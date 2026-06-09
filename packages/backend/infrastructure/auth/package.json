@@ -1,0 +1,54 @@
+{
+  "name": "@spark-nest-ed/infrastructure-auth",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@spark-nest-ed/source": "./src/index.ts",
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "nx": {
+    "name": "infrastructure-auth",
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/backend/infrastructure/auth",
+          "tsConfig": "packages/backend/infrastructure/auth/tsconfig.lib.json",
+          "packageJson": "packages/backend/infrastructure/auth/package.json",
+          "main": "packages/backend/infrastructure/auth/src/index.ts",
+          "assets": [
+            "packages/backend/infrastructure/auth/*.md"
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/core": "^11.0.0",
+    "rxjs": "^7.8.0",
+    "passport-jwt": "^4.0.1",
+    "jwks-rsa": "^3.2.0",
+    "@spark-nest-ed/infrastructure-database": "0.0.1",
+    "ioredis": "^5.8.2",
+    "axios": "^1.13.2",
+    "express": "5.1.0"
+  }
+}

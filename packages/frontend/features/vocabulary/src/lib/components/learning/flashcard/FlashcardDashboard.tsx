@@ -1,0 +1,192 @@
+import React from 'react';
+import { Flame, TrendingUp } from 'lucide-react';
+
+export interface FlashcardDashboardProps {
+  title: string;
+  statsDashboard: { total: number; mastered: number; learning: number; newCount: number; difficultCount: number };
+  onStartStudyMode: (mode: 'all' | 'difficult' | 'new') => void;
+  onGoHome: () => void;
+}
+
+export const FlashcardDashboard: React.FC<FlashcardDashboardProps> = ({
+  title,
+  statsDashboard,
+  onStartStudyMode,
+  onGoHome,
+}) => {
+  const masteredPercent = statsDashboard.total > 0 
+    ? Math.round((statsDashboard.mastered / statsDashboard.total) * 100)
+    : 0;
+
+  return (
+    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 text-white bg-[#070b15] p-6 sm:p-8 rounded-2xl border border-slate-900 shadow-2xl relative overflow-hidden select-none z-10">
+      {/* Background blurs */}
+      <div className="absolute top-0 right-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Dashboard Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/60 pb-5 relative z-10">
+        <div className="flex flex-col gap-1 text-left">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+            <TrendingUp className="w-6.5 h-6.5 text-blue-400 animate-pulse" /> Tiến độ Bộ từ vựng (Thẻ học)
+          </h1>
+          <p className="text-xs text-slate-400">
+            Bộ từ vựng: <span className="font-semibold text-slate-200">{title}</span>
+          </p>
+        </div>
+        <button
+          onClick={onGoHome}
+          className="self-start sm:self-center flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700/50 transition-all cursor-pointer"
+        >
+          Quay lại
+        </button>
+      </div>
+
+      {/* Real-time Statistics Dashboard Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 relative z-10">
+        <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng số thẻ</span>
+          <span className="text-2xl font-black mt-2 text-slate-100">{statsDashboard.total}</span>
+        </div>
+
+        <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
+          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Đã thành thạo</span>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-2xl font-black text-emerald-400">{statsDashboard.mastered}</span>
+            <span className="text-[9px] font-extrabold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">{masteredPercent}%</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
+          <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Đang học tập</span>
+          <span className="text-2xl font-black mt-2 text-blue-400">{statsDashboard.learning}</span>
+        </div>
+
+        <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Chưa bắt đầu</span>
+          <span className="text-2xl font-black mt-2 text-slate-400">{statsDashboard.newCount}</span>
+        </div>
+      </div>
+
+      {/* Spaced Repetition Due message box */}
+      <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-xl flex items-center gap-3 relative z-10 text-left">
+        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 flex-shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-xs font-semibold text-slate-300">
+          Tuyệt vời! Hiện tại không có từ vựng nào đến hạn ôn tập SRS hôm nay. Hãy chọn chế độ học bên dưới để luyện tập với Thẻ ghi nhớ nhé.
+        </p>
+      </div>
+
+      {/* Premium Study options list */}
+      <div className="flex flex-col gap-3.5 relative z-10">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">Chọn chế độ luyện tập Thẻ ghi nhớ:</span>
+
+        <div className="grid grid-cols-1 gap-3">
+          {/* Mode 1: Study All */}
+          <button
+            onClick={() => onStartStudyMode('all')}
+            className="group p-4 bg-slate-900/25 hover:bg-slate-900/70 border border-slate-800/80 hover:border-blue-500/50 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-x-1 w-full text-white"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                <svg className="w-5.5 h-5.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 13.56 2H6a2 2 0 0 0-2 2z" />
+                </svg>
+              </div>
+              <div className="flex flex-col gap-0.5 text-left">
+                <span className="text-sm sm:text-base font-bold text-slate-200">
+                  Luyện tập Toàn bộ từ vựng ({statsDashboard.total} từ)
+                </span>
+                <span className="text-[11px] text-slate-400">Xem lại toàn bộ {statsDashboard.total} từ vựng dưới dạng flashcards.</span>
+              </div>
+            </div>
+            <svg className="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Mode 2: Difficult Words */}
+          <button
+            disabled={statsDashboard.difficultCount === 0}
+            onClick={() => onStartStudyMode('difficult')}
+            className={`group p-4 rounded-2xl flex items-center justify-between transition-all duration-300 w-full text-white ${
+              statsDashboard.difficultCount > 0
+                ? 'bg-slate-900/25 hover:bg-slate-900/70 border border-slate-800/80 hover:border-amber-500/50 cursor-pointer hover:-translate-x-1'
+                : 'bg-slate-950/20 border-slate-900/50 opacity-40 cursor-not-allowed'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl border transition-all duration-300 ${
+                statsDashboard.difficultCount > 0
+                  ? 'bg-amber-600/10 text-amber-500 border-amber-500/20 group-hover:bg-amber-600 group-hover:text-white group-hover:border-transparent'
+                  : 'bg-slate-900/50 text-slate-650 border-slate-900'
+              }`}>
+                <Flame className="w-5.5 h-5.5 animate-pulse" />
+              </div>
+              <div className="flex flex-col gap-0.5 text-left">
+                <span className="text-sm sm:text-base font-bold text-slate-200">
+                  Tập trung ôn tập từ khó / chưa nhớ ({statsDashboard.difficultCount} từ)
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {statsDashboard.difficultCount > 0
+                    ? 'Tập trung ôn lại các từ có điểm thông thạo thấp để khắc sâu hơn.'
+                    : 'Tuyệt vời! Bạn không có từ khó nào cần ôn tập thêm lúc này.'}
+                </span>
+              </div>
+            </div>
+            {statsDashboard.difficultCount > 0 ? (
+              <svg className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">Đã sạch!</span>
+            )}
+          </button>
+
+          {/* Mode 3: Learn New Words */}
+          <button
+            disabled={statsDashboard.newCount === 0}
+            onClick={() => onStartStudyMode('new')}
+            className={`group p-4 rounded-2xl flex items-center justify-between transition-all duration-300 w-full text-white ${
+              statsDashboard.newCount > 0
+                ? 'bg-slate-900/25 hover:bg-slate-900/70 border border-slate-800/80 hover:border-purple-500/50 cursor-pointer hover:-translate-x-1'
+                : 'bg-slate-950/20 border-slate-900/50 opacity-40 cursor-not-allowed'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl border transition-all duration-300 ${
+                statsDashboard.newCount > 0
+                  ? 'bg-purple-600/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-600 group-hover:text-white group-hover:border-transparent'
+                  : 'bg-slate-900/50 text-slate-650 border-slate-900'
+              }`}>
+                <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div className="flex flex-col gap-0.5 text-left">
+                <span className="text-sm sm:text-base font-bold text-slate-200">
+                  Học từ vựng mới ({statsDashboard.newCount} từ)
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {statsDashboard.newCount > 0
+                    ? `Xem và làm quen với ${statsDashboard.newCount} thẻ từ mới chưa từng học.`
+                    : 'Tuyệt vời! Bạn đã bắt đầu làm quen với tất cả các từ trong bộ từ.'}
+                </span>
+              </div>
+            </div>
+            {statsDashboard.newCount > 0 ? (
+              <svg className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded">Hoàn thành!</span>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,97 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/api-sne-e2e"
+    },
+    {
+      "path": "./apps/api-sne"
+    },
+    {
+      "path": "./packages/backend/domains/module-vocabulary"
+    },
+    {
+      "path": "./packages/backend/infrastructure/auth"
+    },
+    {
+      "path": "./packages/shared/libs"
+    },
+    {
+      "path": "./packages/backend/infrastructure/database"
+    },
+    {
+      "path": "./packages/backend/infrastructure/logging"
+    },
+    {
+      "path": "./packages/backend/infrastructure/Logging"
+    },
+    {
+      "path": "./packages/backend/infrastructure/monitoring"
+    },
+    {
+      "path": "./packages/backend/infrastructure/messaging"
+    },
+    {
+      "path": "./packages/backend/infrastructure/exception-global"
+    },
+    {
+      "path": "./packages/backend/infrastructure/cache"
+    },
+    {
+      "path": "./packages/backend/infrastructure/storage"
+    },
+    {
+      "path": "./apps/frontend-sne-e2e"
+    },
+    {
+      "path": "./apps/frontend-sne"
+    },
+    {
+      "path": "./packages/frontend/shared/pages"
+    },
+    {
+      "path": "./packages/frontend/shared/components"
+    },
+    {
+      "path": "./packages/frontend/shared/hooks"
+    },
+    {
+      "path": "./packages/frontend/shared/utils"
+    },
+    {
+      "path": "./packages/frontend/shared/assets"
+    },
+    {
+      "path": "./packages/frontend/core/api"
+    },
+    {
+      "path": "./packages/frontend/core/auth"
+    },
+    {
+      "path": "./packages/frontend/core/constants"
+    },
+    {
+      "path": "./packages/frontend/core/store"
+    },
+    {
+      "path": "./packages/frontend/features/vocabulary"
+    },
+    {
+      "path": "./packages/backend/domains/module-user"
+    },
+    {
+      "path": "./packages/frontend/features/grammar"
+    },
+    {
+      "path": "./packages/backend/domains/module-grammar"
+    },
+    {
+      "path": "./packages/backend/domains/module-reading"
+    },
+    {
+      "path": "./packages/frontend/features/reading"
+    }
+  ]
+}

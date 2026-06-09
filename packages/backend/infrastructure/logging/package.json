@@ -1,0 +1,46 @@
+{
+  "name": "@spark-nest-ed/infrastructure-logging",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@spark-nest-ed/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "nx": {
+    "name": "infrastructure-logging",
+    "tags": [
+      "backend"
+    ],
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/backend/infrastructure/logging",
+          "tsConfig": "packages/backend/infrastructure/logging/tsconfig.lib.json",
+          "packageJson": "packages/backend/infrastructure/logging/package.json",
+          "main": "packages/backend/infrastructure/logging/src/index.ts",
+          "assets": [
+            "packages/backend/infrastructure/logging/*.md"
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

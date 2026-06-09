@@ -1,0 +1,129 @@
+# 🤖 AI Agent Instructions & Architecture Rules for Spark-Nexus-Ed
+
+You are an expert software engineering AI assistant working on the **Spark-Nexus-Ed** project. The project is an enterprise-grade platform built using a modern **Nx Monorepo** and **NPM Workspaces** architecture.
+
+Always adhere strictly to the following rules, structures, and guidelines when writing code, refactoring, or generating files in this repository.
+
+---
+
+## 🏗️ 1. Architecture Overview (Nx Monorepo + NPM Workspaces)
+
+The codebase is split into:
+- `/apps`: Independent execution entry points.
+  - `api-sne`: NestJS Backend Application.
+  - `frontend-sne`: React + Vite Frontend Application.
+- `/packages`: Isolated, modular, and reusable libraries.
+  - `backend/domains`: Self-contained business modules (DDD).
+  - `backend/infrastructure`: Global technical capabilities (Database, cache, auth, etc.).
+  - `frontend/core`: Global frontend setup (Axios API client, auth logic, Redux store).
+  - `frontend/shared`: UI components, hooks, assets, pages shared across features.
+  - `frontend/features`: Isolated, domain-specific frontend libraries.
+  - `shared/libs`: Shareable utility code, helper types, and schemas used by both FE and BE.
+
+### 🔄 Import & Dependency Rules (CRITICAL)
+- **Do NOT configure manual paths** in `tsconfig.base.json`.
+- The project leverages **NPM Workspaces** combined with Nx Project Crystal. Each package/library defines its package name (e.g., `@spark-nest-ed/feature-vocabulary`, `@spark-nest-ed/frontend-core-api`) in its local `package.json` file.
+- Exports are defined using the `exports` field in `package.json` with `@spark-nest-ed/source` pointing to `./src/index.ts` during development (resolved via `"customConditions": ["@spark-nest-ed/source"]` in tsconfig).
+- Always import libraries using their exact package name:
+  ```typescript
+  import { ... } from '@spark-nest-ed/feature-vocabulary';
+  ```
+
+---
+
+## 🛡️ 2. Backend Rules (NestJS + CQRS + DDD)
+
+All backend business logic must live within `/packages/backend/domains/module-<domain-name>`.
+You must strictly follow the **CQRS (Command Query Responsibility Segregation)** and **DDD (Domain-Driven Design)** architectural layers inside `lib/`:
+
+```
+┌─────────────────────────────────────────────────────┐
+│           Presentation Layer (Controllers)          │
+│  - Receives HTTP Requests, validates Input DTOs     │
+│  - Dispatches Commands or Queries to the Bus        │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│            Application Layer (Handlers)             │
+│  - Command Handlers (Write) & Query Handlers (Read) │
+│  - Uses Mappers for DTO ↔ Entity conversion         │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│              Domain Layer (Entities)                │
+│  - Rich Domain Entities containing core business    │
+│  - Emits Domain Events, defines Repository interfaces│
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│         Infrastructure Layer (Repositories)         │
+│  - Implements Repository interfaces using Prisma    │
+└─────────────────────────────────────────────────────┘
+```
+
+### 🚫 Non-Negotiable Backend Rules:
+1. **Never Return Entities Directly:** Handlers and Controllers must ALWAYS return a **Response DTO**. Use the `Mapper` class to convert `Entity ➔ ResponseDTO`. Never expose raw Database Entities to the client.
+2. **DTO Validation:** Use `class-validator` decorators on all input DTOs.
+3. **Command/Query Level Validation:** Implement strict validation checks inside Command or Query constructors (e.g., `if (!title) throw new Error(...)`).
+4. **Command/Query Factory Methods:** Always define a static `fromDto(dto: ...)` method inside your Commands/Queries to easily instantiate them from input DTOs.
+
+---
+
+## 🎨 3. Frontend Rules (React + Container-Component Pattern)
+
+All frontend business features must live within `/packages/frontend/features/<feature-name>` and follow the **Container-Component (Presentation-Container) Pattern** combined with **React Query (TanStack Query)**:
+
+### 📁 Feature Directory Structure:
+- `api/`: Raw Axios HTTP client calls for this feature only.
+- `components/` (Dumb/Presentation Components): Pure UI components.
+  - **Rule:** Must ONLY receive data and callbacks via **Props**. 
+  - **Rule:** Absolutely NO server state hooks (React Query), router/navigation hooks, or global store (Redux) access inside these components.
+- `container/` (Smart/Container Components): Handles the logic and state integration.
+  - **Rule:** Fetches data using custom query hooks.
+  - **Rule:** Performs calculations using services.
+  - **Rule:** Passes clean props (data, actions) down to Dumb Components.
+- `hooks/`: Wraps React Query or Redux selectors (e.g., `useVocabularySets`, `useCreateVocabularySet`).
+- `pages/`: Page routing shells.
+  - **Rule:** Must ONLY render its corresponding Container and handle high-level layout. No business logic here.
+- `services/`: Pure stateless helper functions for computations (e.g., stats, formatting).
+- `types/`: Typescript types and interfaces in `index.ts`.
+- `index.ts`: The public API entry point of the package. Exports only pages, containers, or components needed globally.
+
+---
+
+## 📝 4. Naming Conventions & Code Style
+
+Follow this naming schema exactly when creating files and directories:
+
+| Component Type | File Name Convention | Example |
+| :--- | :--- | :--- |
+| **Page Component** | `*Page.tsx` | `MyLibaryVocabularySetPage.tsx` |
+| **Container Component** | `*Container.tsx` | `MyLibaryVocabularySetContainer.tsx` |
+| **Dumb Component** | `PascalCase.tsx` | `PersonalPackageCard.tsx` |
+| **Custom Hook** | `use-*.ts` (kebab-case) | `use-vocabulary-sets.ts` |
+| **Service Helper** | `*.service.ts` | `vocabulary-stats.service.ts` |
+| **DTOs Backend** | `*.dto.ts` | `create-vocabulary-set.dto.ts` |
+| **Command Backend** | `*.command.ts` | `create-vocabulary-set.command.ts` |
+| **Query Backend** | `*.query.ts` | `get-user-vocabulary-sets.query.ts` |
+| **Handler Backend** | `*.handler.ts` | `create-vocabulary-set.handler.ts` |
+| **Domain Entity** | `*.entity.ts` | `vocabulary-set.entity.ts` |
+
+---
+
+## 🛠️ 5. Nx Generators (Creating New Packages)
+
+When asked to create new modules or features, always use the appropriate **Nx Generator** command to maintain project integration:
+
+### 🎨 To create a new Frontend Feature Library (React + Vite):
+```powershell
+npx nx g @nx/react:library packages/frontend/features/<feature-name> --directory=packages/frontend/features/<feature-name> --style=css --linter=eslint --unitTestRunner=vitest --bundler=vite --importPath=@spark-nest-ed/feature-<feature-name>
+```
+
+### 🛡️ To create a new Backend Domain Module (NestJS/Node):
+```powershell
+npx nx g @nx/js:library packages/backend/domains/module-<domain-name> --directory=packages/backend/domains/module-<domain-name> --linter=eslint --unitTestRunner=jest --importPath=@spark-nest-ed/module-<domain-name>
+```
+
+---
+
+Always read this `.cursorrules` file at the beginning of development tasks to ensure absolute consistency with the existing design system. Avoid writing ad-hoc styles, raw SQL bypassing Prisma (unless required for performance), or tightly coupling presentation logic with server state retrieval.

@@ -1,0 +1,23 @@
+{
+  "name": "@spark-nest-ed/feature-reading",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@spark-nest-ed/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "name": "feature-reading",
+    "tags": [
+      "frontend"
+    ]
+  }
+}

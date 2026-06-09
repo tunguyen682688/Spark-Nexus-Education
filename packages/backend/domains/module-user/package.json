@@ -1,0 +1,50 @@
+{
+  "name": "@spark-nest-ed/module-user",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@spark-nest-ed/source": "./src/index.ts",
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "nx": {
+    "name": "module-user",
+    "tags": [
+      "backend"
+    ],
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/backend/domains/module-user",
+          "tsConfig": "packages/backend/domains/module-user/tsconfig.lib.json",
+          "packageJson": "packages/backend/domains/module-user/package.json",
+          "main": "packages/backend/domains/module-user/src/index.ts",
+          "assets": [
+            "packages/backend/domains/module-user/*.md"
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/cqrs": "^11.0.3",
+    "@nestjs/swagger": "^11.2.1",
+    "@spark-nest-ed/infrastructure-auth": "0.0.1",
+    "@spark-nest-ed/shared-libs": "0.0.1",
+    "@spark-nest-ed/infrastructure-database": "0.0.1",
+    "express": "5.1.0"
+  }
+}

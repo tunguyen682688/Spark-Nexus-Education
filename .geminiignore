@@ -1,0 +1,19 @@
+# Chặn hoàn toàn các thư viện bên thứ ba
+node_modules/
+vendor/
+packages/
+.venv/
+env/
+
+# Chặn các thư mục build / output tự động sinh ra
+dist/
+build/
+out/
+bin/
+
+# Chặn các tệp log và tệp tạm
+*.log
+.cache/
+tmp/
+
+.nx/

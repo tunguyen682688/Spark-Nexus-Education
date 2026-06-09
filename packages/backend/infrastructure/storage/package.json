@@ -1,0 +1,46 @@
+{
+  "name": "@spark-nest-ed/infrastructure-storage",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@spark-nest-ed/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "nx": {
+    "name": "infrastructure-storage",
+    "tags": [
+      "backend"
+    ],
+    "targets": {
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "dist/packages/backend/infrastructure/storage",
+          "tsConfig": "packages/backend/infrastructure/storage/tsconfig.lib.json",
+          "packageJson": "packages/backend/infrastructure/storage/package.json",
+          "main": "packages/backend/infrastructure/storage/src/index.ts",
+          "assets": [
+            "packages/backend/infrastructure/storage/*.md"
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

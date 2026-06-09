@@ -1,0 +1,884 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// schema.prisma
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // For Docker
+}
+
+datasource db {
+  provider          = "postgresql" // hoặc "mysql", "sqlserver"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("DIRECT_URL") // For migrations
+}
+
+// ============================================
+// READING DOMAIN
+// ============================================
+
+model Article {
+  id           String    @id @default(uuid())
+  title        String
+  content      String    @db.Text
+  summary      String?   @db.Text
+  difficulty   String // A1, A2, B1, B2, C1, C2
+  wordCount    Int
+  category     String
+  tags         String[] // Array of tags
+  thumbnailUrl String?
+  sourceUrl    String?
+  author       String?
+  isPublished  Boolean   @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  readingProgress ReadingProgress[]
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([isPublished])
+  @@index([createdAt])
+  @@map("articles")
+}
+
+model ReadingProgress {
+  id           String    @id @default(uuid())
+  userId       String
+  articleId    String
+  progress     Int       @default(0) // 0-100
+  lastPosition Int       @default(0)
+  timeSpent    Int       @default(0) // seconds
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+  @@map("reading_progress")
+}
+
+// ============================================
+// VOCABULARY DOMAIN
+// ============================================
+
+// Enum types (will be created as ENUM in PostgreSQL)
+// Note: Prisma doesn't support native enums in all databases, so we use String with constraints
+
+model VocabularySet {
+  id            String   @id @default(uuid())
+  title         String   @db.VarChar(200)
+  description   String?  @db.Text
+  language      String   @db.VarChar(10) // enum: en, vi, ja, ko, etc.
+  type          String   @db.VarChar(50) // enum: flashcard, quiz, reading, etc.
+  difficulty    String?  @db.VarChar(50) // enum: beginner, intermediate, etc.
+  isPublic      Boolean  @default(false) @map("is_public")
+  isActive      Boolean  @default(true) @map("is_active")
+  tags          String[] @default([]) // Array of tags
+  coverImage    String?  @map("cover_image")
+  userId        String   @map("user_id") // FK to users (will add relation when users table exists)
+  entryCount    Int      @default(0) @map("entry_count")
+  favoriteCount Int      @default(0) @map("favorite_count")
+  studyCount    Int      @default(0) @map("study_count")
+  importStatus  String?  @default("idle") @map("import_status") @db.VarChar(50) // idle, pending, processing, completed, failed
+  importProgress Json?   @map("import_progress") // { total: number, processed: number, failed: number, failedItems?: Array<{word: string, reason: string}>, lastError?: string }
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deleted       Boolean  @default(false)
+  version       BigInt   @default(1)
+
+  // Relations
+  items          VocabularySetItem[]
+  history        VocabularySetHistory[]
+  favorites      UserVocabularySetFavorite[]
+  QuizSession    QuizSession[]
+  ManualQuestion ManualQuestion[]
+  QuizChallenge  QuizChallenge[]
+  PackageReport  PackageReport[]
+
+  @@index([userId])
+  @@index([userId, language])
+  @@index([language])
+  @@index([isPublic, isActive, deleted])
+  @@index([createdAt])
+  @@index([deleted])
+  @@map("vocabulary_sets")
+}
+
+model VocabularySetItem {
+  id              String   @id @default(uuid())
+  entryId         String   @map("entry_id") // FK to entries
+  vocabularySetId String   @map("vocabulary_set_id")
+  word            String   @db.VarChar(255) // Denormalized for performance
+  definition      String?  @db.Text // Denormalized for performance
+  example         String?  @db.Text // Denormalized for performance
+  notes           String?  @db.Text
+  position        Int?
+  addedAt         DateTime @default(now()) @map("added_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deleted         Boolean  @default(false)
+  version         BigInt   @default(1)
+
+  // Relations
+  vocabularySet VocabularySet            @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+  entry         Entry                    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  progress      UserVocabularyProgress[]
+  tags          VocabularySetItemTag[]
+
+  @@unique([vocabularySetId, entryId], map: "idx_items_set_entry") // Prevent duplicate entries in same set
+  @@index([vocabularySetId])
+  @@index([vocabularySetId, deleted])
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([position])
+  @@index([word])
+  @@index([deleted])
+  @@map("vocabulary_set_items")
+}
+
+// Entry (Dictionary word) - Basic structure for now
+// Full implementation will include senses, examples, etc.
+model Entry {
+  id            String   @id @default(uuid())
+  word          String   @db.VarChar(255)
+  language      String   @db.VarChar(10) // enum: en, vi, ja, ko, etc.
+  pronunciation String?  @db.VarChar(100)
+  partOfSpeech  String?  @map("part_of_speech") @db.VarChar(50) // enum: noun, verb, etc.
+  frequency     Int      @default(0)
+  isDraft       Boolean  @default(true) @map("is_draft")
+  isPublished   Boolean  @default(false) @map("is_published")
+  notes         String?  @db.Text
+  sourceUrl     String?  @map("source_url") @db.VarChar(500)
+  tags          String[] @default([])
+  audioUrl      String?  @map("audio_url") @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deleted       Boolean  @default(false)
+  version       BigInt   @default(1)
+
+  // Relations
+  items              VocabularySetItem[]
+  senses             Sense[]
+  examples           Example[]
+  expressions        Expression[]
+  variants           LexicalVariant[]
+  expressionMeanings ExpressionMeaning[]
+  mnemonics          CommunityMnemonic[]
+  communityExamples  CommunityExample[]
+
+  @@unique([word, language], name: "idx_entries_word_lang")
+  @@index([language])
+  @@index([isPublished])
+  @@index([frequency(sort: Desc)])
+  @@index([deleted])
+  // Note: GIN index for tags array should be created manually in migration:
+  // CREATE INDEX idx_entries_tags ON entries USING GIN(tags);
+  // Note: Full-text search vector should be created manually:
+  // CREATE INDEX idx_entries_search ON entries USING GIN(search_vector);
+  @@map("entries")
+}
+
+// Vocabulary Set History - Track study sessions
+model VocabularySetHistory {
+  id                   String    @id @default(uuid())
+  vocabularySetId      String    @map("vocabulary_set_id")
+  completedItems       Int?      @default(0) @map("completed_items")
+  completionPercentage Float?    @default(0) @map("completion_percentage") @db.DoublePrecision
+  correctAnswers       Int?      @default(0) @map("correct_answers")
+  lastStudied          DateTime? @map("last_studied")
+  totalItems           Int?      @default(0) @map("total_items")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deleted              Boolean   @default(false)
+
+  // Relations
+  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+
+  @@index([vocabularySetId])
+  @@index([vocabularySetId, lastStudied(sort: Desc)])
+  @@index([lastStudied])
+  @@map("vocabulary_set_history")
+}
+
+// User Vocabulary Set Favorites - Junction table for favorites
+model UserVocabularySetFavorite {
+  userId          String   @map("user_id")
+  vocabularySetId String   @map("vocabulary_set_id")
+  favoritedAt     DateTime @default(now()) @map("favorited_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deleted         Boolean  @default(false)
+
+  // Relations
+  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+
+  @@id([userId, vocabularySetId])
+  @@index([userId])
+  @@index([userId, deleted])
+  @@index([vocabularySetId])
+  @@index([deleted])
+  @@map("user_vocabulary_set_favorites")
+}
+
+// User Vocabulary Progress - SRS tracking per item
+model UserVocabularyProgress {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  itemId       String    @map("item_id")
+  status       String    @default("NEW") @db.VarChar(50) // NEW, LEARNING, MASTERED
+  streak       Int       @default(0) // Consecutive study days
+  masteryLevel Float     @default(0) @map("mastery_level") @db.DoublePrecision // 0-1
+  lastReview   DateTime? @map("last_review")
+  nextReviewAt DateTime? @map("next_review_at") // When to review next (SRS)
+  interval     Int       @default(0) // Days between reviews (SRS)
+  easeFactor   Float     @default(2.5) @map("ease_factor") @db.DoublePrecision // SM-2 algorithm factor
+  repetitions  Int       @default(0) // Number of successful reviews
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  item VocabularySetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId], name: "idx_progress_user_item")
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, status, nextReviewAt])
+  @@index([userId, lastReview])
+  @@index([itemId])
+  @@index([lastReview])
+  @@index([nextReviewAt])
+  @@index([status])
+  @@index([masteryLevel])
+  @@map("user_vocabulary_progress")
+}
+
+// ============================================
+// DICTIONARY DOMAIN - Entry Details
+// ============================================
+
+// Sense - Nghĩa của entry
+model Sense {
+  id            String   @id @default(uuid())
+  entryId       String   @map("entry_id")
+  definition    String   @db.Text
+  language      String   @db.VarChar(10)
+  antonym       String?  @db.VarChar(255)
+  etymologyText String?  @map("etymology_text") @db.Text
+  fieldOfStudy  String?  @map("field_of_study") @db.VarChar(100)
+  level         String?  @db.VarChar(50)
+  note          String?  @db.Text
+  partOfSpeech  String?  @map("part_of_speech") @db.VarChar(50)
+  seeAlso       String?  @map("see_also") @db.VarChar(255)
+  synonym       String?  @db.VarChar(255)
+  topic         String?  @db.VarChar(100)
+  usage         String?  @db.Text
+  images        String[] @default([])
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deleted       Boolean  @default(false)
+  version       BigInt   @default(1)
+
+  // Relations
+  entry          Entry            @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  examples       Example[]
+  QuizQuestion   QuizQuestion[]
+  ManualQuestion ManualQuestion[]
+
+  @@index([entryId])
+  @@index([entryId, language])
+  @@index([entryId, deleted])
+  @@index([language])
+  @@index([deleted])
+  @@map("senses")
+}
+
+// Example - Ví dụ cho entry/sense
+model Example {
+  id          String   @id @default(uuid())
+  entryId     String?  @map("entry_id")
+  senseId     String?  @map("sense_id")
+  exampleText String   @map("example_text") @db.Text
+  translation String?  @db.Text
+  language    String   @db.VarChar(10)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deleted     Boolean  @default(false)
+  version     BigInt   @default(1)
+
+  // Relations
+  entry Entry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  sense Sense? @relation(fields: [senseId], references: [id], onDelete: SetNull)
+
+  @@index([senseId])
+  @@index([senseId, deleted])
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([deleted])
+  @@map("examples")
+}
+
+// Expression - Cụm từ
+model Expression {
+  id         String   @id @default(uuid())
+  entryId    String   @map("entry_id")
+  expression String   @db.Text
+  language   String   @db.VarChar(10)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  deleted    Boolean  @default(false)
+  version    BigInt   @default(1)
+
+  // Relations
+  entry    Entry               @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  meanings ExpressionMeaning[]
+
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([deleted])
+  @@map("expressions")
+}
+
+// ExpressionMeaning - Nghĩa của cụm từ
+model ExpressionMeaning {
+  id           String   @id @default(uuid())
+  expressionId String   @map("expression_id")
+  entryId      String?  @map("entry_id")
+  meaningOrder Int      @default(1) @map("meaning_order")
+  meaningText  String   @map("meaning_text") @db.Text
+  usageNotes   String?  @map("usage_notes") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deleted      Boolean  @default(false)
+  version      BigInt   @default(1)
+
+  // Relations
+  expression Expression @relation(fields: [expressionId], references: [id], onDelete: Cascade)
+  entry      Entry?     @relation(fields: [entryId], references: [id], onDelete: SetNull)
+
+  @@index([expressionId])
+  @@index([expressionId, deleted])
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([deleted])
+  @@map("expression_meanings")
+}
+
+// LexicalVariant - Biến thể từ
+model LexicalVariant {
+  id            String   @id @default(uuid())
+  entryId       String   @map("entry_id")
+  notes         String?  @db.Text
+  partOfSpeech  String?  @map("part_of_speech") @db.VarChar(50)
+  pronunciation String?  @db.VarChar(100)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deleted       Boolean  @default(false)
+  version       BigInt   @default(1)
+
+  // Relations
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([deleted])
+  @@map("lexical_variants")
+}
+
+// ============================================
+// COMMUNITY & TAGGING
+// ============================================
+
+// Tag - Tags cho từ vựng
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  itemTags VocabularySetItemTag[]
+
+  @@index([name])
+  @@map("tags")
+}
+
+// VocabularySetItemTag - Junction table for item tags
+model VocabularySetItemTag {
+  itemId    String   @map("item_id")
+  tagId     String   @map("tag_id")
+  userId    String   @map("user_id") // User who created the tag relationship
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  item VocabularySetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag  Tag               @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+  @@index([userId])
+  @@index([itemId])
+  @@index([tagId])
+  @@index([itemId, tagId])
+  @@map("vocabulary_set_item_tags")
+}
+
+// Community Mnemonic - Mẹo ghi nhớ cộng đồng
+model CommunityMnemonic {
+  id        String   @id @default(uuid())
+  entryId   String   @map("entry_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  upvotes   Int      @default(0)
+  downvotes Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deleted   Boolean  @default(false)
+
+  // Relations
+  entry Entry          @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  votes MnemonicVote[]
+
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([userId])
+  @@index([upvotes, downvotes])
+  @@index([deleted])
+  @@map("community_mnemonics")
+}
+
+// MnemonicVote - Bình chọn mẹo ghi nhớ
+model MnemonicVote {
+  userId     String   @map("user_id")
+  mnemonicId String   @map("mnemonic_id")
+  vote       Int // 1 for upvote, -1 for downvote
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  mnemonic CommunityMnemonic @relation(fields: [mnemonicId], references: [id], onDelete: Cascade)
+
+  @@id([userId, mnemonicId])
+  @@index([userId])
+  @@index([mnemonicId])
+  @@index([vote])
+  @@map("mnemonic_votes")
+}
+
+// Community Example - Ví dụ cộng đồng
+model CommunityExample {
+  id          String   @id @default(uuid())
+  entryId     String   @map("entry_id")
+  userId      String   @map("user_id")
+  exampleText String   @map("example_text") @db.Text
+  upvotes     Int      @default(0)
+  downvotes   Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deleted     Boolean  @default(false)
+
+  // Relations
+  entry Entry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  votes ExampleVote[]
+
+  @@index([entryId])
+  @@index([entryId, deleted])
+  @@index([userId])
+  @@index([upvotes, downvotes])
+  @@index([deleted])
+  @@map("community_examples")
+}
+
+// ExampleVote - Bình chọn ví dụ
+model ExampleVote {
+  userId    String   @map("user_id")
+  exampleId String   @map("example_id")
+  vote      Int // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  example CommunityExample @relation(fields: [exampleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, exampleId])
+  @@index([userId])
+  @@index([exampleId])
+  @@index([vote])
+  @@map("example_votes")
+}
+
+// ============================================
+// QUIZ DOMAIN
+// ============================================
+
+// QuizSession - Phiên quiz
+model QuizSession {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  vocabularySetId String?   @map("vocabulary_set_id")
+  status          String    @db.VarChar(50) // IN_PROGRESS, COMPLETED, ABANDONED
+  score           Float?    @db.DoublePrecision
+  totalQuestions  Int?      @map("total_questions")
+  correctAnswers  Int?      @map("correct_answers")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  vocabularySet      VocabularySet?  @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  questions          QuizQuestion[]
+  challenges         QuizChallenge[] @relation("ChallengerSession")
+  opponentChallenges QuizChallenge[] @relation("OpponentSession")
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([vocabularySetId])
+  @@index([status])
+  @@index([completedAt])
+  @@index([createdAt])
+  @@map("quiz_sessions")
+}
+
+// QuizQuestion - Câu hỏi quiz
+model QuizQuestion {
+  id            String   @id @default(uuid())
+  quizSessionId String   @map("quiz_session_id")
+  senseId       String?  @map("sense_id")
+  questionData  Json     @map("question_data") // Contains question text, options, etc.
+  userAnswer    Json?    @map("user_answer")
+  isCorrect     Boolean? @map("is_correct")
+  order         Int
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  quizSession QuizSession @relation(fields: [quizSessionId], references: [id], onDelete: Cascade)
+  sense       Sense?      @relation(fields: [senseId], references: [id], onDelete: SetNull)
+
+  @@index([quizSessionId])
+  @@index([quizSessionId, order])
+  @@index([senseId])
+  @@index([isCorrect])
+  @@map("quiz_questions")
+}
+
+// ManualQuestion - Câu hỏi thủ công
+model ManualQuestion {
+  id              String   @id @default(uuid())
+  vocabularySetId String   @map("vocabulary_set_id")
+  senseId         String?  @map("sense_id")
+  questionText    String   @map("question_text") @db.Text
+  options         Json // Array of options
+  correctAnswer   String   @map("correct_answer") @db.VarChar(10) // A, B, C, D
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deleted         Boolean  @default(false)
+
+  // Relations
+  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+  sense         Sense?        @relation(fields: [senseId], references: [id], onDelete: SetNull)
+
+  @@index([vocabularySetId])
+  @@index([vocabularySetId, deleted])
+  @@index([senseId])
+  @@index([deleted])
+  @@map("manual_questions")
+}
+
+// QuizChallenge - Thách đấu quiz
+model QuizChallenge {
+  id                  String   @id @default(uuid())
+  vocabularySetId     String   @map("vocabulary_set_id")
+  challengerId        String   @map("challenger_id")
+  opponentId          String   @map("opponent_id")
+  status              String   @db.VarChar(50) // PENDING, ACCEPTED, COMPLETED, DECLINED
+  challengerSessionId String?  @map("challenger_session_id")
+  opponentSessionId   String?  @map("opponent_session_id")
+  challengerScore     Float?   @map("challenger_score") @db.DoublePrecision
+  opponentScore       Float?   @map("opponent_score") @db.DoublePrecision
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  vocabularySet     VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+  challengerSession QuizSession?  @relation("ChallengerSession", fields: [challengerSessionId], references: [id], onDelete: SetNull)
+  opponentSession   QuizSession?  @relation("OpponentSession", fields: [opponentSessionId], references: [id], onDelete: SetNull)
+
+  @@index([challengerId])
+  @@index([opponentId])
+  @@index([status])
+  @@index([vocabularySetId])
+  @@index([challengerId, status])
+  @@index([opponentId, status])
+  @@map("quiz_challenges")
+}
+
+// ============================================
+// SOCIAL & COMMUNITY
+// ============================================
+
+// UserFollow - Follow creators
+model UserFollow {
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("user_follows")
+}
+
+// PackageReport - Báo cáo gói từ vựng
+model PackageReport {
+  id              String   @id @default(uuid())
+  vocabularySetId String   @map("vocabulary_set_id")
+  reporterId      String   @map("reporter_id")
+  reason          String   @db.VarChar(100) // SPAM, INACCURATE, COPYRIGHT, OTHER
+  description     String?  @db.Text
+  status          String   @default("PENDING") @db.VarChar(50) // PENDING, REVIEWED, RESOLVED
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
+
+  @@index([vocabularySetId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("package_reports")
+}
+
+// ============================================
+// USER DOMAIN (Phase 2)
+// ============================================
+
+model User {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  picture   String?  // Ảnh đại diện từ Auth0
+  role      String   @default("user")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// ============================================
+// GRAMMAR DOMAIN (Lĩnh vực Ngữ pháp)
+// ============================================
+
+model GrammarLesson {
+  id              String                 @id @default(uuid())
+  title           String                 @db.VarChar(255)
+  vietnameseTitle String?                @map("vietnamese_title") @db.VarChar(255)
+  level           String                 @db.VarChar(10) // e.g., A1, A2, B1, B2, C1, C2
+  status          String                 @default("DRAFT") @db.VarChar(50) // DRAFT, PUBLISHED
+  tags            String[]               @default([])
+  outline         Json                   @default("[]") // [{ id: string, label: string, status: string }]
+  blocks          Json                   @default("[]") // Danh sách các khối nội dung động (Text, Formula, Quiz, Media, Example, Callout)
+  icon            String                 @default("📖") @db.VarChar(50)
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  deleted         Boolean                @default(false)
+
+  // Quan hệ
+  progress        UserGrammarProgress[]
+
+  @@index([level])
+  @@index([status])
+  @@index([deleted])
+  @@map("grammar_lessons")
+}
+
+model UserGrammarProgress {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  lessonId    String        @map("lesson_id")
+  status      String        @default("IN_PROGRESS") @db.VarChar(50) // IN_PROGRESS, MASTERED
+  proficiency Int           @default(0) // 0-100%
+  quickNotes  String?       @map("quick_notes") @db.Text // Tự động lưu ghi chú nhanh từ Sidebar
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Quan hệ
+  lesson      GrammarLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId], name: "idx_user_grammar_lesson")
+  @@index([userId])
+  @@index([lessonId])
+  @@map("user_grammar_progress")
+}
+
+model UserDailyStreak {
+  id           String    @id @default(uuid())
+  userId       String    @unique @map("user_id")
+  streakCount  Int       @default(0) @map("streak_count")
+  lastActiveAt DateTime? @map("last_active_at")
+  totalXP      Int       @default(0) @map("total_xp")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_daily_streaks")
+}
+
+model UserLevelGraduation {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  level          String   @db.VarChar(10) // A1, A2, B1, B2, C1, C2
+  isPassed       Boolean  @default(false) @map("is_passed")
+  bestScore      Float    @map("best_score") @db.DoublePrecision // Điểm phần trăm đúng (ví dụ: 90.0)
+  certificateUrl String?  @map("certificate_url") @db.VarChar(500)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, level], name: "idx_user_level_graduation")
+  @@index([userId])
+  @@map("user_level_graduations")
+}
+
+// ============================================
+// GRAMMAR COMMUNITY & ADVANCED PRACTICE DOMAINS
+// ============================================
+
+model GrammarCommunityPost {
+  id          String                    @id @default(uuid())
+  userId      String                    @map("user_id")
+  title       String                    @db.VarChar(200)
+  content     String                    @db.Text
+  likesCount  Int                       @default(0) @map("likes_count")
+  tags        String[]
+  hasQuiz     Boolean                   @default(false) @map("has_quiz")
+  quizType    String?                   @map("quiz_type")
+  quizData    Json?                     @map("quiz_data")
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+  comments    GrammarCommunityComment[]
+
+  @@map("grammar_community_posts")
+}
+
+model GrammarCommunityComment {
+  id        String               @id @default(uuid())
+  postId    String               @map("post_id")
+  userId    String               @map("user_id")
+  content   String               @db.Text
+  createdAt DateTime             @default(now()) @map("created_at")
+  post      GrammarCommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("grammar_community_comments")
+}
+
+model GrammarCrowdsourcedQuiz {
+  id            String   @id @default(uuid())
+  lessonId      String   @map("lesson_id")
+  contributorId String   @map("contributor_id")
+  questionType  String   @map("question_type") // MULTIPLE_CHOICE, SENTENCE_BUILDER, ERROR_SPOTLIGHT
+  questionData  Json     @map("question_data") // options, answer, words, incorrectWord, correctWord
+  explanation   String   @db.Text
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  upvotes       Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("grammar_crowdsourced_quizzes")
+}
+
+model UserSrsProgress {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  quizId      String   @map("quiz_id")
+  interval    Int      @default(1)
+  easeFactor  Float    @default(2.5) @map("ease_factor")
+  repetitions Int      @default(0)
+  dueDate     DateTime @map("due_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, quizId], name: "idx_user_srs_quiz")
+  @@map("user_srs_progress")
+}
+
+model GrammarExamSet {
+  id            String                 @id @default(uuid())
+  title         String                 @db.VarChar(200)
+  description   String                 @db.Text
+  level         String                 @db.VarChar(10) // A1, A2, B1, B2, C1, C2 hoặc "ALL" cho TOEIC/IELTS
+  examType      String                 @default("CEFR") @map("exam_type") @db.VarChar(50) // CEFR, TOEIC, IELTS, VSTEP
+  examMetadata  Json                   @default("{}") @map("exam_metadata") // Lưu trữ metadata chuyên sâu (ví dụ: { targetBand: "6.5", toeicPart: 5 })
+  creatorId     String                 @map("creator_id")
+  creatorName   String                 @default("Cộng tác viên") @map("creator_name") @db.VarChar(100)
+  questions     Json                   @default("[]") // [{ id, text, type, options, answer, explanation, category, words, sentence, incorrectWord, correctWord }]
+  timeLimit     Int                    @default(600) @map("time_limit") // Thời gian làm bài tính bằng giây (ví dụ: 10 phút)
+  upvotes       Int                    @default(0)
+  status        String                 @default("PENDING") @db.VarChar(50) // PENDING, APPROVED, REJECTED
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  deleted       Boolean                @default(false)
+  progress      UserExamSetProgress[]
+
+  @@index([level])
+  @@index([examType])
+  @@index([status])
+  @@index([deleted])
+  @@map("grammar_exam_sets")
+}
+
+model UserExamSetProgress {
+  id          String         @id @default(uuid())
+  userId      String         @map("user_id")
+  examSetId   String         @map("exam_set_id")
+  bestScore   Float          @map("best_score") @db.DoublePrecision // Điểm phần trăm cao nhất (ví dụ: 85.5)
+  isPassed    Boolean        @default(false) @map("is_passed") // true nếu bestScore >= 80.0
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  examSet     GrammarExamSet @relation(fields: [examSetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, examSetId], name: "idx_user_exam_set")
+  @@index([userId])
+  @@index([examSetId])
+  @@map("user_exam_set_progress")
+}
+
+model CommunityGrammarCertificate {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  level          String   @db.VarChar(10) // Cấp độ (A1-C2) hoặc hệ quy chuẩn (TOEIC, IELTS, VSTEP)
+  examType       String   @default("CEFR") @map("exam_type") @db.VarChar(50) // CEFR, TOEIC, IELTS, VSTEP
+  serialNumber   String   @unique @map("serial_number") @db.VarChar(100) // CERT-SNE-XXXX
+  issuedAt       DateTime @default(now()) @map("issued_at")
+  metadata       Json     @default("{}") // Tên học viên, điểm số cao nhất đạt được
+  
+  @@index([userId])
+  @@index([examType])
+  @@map("community_grammar_certificates")
+}
+
+model UserGrammarTrap {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  questionId   String   @map("question_id")
+  questionText String   @map("question_text") @db.Text
+  questionType String   @map("question_type") // MULTIPLE_CHOICE, SENTENCE_BUILDER, ERROR_SPOTLIGHT
+  questionData Json     @map("question_data") // Lưu trữ options, words, sentence, etc.
+  category     String   @db.VarChar(50) // syntax, tenses, morphology, modality
+  userAnswer   String   @map("user_answer") @db.Text
+  correctAnswer String  @map("correct_answer") @db.Text
+  explanation  String   @db.Text
+  aiAnalysis   String?  @map("ai_analysis") @db.Text // Cached AI Analysis of the grammar trap
+  status       String   @default("TRAPPED") @db.VarChar(50) // TRAPPED, BROKEN
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, questionId], name: "idx_user_question_trap")
+  @@index([userId])
+  @@index([status])
+  @@map("user_grammar_traps")
+}
+
