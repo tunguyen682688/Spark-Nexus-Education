@@ -24,7 +24,7 @@ async function main() {
 
     console.log('✅ Cleaned up old database entries.');
   } catch (e) {
-    console.log('⚠️ Cleanup warning (might be empty database):', (e as any).message);
+    console.log('⚠️ Cleanup warning (might be empty database):', (e as Error).message);
   }
 
 
@@ -62,16 +62,85 @@ async function main() {
     }),
     prisma.article.create({
       data: {
-        title: 'Business English Essentials',
-        content: `Professional communication requires specific vocabulary and expressions. 
-        This guide covers essential business English phrases, email etiquette, 
-        and presentation skills that will help you succeed in international business.`,
-        summary: 'Essential English skills for business professionals',
-        difficulty: 'B2',
-        wordCount: 38,
-        category: 'Business',
-        tags: ['business', 'professional', 'intermediate'],
+        title: 'Global Tech Innovations 2026',
+        content: `A deep dive into the latest technological advancements shaping our future. From AI to quantum computing, stay updated with the fastest growing sector.`,
+        summary: 'Latest tech innovations globally.',
+        difficulty: 'C1',
+        wordCount: 300,
+        category: 'news',
+        tags: ['technology', 'news', 'future'],
         isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Breakthrough in Renewable Energy',
+        content: `Scientists have developed a new solar panel technology that is 50% more efficient than current models. This could revolutionize the way we harness the sun's energy.`,
+        summary: 'New solar panel technology.',
+        difficulty: 'B2',
+        wordCount: 250,
+        category: 'news',
+        tags: ['environment', 'news', 'energy'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1509391366360-1f9509e1f16e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'The Great Gatsby - Chapter 1',
+        content: `In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.`,
+        summary: 'Classic novel chapter 1 excerpt.',
+        difficulty: 'B2',
+        wordCount: 500,
+        category: 'book',
+        tags: ['classic', 'literature', 'novel'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Pride and Prejudice - Chapter 1',
+        content: `It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.`,
+        summary: 'Classic novel chapter 1 excerpt.',
+        difficulty: 'C1',
+        wordCount: 450,
+        category: 'book',
+        tags: ['classic', 'literature', 'novel'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'My Journey to Bilingualism',
+        content: `Learning a second language is never easy, but the rewards are immense. Here is my personal story of how I mastered a new tongue.`,
+        summary: 'Personal blog about language learning.',
+        difficulty: 'B1',
+        wordCount: 250,
+        category: 'blog',
+        tags: ['personal', 'language', 'blog'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead2708?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Top 10 Tips for Effective Studying',
+        content: `Studying effectively is more than just reading textbooks. It involves active recall, spaced repetition, and maintaining a healthy lifestyle.`,
+        summary: 'Tips for effective studying.',
+        difficulty: 'A2',
+        wordCount: 300,
+        category: 'blog',
+        tags: ['education', 'tips', 'study'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
         publishedAt: new Date(),
       },
     }),

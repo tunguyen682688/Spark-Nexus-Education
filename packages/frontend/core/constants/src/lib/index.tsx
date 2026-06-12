@@ -30,8 +30,12 @@ export const ROUTES = {
     LEARNING_VOCABULARY_DETAIL_VIEW_EDIT: '/learning/vocabulary/:id/view/edit',
     LEARNING_VOCABULARY_DETAIL_VIEW_DELETE: '/learning/vocabulary/:id/view/delete',
   },
- 
- }
+  
+  READING: {
+    HUB: '/reading',
+    ARTICLE: '/reading/article/:articleId',
+  },
+}
 
  export const CATEGORY_LIST = [
   { label: "General Vocabulary", value: "GENERAL" },
@@ -56,3 +60,5 @@ export const ROUTES = {
   { label: "Music", value: "MUSIC" },
   { label: "Other", value: "OTHER" },
 ];
+
+export const DEFAULT_ARTICLE_THUMBNAIL = 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop';

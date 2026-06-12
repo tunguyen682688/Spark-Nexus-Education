@@ -28,19 +28,22 @@
   ],
   "references": [
     {
-      "path": "../../packages/backend/infrastructure/database/tsconfig.lib.json"
-    },
-    {
-      "path": "../../packages/backend/infrastructure/auth/tsconfig.lib.json"
+      "path": "../../packages/backend/domains/module-reading/tsconfig.lib.json"
     },
     {
       "path": "../../packages/backend/domains/module-grammar/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/backend/domains/module-vocabulary/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/backend/domains/module-user/tsconfig.lib.json"
     },
     {
-      "path": "../../packages/backend/domains/module-vocabulary/tsconfig.lib.json"
+      "path": "../../packages/backend/infrastructure/database/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/infrastructure/auth/tsconfig.lib.json"
     }
   ]
 }

@@ -41,6 +41,9 @@
       "path": "../../packages/frontend/core/api/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/frontend/features/reading/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/frontend/features/grammar/tsconfig.lib.json"
     },
     {

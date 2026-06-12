@@ -787,33 +787,23 @@ export const createRouter = () =>
 
         // Reading routes
         {
-          path: 'reading',
+          path: ROUTES.READING.HUB,
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Đọc</h1>
-                <p className="text-muted-foreground">
-                  Trang đọc đang được phát triển...
-                </p>
-              </div>
+            const { ArticleHubPage } = await import(
+              '@spark-nest-ed/feature-reading'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ArticleHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'reading/articles',
+          path: ROUTES.READING.ARTICLE,
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Bài đọc</h1>
-                <p className="text-muted-foreground">
-                  Trang bài đọc đang được phát triển...
-                </p>
-              </div>
+            const { AdvancedReaderPage } = await import(
+              '@spark-nest-ed/feature-reading'
             );
-            return { Component: PlaceholderPage };
+            return { Component: AdvancedReaderPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
