@@ -201,3 +201,129 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-neutral-400;
 }
+
+/* Custom CSS overrides for EditorJS in Dark Mode */
+.dark .codex-editor {
+  color: #cbd5e1; /* slate-300 */
+}
+
+.dark .ce-paragraph[data-placeholder]:empty::before {
+  color: #475569 !important; /* slate-600 */
+}
+
+/* Custom editable placeholder styling for BilingualBlock */
+[contenteditable="true"][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8; /* slate-400 */
+  pointer-events: none;
+  display: block; /* For secure display */
+}
+
+.dark [contenteditable="true"][data-placeholder]:empty::before {
+  color: #475569; /* slate-600 */
+}
+
+.dark .ce-toolbar__plus,
+.dark .ce-toolbar__settings-btn {
+  color: #94a3b8; /* slate-400 */
+  background-color: transparent;
+  transition: all 0.2s;
+}
+
+.dark .ce-toolbar__plus:hover,
+.dark .ce-toolbar__settings-btn:hover {
+  color: #f1f5f9;
+  background-color: #334155; /* slate-700 */
+}
+
+/* Inline Toolbar */
+.dark .ce-inline-toolbar {
+  background-color: #1e293b; /* slate-800 */
+  border: 1px solid #334155; /* slate-700 */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .ce-inline-toolbar__buttons {
+  border-color: #334155;
+}
+
+.dark .ce-inline-tool {
+  color: #cbd5e1; /* slate-300 */
+}
+
+.dark .ce-inline-tool:hover {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .ce-inline-tool--active {
+  color: #3b82f6; /* blue-500 */
+}
+
+.dark .ce-inline-toolbar__dropdown {
+  color: #cbd5e1;
+  border-right-color: #334155;
+}
+
+.dark .ce-inline-toolbar__dropdown:hover {
+  background-color: #334155;
+}
+
+/* Toolbox & Popovers */
+.dark .ce-popover {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .ce-popover__item {
+  color: #cbd5e1 !important;
+}
+
+.dark .ce-popover__item:hover {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .ce-popover__item-icon {
+  background-color: #334155 !important;
+  color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+.dark .ce-popover__item--active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.dark .ce-popover__item--active .ce-popover__item-icon {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+/* Settings, Block Tunes */
+.dark .ce-settings {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.dark .ce-settings__button {
+  color: #cbd5e1;
+}
+
+.dark .ce-settings__button:hover {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .ce-settings__button--active {
+  color: #3b82f6;
+}
+
+/* Delimiter */
+.dark .ce-delimiter {
+  line-height: 1.6em;
+  width: 100%;
+  text-align: center;
+  color: #475569; /* slate-600 */
+}

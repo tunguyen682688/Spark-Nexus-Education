@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   useReadingDashboard,
   useArticles,
@@ -9,18 +10,21 @@ import { ReadingStatsBar } from '../components/dashboard/ReadingStatsBar';
 import { BookNook } from '../components/dashboard/BookNook';
 import { Blogosphere } from '../components/dashboard/Blogosphere';
 import { ReadingStreakCard } from '../components/dashboard/ReadingStreakCard';
+import { READING_UI_TEXT } from '../constants';
 import { TrendingTopics } from '../components/dashboard/TrendingTopics';
 import { RecentLookups } from '../components/dashboard/RecentLookups';
 import { ArticleFilterBar } from '../components/shared/ArticleFilterBar';
 import { ArticleCard } from '../components/shared/ArticleCard';
+import { ROUTES } from '@spark-nest-ed/frontend-core-constants';
 import {
   Skeleton,
   Input,
   Button,
 } from '@spark-nest-ed/frontend-shared-components';
-import { Search, Compass, Users, BookOpen } from 'lucide-react';
+import { Search, Compass, Users, BookOpen, PenLine } from 'lucide-react';
 
 export const ArticleHubContainer: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<{
     category?: string;
@@ -68,7 +72,6 @@ export const ArticleHubContainer: React.FC = () => {
   const {
     data: communityData,
     isLoading: isCommunityLoading,
-    isError: isCommunityError,
   } = useCommunityArticles(communitySort, 10);
 
   const [activeTab, setActiveTab] = useState<'official' | 'community'>(
@@ -89,12 +92,12 @@ export const ArticleHubContainer: React.FC = () => {
     return (
       <div className="p-8 text-center space-y-4">
         <h3 className="text-xl font-bold text-red-600">
-          Failed to load Reading Hub
+          {READING_UI_TEXT.hub.FAILED_LOAD}
         </h3>
         <p className="text-slate-500">
-          Please check your database connection and try again.
+          {READING_UI_TEXT.hub.CHECK_CONNECTION}
         </p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+        <Button onClick={() => window.location.reload()}>{READING_UI_TEXT.hub.RETRY}</Button>
       </div>
     );
   }
@@ -109,27 +112,33 @@ export const ArticleHubContainer: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight transition-colors">
-              Reading Hub
+              {READING_UI_TEXT.hub.TITLE}
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium transition-colors">
-              Explore publications, track progress and boost your reading speed.
+              {READING_UI_TEXT.hub.SUBTITLE}
             </p>
           </div>
         </div>
-        <form
-          onSubmit={handleSearchSubmit}
-          className="relative w-full md:w-80 flex items-center"
-        >
-          <Search className="absolute left-3 text-slate-400 dark:text-slate-500 h-4 w-4" />
-          <Input
-            value={searchTerm}
-            onChange={(e) =>
-              setSearchTerm((e.target as HTMLInputElement).value)
-            }
-            placeholder="Search by title or topic..."
-            className="pl-9 h-9 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 text-xs w-full bg-slate-50/50 dark:bg-slate-800/50 dark:text-slate-200 rounded-lg transition-colors"
-          />
-        </form>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative w-full md:w-80 flex items-center"
+          >
+            <Search className="absolute left-3 text-slate-400 dark:text-slate-500 h-4 w-4" />
+            <Input
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm((e.target as HTMLInputElement).value)
+              }
+              placeholder={READING_UI_TEXT.hub.SEARCH_PLACEHOLDER}
+              className="pl-9 h-9 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 text-xs w-full bg-slate-50/50 dark:bg-slate-800/50 dark:text-slate-200 rounded-lg transition-colors"
+            />
+          </form>
+          <Button onClick={() => navigate(ROUTES.READING.STUDIO)} className="gap-2 shrink-0 h-9 px-4 text-xs font-semibold">
+            <PenLine className="w-4 h-4" />
+            <span className="hidden sm:inline">{READING_UI_TEXT.hub.CREATE_STUDIO}</span>
+          </Button>
+        </div>
       </div>
 
       {isPageLoading ? (
@@ -186,7 +195,7 @@ export const ArticleHubContainer: React.FC = () => {
                       }`}
                     >
                       <BookOpen className="w-4 h-4" />
-                      Official Curated
+                      {READING_UI_TEXT.hub.TAB_OFFICIAL}
                     </button>
                     <button
                       onClick={() => setActiveTab('community')}
@@ -197,7 +206,7 @@ export const ArticleHubContainer: React.FC = () => {
                       }`}
                     >
                       <Users className="w-4 h-4" />
-                      Community Hub
+                      {READING_UI_TEXT.hub.TAB_COMMUNITY}
                     </button>
                   </div>
 
@@ -220,11 +229,10 @@ export const ArticleHubContainer: React.FC = () => {
                             <BookOpen className="w-8 h-8 text-slate-400" />
                           </div>
                           <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                            Không tìm thấy tài liệu phù hợp
+                            {READING_UI_TEXT.hub.NO_MATCHES}
                           </h4>
                           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
-                            Hãy thử thay đổi bộ lọc hoặc tìm kiếm bằng từ khoá
-                            khác.
+                            {READING_UI_TEXT.hub.NO_MATCHES_SUB}
                           </p>
                         </div>
                       )}
@@ -268,14 +276,13 @@ export const ArticleHubContainer: React.FC = () => {
                             <Users className="w-10 h-10 text-indigo-500" />
                           </div>
                           <h4 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
-                            Chưa có bài viết cộng đồng nào
+                            {READING_UI_TEXT.hub.NO_COMMUNITY}
                           </h4>
                           <p className="text-slate-600 dark:text-slate-400 font-medium text-sm max-w-sm">
-                            Hãy là người đầu tiên chia sẻ tài liệu hay cho mọi
-                            người!
+                            {READING_UI_TEXT.hub.NO_COMMUNITY_SUB}
                           </p>
                           <Button className="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 border-0 rounded-full px-8">
-                            Khám phá thêm
+                            {READING_UI_TEXT.hub.EXPLORE_MORE}
                           </Button>
                         </div>
                       )}

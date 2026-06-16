@@ -140,7 +140,7 @@ export class GetReadingDashboardQueryHandler
         title: a.getTitle(),
         summary: a.getSummary() || 'No summary available.',
         difficulty: a.getDifficulty().getValue(),
-        createdAt: (a as any)._createdAt || new Date(),
+        createdAt: (a as unknown as { _createdAt: Date })._createdAt || new Date(),
         category: a.getCategory(),
         thumbnailUrl: a.getThumbnailUrl(),
         author: a.getAuthor() || 'Unknown Author',

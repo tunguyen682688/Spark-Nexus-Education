@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Badge, Progress } from '@spark-nest-ed/frontend-shared-components';
 import { Book, Play } from 'lucide-react';
 import type { BookProgress } from '../../types';
+import { READING_UI_TEXT } from '../../constants';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
 
@@ -14,7 +15,7 @@ export const BookNook: React.FC<BookNookProps> = ({ books }) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">Book Nook</h2>
+      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.BOOK_NOOK}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {books.length > 0 ? (
           books.map((book) => (
@@ -75,7 +76,7 @@ export const BookNook: React.FC<BookNookProps> = ({ books }) => {
         ) : (
           <div className="col-span-1 sm:col-span-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 text-center rounded-xl transition-colors">
             <p className="text-slate-400 dark:text-slate-500 font-medium text-sm transition-colors">
-              No books available in your Book Nook.
+              {READING_UI_TEXT.components.dashboard.NO_BOOK_NOOK}
             </p>
           </div>
         )}

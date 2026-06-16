@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { READING_UI_TEXT } from '../../constants';
 import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@spark-nest-ed/frontend-shared-components';
 import { BookOpen, Plus, Check, Loader2, X } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
@@ -137,7 +138,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
     >
       <div className="flex justify-between items-center pb-1 border-b border-slate-50">
         <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-          <BookOpen className="h-3.5 w-3.5 text-blue-500" /> Lookup Word
+          <BookOpen className="h-3.5 w-3.5 text-blue-500" /> {READING_UI_TEXT.components.reader.POPOVER_LOOKUP}
         </h4>
         <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full text-slate-400 hover:text-slate-600" onClick={onClose}>
           <X className="h-3 w-3" />
@@ -147,7 +148,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
       {loading ? (
         <div className="flex items-center justify-center py-6 text-slate-400 gap-2">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-          <span className="text-xs font-semibold">Translating word...</span>
+          <span className="text-xs font-semibold">{READING_UI_TEXT.components.reader.POPOVER_TRANSLATING}</span>
         </div>
       ) : (
         <div className="space-y-3">
@@ -165,7 +166,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
           {/* Contextual Translation Highlight Box */}
           {contextTranslation && (
             <div className="bg-amber-50/50 border border-amber-100/70 rounded-lg p-2 text-xs space-y-0.5 select-text">
-              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider block">Contextual Meaning</span>
+              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider block">{READING_UI_TEXT.components.reader.POPOVER_CONTEXTUAL}</span>
               <p className="font-bold text-slate-800">{contextTranslation}</p>
               {contextExplanation && (
                 <p className="text-[10px] text-slate-500 font-sans leading-normal">{contextExplanation}</p>

@@ -43,6 +43,14 @@ import { InteractArticleCommand } from '../../application/commands/interact-arti
 import { AddArticleCommentCommand } from '../../application/commands/add-article-comment/add-article-comment.command';
 import { GetCommunityArticlesQuery } from '../../application/querys/get-community-articles/get-community-articles.query';
 
+// Studio DTOs & Commands
+import { CreateStudioArticleDto } from '../../application/dtos/create-studio-article.dto';
+import { UpdateStudioArticleDto } from '../../application/dtos/update-studio-article.dto';
+import { CreateStudioArticleCommand } from '../../application/commands/create-studio-article/create-studio-article.command';
+import { UpdateStudioArticleCommand } from '../../application/commands/update-studio-article/update-studio-article.command';
+import { DeleteStudioArticleCommand } from '../../application/commands/delete-studio-article/delete-studio-article.command';
+import { GetMyArticlesQuery } from '../../application/querys/get-my-articles/get-my-articles.query';
+
 @ApiTags('Reading')
 @Controller('reading')
 export class ReadingController {
@@ -297,7 +305,7 @@ export class ReadingController {
     const safeLimit = limit ? Number(limit) : 10;
     
     const result = await this.queryBus.execute(
-      new GetCommunityArticlesQuery(safeSortBy as any, safeLimit, user.id)
+      new GetCommunityArticlesQuery(safeSortBy as 'trending' | 'newest' | 'top', safeLimit, user.id)
     );
 
     return createJsonApiPaginatedResponse(
@@ -408,5 +416,192 @@ export class ReadingController {
       message: 'Comment added successfully',
       version: '1.0.0',
     });
+  }
+
+  // ==========================================
+  // Studio API Endpoints
+  // ==========================================
+
+  @Post('articles/studio')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Create an article via Studio',
+    description: 'Allows a user to create a new article from the studio.',
+  })
+  @ApiJsonApiCreatedResponse({
+    description: 'Article created successfully',
+    resourceType: 'article',
+  })
+  async createStudioArticle(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Body() dto: CreateStudioArticleDto,
+    @Req() req: express.Request
+  ) {
+    const articleId = await this.commandBus.execute(
+      new CreateStudioArticleCommand(
+        user.id,
+        dto.title,
+        dto.content,
+        dto.category,
+        dto.summary,
+        dto.difficulty,
+        dto.tags,
+        dto.thumbnailUrl,
+        dto.sourceUrl,
+        dto.author,
+        dto.status
+      )
+    );
+
+    return convertEntityToJsonApi({ id: articleId }, 'article', {
+      selfLink: getSelfLinkFromRequest(req, 'articles/studio'),
+      message: 'Article created successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('articles/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Update an article via Studio',
+    description: 'Allows a user to update their own article from the studio.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Article updated successfully',
+    resourceType: 'article',
+  })
+  async updateStudioArticle(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateStudioArticleDto,
+    @Req() req: express.Request
+  ) {
+    const articleId = await this.commandBus.execute(
+      new UpdateStudioArticleCommand(
+        user.id,
+        id,
+        dto.title,
+        dto.content,
+        dto.category,
+        dto.summary,
+        dto.difficulty,
+        dto.tags,
+        dto.thumbnailUrl,
+        dto.sourceUrl,
+        dto.author,
+        dto.status
+      )
+    );
+
+    return convertEntityToJsonApi({ id: articleId }, 'article', {
+      selfLink: getSelfLinkFromRequest(req, id),
+      message: 'Article updated successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('articles/:id/draft')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Save an article as draft via Studio',
+    description: 'Allows a user to update their own article and save as draft.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Article draft saved successfully',
+    resourceType: 'article',
+  })
+  async saveStudioArticleDraft(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateStudioArticleDto,
+    @Req() req: express.Request
+  ) {
+    const articleId = await this.commandBus.execute(
+      new UpdateStudioArticleCommand(
+        user.id,
+        id,
+        dto.title,
+        dto.content,
+        dto.category,
+        dto.summary,
+        dto.difficulty,
+        dto.tags,
+        dto.thumbnailUrl,
+        dto.sourceUrl,
+        dto.author,
+        'DRAFT'
+      )
+    );
+
+    return convertEntityToJsonApi({ id: articleId }, 'article', {
+      selfLink: getSelfLinkFromRequest(req, id),
+      message: 'Article draft saved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('articles/:id/delete') // Or @Delete('articles/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Delete an article via Studio',
+    description: 'Allows a user to delete their own article.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Article deleted successfully',
+    resourceType: 'article',
+  })
+  async deleteStudioArticle(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Param('id') id: string,
+    @Req() req: express.Request
+  ) {
+    await this.commandBus.execute(new DeleteStudioArticleCommand(user.id, id));
+
+    return convertEntityToJsonApi({ id }, 'article', {
+      selfLink: getSelfLinkFromRequest(req, id),
+      message: 'Article deleted successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('articles/my/list')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get my articles',
+    description: 'Retrieve articles created by the current user.',
+  })
+  @ApiJsonApiPaginatedResponse({
+    description: 'My articles retrieved successfully',
+    resourceType: 'article',
+  })
+  async getMyArticles(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Req() req: express.Request
+  ) {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, Math.min(100, limit));
+
+    const { data, meta } = await this.queryBus.execute(
+      new GetMyArticlesQuery(user.id, safePage, safeLimit)
+    );
+
+    return createJsonApiPaginatedResponse(
+      data,
+      meta.total,
+      'article',
+      getBaseUrlFromRequest(req),
+      { total: meta.total, limit: meta.limit, page: meta.page, totalPages: meta.totalPages },
+      {
+        message: 'My articles retrieved successfully',
+        version: '1.0.0',
+      }
+    );
   }
 }

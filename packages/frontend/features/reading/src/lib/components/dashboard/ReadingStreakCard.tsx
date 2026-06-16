@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { Flame } from 'lucide-react';
 import type { ReadingStreak } from '../../types';
+import { READING_UI_TEXT } from '../../constants';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface ReadingStreakCardProps {
@@ -17,7 +18,7 @@ export const ReadingStreakCard: React.FC<ReadingStreakCardProps> = ({ streak }) 
           <div className="h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 flex items-center justify-center transition-colors">
             <Flame className="h-4 w-4 fill-current animate-pulse" />
           </div>
-          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">Your Reading Streak</h3>
+          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.STREAK_TITLE}</h3>
         </div>
 
         {/* Days circle list */}
@@ -42,7 +43,7 @@ export const ReadingStreakCard: React.FC<ReadingStreakCardProps> = ({ streak }) 
 
         {/* Description text */}
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed transition-colors">
-          <span className="font-extrabold text-amber-600 dark:text-amber-500">{streak.currentStreak} Day Streak!</span> Keep
+          <span className="font-extrabold text-amber-600 dark:text-amber-500">{READING_UI_TEXT.components.dashboard.STREAK_TEXT.replace('{streak}', streak.currentStreak.toString())}</span> {READING_UI_TEXT.components.dashboard.STREAK_SUBTEXT}
           it up to reach your weekly goal.
         </p>
       </CardContent>

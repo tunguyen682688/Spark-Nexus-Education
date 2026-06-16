@@ -17,6 +17,7 @@ import VocabularySetOverview from '../components/manager/VocabularySetOverview';
 import VocabularySetProgressCard from '../components/manager/VocabularySetProgressCard';
 import VocabularySetStudyOptions from '../components/manager/VocabularySetStudyOptions';
 import VocabularySetWordsList, { type WordItem } from '../components/manager/VocabularySetWordsList';
+import { VOCABULARY_UI_TEXT } from '../constants/vocabulary-ui-text';
 
 const getStatusFilterValue = (filter: string): WordStatus | null => {
   switch (filter) {
@@ -72,14 +73,14 @@ export default function DetailVocabularySetContainer() {
       {
         onSuccess: () => {
           toast({
-            title: 'Đã xóa từ vựng',
-            description: 'Từ vựng đã được xóa khỏi bộ từ vựng của bạn.',
+            title: VOCABULARY_UI_TEXT.DETAIL.WORD_DELETED_TITLE,
+            description: VOCABULARY_UI_TEXT.DETAIL.WORD_DELETED_DESC,
           });
         },
         onError: (error) => {
           toast({
-            title: 'Lỗi xóa từ vựng',
-            description: error instanceof Error ? error.message : 'Không thể xóa từ vựng',
+            title: VOCABULARY_UI_TEXT.DETAIL.WORD_DELETE_ERROR_TITLE,
+            description: error instanceof Error ? error.message : VOCABULARY_UI_TEXT.DETAIL.WORD_DELETE_ERROR_DESC,
             variant: 'destructive',
           });
         },
@@ -98,15 +99,15 @@ export default function DetailVocabularySetContainer() {
     deleteSet.mutate(id, {
       onSuccess: () => {
         toast({
-          title: 'Đã xóa bộ từ vựng',
-          description: 'Bộ từ vựng của bạn đã được xóa thành công.',
+          title: VOCABULARY_UI_TEXT.DETAIL.SET_DELETED_TITLE,
+          description: VOCABULARY_UI_TEXT.DETAIL.SET_DELETED_DESC,
         });
         navigate(ROUTES.VOCABULARIES.MY_VOCABULARY_SET);
       },
       onError: (error) => {
         toast({
-          title: 'Lỗi xóa bộ từ vựng',
-          description: error instanceof Error ? error.message : 'Không thể xóa bộ từ vựng',
+          title: VOCABULARY_UI_TEXT.DETAIL.SET_DELETE_ERROR_TITLE,
+          description: error instanceof Error ? error.message : VOCABULARY_UI_TEXT.DETAIL.SET_DELETE_ERROR_DESC,
           variant: 'destructive',
         });
       },
@@ -127,12 +128,12 @@ export default function DetailVocabularySetContainer() {
           example: item.customExample ?? base?.example ?? undefined,
           pronunciation: base?.pronunciation ?? null,
           // Map real progress fields returned by backend
-          status: (item as any)?.userProgress?.status === 'MASTERED'
+          status: (item as Record<string, any>)?.userProgress?.status === 'MASTERED'
             ? WordStatus.MASTERED
-            : (item as any)?.userProgress?.status === 'LEARNING'
+            : (item as Record<string, any>)?.userProgress?.status === 'LEARNING'
             ? WordStatus.LEARNING
             : WordStatus.NEW,
-          masteryLevel: (item as any)?.userProgress?.masteryLevel ?? 0,
+          masteryLevel: (item as Record<string, any>)?.userProgress?.masteryLevel ?? 0,
         };
 
         return {
@@ -213,8 +214,8 @@ export default function DetailVocabularySetContainer() {
   useEffect(() => {
     if (errorVocabularySet || errorWords) {
       toast({
-        title: 'Lỗi tải bộ từ vựng',
-        description: 'Đã có sự cố khi tải bộ từ vựng. Vui lòng thử lại sau.',
+        title: VOCABULARY_UI_TEXT.DETAIL.SET_LOAD_ERROR_TITLE,
+        description: VOCABULARY_UI_TEXT.DETAIL.SET_LOAD_ERROR_DESC,
         variant: 'destructive',
       });
     }
@@ -223,8 +224,8 @@ export default function DetailVocabularySetContainer() {
   const handleShare = () => {
     // TODO: Implement share functionality
     toast({
-      title: 'Chia sẻ',
-      description: 'Chức năng chia sẻ sẽ sớm được ra mắt.',
+      title: VOCABULARY_UI_TEXT.DETAIL.SHARE_TITLE,
+      description: VOCABULARY_UI_TEXT.DETAIL.SHARE_DESC,
     });
   };
 
@@ -310,8 +311,8 @@ export default function DetailVocabularySetContainer() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="words">Danh sách từ</TabsTrigger>
+          <TabsTrigger value="overview">{VOCABULARY_UI_TEXT.DETAIL.TAB_OVERVIEW}</TabsTrigger>
+          <TabsTrigger value="words">{VOCABULARY_UI_TEXT.DETAIL.TAB_WORDS}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

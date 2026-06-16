@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Progress } from '@spark-nest-ed/frontend-shared-components';
 import { Search, BookOpen, Clock, Award } from 'lucide-react';
 import type { UserReadingStats } from '../../types';
+import { READING_UI_TEXT } from '../../constants';
 
 interface ReadingStatsBarProps {
   stats: UserReadingStats;
@@ -15,11 +16,11 @@ export const ReadingStatsBar: React.FC<ReadingStatsBarProps> = ({ stats }) => {
         <CardContent className="p-5 flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider flex items-center gap-1 transition-colors">
-              <Search className="h-3 w-3" /> Words Looked Up
+              <Search className="h-3 w-3" /> {READING_UI_TEXT.components.dashboard.STATS_WORDS_LOOKED_UP}
             </p>
             <h3 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{stats.wordsLookedUp}</h3>
             <span className="text-[10px] font-semibold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
-              +12% this week
+              {READING_UI_TEXT.components.dashboard.STATS_INC_WEEKLY}
             </span>
           </div>
           {/* Mini Sparkline Graph */}
@@ -42,11 +43,11 @@ export const ReadingStatsBar: React.FC<ReadingStatsBarProps> = ({ stats }) => {
         <CardContent className="p-5 flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider flex items-center gap-1 transition-colors">
-              <BookOpen className="h-3 w-3" /> Total Articles
+              <BookOpen className="h-3 w-3" /> {READING_UI_TEXT.components.dashboard.STATS_TOTAL_ARTICLES}
             </p>
             <h3 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{stats.totalArticles}</h3>
             <span className="text-[10px] font-semibold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
-              +4 new
+              {READING_UI_TEXT.components.dashboard.STATS_NEW_ARTICLES}
             </span>
           </div>
           {/* Mini Sparkline Graph */}
@@ -69,10 +70,10 @@ export const ReadingStatsBar: React.FC<ReadingStatsBarProps> = ({ stats }) => {
         <CardContent className="p-5 flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider flex items-center gap-1 transition-colors">
-              <Clock className="h-3 w-3" /> Avg. Speed (WPM)
+              <Clock className="h-3 w-3" /> {READING_UI_TEXT.components.dashboard.STATS_AVG_SPEED}
             </p>
             <h3 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{stats.avgWpm}</h3>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium transition-colors">Target: 290 WPM</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium transition-colors">{READING_UI_TEXT.components.dashboard.STATS_TARGET}</p>
           </div>
           {/* Speed Indicator Arc */}
           <div className="w-12 h-12 relative flex items-center justify-center">
@@ -107,7 +108,7 @@ export const ReadingStatsBar: React.FC<ReadingStatsBarProps> = ({ stats }) => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider flex items-center gap-1 transition-colors">
-                <Award className="h-3 w-3" /> Mastery Level
+                <Award className="h-3 w-3" /> {READING_UI_TEXT.components.dashboard.STATS_MASTERY_LEVEL}
               </p>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full transition-colors">
                 {stats.masteryLevel}

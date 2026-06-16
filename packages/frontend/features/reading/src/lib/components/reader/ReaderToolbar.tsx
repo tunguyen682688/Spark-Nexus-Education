@@ -1,4 +1,5 @@
 import React from 'react';
+import { READING_UI_TEXT } from '../../constants';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@spark-nest-ed/frontend-shared-components';
 import { ArrowLeft, Brain, Eye, Type, Check, Play, Pause, Square, Volume2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -57,7 +58,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
         {/* Back Button */}
         <Button variant="ghost" size="sm" className="text-slate-600 font-bold gap-1 text-xs pl-2 rounded flex-shrink-0" asChild>
           <Link to="/reading">
-            <ArrowLeft className="h-4 w-4" /> Back to Hub
+            <ArrowLeft className="h-4 w-4" /> {READING_UI_TEXT.components.reader.TOOLBAR_BACK}
           </Link>
         </Button>
 
@@ -97,7 +98,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-32 p-2 border-slate-100 shadow-md space-y-0.5">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1.5 block">Speed Rate</label>
+                <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1.5 block">{READING_UI_TEXT.components.reader.TOOLBAR_SPEED_RATE}</label>
                 {[
                   { label: '0.8x Slow', value: 0.8 },
                   { label: '1.0x Normal', value: 1.0 },
@@ -132,12 +133,12 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                     : 'text-slate-600 hover:bg-slate-50'
                 )}
               >
-                <Brain className="h-4 w-4" /> Bionic
+                <Brain className="h-4 w-4" /> {READING_UI_TEXT.components.reader.TOOLBAR_BIONIC}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-3 border-slate-100 shadow-md space-y-3">
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                <span className="font-bold text-xs text-slate-700">Bionic Settings</span>
+                <span className="font-bold text-xs text-slate-700">{READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_SETTINGS}</span>
                 <Button 
                   size="sm" 
                   variant={isBionicMode ? 'destructive' : 'default'} 
@@ -151,7 +152,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
               {/* Fixation Slider */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                  <span>FIXATION (BOLD LENGTH)</span>
+                  <span>{READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_FIXATION}</span>
                   <span className="text-blue-500 font-extrabold">{Math.round(fixation * 100)}%</span>
                 </div>
                 <input 
@@ -169,7 +170,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
               {/* Saccade Slider */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                  <span>SACCADE (FREQUENCY)</span>
+                  <span>{READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_SACCADE}</span>
                   <span className="text-blue-500 font-extrabold">{Math.round(saccade * 100)}%</span>
                 </div>
                 <input 
@@ -198,7 +199,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             )}
             onClick={onToggleFocusMode}
           >
-            <Eye className="h-4 w-4" /> Focus
+            <Eye className="h-4 w-4" /> {READING_UI_TEXT.components.reader.TOOLBAR_FOCUS}
           </Button>
 
           {/* Font Size Selector */}
@@ -209,7 +210,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-40 p-2 border-slate-100 shadow-md space-y-0.5">
-              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1.5 block">Font Size</label>
+              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1.5 block">{READING_UI_TEXT.components.reader.TOOLBAR_FONT_SIZE}</label>
               {[
                 { label: 'Small', value: 'sm' },
                 { label: 'Medium', value: 'md' },

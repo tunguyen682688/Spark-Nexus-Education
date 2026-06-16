@@ -1,21 +1,22 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Loader2,
   BookOpen,
-  Plus,
-  Heart,
-  Search,
-  ChevronDown,
   Star,
+  Heart,
   Award,
-  Sparkles,
-  Users,
-  Library,
   TrendingUp,
+  Sparkles,
   ChevronLeft,
   ChevronRight,
+  Search,
+  Plus,
+  Loader2,
+  ChevronDown,
+  Library,
+  Users,
 } from 'lucide-react';
+import { VOCABULARY_UI_TEXT } from '../constants/vocabulary-ui-text';
 import {
   useToast,
   Card,
@@ -26,7 +27,8 @@ import {
   Badge,
   Input,
 } from '@spark-nest-ed/frontend-shared-components';
-import { CATEGORY_LIST, ROUTES } from '@spark-nest-ed/frontend-core-constants';
+import { ROUTES } from '@spark-nest-ed/frontend-core-constants';
+import { CATEGORY_LIST } from '../constants';
 import { useDebounceValue } from 'usehooks-ts';
 import {
   useCommunityVocabularySets,
@@ -116,12 +118,15 @@ export default function CommunityVocabularySetContainer() {
 
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return () => { /* no-op */ };
+    if (!container)
+      return () => {
+        /* no-op */
+      };
 
     checkScroll();
     container.addEventListener('scroll', checkScroll);
     window.addEventListener('resize', checkScroll);
-    
+
     // Re-run checking after images or fonts load
     const timer = setTimeout(checkScroll, 500);
     return () => {
@@ -141,7 +146,9 @@ export default function CommunityVocabularySetContainer() {
     if (container) {
       const scrollAmount = container.clientWidth * 0.75;
       container.scrollTo({
-        left: container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount),
+        left:
+          container.scrollLeft +
+          (direction === 'left' ? -scrollAmount : scrollAmount),
         behavior: 'smooth',
       });
     }
@@ -198,8 +205,8 @@ export default function CommunityVocabularySetContainer() {
   useEffect(() => {
     if (error) {
       toast({
-        title: 'Lỗi tải học liệu cộng đồng',
-        description: 'Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.',
+        title: VOCABULARY_UI_TEXT.COMMUNITY.LOAD_ERROR_TITLE,
+        description: VOCABULARY_UI_TEXT.COMMUNITY.LOAD_ERROR_DESC,
         variant: 'destructive',
       });
     }
@@ -251,15 +258,17 @@ export default function CommunityVocabularySetContainer() {
         )
       );
       toast({
-        title: isFavorited ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích',
+        title: isFavorited
+          ? VOCABULARY_UI_TEXT.COMMUNITY.FAV_REMOVED_TITLE
+          : VOCABULARY_UI_TEXT.COMMUNITY.FAV_ADDED_TITLE,
         description: isFavorited
-          ? 'Đã xóa khỏi danh sách yêu thích của bạn.'
-          : 'Đã thêm vào danh sách yêu thích của bạn.',
+          ? VOCABULARY_UI_TEXT.COMMUNITY.FAV_REMOVED_DESC
+          : VOCABULARY_UI_TEXT.COMMUNITY.FAV_ADDED_DESC,
       });
     } catch {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể cập nhật yêu thích. Thử lại sau.',
+        title: VOCABULARY_UI_TEXT.COMMUNITY.ERROR_TITLE,
+        description: VOCABULARY_UI_TEXT.COMMUNITY.ERROR_DESC,
         variant: 'destructive',
       });
     }
@@ -271,7 +280,7 @@ export default function CommunityVocabularySetContainer() {
   const handleCreateNewSet = async () => {
     try {
       await createEmptySetMutation.mutateAsync({
-        title: 'Bộ từ vựng mới',
+        title: VOCABULARY_UI_TEXT.COMMUNITY.NEW_SET_TITLE,
         language: Language.ENGLISH,
         type: VocabularySetType.FLASHCARD,
       });
@@ -314,18 +323,18 @@ export default function CommunityVocabularySetContainer() {
           <div className="flex-1 flex flex-col gap-4 text-left">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-bold border border-blue-200 dark:border-blue-800">
-                <Sparkles className="w-3 h-3" /> Cộng đồng học tập
+                <Sparkles className="w-3 h-3" />{' '}
+                {VOCABULARY_UI_TEXT.COMMUNITY.COMMUNITY_LEARNING}
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-blue-900 dark:text-blue-100 leading-tight">
-              Học từ vựng cùng{' '}
+              {VOCABULARY_UI_TEXT.COMMUNITY.LEARN_WITH}{' '}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Cộng đồng
+                {VOCABULARY_UI_TEXT.COMMUNITY.COMMUNITY_TEXT}
               </span>
             </h1>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium max-w-lg">
-              Khám phá hàng ngàn bộ từ vựng chất lượng cao được tạo bởi các
-              chuyên gia và học viên trên toàn thế giới.
+              {VOCABULARY_UI_TEXT.COMMUNITY.DESCRIPTION}
             </p>
 
             {/* Search + Create */}
@@ -334,7 +343,7 @@ export default function CommunityVocabularySetContainer() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="search"
-                  placeholder="Tìm IELTS, TOEIC, Business English…"
+                  placeholder={VOCABULARY_UI_TEXT.COMMUNITY.SEARCH_PLACEHOLDER}
                   className="pl-10 h-11 w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500/30"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -350,7 +359,7 @@ export default function CommunityVocabularySetContainer() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                Tạo bộ từ mới
+                {VOCABULARY_UI_TEXT.COMMUNITY.CREATE_NEW}
               </Button>
             </div>
           </div>
@@ -387,7 +396,10 @@ export default function CommunityVocabularySetContainer() {
           ref={scrollContainerRef}
           className="w-full flex items-center gap-2 overflow-x-auto py-1.5 scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {[{ value: null, label: 'Tất cả' }, ...CATEGORY_LIST].map((cat) => {
+          {[
+            { value: null, label: VOCABULARY_UI_TEXT.COMMUNITY.ALL_LABEL },
+            ...CATEGORY_LIST,
+          ].map((cat) => {
             const active = selectedCategory === cat.value;
             return (
               <button
@@ -422,7 +434,6 @@ export default function CommunityVocabularySetContainer() {
         )}
       </div>
 
-
       {/* ═══════════════════════════════════════════ MAIN 3-COL + SIDEBAR GRID */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-8 items-start">
         {/* ─── LEFT: all content ───────────────────────────────────────────── */}
@@ -432,10 +443,10 @@ export default function CommunityVocabularySetContainer() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-amber-500" />
-                Đang thịnh hành
+                {VOCABULARY_UI_TEXT.COMMUNITY.TRENDING}
               </h2>
               <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide cursor-pointer hover:underline">
-                Xem tất cả →
+                {VOCABULARY_UI_TEXT.COMMUNITY.VIEW_ALL}
               </span>
             </div>
 
@@ -544,7 +555,7 @@ export default function CommunityVocabularySetContainer() {
                     {tab === 'featured'
                       ? 'Phổ biến'
                       : tab === 'recent'
-                      ? 'Mới nhất'
+                      ? VOCABULARY_UI_TEXT.COMMUNITY.LATEST
                       : 'Yêu thích'}
                   </button>
                 ))}
@@ -728,9 +739,9 @@ export default function CommunityVocabularySetContainer() {
                     </div>
                     {/* Name + count */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                         {contributor.name}
-                      </p>
+                      </h3>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500">
                         {contributor.sets} học liệu
                       </p>

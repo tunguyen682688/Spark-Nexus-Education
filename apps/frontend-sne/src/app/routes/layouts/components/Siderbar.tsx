@@ -41,13 +41,13 @@ const menuItems: MenuItem[] = [
   {
     icon: Home,
     label: 'Trang chủ',
-    path: '/dashboard',
+    path: ROUTES.DASHBOARD,
     badge: 'Mới',
   },
   {
     icon: BookTemplate,
     label: 'Thư viện',
-    path: '/library',
+    path: ROUTES.LIBRARY,
     children: [
       { label: 'Tài liệu', path: '/library/documents' },
       { label: 'Sách', path: '/library/books' },
@@ -102,13 +102,15 @@ const menuItems: MenuItem[] = [
   {
     icon: BookOpen,
     label: 'Đọc',
-    path: '/reading',
+    path: ROUTES.READING.HUB,
     children: [
+      { label: 'Khám phá', path: ROUTES.READING.EXPLORE, badge: 'Hot' },
       { label: 'Bài đọc', path: '/reading/articles' },
       { label: 'Truyện', path: '/reading/stories' },
-      { label: 'Báo chí', path: '/reading/news' },
-      { label: 'Tài liệu học thuật', path: '/reading/academic' },
+      { label: 'Báo chí', path: ROUTES.READING.NEWS },
+      { label: 'Tài liệu học thuật', path: ROUTES.READING.ACADEMIC },
       { label: 'Lịch sử đọc', path: '/reading/history' },
+      { label: 'Content Studio', path: ROUTES.READING.STUDIO, badge: 'Mới' },
     ],
   },
   {
@@ -393,7 +395,7 @@ const Sidebar = () => {
               </div>
             </div>
             <Button
-              onClick={() => navigate('/plans')}
+              onClick={() => navigate(ROUTES.PLANS)}
               variant="outline"
               size="sm"
               className="w-full border-primary/20 hover:bg-primary/5"

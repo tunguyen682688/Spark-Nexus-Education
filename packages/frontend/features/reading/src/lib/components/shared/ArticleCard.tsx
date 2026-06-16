@@ -5,6 +5,7 @@ import type { Article } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
+import { READING_UI_TEXT } from '../../constants';
 
 interface ArticleCardProps {
   article: Article;
@@ -80,7 +81,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           {article.progress > 0 && (
             <div className="space-y-1 pt-1">
               <div className="flex justify-between text-[9px] font-bold text-slate-400 dark:text-slate-500 transition-colors">
-                <span>PROGRESS</span>
+                <span>{READING_UI_TEXT.components.shared.CARD_PROGRESS}</span>
                 <span className={cn(isCompleted ? 'text-emerald-500 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400')}>
                   {article.progress}%
                 </span>

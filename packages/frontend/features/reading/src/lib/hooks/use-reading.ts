@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { readingApi } from '../api/reading-api';
-import type { ApiQueryParams } from '@spark-nest-ed/frontend-core-api';
+import type { ApiQueryParams, SimplifiedPaginatedResponse } from '@spark-nest-ed/frontend-core-api';
+import type { Article } from '../types';
 
 export const readingKeys = {
   all: ['reading'] as const,
@@ -23,6 +24,27 @@ export function useArticles(params?: ApiQueryParams) {
     queryKey: readingKeys.articlesList(params),
     queryFn: () => readingApi.getArticles(params),
     staleTime: 1 * 60 * 1000, // 1 minute cache
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useInfiniteArticles(params?: ApiQueryParams) {
+  return useInfiniteQuery<SimplifiedPaginatedResponse<Article>>({
+    queryKey: [...readingKeys.all, 'list', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      readingApi.getArticles({ ...params, page: pageParam as number }),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.data || lastPage.data.length === 0) {
+        return undefined;
+      }
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 1 * 60 * 1000, // 1 minute cache
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -72,6 +94,7 @@ export function useCommunityArticles(sortBy: 'trending' | 'newest' | 'top' = 'tr
     queryKey: readingKeys.communityArticlesList(sortBy, limit),
     queryFn: () => readingApi.getCommunityArticles(sortBy, limit),
     staleTime: 1 * 60 * 1000, // 1 minute cache
+    placeholderData: keepPreviousData,
   });
 }
 

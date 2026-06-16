@@ -44,6 +44,16 @@ export class GetArticlesQueryDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by tag (technology, environment, etc.)', example: 'technology' })
+  @IsOptional()
+  @IsString()
+  tag?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by time (today, week, month)', example: 'week' })
+  @IsOptional()
+  @IsString()
+  timeFilter?: string;
+
   @ApiPropertyOptional({ description: 'Filter by status (all, in-progress, completed)', example: 'in-progress' })
   @IsOptional()
   @IsString()

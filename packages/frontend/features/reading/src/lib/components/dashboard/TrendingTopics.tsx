@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Badge } from '@spark-nest-ed/frontend-shared-components';
 import { Hash, TrendingUp } from 'lucide-react';
+import { READING_UI_TEXT } from '../../constants';
 
 interface TrendingTopicsProps {
   topics: string[];
@@ -17,7 +18,7 @@ export const TrendingTopics: React.FC<TrendingTopicsProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-50 dark:border-slate-800 transition-colors">
           <TrendingUp className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">Trending Topics</h3>
+          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.TRENDING_TOPICS}</h3>
         </div>
 
         {/* Tags Grid */}

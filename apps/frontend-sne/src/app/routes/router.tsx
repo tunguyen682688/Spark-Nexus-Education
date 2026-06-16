@@ -147,6 +147,40 @@ export const createRouter = () =>
       hydrateFallbackElement: <LoadingFallback />,
       errorElement: <RouteErrorBoundary />,
     },
+    // ull screen blank layout
+    {
+      loader: authGuardLoader,
+      lazy: async () => {
+        const { BlankLayout } = await import('./layouts/BlankLayout');
+        return { Component: BlankLayout };
+      },
+      errorElement: <RouteErrorBoundary />,
+      children: [
+        {
+          path: ROUTES.READING.STUDIO_EDIT,
+          lazy: async () => {
+            const { ContentStudioPage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: ContentStudioPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: ROUTES.READING.STUDIO,
+          lazy: async () => {
+            const { ContentStudioPage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: ContentStudioPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+      ],
+    },
+    // main layout
     // Dashboard
     {
       loader: authGuardLoader,
@@ -254,7 +288,6 @@ export const createRouter = () =>
         // Vocabulary routes
         {
           path: ROUTES.VOCABULARIES.DETAIL_SET_VOCABULARY,
-
           lazy: async () => {
             const { DetailVocabularySetPage } = await import(
               '@spark-nest-ed/feature-vocabulary'
@@ -603,8 +636,6 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
 
-
-
         // Listening routes
         {
           path: 'listening',
@@ -787,6 +818,17 @@ export const createRouter = () =>
 
         // Reading routes
         {
+          path: ROUTES.READING.EXPLORE,
+          lazy: async () => {
+            const { ExplorePage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: ExplorePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
           path: ROUTES.READING.HUB,
           lazy: async () => {
             const { ArticleHubPage } = await import(
@@ -797,6 +839,7 @@ export const createRouter = () =>
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
+
         {
           path: ROUTES.READING.ARTICLE,
           lazy: async () => {
@@ -825,33 +868,21 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'reading/news',
+          path: ROUTES.READING.NEWS,
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Báo chí</h1>
-                <p className="text-muted-foreground">
-                  Trang báo chí đang được phát triển...
-                </p>
-              </div>
-            );
-            return { Component: PlaceholderPage };
+            const { NewsPage } = await import('@spark-nest-ed/feature-reading');
+            return { Component: NewsPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'reading/academic',
+          path: ROUTES.READING.ACADEMIC,
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Tài liệu học thuật</h1>
-                <p className="text-muted-foreground">
-                  Trang tài liệu học thuật đang được phát triển...
-                </p>
-              </div>
+            const { AcademicPage } = await import(
+              '@spark-nest-ed/feature-reading'
             );
-            return { Component: PlaceholderPage };
+            return { Component: AcademicPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Flame, RotateCcw, BookOpen, TrendingUp } from 'lucide-react';
 import type { FlashcardWord } from '../../../types';
+import { VOCABULARY_UI_TEXT } from '../../../constants/vocabulary-ui-text';
 
 export interface FlashcardCompletionProps {
   totalCards: number;
@@ -57,29 +58,29 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
 
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Tuyệt vời! Hoàn thành!
+            {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.COMPLETED_TITLE}
           </h1>
           <p className="text-sm text-slate-400">
-            Bạn đã hoàn thành xuất sắc tất cả các thẻ ghi nhớ trong phiên học này.
+            {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.COMPLETED_DESC}
           </p>
         </div>
 
         {/* Stats Box */}
         <div className="grid grid-cols-2 gap-4 w-full bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 my-2 text-left">
           <div className="flex flex-col gap-1 items-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Số thẻ học</span>
-            <span className="text-2xl font-black text-white">{totalCards} từ</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.CARD_COUNT}</span>
+            <span className="text-2xl font-black text-white">{totalCards} {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.CARD_COUNT_UNIT}</span>
           </div>
           <div className="flex flex-col gap-1 items-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Thời gian học</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.STUDY_TIME}</span>
             <span className="text-2xl font-black text-blue-400 font-mono">{elapsedTime}</span>
           </div>
           <div className="flex flex-col gap-1 items-center border-t border-slate-800/50 pt-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tỷ lệ chính xác</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.ACCURACY_RATE}</span>
             <span className="text-2xl font-black text-emerald-400">{stats.accuracyRate}%</span>
           </div>
           <div className="flex flex-col gap-1 items-center border-t border-slate-800/50 pt-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phản hồi trung bình</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.AVG_RESPONSE}</span>
             <span className="text-2xl font-black text-purple-400">{stats.avgResponseTime}s</span>
           </div>
         </div>
@@ -89,8 +90,8 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
           <div className="flex items-center gap-3">
             <Flame className="h-6 w-6 text-amber-500 fill-amber-500 animate-pulse" />
             <div className="text-left">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">STREAK HIỆN TẠI</p>
-              <p className="text-base font-extrabold text-white">{userStreak} ngày học</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.CURRENT_STREAK}</p>
+              <p className="text-base font-extrabold text-white">{userStreak} {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.STREAK_DAYS}</p>
             </div>
           </div>
         </div>
@@ -102,7 +103,7 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
               <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              Thẻ từ vựng chưa thuộc ({failedCardsList.length} từ)
+              {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.UNMEMORIZED_CARDS(failedCardsList.length)}
             </span>
             
             <div className="flex flex-col gap-2 max-h-36 overflow-y-auto pr-1">
@@ -129,14 +130,14 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
               onClick={onRestartFailedCards}
               className="mt-1 w-full py-2.5 bg-red-650/10 hover:bg-red-650/20 border border-red-500/30 text-red-400 hover:text-red-300 rounded-xl font-bold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Luyện tập lại {failedCardsList.length} thẻ chưa nhớ
+              <RotateCcw className="w-3.5 h-3.5" /> {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.PRACTICE_AGAIN(failedCardsList.length)}
             </button>
           </div>
         )}
 
         {/* Gợi ý học tập */}
         <div className="w-full text-left flex flex-col gap-3 mt-2">
-          <span className="text-sm font-semibold text-slate-300"><span role="img" aria-label="Gợi ý">💡</span> Gợi ý học tập</span>
+          <span className="text-sm font-semibold text-slate-300"><span role="img" aria-label="Gợi ý">💡</span> {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.STUDY_SUGGESTIONS}</span>
           <div className="grid grid-cols-2 gap-3">
             {onNavigateToQuiz && (
               <div
@@ -147,8 +148,8 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-xs font-bold text-slate-200">Review Quiz</span>
-                  <span className="text-[10px] text-slate-500">Thử thách trắc nghiệm từ</span>
+                  <span className="text-xs font-bold text-slate-200">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.REVIEW_QUIZ}</span>
+                  <span className="text-[10px] text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.REVIEW_QUIZ_DESC}</span>
                 </div>
               </div>
             )}
@@ -161,8 +162,8 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
                 <TrendingUp className="w-4 h-4" />
               </div>
               <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-200">Advanced Flashcards</span>
-                <span className="text-[10px] text-slate-500">Tập trung ôn thẻ từ khó</span>
+                <span className="text-xs font-bold text-slate-200">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.ADVANCED_FLASHCARDS}</span>
+                <span className="text-[10px] text-slate-500">{VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.ADVANCED_FLASHCARDS_DESC}</span>
               </div>
             </div>
           </div>
@@ -174,13 +175,13 @@ export const FlashcardCompletion: React.FC<FlashcardCompletionProps> = ({
             onClick={onRestart}
             className="flex-1 py-3 px-4 bg-slate-850 hover:bg-slate-800 text-white rounded-xl font-bold transition-all duration-200 border border-slate-700/50 hover:border-slate-650"
           >
-            Học lại
+            {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.STUDY_AGAIN}
           </button>
           <button
             onClick={onGoHome}
             className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-200 shadow-lg shadow-blue-500/20"
           >
-            Quay lại bộ từ
+            {VOCABULARY_UI_TEXT.FLASHCARD_COMPLETION.BACK_TO_SET}
           </button>
         </div>
       </div>

@@ -17,6 +17,7 @@ import { VOCABULARY_UI_TEXT } from "../constants/vocabulary-ui-text";
 
 
 
+
 interface StatusVocabulariesContainerProps {
   vocabularySetId?: string;
 }
@@ -46,7 +47,8 @@ const StatusVocabulariesContainer: React.FC<
   const pageSize = 5; // default 5 entries to match user screenshot
 
   // Selected word details modal
-  const [selectedWord, setSelectedWord] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedWord, setSelectedWord] = useState<any | null>(null);
   const [isWordDetailsOpen, setIsWordDetailsOpen] = useState(false);
 
   // Transform API data to flat Table items with SRS stats
@@ -121,19 +123,21 @@ const StatusVocabulariesContainer: React.FC<
 
     // Apply sorting
     result.sort((a, b) => {
-      let valA: any = a[sortBy];
-      let valB: any = b[sortBy];
+      let valA = a[sortBy] as string | number;
+      let valB = b[sortBy] as string | number;
 
       // Handle null/undefined values
       if (valA === null || valA === undefined) valA = "";
       if (valB === null || valB === undefined) valB = "";
 
-      if (typeof valA === "string") {
+      if (typeof valA === "string" && typeof valB === "string") {
         return sortOrder === "asc"
           ? valA.localeCompare(valB)
           : valB.localeCompare(valA);
       } else {
-        return sortOrder === "asc" ? valA - valB : valB - valA;
+        const numA = Number(valA);
+        const numB = Number(valB);
+        return sortOrder === "asc" ? numA - numB : numB - numA;
       }
     });
 
@@ -293,7 +297,7 @@ const StatusVocabulariesContainer: React.FC<
               <select
                 className="bg-transparent border-none outline-none text-sm text-white font-medium pl-1 pr-4 cursor-pointer appearance-none focus:ring-0"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as "word" | "meaning" | "status" | "repetitions" | "nextReviewAt")}
               >
                 <option value="word" className="bg-[#0f172a] text-white">{VOCABULARY_UI_TEXT.DATATABLE.SORT.ALPHABETICAL}</option>
                 <option value="repetitions" className="bg-[#0f172a] text-white">{VOCABULARY_UI_TEXT.DATATABLE.SORT.REPETITIONS}</option>
@@ -422,7 +426,7 @@ const StatusVocabulariesContainer: React.FC<
                     <td className="px-6 py-4 text-center align-middle">
                       <span className={`text-sm ${
                         item.status === 'MASTERED' ? 'text-slate-500' :
-                        formatNextReview(item.nextReviewAt) === 'Hôm nay' || formatNextReview(item.nextReviewAt) === 'Ngày mai'
+                        formatNextReview(item.nextReviewAt) === VOCABULARY_UI_TEXT.STATUS_UI.TODAY || formatNextReview(item.nextReviewAt) === VOCABULARY_UI_TEXT.STATUS_UI.TOMORROW
                           ? 'text-white font-medium animate-pulse-soft'
                           : 'text-slate-400'
                       }`}>
@@ -437,7 +441,7 @@ const StatusVocabulariesContainer: React.FC<
                         <button
                           onClick={() => handlePlayPronunciation(item.word)}
                           className="hover:text-blue-400 transition-colors p-1"
-                          title="Phát âm"
+                          title={VOCABULARY_UI_TEXT.STATUS_UI.PRONUNCIATION}
                         >
                           <Volume2 className="w-4 h-4" />
                         </button>
@@ -449,7 +453,7 @@ const StatusVocabulariesContainer: React.FC<
                             navigate(ROUTES.VOCABULARIES.UPDATE.replace(':id', vocabularySetId));
                           }}
                           className="hover:text-blue-400 transition-colors p-1"
-                          title="Sửa từ"
+                          title={VOCABULARY_UI_TEXT.STATUS_UI.EDIT_WORD}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>

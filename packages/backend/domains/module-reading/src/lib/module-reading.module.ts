@@ -13,6 +13,7 @@ import { GetArticleQueryHandler } from './application/querys/get-article/get-art
 import { GetArticleQuizQueryHandler } from './application/querys/get-article-quiz/get-article-quiz.handler';
 import { TranslateWordInContextQueryHandler } from './application/querys/translate-word-in-context/translate-word-in-context.handler';
 import { GetCommunityArticlesHandler } from './application/querys/get-community-articles/get-community-articles.handler';
+import { GetMyArticlesHandler } from './application/querys/get-my-articles/get-my-articles.handler';
 
 // Command Handlers
 import { UpdateReadingProgressCommandHandler } from './application/commands/update-reading-progress/update-reading-progress.handler';
@@ -20,6 +21,9 @@ import { SubmitArticleQuizCommandHandler } from './application/commands/submit-a
 import { CreateCommunityArticleHandler } from './application/commands/create-community-article/create-community-article.handler';
 import { InteractArticleHandler } from './application/commands/interact-article/interact-article.handler';
 import { AddArticleCommentHandler } from './application/commands/add-article-comment/add-article-comment.handler';
+import { CreateStudioArticleHandler } from './application/commands/create-studio-article/create-studio-article.handler';
+import { UpdateStudioArticleHandler } from './application/commands/update-studio-article/update-studio-article.handler';
+import { DeleteStudioArticleHandler } from './application/commands/delete-studio-article/delete-studio-article.handler';
 
 // Application Event Handlers
 import { ReadingProgressUpdatedHandler } from './application/events/reading-progress-updated.handler';
@@ -56,6 +60,7 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
     GetArticleQuizQueryHandler,
     TranslateWordInContextQueryHandler,
     GetCommunityArticlesHandler,
+    GetMyArticlesHandler,
 
     // ===== APPLICATION LAYER: Command Handlers =====
     UpdateReadingProgressCommandHandler,
@@ -63,6 +68,9 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
     CreateCommunityArticleHandler,
     InteractArticleHandler,
     AddArticleCommentHandler,
+    CreateStudioArticleHandler,
+    UpdateStudioArticleHandler,
+    DeleteStudioArticleHandler,
 
     // ===== APPLICATION LAYER: Event Handlers =====
     ReadingProgressUpdatedHandler,

@@ -20,6 +20,10 @@ export interface IReadingRepository {
 
   saveArticle(article: ArticleEntity): Promise<ArticleEntity>;
 
+  deleteArticle(id: string): Promise<void>;
+
+  findArticlesByCreatorId(creatorId: string, limit?: number): Promise<ArticleEntity[]>;
+
   findCommunityArticles(sortBy: 'trending' | 'newest' | 'top', limit?: number): Promise<ArticleEntity[]>;
 
   voteArticle(userId: string, articleId: string, voteType: 1 | -1): Promise<void>;

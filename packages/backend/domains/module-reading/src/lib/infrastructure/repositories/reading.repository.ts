@@ -28,6 +28,12 @@ export class ReadingRepository implements IReadingRepository {
       unknown
     >;
 
+    const tagFilter = normalizedParams.tag as string | undefined;
+    delete normalizedParams.tag;
+
+    const timeFilter = normalizedParams.timeFilter as string | undefined;
+    delete normalizedParams.timeFilter;
+
     // Base filters: published articles only
     const baseWhere: Record<string, unknown> = {
       isPublished: true,
@@ -45,6 +51,28 @@ export class ReadingRepository implements IReadingRepository {
             AND: [baseWhere, prismaQuery.where],
           }
         : { ...baseWhere };
+
+    if (tagFilter) {
+      where['tags'] = { has: tagFilter.toLowerCase() };
+    }
+
+    if (timeFilter) {
+      const date = new Date();
+      if (timeFilter === 'today') {
+        date.setHours(0, 0, 0, 0);
+        where['createdAt'] = { gte: date };
+      } else if (timeFilter === 'week') {
+        const day = date.getDay();
+        const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(date.setDate(diff));
+        monday.setHours(0, 0, 0, 0);
+        where['createdAt'] = { gte: monday };
+      } else if (timeFilter === 'month') {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        firstDay.setHours(0, 0, 0, 0);
+        where['createdAt'] = { gte: firstDay };
+      }
+    }
 
     // Check if there is full-text search
     if (normalizedParams.q || normalizedParams.search) {
@@ -429,6 +457,19 @@ export class ReadingRepository implements IReadingRepository {
       create: data,
     });
     return ArticleEntity.fromPersistence(saved);
+  }
+
+  async deleteArticle(id: string): Promise<void> {
+    await this.prisma.article.delete({ where: { id } });
+  }
+
+  async findArticlesByCreatorId(creatorId: string, limit = 50): Promise<ArticleEntity[]> {
+    const records = await this.prisma.article.findMany({
+      where: { creatorId },
+      orderBy: { updatedAt: 'desc' },
+      take: limit,
+    });
+    return records.map((record) => ArticleEntity.fromPersistence(record));
   }
 
   async findCommunityArticles(

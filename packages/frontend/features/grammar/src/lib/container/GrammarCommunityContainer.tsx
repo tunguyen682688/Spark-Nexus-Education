@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sparkles, Award, Plus, ArrowLeft } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import { useGrammarCommunityPosts } from '../hooks';
-import { GRAMMAR_UI_TEXT } from '../constants';
+import { GRAMMAR_UI_TEXT, TRENDING_TAGS } from '../constants';
 
 import { CommunitySidebar } from '../components/community/CommunitySidebar';
 import { CommunityFeed } from '../components/community/CommunityFeed';
@@ -27,15 +27,6 @@ export function GrammarCommunityContainer({
     selectedTag || undefined,
     searchQuery || undefined
   );
-
-  const trendingTags = [
-    'Tenses',
-    'Inversion',
-    'Conditionals',
-    'RelativeClauses',
-    'PassiveVoice',
-    'Modals',
-  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans pb-16">
@@ -87,7 +78,7 @@ export function GrammarCommunityContainer({
           onSearchChange={setSearchQuery}
           selectedTag={selectedTag}
           onTagSelect={setSelectedTag}
-          trendingTags={trendingTags}
+          trendingTags={TRENDING_TAGS}
         />
         <CommunityFeed
           posts={posts}

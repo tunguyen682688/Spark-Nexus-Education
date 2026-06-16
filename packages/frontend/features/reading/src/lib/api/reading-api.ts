@@ -10,6 +10,7 @@ import type {
   Article,
   ReadingProgress,
   ReadingDashboardData,
+  CreateArticlePayload,
 } from '../types';
 
 const ENDPOINTS = {
@@ -21,6 +22,12 @@ const ENDPOINTS = {
   createCommunityArticle: '/reading/articles/community',
   interactArticle: (id: string) => `/reading/articles/${id}/vote`,
   commentArticle: (id: string) => `/reading/articles/${id}/comment`,
+  // Studio endpoints
+  studioCreate: '/reading/articles/studio',
+  studioUpdate: (id: string) => `/reading/articles/${id}`,
+  studioDraft: (id: string) => `/reading/articles/${id}/draft`,
+  studioDelete: (id: string) => `/reading/articles/${id}`,
+  myArticles: '/reading/articles/my',
 } as const;
 
 type ResourceResponse<T> =
@@ -192,5 +199,39 @@ export const readingApi = {
       { action }
     );
     return extractResource(response.data);
+  },
+
+  // ── Studio API Methods ──────────────────────────────────────
+
+  async createStudioArticle(payload: CreateArticlePayload): Promise<Article> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<Article>>(ENDPOINTS.studioCreate, payload);
+    return extractResource(response.data);
+  },
+
+  async updateArticle(id: string, payload: Partial<CreateArticlePayload>): Promise<Article> {
+    const axios = await getAxiosInstance();
+    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioUpdate(id), payload);
+    return extractResource(response.data);
+  },
+
+  async saveDraft(id: string, payload: Partial<CreateArticlePayload>): Promise<Article> {
+    const axios = await getAxiosInstance();
+    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioDraft(id), payload);
+    return extractResource(response.data);
+  },
+
+  async deleteArticle(id: string): Promise<void> {
+    const axios = await getAxiosInstance();
+    await axios.delete(ENDPOINTS.studioDelete(id));
+  },
+
+  async getMyArticles(params?: ApiQueryParams): Promise<SimplifiedPaginatedResponse<Article>> {
+    const axios = await getAxiosInstance();
+    const queryString = buildQueryString(params);
+    const response = await axios.get<JsonApiListResponse<Article>>(
+      `${ENDPOINTS.myArticles}${queryString}`
+    );
+    return extractPaginatedResponse(response.data);
   },
 };

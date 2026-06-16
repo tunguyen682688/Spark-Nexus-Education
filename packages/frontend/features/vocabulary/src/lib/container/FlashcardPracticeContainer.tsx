@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFlashcardSession, useReviewFlashcard } from '../hooks/use-vocabulary-sets';
 import { useFlashcardPractice } from '../hooks/use-flashcard-practice';
 import { FlashcardPractice } from '../components/learning/FlashcardPractice';
+import { VOCABULARY_UI_TEXT } from '../constants/vocabulary-ui-text';
 
 export interface FlashcardPracticeContainerProps {
   setId: string;
@@ -43,15 +44,15 @@ export const FlashcardPracticeContainer: React.FC<FlashcardPracticeContainerProp
   if (error || !sessionData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-red-400 bg-[#070b15] rounded-2xl p-8 border border-red-950/20 text-center">
-        <p className="text-xl font-bold mb-2">Lỗi tải dữ liệu học</p>
+        <p className="text-xl font-bold mb-2">{VOCABULARY_UI_TEXT.FLASHCARD.LOAD_ERROR}</p>
         <p className="text-sm text-slate-500 mb-6">
-          {error instanceof Error ? error.message : 'Không thể tải phiên học flashcard này.'}
+          {error instanceof Error ? error.message : VOCABULARY_UI_TEXT.FLASHCARD.LOAD_ERROR_DESC}
         </p>
         <button
           onClick={() => window.location.reload()}
           className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
         >
-          Tải lại trang
+          {VOCABULARY_UI_TEXT.FLASHCARD.RELOAD}
         </button>
       </div>
     );

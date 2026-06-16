@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import type { Article } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
+import { READING_UI_TEXT } from '../../constants';
 
 interface TrendingPublicationsProps {
   publications: Omit<Article, 'content' | 'summary'>[];
@@ -26,10 +27,10 @@ export const TrendingPublications: React.FC<TrendingPublicationsProps> = ({
   if (publications.length === 0) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">Trending Publications</h2>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.TRENDING_PUBLICATIONS}</h2>
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 text-center rounded-xl transition-colors">
           <p className="text-slate-400 dark:text-slate-500 font-medium text-sm transition-colors">
-            No trending publications available at the moment.
+            {READING_UI_TEXT.components.dashboard.NO_TRENDING_PUB}
           </p>
         </div>
       </div>
@@ -46,7 +47,7 @@ export const TrendingPublications: React.FC<TrendingPublicationsProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">Trending Publications</h2>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.TRENDING_PUBLICATIONS}</h2>
         <div className="flex gap-1">
           <Button variant="outline" size="icon" className="h-8 w-8 rounded-full dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors" onClick={handlePrev}>
             <ChevronLeft className="h-4 w-4" />

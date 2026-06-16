@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, RadioGroup, RadioGroupItem, Label } from '@spark-nest-ed/frontend-shared-components';
 import { CheckCircle2, XCircle, Award, BookOpen, AlertCircle, ArrowRight, RotateCcw, Loader2 } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { READING_UI_TEXT } from '../../constants';
 
 interface ArticleQuizProps {
   articleId: string;
@@ -121,7 +122,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
     return (
       <Card className="max-w-[750px] mx-auto p-8 border-slate-100/80 shadow-md flex flex-col items-center justify-center py-12 gap-3">
         <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Generating comprehension quiz...</p>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{READING_UI_TEXT.components.reader.QUIZ_GENERATING}</p>
       </Card>
     );
   }
@@ -131,8 +132,8 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
       <Card className="max-w-[750px] mx-auto p-6 border-slate-100/80 shadow-md flex items-center gap-3 bg-red-50/50 border-red-100">
         <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
         <div>
-          <p className="text-sm font-bold text-slate-800">Quiz Unavailable</p>
-          <p className="text-xs text-slate-500">We couldn't generate comprehension questions for this article. Please try again later.</p>
+          <p className="text-sm font-bold text-slate-800">{READING_UI_TEXT.components.reader.QUIZ_UNAVAILABLE_TITLE}</p>
+          <p className="text-xs text-slate-500">{READING_UI_TEXT.components.reader.QUIZ_UNAVAILABLE_DESC}</p>
         </div>
       </Card>
     );
@@ -150,7 +151,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
             : 'bg-gradient-to-r from-blue-500 to-indigo-600'
         )}>
           <Award className="h-12 w-12 text-amber-300 animate-bounce" />
-          <h3 className="font-extrabold text-xl font-serif">Comprehension Quiz Results</h3>
+          <h3 className="font-extrabold text-xl font-serif">{READING_UI_TEXT.components.reader.QUIZ_RESULTS}</h3>
           <p className="text-sm font-medium opacity-90">
             {isPassing ? 'Fantastic! You fully understood the text.' : 'Good effort! Read again to master this content.'}
           </p>
@@ -160,7 +161,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
         </div>
 
         <CardContent className="p-6 space-y-6">
-          <h4 className="font-bold text-sm text-slate-800 border-b pb-2">Questions Review</h4>
+          <h4 className="font-bold text-sm text-slate-800 border-b pb-2">{READING_UI_TEXT.components.reader.QUIZ_REVIEW}</h4>
           
           <div className="space-y-6">
             {results.results.map((res, index) => (
@@ -172,7 +173,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
                   <div>
                     <p className="font-bold text-sm text-slate-800 leading-tight">{res.question}</p>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Your Answer:</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400">{READING_UI_TEXT.components.reader.QUIZ_YOUR_ANSWER}</span>
                       <span className={cn("text-xs font-bold flex items-center gap-1", res.isCorrect ? 'text-emerald-600' : 'text-red-500')}>
                         {res.isCorrect ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
                         {res.userAnswer || 'No answer'}
@@ -180,7 +181,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
                     </div>
                     {!res.isCorrect && (
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Correct Answer:</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400">{READING_UI_TEXT.components.reader.QUIZ_CORRECT_ANSWER}</span>
                         <span className="text-xs font-extrabold text-emerald-600">{res.correctAnswer}</span>
                       </div>
                     )}
@@ -189,7 +190,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
 
                 {res.explanation && (
                   <div className="ml-7 p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs leading-relaxed text-slate-600 font-sans">
-                    <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">Explanation</span>
+                    <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">{READING_UI_TEXT.components.reader.QUIZ_EXPLANATION}</span>
                     {res.explanation}
                   </div>
                 )}
@@ -202,7 +203,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
               onClick={handleRetry}
               className="font-bold text-xs bg-slate-900 text-white rounded gap-1.5"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> Try Quiz Again
+              <RotateCcw className="h-3.5 w-3.5" /> {READING_UI_TEXT.components.reader.QUIZ_TRY_AGAIN}
             </Button>
           </div>
         </CardContent>
@@ -217,7 +218,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
     <Card className="max-w-[750px] mx-auto border-slate-100/80 shadow-md bg-white select-none">
       <CardHeader className="border-b border-slate-50 p-4 flex flex-row items-center justify-between">
         <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-          <BookOpen className="h-4.5 w-4.5 text-blue-500" /> Comprehension Check
+          <BookOpen className="h-4.5 w-4.5 text-blue-500" /> {READING_UI_TEXT.components.reader.QUIZ_CHECK}
         </h3>
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full">
           Question {currentIdx + 1} of {questions.length}
@@ -276,7 +277,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
             >
               {submitting ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> {READING_UI_TEXT.components.reader.QUIZ_SUBMITTING}
                 </>
               ) : (
                 'Submit Quiz'

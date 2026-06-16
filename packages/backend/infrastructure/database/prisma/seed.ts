@@ -90,6 +90,146 @@ async function main() {
     }),
     prisma.article.create({
       data: {
+        title: 'The Science of Phonetics in Language Learning',
+        content: `Phonetics is the study of speech sounds, their production, and perception. In language learning, mastering phonetics is key to accurate pronunciation and accent reduction. By understanding speech apparatus and phonetic transcriptions (IPA), students can self-correct and speak with greater confidence.`,
+        summary: 'How phonetics improves pronunciation in foreign languages.',
+        difficulty: 'B1',
+        wordCount: 280,
+        category: 'news',
+        tags: ['phonetics', 'news', 'pronunciation'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'AI in Education: Customizing the Classroom',
+        content: `Artificial Intelligence is transforming classrooms worldwide. Modern AI tools analyze student performance in real-time, adapting curricula to address individual weaknesses. This custom learning experience improves engagement and helps students learn English at their own optimal pace.`,
+        summary: 'AI-driven personalized learning systems are reshaping education.',
+        difficulty: 'B2',
+        wordCount: 320,
+        category: 'news',
+        tags: ['ai in education', 'news', 'technology'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Quantum Computing Reaches Crucial Milestone',
+        content: `Physicists have achieved quantum supremacy in a new error-corrected processor. This breakthrough brings us closer to solving complex molecular simulations and cryptography challenges that are impossible on classical supercomputers, marking a massive leap for quantum mechanics.`,
+        summary: 'A new milestone in error-correction for quantum computing.',
+        difficulty: 'C1',
+        wordCount: 410,
+        category: 'news',
+        tags: ['quantum computing', 'news', 'technology'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Mars Rover Discovers Traces of Ancient Water',
+        content: `NASA's latest Mars explorer has uncovered rock samples containing minerals that only form in the presence of liquid water. This discovery strongly supports the hypothesis that ancient Mars had stable lakes and rivers, suggesting the planet could once have harbored microbial life.`,
+        summary: 'Rock samples on Mars suggest ancient habitable lakes.',
+        difficulty: 'C2',
+        wordCount: 350,
+        category: 'news',
+        tags: ['science', 'space', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Global Economic Outlook 2026',
+        content: `Central banks are navigating a complex landscape of inflation stabilization and interest rate adjustments. Analysts predict moderate growth for developing nations, while technological sectors continue to dominate investment trends globally, shaping international trade routes.`,
+        summary: 'Analyzing central bank policies and global market trends.',
+        difficulty: 'C1',
+        wordCount: 300,
+        category: 'news',
+        tags: ['business', 'finance', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Artistic Revival in the Digital Age',
+        content: `Traditional painters are embracing digital mediums and blockchain platforms to share and sell their work. This integration has birthed a new wave of hybrid galleries, where physical paintings are accompanied by immersive virtual reality exhibits, redefining creative boundaries.`,
+        summary: 'How digital technology is blending with traditional art mediums.',
+        difficulty: 'B1',
+        wordCount: 260,
+        category: 'news',
+        tags: ['arts', 'culture', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'The Rise of Green Cities',
+        content: `Metropolitan areas are implementing eco-friendly architectures, including rooftop gardens, electric transit fleets, and smart recycling bins. These green initiatives decrease carbon footprints and improve urban quality of life, proving that industrial progress can align with sustainability.`,
+        summary: 'Smart environmental architectures are transforming urban centers.',
+        difficulty: 'B2',
+        wordCount: 275,
+        category: 'news',
+        tags: ['environment', 'sustainability', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Exploring Deep Ocean Trenches',
+        content: `A robotic submarine has successfully recorded high-definition footage of unknown organisms at the bottom of the Mariana Trench. These creatures possess bioluminescent adaptations that survive intense pressure and total darkness, opening new frontiers in deep-sea biology.`,
+        summary: 'New species discovered at extreme ocean depths.',
+        difficulty: 'A2',
+        wordCount: 290,
+        category: 'news',
+        tags: ['science', 'ocean', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Healthy Eating Tips for Busy Students',
+        content: `Maintaining a balanced diet is challenging for students balancing study and work. Experts recommend meal prepping, staying hydrated, and choosing nutrient-rich snacks like nuts and fruits over processed sugars to keep cognitive performance at its peak during exams.`,
+        summary: 'Simple nutritional strategies to support focus and energy.',
+        difficulty: 'A1',
+        wordCount: 240,
+        category: 'news',
+        tags: ['lifestyle', 'health', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'The Future of Renewable Energy Networks',
+        content: `Smart grids powered by solar wind and ocean tides are replacing coal power stations in northern Europe. Innovative storage batteries help stabilize supply during low-generation days, creating a resilient clean energy infrastructure that could solve energy security crises.`,
+        summary: 'Integration of renewable grids and battery storage.',
+        difficulty: 'B2',
+        wordCount: 280,
+        category: 'news',
+        tags: ['environment', 'energy', 'news'],
+        isPublished: true,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
         title: 'The Great Gatsby - Chapter 1',
         content: `In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.`,
         summary: 'Classic novel chapter 1 excerpt.',
@@ -141,6 +281,102 @@ async function main() {
         tags: ['education', 'tips', 'study'],
         isPublished: true,
         thumbnailUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Principles of Cognitive Neuroscience',
+        content: `A comprehensive textbook on neuroscience and cognitive functions, discussing sensory systems, motor controls, memory systems, executive functions, and brain mapping techniques.`,
+        summary: `A landmark text on neuroscientific principles and cognitive architecture.`,
+        difficulty: 'C1',
+        wordCount: 840,
+        category: 'academic',
+        tags: ['Neuroscience', 'Biology', 'Cognition'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=800&auto=format&fit=crop',
+        author: 'Dale Purves, et al.',
+        viewCount: 4200,
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Modernist Literature and the Crisis of Representation',
+        content: `Explores the fractured narratives, stream of consciousness, and complex aesthetics of early 20th-century literature. Discusses Virginia Woolf, James Joyce, and key literary innovations.`,
+        summary: `Dr. Sarah Jenkins explores the fractured narratives and complex aesthetics of the early 20th century in this definitive masterclass text.`,
+        difficulty: 'C2',
+        wordCount: 412,
+        category: 'academic',
+        tags: ['Literature', 'History', 'Arts'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop',
+        author: 'Dr. Sarah Jenkins',
+        viewCount: 1800,
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Introduction to Quantum Mechanics',
+        content: `An introductory guide to quantum physics, detailing wavefunctions, Schrodinger's equation, potential wells, angular momentum, and hydrogenic systems.`,
+        summary: `A classic textbook introducing the mathematical foundations and physical interpretations of quantum mechanics.`,
+        difficulty: 'B2',
+        wordCount: 510,
+        category: 'academic',
+        tags: ['Physics', 'Science', 'Quantum'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=800&auto=format&fit=crop',
+        author: 'David J. Griffiths',
+        viewCount: 8500,
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Computational Linguistics',
+        content: `Investigates natural language processing algorithms, parsing techniques, syntactic analysis, machine translation, neural language models, and syntax representations.`,
+        summary: `Core theoretical insights and practical applications of natural language computation.`,
+        difficulty: 'C1',
+        wordCount: 320,
+        category: 'academic',
+        tags: ['Comp Sci', 'Technology', 'Linguistics'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=800&auto=format&fit=crop',
+        author: 'Alan Turing',
+        viewCount: 1100,
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'Advanced Macroeconomics',
+        content: `Analyzes modern macroeconomic growth theories, dynamic general equilibrium systems, fiscal policies, monetary tools, inflation, and financial markets.`,
+        summary: `Standard graduate-level macroeconomic models and empirical foundations.`,
+        difficulty: 'C1',
+        wordCount: 490,
+        category: 'academic',
+        tags: ['Economics', 'Finance'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800&auto=format&fit=crop',
+        author: 'David Romer',
+        viewCount: 3200,
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    }),
+    prisma.article.create({
+      data: {
+        title: 'The Philosophy of Space and Time',
+        content: `Explores the epistemological and ontological foundations of spacetime theories, relativistic geometry, temporal order, causation, and physical topology.`,
+        summary: `An investigation into the relativistic concepts of geometry, temporal flows, and cosmic structure.`,
+        difficulty: 'C2',
+        wordCount: 380,
+        category: 'academic',
+        tags: ['Philosophy', 'Physics'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=800&auto=format&fit=crop',
+        author: 'Hans Reichenbach',
+        viewCount: 2900,
+        isPublished: true,
         publishedAt: new Date(),
       },
     }),
@@ -270,6 +506,32 @@ async function main() {
     }
   });
   console.log('✅ Created mock user grammar progress');
+
+  const quantumMechBook = articles.find(a => a.title === 'Introduction to Quantum Mechanics');
+  const cognitiveNeuroBook = articles.find(a => a.title === 'Principles of Cognitive Neuroscience');
+
+  if (quantumMechBook && cognitiveNeuroBook) {
+    await prisma.readingProgress.create({
+      data: {
+        userId: 'mock-user-123',
+        articleId: quantumMechBook.id,
+        progress: 68,
+        lastPosition: 100,
+        timeSpent: 3600,
+      }
+    });
+
+    await prisma.readingProgress.create({
+      data: {
+        userId: 'mock-user-123',
+        articleId: cognitiveNeuroBook.id,
+        progress: 32,
+        lastPosition: 50,
+        timeSpent: 1800,
+      }
+    });
+    console.log('✅ Created mock user reading progress for academic books');
+  }
 
   // 1. Create UserDailyStreak for mock-user-123
   console.log('🌱 Seeding daily streak...');

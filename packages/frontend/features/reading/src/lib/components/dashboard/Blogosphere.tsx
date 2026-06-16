@@ -4,6 +4,7 @@ import { Rss } from 'lucide-react';
 import type { Article } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
+import { READING_UI_TEXT } from '../../constants';
 
 interface BlogosphereProps {
   articles: Omit<Article, 'content'>[];
@@ -28,7 +29,7 @@ export const Blogosphere: React.FC<BlogosphereProps> = ({ articles }) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">Blogosphere</h2>
+      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.BLOGOSPHERE}</h2>
       <div className="grid grid-cols-1 gap-3">
         {articles.length > 0 ? (
           articles.map((art) => (
@@ -78,7 +79,7 @@ export const Blogosphere: React.FC<BlogosphereProps> = ({ articles }) => {
         ) : (
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 text-center rounded-xl transition-colors">
             <p className="text-slate-400 dark:text-slate-500 font-medium text-sm transition-colors">
-              No articles available in the Blogosphere.
+              {READING_UI_TEXT.components.dashboard.NO_BLOGOSPHERE}
             </p>
           </div>
         )}

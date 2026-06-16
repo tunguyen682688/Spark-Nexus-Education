@@ -20,6 +20,7 @@ export interface Article {
   lastPosition: number; // chapter info or line offset
   timeSpent: number; // seconds
   readTime?: string; // e.g. "5 min read"
+  viewCount?: number;
 }
 
 export interface ReadingProgress {
@@ -77,4 +78,62 @@ export interface ReadingDashboardData {
   recentLookups: RecentLookupItem[];
   readingStreak: ReadingStreak;
   trendingTopics: string[];
+}
+
+// ── Content Studio Types ──────────────────────────────────────
+
+export type ContentType = 'article' | 'book' | 'book_chapter' | 'news' | 'blog';
+
+export type ArticleStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED';
+
+export interface StudioFormValues {
+  title: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: any; // EditorJS OutputData object
+  summary: string;
+  contentType: ContentType;
+  category: string;
+  difficulty: string; // CEFR level: A1–C2
+  tags: string[];
+  thumbnailUrl: string | null;
+  sourceUrl: string | null;
+  author: string | null;
+  status: ArticleStatus;
+  bookId?: string; // For book chapters
+  chapterIndex?: number; // For book chapters
+  targetLanguage?: string;
+  audioUrl?: string | null;
+  isBilingual?: boolean;
+  publishedAt?: string;
+}
+
+export interface ArticleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // emoji
+  contentType: ContentType;
+  defaultValues: Partial<StudioFormValues>;
+}
+
+export interface CreateArticlePayload {
+  title: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: any; // EditorJS OutputData or serialized string
+  summary?: string;
+  category: string;
+  contentType?: ContentType;
+  difficulty?: string;
+  tags?: string[];
+  thumbnailUrl?: string;
+  sourceUrl?: string;
+  author?: string;
+  status?: ArticleStatus;
+  targetLanguage?: string;
+  audioUrl?: string;
+  isBilingual?: boolean;
+}
+
+export interface UpdateArticlePayload extends Partial<CreateArticlePayload> {
+  id: string;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Button } from '@spark-nest-ed/frontend-shared-components';
 import { History, BookOpen, ExternalLink } from 'lucide-react';
+import { READING_UI_TEXT } from '../../constants';
 import type { RecentLookupItem } from '../../types';
 import { Link } from 'react-router-dom';
 
@@ -19,7 +20,7 @@ export const RecentLookups: React.FC<RecentLookupsProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-50 dark:border-slate-800 transition-colors">
           <History className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">Recent Lookups</h3>
+          <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200 tracking-tight transition-colors">{READING_UI_TEXT.components.dashboard.RECENT_LOOKUPS}</h3>
         </div>
 
         {/* Word list */}
@@ -56,7 +57,7 @@ export const RecentLookups: React.FC<RecentLookupsProps> = ({
           ) : (
             <div className="bg-slate-50 dark:bg-slate-800/50 p-6 text-center rounded-lg transition-colors">
               <p className="text-slate-400 dark:text-slate-500 font-medium text-xs transition-colors">
-                No recent lookups.
+                {READING_UI_TEXT.components.dashboard.NO_RECENT_LOOKUPS}
               </p>
             </div>
           )}
