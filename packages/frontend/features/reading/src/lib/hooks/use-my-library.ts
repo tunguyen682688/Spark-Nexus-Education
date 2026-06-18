@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { readingApi } from '../api/reading-api';
-import type { Article } from '../types';
 
 export interface LibraryDashboardData {
   stats: {
@@ -54,16 +53,6 @@ export interface LibraryDashboardData {
   };
 }
 
-interface LocalVocabularySet {
-  id: string;
-  title?: string;
-  entryCount?: number;
-  attributes?: {
-    id?: string;
-    title?: string;
-    entryCount?: number;
-  };
-}
 
 export function useMyLibraryDashboard() {
   return useQuery<LibraryDashboardData>({
@@ -87,20 +76,18 @@ export function useMyLibraryDashboard() {
       // Map inProgress
       const inProgress: LibraryDashboardData['inProgress'] = [];
 
-      const inProgressList = (inProgressRes && 'data' in inProgressRes) ? inProgressRes.data : [];
-      if (Array.isArray(inProgressList)) {
-        (inProgressList as Article[]).forEach((art) => {
-          inProgress.push({
-            id: art.id,
-            title: art.title,
-            category: art.category === 'news' ? 'Báo chí' : art.category === 'academic' ? 'Học thuật' : art.category === 'book' ? 'Sách/Truyện' : 'Tài liệu',
-            readTimeStr: art.readTime || `${Math.ceil(art.wordCount / 200)} phút đọc`,
-            progress: art.progress || 0,
-            thumbnailUrl: art.thumbnailUrl || 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&q=80',
-            type: art.category === 'book' || art.category === 'academic' ? 'LEARNING' : 'PRACTICE',
-          });
+      const inProgressList = inProgressRes?.data || [];
+      inProgressList.forEach((art) => {
+        inProgress.push({
+          id: art.id,
+          title: art.title,
+          category: art.category === 'news' ? 'Báo chí' : art.category === 'academic' ? 'Học thuật' : art.category === 'book' ? 'Sách/Truyện' : 'Tài liệu',
+          readTimeStr: art.readTime || `${Math.ceil(art.wordCount / 200)} phút đọc`,
+          progress: art.progress || 0,
+          thumbnailUrl: art.thumbnailUrl || 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&q=80',
+          type: art.category === 'book' || art.category === 'academic' ? 'LEARNING' : 'PRACTICE',
         });
-      }
+      });
 
       // If no in progress articles found via API filter, fallback to bookNook recommendations
       if (inProgress.length === 0 && dashboard.bookNook) {
@@ -127,27 +114,22 @@ export function useMyLibraryDashboard() {
       ];
       const icons = ['graduation' as const, 'flask' as const, 'book' as const];
       
-      const vocabList = (
-        (vocabPackagesRes && typeof vocabPackagesRes === 'object' && 'data' in vocabPackagesRes)
-          ? (vocabPackagesRes as { data: LocalVocabularySet[] }).data
-          : (vocabPackagesRes as LocalVocabularySet[])
-      ) || [];
+      const vocabList = vocabPackagesRes?.data || [];
 
-      const collections = (Array.isArray(vocabList) ? vocabList : []).map((pkg, idx: number) => {
-        const pkgData = pkg.attributes || pkg;
+      const collections = vocabList.map((pkg, idx: number) => {
         return {
-          id: pkg.id || pkgData.id || `vocab-${idx}`,
-          name: pkgData.title || 'Bộ từ vựng',
-          articleCount: pkgData.entryCount ?? 0,
-          newWordCount: pkgData.entryCount ?? 0,
+          id: pkg.id || `vocab-${idx}`,
+          name: pkg.title || 'Bộ từ vựng',
+          articleCount: pkg.entryCount ?? 0,
+          newWordCount: pkg.entryCount ?? 0,
           colorClass: colors[idx % colors.length],
           icon: icons[idx % icons.length],
         };
       });
 
       // Map history (completed articles)
-      const completedList = (completedRes && 'data' in completedRes) ? completedRes.data : [];
-      const history = (Array.isArray(completedList) ? (completedList as Article[]) : []).map((art) => ({
+      const completedList = completedRes?.data || [];
+      const history = completedList.map((art) => ({
         id: art.id,
         title: art.title,
         timeAgo: 'Đã hoàn thành',

@@ -112,8 +112,8 @@ export function useNewsContainer() {
   }, []);
 
   return {
-    page: articles.length === 0 ? 1 : 2,
-    setPage: () => undefined, // Mock setPage to avoid prop type errors
+    page: articlesData?.pages[articlesData.pages.length - 1]?.meta.page || 1,
+    totalPages: articlesData?.pages[0]?.meta.totalPages || 1,
     articles,
     searchTerm,
     setSearchTerm,

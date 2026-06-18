@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useReadingDashboard,
   useArticles,
@@ -7,6 +7,7 @@ import {
 
 export function useArticleHub() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [activeFilters, setActiveFilters] = useState<{
     category?: string;
     difficulty?: string;
@@ -18,6 +19,11 @@ export function useArticleHub() {
     sortOrder: 'desc',
   });
 
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, activeFilters]);
+
   // Fetch dashboard aggregate data
   const {
     data: dashboardData,
@@ -27,7 +33,7 @@ export function useArticleHub() {
 
   // Prepare query parameters for discover articles list
   const queryParams = {
-    page: 1,
+    page,
     pageSize: 6,
     sortBy: activeFilters.sortBy,
     sortOrder: activeFilters.sortOrder,
@@ -81,5 +87,8 @@ export function useArticleHub() {
     isCommunityLoading,
     activeTab,
     setActiveTab,
+    page,
+    setPage,
+    totalPages: discoverData?.meta.totalPages || 1,
   };
 }

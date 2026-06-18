@@ -16,7 +16,7 @@ import {
   Input,
   Button,
 } from '@spark-nest-ed/frontend-shared-components';
-import { Search, Compass, Users, BookOpen, PenLine, Library } from 'lucide-react';
+import { Search, Compass, Users, BookOpen, PenLine, Library, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 import { useArticleHub } from '../hooks/use-article-hub';
 
@@ -38,6 +38,9 @@ export const ArticleHubContainer: React.FC = () => {
     isCommunityLoading,
     activeTab,
     setActiveTab,
+    page,
+    setPage,
+    totalPages,
   } = useArticleHub();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -180,11 +183,69 @@ export const ArticleHubContainer: React.FC = () => {
                       />
 
                       {discoverData && discoverData.data.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {discoverData.data.map((article) => (
-                            <ArticleCard key={article.id} article={article} />
-                          ))}
-                        </div>
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {discoverData.data.map((article) => (
+                              <ArticleCard key={article.id} article={article} />
+                            ))}
+                          </div>
+                          {/* Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page - 1)}
+                                disabled={page === 1}
+                                className="h-8 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-705 dark:text-slate-200 hover:bg-slate-50"
+                              >
+                                <ChevronLeft className="h-4 w-4 mr-1" />
+                                Trước
+                              </Button>
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                  let pageNum: number;
+                                  if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                  } else if (page <= 3) {
+                                    pageNum = i + 1;
+                                  } else if (page >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                  } else {
+                                    pageNum = page - 2 + i;
+                                  }
+
+                                  return (
+                                    <Button
+                                      key={pageNum}
+                                      variant={page === pageNum ? "default" : "outline"}
+                                      size="sm"
+                                      className={cn(
+                                        "h-8 w-8 p-0 text-xs font-bold",
+                                        page === pageNum 
+                                          ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-750"
+                                      )}
+                                      onClick={() => setPage(pageNum)}
+                                    >
+                                      {pageNum}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page + 1)}
+                                disabled={page === totalPages}
+                                className="h-8 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-705 dark:text-slate-200 hover:bg-slate-50"
+                              >
+                                Sau
+                                <ChevronRight className="h-4 w-4 ml-1" />
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="bg-slate-50/50 backdrop-blur-md dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800/50 p-12 text-center rounded-2xl shadow-sm transition-all flex flex-col items-center justify-center space-y-3">
                           <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-2">

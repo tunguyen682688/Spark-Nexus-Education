@@ -425,16 +425,16 @@ export const BooksContainer: React.FC = () => {
                 Phân loại tài liệu
               </span>
               <div className="flex gap-2">
-                {[
+                {([
                   { value: 'all', label: 'Tất cả' },
                   { value: 'academic', label: 'Học thuật' },
                   { value: 'book', label: 'Truyện đọc' },
-                ].map((item) => {
+                ] as { value: 'all' | 'academic' | 'book'; label: string }[]).map((item) => {
                   const isSelected = categoryFilter === item.value;
                   return (
                     <button
                       key={item.value}
-                      onClick={() => setCategoryFilter(item.value as any)}
+                      onClick={() => setCategoryFilter(item.value)}
                       className={`px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer flex-1 text-center ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'

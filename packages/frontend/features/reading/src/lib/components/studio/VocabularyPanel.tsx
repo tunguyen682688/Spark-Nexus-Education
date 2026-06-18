@@ -80,10 +80,9 @@ export const VocabularyPanel: React.FC = () => {
   // Update vocabData and DOM attributes when dictData is resolved
   useEffect(() => {
     if (dictData && activeMark) {
-      const attributes = dictData.attributes || dictData;
-      const suggestedDef = attributes.definition || attributes.notes || '';
-      const suggestedPron = attributes.pronunciation || '';
-      const suggestedLevel = attributes.difficulty || attributes.level || attributes.partOfSpeech || '';
+      const suggestedDef = dictData.senses?.[0]?.definition || dictData.notes || '';
+      const suggestedPron = dictData.pronunciation || '';
+      const suggestedLevel = dictData.senses?.[0]?.level || dictData.partOfSpeech || '';
 
       setVocabData(prev => {
         const updated = {
@@ -106,10 +105,9 @@ export const VocabularyPanel: React.FC = () => {
   // Update vocabData and DOM attributes when contextData is resolved
   useEffect(() => {
     if (contextData && activeMark) {
-      const attrs = contextData.attributes || contextData;
-      const suggestedDef = attrs.translation || '';
+      const suggestedDef = contextData.translation || '';
       const suggestedEx = suggestionSentence;
-      const suggestedExTrans = attrs.explanation || '';
+      const suggestedExTrans = contextData.explanation || '';
 
       setVocabData(prev => {
         const updated = {

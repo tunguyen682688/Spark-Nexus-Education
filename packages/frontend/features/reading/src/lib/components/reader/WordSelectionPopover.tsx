@@ -66,40 +66,31 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
   // Set dictionary definitions
   useEffect(() => {
     if (dictData && !initialDefinition) {
-      const attributes = dictData.attributes || dictData;
-      const resolvedDefinition = attributes.definition || attributes.notes || '';
+      const resolvedDefinition = dictData.senses?.[0]?.definition || dictData.notes || '';
       setDefinition(resolvedDefinition);
-      setPronunciation(attributes.pronunciation || '');
-      setPartOfSpeech(attributes.partOfSpeech || 'noun');
+      setPronunciation(dictData.pronunciation || '');
+      setPartOfSpeech(dictData.partOfSpeech || 'noun');
     }
   }, [dictData, initialDefinition]);
 
   // Set context translation definitions
   useEffect(() => {
     if (contextData && !initialDefinition) {
-      const attrs = contextData.attributes || contextData;
-      setContextTranslation(attrs.translation);
-      setContextExplanation(attrs.explanation);
+      setContextTranslation(contextData.translation);
+      setContextExplanation(contextData.explanation);
       
       // Auto-fill definition input if dictionary lookup returned empty
-      setDefinition(prev => prev || attrs.translation || '');
+      setDefinition(prev => prev || contextData.translation || '');
     }
   }, [contextData, initialDefinition]);
 
   // Populate user sets options
   useEffect(() => {
-    if (packagesData) {
-      const packagesList = packagesData.data || packagesData;
-      const arrayList = Array.isArray(packagesList) ? packagesList : (packagesData.data || []);
-      
-      const sets = arrayList.map((item: any) => {
-        const id = item.id;
-        const attributes = item.attributes || item;
-        return {
-          id,
-          title: attributes.title,
-        };
-      });
+    if (packagesData?.data) {
+      const sets = packagesData.data.map((item) => ({
+        id: item.id,
+        title: item.title,
+      }));
       setUserSets(sets);
       if (sets.length > 0) {
         setSelectedSetId(sets[0].id);

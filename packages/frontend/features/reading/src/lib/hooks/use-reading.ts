@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { readingApi } from '../api/reading-api';
 import type { ApiQueryParams, SimplifiedPaginatedResponse } from '@spark-nest-ed/frontend-core-api';
-import type { Article } from '../types';
+import type { Article, VocabularySet, WordFull, AddWordToPackagePayload, VocabularySetItem, ArticleQuizData, QuizResponse } from '../types';
 
 export const readingKeys = {
   all: ['reading'] as const,
@@ -9,6 +9,7 @@ export const readingKeys = {
   articlesList: (params?: ApiQueryParams) => [...readingKeys.all, 'list', params] as const,
   communityArticlesList: (sortBy: string, limit: number) => [...readingKeys.all, 'community-list', sortBy, limit] as const,
   articleDetail: (id: string) => [...readingKeys.all, 'detail', id] as const,
+  quiz: (articleId: string) => [...readingKeys.all, 'quiz', articleId] as const,
 };
 
 export function useReadingDashboard() {
@@ -118,7 +119,7 @@ export function useInteractArticle() {
 }
 
 export function useVocabularyEntryDetail(word: string | null | undefined) {
-  return useQuery({
+  return useQuery<WordFull>({
     queryKey: ['vocabulary', 'entry', word?.toLowerCase().trim() ?? ''],
     queryFn: () => readingApi.getEntryDetail(word as string),
     enabled: !!word && word.trim().length > 0,
@@ -127,7 +128,7 @@ export function useVocabularyEntryDetail(word: string | null | undefined) {
 }
 
 export function useContextTranslation(word: string | null | undefined, sentence: string | null | undefined) {
-  return useQuery({
+  return useQuery<{ translation: string; explanation: string }>({
     queryKey: ['reading', 'translate-context', word?.toLowerCase().trim() ?? '', sentence?.trim() ?? ''],
     queryFn: () => readingApi.translateContext(word as string, sentence as string),
     enabled: !!word && !!sentence && word.trim().length > 0 && sentence.trim().length > 0,
@@ -135,10 +136,10 @@ export function useContextTranslation(word: string | null | undefined, sentence:
   });
 }
 
-export function useUserVocabularyPackages() {
-  return useQuery({
-    queryKey: ['vocabulary', 'my-packages'],
-    queryFn: () => readingApi.getUserVocabularyPackages(),
+export function useUserVocabularyPackages(params?: ApiQueryParams) {
+  return useQuery<SimplifiedPaginatedResponse<VocabularySet>>({
+    queryKey: ['vocabulary', 'my-packages', params],
+    queryFn: () => readingApi.getUserVocabularyPackages(params),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -146,12 +147,34 @@ export function useUserVocabularyPackages() {
 export function useAddWordToPackage() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ packageId, payload }: { packageId: string; payload: any }) =>
+  return useMutation<VocabularySetItem, Error, { packageId: string; payload: AddWordToPackagePayload }>({
+    mutationFn: ({ packageId, payload }) =>
       readingApi.addWordToPackage(packageId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['vocabulary', 'my-packages'],
+      });
+    },
+  });
+}
+
+export function useArticleQuiz(articleId: string) {
+  return useQuery<ArticleQuizData>({
+    queryKey: readingKeys.quiz(articleId),
+    queryFn: () => readingApi.getArticleQuiz(articleId),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!articleId,
+  });
+}
+
+export function useSubmitArticleQuiz() {
+  const queryClient = useQueryClient();
+
+  return useMutation<QuizResponse, Error, { articleId: string; answers: Record<string, string> }>({
+    mutationFn: ({ articleId, answers }) => readingApi.submitArticleQuiz(articleId, answers),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: readingKeys.quiz(variables.articleId),
       });
     },
   });

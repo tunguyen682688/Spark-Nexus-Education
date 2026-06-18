@@ -11,6 +11,12 @@ import type {
   ReadingProgress,
   ReadingDashboardData,
   CreateArticlePayload,
+  VocabularySet,
+  WordFull,
+  VocabularySetItem,
+  AddWordToPackagePayload,
+  ArticleQuizData,
+  QuizResponse,
 } from '../types';
 
 const ENDPOINTS = {
@@ -28,6 +34,8 @@ const ENDPOINTS = {
   studioDraft: (id: string) => `/reading/articles/${id}/draft`,
   studioDelete: (id: string) => `/reading/articles/${id}/delete`,
   myArticles: '/reading/articles/my/list',
+  quiz: (id: string) => `/reading/articles/${id}/quiz`,
+  submitQuiz: (id: string) => `/reading/articles/${id}/quiz/submit`,
 } as const;
 
 type ResourceResponse<T> =
@@ -258,30 +266,47 @@ export const readingApi = {
     return extractPaginatedResponse(response.data);
   },
 
-  async getEntryDetail(word: string): Promise<any> {
+  async getEntryDetail(word: string): Promise<WordFull> {
     const axios = await getAxiosInstance();
-    const response = await axios.get<ResourceResponse<any>>(`/vocabulary/entries/${word.toLowerCase().trim()}`);
+    const response = await axios.get<ResourceResponse<WordFull>>(`/vocabulary/entries/${word.toLowerCase().trim()}`);
     return extractResource(response.data);
   },
 
-  async translateContext(word: string, sentence: string): Promise<any> {
+  async translateContext(word: string, sentence: string): Promise<{ translation: string; explanation: string }> {
     const axios = await getAxiosInstance();
-    const response = await axios.post<ResourceResponse<any>>('/reading/translate-context', {
+    const response = await axios.post<ResourceResponse<{ translation: string; explanation: string }>>('/reading/translate-context', {
       word,
       sentence,
     });
     return extractResource(response.data);
   },
 
-  async getUserVocabularyPackages(): Promise<any> {
+  async getUserVocabularyPackages(params?: ApiQueryParams): Promise<SimplifiedPaginatedResponse<VocabularySet>> {
     const axios = await getAxiosInstance();
-    const response = await axios.get<ResourceResponse<any>>('/vocabulary/packages/my/created');
+    const queryString = buildQueryString(params);
+    const response = await axios.get<JsonApiListResponse<VocabularySet>>(
+      `/vocabulary/packages/my/created${queryString}`
+    );
+    return extractPaginatedResponse(response.data);
+  },
+
+  async addWordToPackage(packageId: string, payload: AddWordToPackagePayload): Promise<VocabularySetItem> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<VocabularySetItem>>(`/vocabulary/packages/${packageId}/words`, payload);
     return extractResource(response.data);
   },
 
-  async addWordToPackage(packageId: string, payload: any): Promise<any> {
+  async getArticleQuiz(articleId: string): Promise<ArticleQuizData> {
     const axios = await getAxiosInstance();
-    const response = await axios.post<ResourceResponse<any>>(`/vocabulary/packages/${packageId}/words`, payload);
+    const response = await axios.get<ResourceResponse<ArticleQuizData>>(ENDPOINTS.quiz(articleId));
+    return extractResource(response.data);
+  },
+
+  async submitArticleQuiz(articleId: string, answers: Record<string, string>): Promise<QuizResponse> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<QuizResponse>>(ENDPOINTS.submitQuiz(articleId), {
+      answers,
+    });
     return extractResource(response.data);
   },
 };

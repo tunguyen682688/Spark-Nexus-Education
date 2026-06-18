@@ -1,72 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, RadioGroup, RadioGroupItem, Label } from '@spark-nest-ed/frontend-shared-components';
 import { CheckCircle2, XCircle, Award, BookOpen, AlertCircle, ArrowRight, RotateCcw, Loader2 } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 import { READING_UI_TEXT } from '../../constants';
+import { useArticleQuiz, useSubmitArticleQuiz } from '../../hooks/use-reading';
+import type { QuizResponse } from '../../types';
 
 interface ArticleQuizProps {
   articleId: string;
   onQuizCompleted?: (score: number) => void;
 }
 
-interface Question {
-  id: string;
-  question: string;
-  options: string[];
-}
-
-interface QuizResultDetail {
-  questionId: string;
-  question: string;
-  userAnswer: string;
-  correctAnswer: string;
-  isCorrect: boolean;
-  explanation: string;
-}
-
-interface QuizResponse {
-  score: number;
-  totalQuestions: number;
-  correctCount: number;
-  results: QuizResultDetail[];
-}
-
 export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
   articleId,
   onQuizCompleted,
 }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { data: quizData, isLoading: loading, isError: error } = useArticleQuiz(articleId);
+  const submitMutation = useSubmitArticleQuiz();
   
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<QuizResponse | null>(null);
 
-  useEffect(() => {
-    const fetchQuiz = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const { getAxiosClient } = await import('@spark-nest-ed/frontend-core-api');
-        const axios = getAxiosClient();
-        
-        const response = await axios.get(`/reading/articles/${articleId}/quiz`);
-        if (response.data && response.data.data) {
-          const attributes = response.data.data.attributes;
-          setQuestions(attributes.questions || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch article quiz', err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchQuiz();
-  }, [articleId]);
+  const questions = quizData?.questions || [];
 
   const handleSelectAnswer = (value: string) => {
     const currentQuestion = questions[currentIdx];
@@ -90,25 +46,16 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
 
   const handleSubmit = async () => {
     try {
-      setSubmitting(true);
-      const { getAxiosClient } = await import('@spark-nest-ed/frontend-core-api');
-      const axios = getAxiosClient();
-
-      const response = await axios.post(`/reading/articles/${articleId}/quiz/submit`, {
+      const response = await submitMutation.mutateAsync({
+        articleId,
         answers: selectedAnswers,
       });
-
-      if (response.data && response.data.data) {
-        const attributes = response.data.data.attributes;
-        setResults(attributes as QuizResponse);
-        if (onQuizCompleted) {
-          onQuizCompleted(attributes.score);
-        }
+      setResults(response);
+      if (onQuizCompleted) {
+        onQuizCompleted(response.score);
       }
     } catch (err) {
       console.error('Failed to submit quiz', err);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -117,6 +64,8 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
     setCurrentIdx(0);
     setResults(null);
   };
+
+  const submitting = submitMutation.isPending;
 
   if (loading) {
     return (
