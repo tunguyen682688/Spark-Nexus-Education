@@ -87,4 +87,10 @@ export interface IReadingRepository {
     userId: string,
     articleIds: string[]
   ): Promise<ReadingProgressEntity[]>;
+
+  syncArticleVocabulary(
+    articleId: string,
+    creatorId: string,
+    content: string
+  ): Promise<void>;
 }

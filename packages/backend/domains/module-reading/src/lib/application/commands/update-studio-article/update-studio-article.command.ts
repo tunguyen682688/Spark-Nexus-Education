@@ -13,6 +13,7 @@ export class UpdateStudioArticleCommand implements ICommand {
     public readonly thumbnailUrl?: string,
     public readonly sourceUrl?: string,
     public readonly author?: string,
-    public readonly status?: string
+    public readonly status?: string,
+    public readonly contentType?: string
   ) {}
 }

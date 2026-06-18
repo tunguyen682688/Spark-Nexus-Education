@@ -450,7 +450,8 @@ export class ReadingController {
         dto.thumbnailUrl,
         dto.sourceUrl,
         dto.author,
-        dto.status
+        dto.status,
+        dto.contentType
       )
     );
 
@@ -491,7 +492,8 @@ export class ReadingController {
         dto.thumbnailUrl,
         dto.sourceUrl,
         dto.author,
-        dto.status
+        dto.status,
+        dto.contentType
       )
     );
 
@@ -532,7 +534,8 @@ export class ReadingController {
         dto.thumbnailUrl,
         dto.sourceUrl,
         dto.author,
-        'DRAFT'
+        'DRAFT',
+        dto.contentType
       )
     );
 

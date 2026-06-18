@@ -186,8 +186,8 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -195,11 +195,21 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-neutral-300 rounded-full;
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-neutral-400;
+  @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent; /* slate-300 */
+}
+
+.dark * {
+  scrollbar-color: #334155 transparent; /* slate-700 */
 }
 
 /* Custom CSS overrides for EditorJS in Dark Mode */
@@ -326,4 +336,39 @@
   width: 100%;
   text-align: center;
   color: #475569; /* slate-600 */
+}
+
+/* Hide scrollbar utility and sidebar nav specifically */
+.no-scrollbar::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+aside div::-webkit-scrollbar,
+aside nav::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+aside div::-webkit-scrollbar-thumb,
+aside nav::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+aside div::-webkit-scrollbar-track,
+aside nav::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+.no-scrollbar,
+aside,
+aside div,
+aside nav {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }

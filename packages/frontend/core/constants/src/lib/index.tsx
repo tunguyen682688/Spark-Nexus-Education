@@ -37,8 +37,10 @@ export const ROUTES = {
     ARTICLE: '/reading/article/:articleId',
     NEWS: '/reading/news',
     ACADEMIC: '/reading/academic',
+    BOOKS: '/reading/books',
     STUDIO: '/reading/studio',
     STUDIO_EDIT: '/reading/studio/:articleId',
+    MY_LIBRARY: '/reading/library',
   },
 }
 

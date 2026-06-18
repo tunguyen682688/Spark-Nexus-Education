@@ -818,6 +818,17 @@ export const createRouter = () =>
 
         // Reading routes
         {
+          path: ROUTES.READING.MY_LIBRARY,
+          lazy: async () => {
+            const { MyLibraryPage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: MyLibraryPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
           path: ROUTES.READING.EXPLORE,
           lazy: async () => {
             const { ExplorePage } = await import(
@@ -852,17 +863,23 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
+          path: 'reading/articles',
+          lazy: async () => {
+            const { ArticlesPage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: ArticlesPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
           path: 'reading/stories',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Truyện</h1>
-                <p className="text-muted-foreground">
-                  Trang truyện đang được phát triển...
-                </p>
-              </div>
+            const { BooksPage } = await import(
+              '@spark-nest-ed/feature-reading'
             );
-            return { Component: PlaceholderPage };
+            return { Component: BooksPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -879,10 +896,21 @@ export const createRouter = () =>
         {
           path: ROUTES.READING.ACADEMIC,
           lazy: async () => {
-            const { AcademicPage } = await import(
+            const { BooksPage } = await import(
               '@spark-nest-ed/feature-reading'
             );
-            return { Component: AcademicPage };
+            return { Component: BooksPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: ROUTES.READING.BOOKS,
+          lazy: async () => {
+            const { BooksPage } = await import(
+              '@spark-nest-ed/feature-reading'
+            );
+            return { Component: BooksPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -890,15 +918,10 @@ export const createRouter = () =>
         {
           path: 'reading/history',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Lịch sử đọc</h1>
-                <p className="text-muted-foreground">
-                  Trang lịch sử đọc đang được phát triển...
-                </p>
-              </div>
+            const { HistoryPage } = await import(
+              '@spark-nest-ed/feature-reading'
             );
-            return { Component: PlaceholderPage };
+            return { Component: HistoryPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

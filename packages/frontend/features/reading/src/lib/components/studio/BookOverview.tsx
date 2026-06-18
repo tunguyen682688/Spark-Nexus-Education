@@ -2,15 +2,14 @@ import React, { useRef, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import TextareaAutosize from 'react-textarea-autosize';
 import { STUDIO_UI_TEXT } from '../../constants/studio-ui-text';
-import type { StudioFormValues } from '../../types';
+import type { StudioFormValues, EditorJsOutputData } from '../../types';
 import { Book, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface Chapter {
   id: string;
   title: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any;
+  content: EditorJsOutputData | null;
   isDraft: boolean;
 }
 

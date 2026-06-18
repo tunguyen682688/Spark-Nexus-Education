@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutList } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import type { StudioFormValues, EditorJsBlock } from '../../types';
+import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface ArticleLeftSidebarProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: UseFormReturn<any>;
+  form: UseFormReturn<StudioFormValues>;
 }
 
 export const ArticleLeftSidebar: React.FC<ArticleLeftSidebarProps> = ({ form }) => {
@@ -22,7 +23,7 @@ export const ArticleLeftSidebar: React.FC<ArticleLeftSidebarProps> = ({ form }) 
     const newHeadings: { id: string, text: string, level: number }[] = [];
     let hIndex = 0;
 
-    content.blocks.forEach((block: any) => {
+    content.blocks.forEach((block: EditorJsBlock) => {
       if (block.type === 'header' && block.data?.text) {
         // Strip HTML tags if any (EditorJS sometimes wraps in bold/italic)
         const textStr = block.data.text.replace(/<[^>]*>?/gm, '');
@@ -39,8 +40,8 @@ export const ArticleLeftSidebar: React.FC<ArticleLeftSidebarProps> = ({ form }) 
   }, [content]);
 
   return (
-    <div className="w-64 bg-white/40 dark:bg-[#121826]/80 backdrop-blur-xl border-r border-slate-200/60 dark:border-white/5 h-full flex flex-col shrink-0">
-      <div className="p-5 border-b border-slate-200/60 dark:border-white/5 flex items-center gap-3">
+    <div className="w-full h-full flex flex-col bg-transparent font-sans">
+      <div className="p-5 border-b border-slate-200/60 dark:border-white/5 flex items-center gap-3 shrink-0">
         <div className="p-1.5 rounded-md bg-blue-500/10 dark:bg-blue-500/20">
           <LayoutList className="w-4 h-4 text-blue-600 dark:text-blue-400" />
         </div>
@@ -62,11 +63,12 @@ export const ArticleLeftSidebar: React.FC<ArticleLeftSidebarProps> = ({ form }) 
             {headings.map((h, i) => (
               <li 
                 key={i} 
-                className={`text-sm py-1.5 px-2 rounded-lg cursor-pointer hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 ${
-                  h.level === 1 ? 'font-bold text-slate-800 dark:text-slate-200' :
-                  h.level === 2 ? 'font-medium text-slate-600 dark:text-slate-400 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-3' :
-                  'text-slate-500 dark:text-slate-500 ml-8 border-l-2 border-slate-200 dark:border-slate-800 pl-3'
-                }`}
+                className={cn(
+                  "text-sm py-1.5 px-2 rounded-lg cursor-pointer hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200",
+                  h.level === 1 && "font-bold text-slate-800 dark:text-slate-200",
+                  h.level === 2 && "font-medium text-slate-600 dark:text-slate-400 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-3",
+                  h.level > 2 && "text-slate-500 dark:text-slate-500 ml-8 border-l-2 border-slate-200 dark:border-slate-800 pl-3"
+                )}
               >
                 <span className="line-clamp-1">{h.text}</span>
               </li>

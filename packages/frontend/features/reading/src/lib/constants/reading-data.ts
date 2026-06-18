@@ -1,5 +1,7 @@
+export const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
 export const EXPLORE_DATA = {
-  LEVELS: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+  LEVELS: CEFR_LEVELS,
   KEYWORDS: ['Biến đổi khí hậu', 'Học máy', 'Triết học', 'Kinh tế học'],
   SAVED_FILTERS: [
     { label: 'Tin công nghệ (B2)' },
@@ -15,7 +17,7 @@ export const EXPLORE_DATA = {
 };
 
 export const ACADEMIC_DATA = {
-  LEVELS: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+  LEVELS: CEFR_LEVELS,
   DISCIPLINES: [
     { label: 'Khoa học máy tính', value: 'Comp Sci' },
     { label: 'Khoa học thần kinh', value: 'Neuroscience' },

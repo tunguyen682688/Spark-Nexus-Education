@@ -523,4 +523,149 @@ export class ReadingRepository implements IReadingRepository {
       create: { userId, articleId },
     });
   }
+
+  async syncArticleVocabulary(
+    articleId: string,
+    creatorId: string,
+    content: string
+  ): Promise<void> {
+    const article = await this.prisma.article.findUnique({
+      where: { id: articleId },
+    });
+    if (!article) return;
+
+    // Parse highlights
+    const markRegex = /<mark\s+[^>]*class=["']vocab-highlight["'][^>]*>([\s\S]*?)<\/mark>/gi;
+    const highlights: Array<{
+      word: string;
+      level: string;
+      def: string;
+      pron: string;
+      ex: string;
+      exTrans: string;
+    }> = [];
+
+    let match;
+    while ((match = markRegex.exec(content)) !== null) {
+      const fullTag = match[0];
+      const word = match[1].trim();
+
+      const getAttr = (attr: string): string | null => {
+        const r = new RegExp(`${attr}=["']([^"']*)["']`, 'i');
+        const m = r.exec(fullTag);
+        return m ? m[1] : null;
+      };
+
+      const level = getAttr('data-level') || '';
+      const def = getAttr('data-def') || '';
+      const pron = getAttr('data-pron') || '';
+      const ex = getAttr('data-ex') || '';
+      const exTrans = getAttr('data-ex-trans') || '';
+
+      if (word) {
+        highlights.push({
+          word,
+          level,
+          def,
+          pron,
+          ex,
+          exTrans,
+        });
+      }
+    }
+
+    // Ensure a VocabularySet is linked to the article
+    let vocabSetId = article.vocabularySetId;
+    if (!vocabSetId) {
+      const newSet = await this.prisma.vocabularySet.create({
+        data: {
+          title: `Vocabulary for: ${article.title}`,
+          description: `Automatically generated vocabulary set for the article "${article.title}"`,
+          language: 'en',
+          type: 'reading',
+          isPublic: false,
+          isActive: true,
+          userId: creatorId || 'system',
+          tags: [],
+        },
+      });
+      vocabSetId = newSet.id;
+      await this.prisma.article.update({
+        where: { id: articleId },
+        data: { vocabularySetId: vocabSetId },
+      });
+    }
+
+    const activeEntryIds: string[] = [];
+
+    // Sync entries & items
+    for (const h of highlights) {
+      // Find or create Dictionary Entry
+      const entry = await this.prisma.entry.upsert({
+        where: {
+          idx_entries_word_lang: {
+            word: h.word.toLowerCase().trim(),
+            language: 'en',
+          },
+        },
+        update: {
+          pronunciation: h.pron || undefined,
+          partOfSpeech: h.level || undefined,
+          notes: h.def || undefined,
+        },
+        create: {
+          word: h.word.toLowerCase().trim(),
+          language: 'en',
+          pronunciation: h.pron || '',
+          partOfSpeech: h.level || '',
+          notes: h.def || '',
+        },
+      });
+
+      activeEntryIds.push(entry.id);
+
+      // Create or update VocabularySetItem
+      await this.prisma.vocabularySetItem.upsert({
+        where: {
+          vocabularySetId_entryId: {
+            vocabularySetId: vocabSetId,
+            entryId: entry.id,
+          },
+        },
+        update: {
+          word: h.word,
+          definition: h.def,
+          example: h.ex,
+          notes: h.exTrans,
+          deleted: false,
+        },
+        create: {
+          vocabularySetId: vocabSetId,
+          entryId: entry.id,
+          word: h.word,
+          definition: h.def,
+          example: h.ex,
+          notes: h.exTrans,
+          deleted: false,
+        },
+      });
+    }
+
+    // Prune removed words from VocabularySetItem
+    await this.prisma.vocabularySetItem.deleteMany({
+      where: {
+        vocabularySetId: vocabSetId,
+        entryId: { notIn: activeEntryIds },
+      },
+    });
+
+    // Update Entry Count
+    const currentCount = await this.prisma.vocabularySetItem.count({
+      where: { vocabularySetId: vocabSetId },
+    });
+    await this.prisma.vocabularySet.update({
+      where: { id: vocabSetId },
+      data: { entryCount: currentCount },
+    });
+  }
 }

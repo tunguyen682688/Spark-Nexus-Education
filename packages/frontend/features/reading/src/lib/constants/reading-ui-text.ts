@@ -28,7 +28,7 @@ export const READING_UI_TEXT = {
     READ_TIME_HEADING: 'Thời gian đọc',
   },
   academic: {
-    TITLE: 'Thư viện Học thuật',
+    TITLE: 'Sách học thuật',
     SUBTITLE: 'Tuyển tập các tạp chí khoa học, sách giáo khoa và ấn phẩm nghiên cứu chọn lọc.',
     BACK_TO_EXPLORE: 'Quay lại Khám phá',
     SEARCH_PLACEHOLDER: 'Tìm kiếm tên sách, tác giả, hoặc chuyên ngành...',
@@ -192,5 +192,32 @@ export const READING_UI_TEXT = {
       FILTER_SORT: 'Sắp xếp',
       FILTER_SORT_BY: 'Sắp xếp theo',
     }
+  },
+  library: {
+    TITLE: 'Thư viện bài đọc của tôi',
+    TAB_READING: 'Thư viện đọc',
+    TAB_CREATED: 'Tác phẩm của tôi',
+    IN_PROGRESS: 'Đang đọc dở',
+    VIEW_ALL: 'Xem tất cả',
+    COLLECTIONS: 'Bộ sưu tập cá nhân',
+    HISTORY: 'Lịch sử bài đọc',
+    YOUR_WORKS: 'Bài viết & Sách của bạn',
+    YOUR_WORKS_SUB: 'Soạn thảo, quản lý bài viết và phát hành tác phẩm của riêng bạn trong Content Studio.',
+    WRITE_NEW: 'Viết tác phẩm mới',
+    NO_WORKS: 'Chưa có tác phẩm nào',
+    NO_WORKS_SUB: 'Hãy bắt đầu sáng tác bài viết hoặc biên soạn sách đầu tiên của bạn ngay bây giờ!',
+    CREATE_FIRST: 'Tạo bài viết đầu tiên',
+    CONFIRM_DELETE: 'Bạn có chắc chắn muốn xóa tác phẩm này không? Hành động này không thể hoàn tác.',
+    TOAST_SUCCESS: 'Thành công',
+    TOAST_DELETE_SUCCESS: 'Tác phẩm đã được xóa khỏi danh sách của bạn.',
+    TOAST_ERROR: 'Lỗi',
+    TOAST_DELETE_ERROR: 'Không thể xóa tác phẩm. Vui lòng thử lại sau.',
+  },
+  myArticleCard: {
+    PUBLISHED: 'Đã xuất bản',
+    DRAFT: 'Bản nháp',
+    EDIT: 'Chỉnh sửa',
+    LAST_UPDATED: 'Cập nhật:',
+    WORDS: 'từ',
   }
 };

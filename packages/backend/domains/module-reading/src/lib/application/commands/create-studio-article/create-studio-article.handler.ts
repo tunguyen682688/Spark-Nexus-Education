@@ -29,6 +29,7 @@ export class CreateStudioArticleHandler
       author: command.author || null,
       creatorId: command.userId,
       isCommunity: true,
+      contentType: command.contentType,
     });
 
     if (command.status === 'PUBLISHED') {
@@ -36,6 +37,11 @@ export class CreateStudioArticleHandler
     }
 
     const saved = await this.readingRepository.saveArticle(article);
+    await this.readingRepository.syncArticleVocabulary(
+      saved.getId(),
+      command.userId,
+      saved.getContent()
+    );
     return saved.getId();
   }
 }

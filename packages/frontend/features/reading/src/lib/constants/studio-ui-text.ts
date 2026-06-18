@@ -76,10 +76,16 @@ export const STUDIO_UI_TEXT = {
   PREVIEW_CLOSE: 'Đóng',
 
   // ── Toast Messages ──
+  TOAST_TITLE_SUCCESS: 'Thành công',
+  TOAST_TITLE_ERROR: 'Lỗi',
+  TOAST_TITLE_DELETED: 'Đã xoá',
+  TOAST_TITLE_INFO: 'Thông báo',
   TOAST_DRAFT_SAVED: 'Bản nháp đã được lưu thành công.',
   TOAST_PUBLISHED: 'Bài viết đã được xuất bản thành công!',
   TOAST_DELETED: 'Bài viết đã bị xoá.',
   TOAST_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+  TOAST_URL_IMPORT_COMMING_SOON: 'Tính năng nhập từ URL sẽ sớm ra mắt.',
+  DEFAULT_CHAPTER_TITLE: 'Chương mới',
 
   // ── Confirm Dialog ──
   CONFIRM_DISCARD_TITLE: 'Huỷ bỏ bài viết?',

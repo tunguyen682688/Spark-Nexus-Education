@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Settings, ChevronDown } from 'lucide-react';
+import { Plus, Settings, ChevronDown, ListTree } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface Chapter {
@@ -26,11 +26,16 @@ export const BookStudioSidebar: React.FC<BookStudioSidebarProps> = ({
   isOverviewActive,
 }) => {
   return (
-    <div className="w-64 bg-white/40 dark:bg-[#121826]/80 backdrop-blur-xl border-r border-slate-200/60 dark:border-white/5 h-full flex flex-col shrink-0 font-sans">
-      <div className="p-5 border-b border-slate-200/60 dark:border-white/5 flex items-center justify-between">
-        <h2 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-widest">
-          Manuscript Tree
-        </h2>
+    <div className="w-full h-full flex flex-col bg-transparent font-sans">
+      <div className="p-5 border-b border-slate-200/60 dark:border-white/5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-md bg-blue-500/10 dark:bg-blue-500/20">
+            <ListTree className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h2 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-widest">
+            Manuscript Tree
+          </h2>
+        </div>
         <button 
           onClick={onAddChapter}
           className="p-1 rounded bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 hover:scale-110 transition-all duration-300"

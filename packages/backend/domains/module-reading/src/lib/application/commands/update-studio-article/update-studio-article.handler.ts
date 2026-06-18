@@ -34,6 +34,7 @@ export class UpdateStudioArticleHandler
       thumbnailUrl: command.thumbnailUrl,
       sourceUrl: command.sourceUrl,
       author: command.author,
+      contentType: command.contentType,
     });
 
     if (command.status === 'PUBLISHED' && !article.getIsPublished()) {
@@ -43,6 +44,11 @@ export class UpdateStudioArticleHandler
     }
 
     await this.readingRepository.saveArticle(article);
+    await this.readingRepository.syncArticleVocabulary(
+      article.getId(),
+      command.userId,
+      article.getContent()
+    );
     return article.getId();
   }
 }

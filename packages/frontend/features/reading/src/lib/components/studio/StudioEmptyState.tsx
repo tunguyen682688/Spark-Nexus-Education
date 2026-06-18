@@ -7,12 +7,14 @@ interface StudioEmptyStateProps {
   onCreateNew: () => void;
   onImportUrl: () => void;
   onChooseTemplate: () => void;
+  isCreating?: boolean;
 }
 
 export const StudioEmptyState: React.FC<StudioEmptyStateProps> = ({
   onCreateNew,
   onImportUrl,
   onChooseTemplate,
+  isCreating = false,
 }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[500px] bg-slate-900/5 dark:bg-slate-100/5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 border-dashed m-6">
@@ -30,10 +32,15 @@ export const StudioEmptyState: React.FC<StudioEmptyStateProps> = ({
       <div className="flex flex-wrap items-center justify-center gap-4">
         <Button 
           onClick={onCreateNew} 
+          disabled={isCreating}
           className="bg-blue-600 hover:bg-blue-700 text-white gap-2 font-semibold px-6 py-5 rounded-xl shadow-sm"
         >
-          <PenLine className="w-5 h-5" />
-          {STUDIO_UI_TEXT.BTN_CREATE_NEW}
+          {isCreating ? (
+             <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+          ) : (
+             <PenLine className="w-5 h-5" />
+          )}
+          {isCreating ? "Đang khởi tạo..." : STUDIO_UI_TEXT.BTN_CREATE_NEW}
         </Button>
 
         <Button 

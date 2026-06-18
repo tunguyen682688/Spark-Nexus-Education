@@ -21,6 +21,7 @@ export interface Article {
   timeSpent: number; // seconds
   readTime?: string; // e.g. "5 min read"
   viewCount?: number;
+  contentType?: string;
 }
 
 export interface ReadingProgress {
@@ -86,10 +87,49 @@ export type ContentType = 'article' | 'book' | 'book_chapter' | 'news' | 'blog';
 
 export type ArticleStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED';
 
+export interface EditorJsBlockData {
+  text?: string;
+  level?: number;
+  items?: string[];
+  style?: string;
+  caption?: string;
+  url?: string;
+  file?: {
+    url: string;
+  };
+  original?: string;
+  translation?: string;
+}
+
+export interface EditorJsBlock {
+  id?: string;
+  type: string;
+  data: EditorJsBlockData;
+}
+
+export interface EditorJsOutputData {
+  time?: number;
+  blocks: EditorJsBlock[];
+  version?: string;
+}
+
+export interface BookContentPayload {
+  chapters: { id: string; title: string; content: EditorJsOutputData | null; isDraft: boolean }[];
+  audioUrl: string | null;
+  isBilingual: boolean;
+}
+
+export interface ArticleContentPayload {
+  editorData: EditorJsOutputData | null;
+  audioUrl: string | null;
+  isBilingual: boolean;
+}
+
+export type StudioContentPayload = BookContentPayload | ArticleContentPayload;
+
 export interface StudioFormValues {
   title: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any; // EditorJS OutputData object
+  content: EditorJsOutputData | null;
   summary: string;
   contentType: ContentType;
   category: string;
@@ -105,6 +145,9 @@ export interface StudioFormValues {
   audioUrl?: string | null;
   isBilingual?: boolean;
   publishedAt?: string;
+  chapters?: { id: string; title: string; content: EditorJsOutputData | null; isDraft: boolean }[];
+  chapterTitle?: string;
+  chapterContent?: EditorJsOutputData | null;
 }
 
 export interface ArticleTemplate {
@@ -118,8 +161,7 @@ export interface ArticleTemplate {
 
 export interface CreateArticlePayload {
   title: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any; // EditorJS OutputData or serialized string
+  content: StudioContentPayload | EditorJsOutputData | string | null;
   summary?: string;
   category: string;
   contentType?: ContentType;
@@ -137,3 +179,4 @@ export interface CreateArticlePayload {
 export interface UpdateArticlePayload extends Partial<CreateArticlePayload> {
   id: string;
 }
+

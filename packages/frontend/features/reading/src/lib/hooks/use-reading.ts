@@ -116,3 +116,43 @@ export function useInteractArticle() {
     },
   });
 }
+
+export function useVocabularyEntryDetail(word: string | null | undefined) {
+  return useQuery({
+    queryKey: ['vocabulary', 'entry', word?.toLowerCase().trim() ?? ''],
+    queryFn: () => readingApi.getEntryDetail(word as string),
+    enabled: !!word && word.trim().length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useContextTranslation(word: string | null | undefined, sentence: string | null | undefined) {
+  return useQuery({
+    queryKey: ['reading', 'translate-context', word?.toLowerCase().trim() ?? '', sentence?.trim() ?? ''],
+    queryFn: () => readingApi.translateContext(word as string, sentence as string),
+    enabled: !!word && !!sentence && word.trim().length > 0 && sentence.trim().length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUserVocabularyPackages() {
+  return useQuery({
+    queryKey: ['vocabulary', 'my-packages'],
+    queryFn: () => readingApi.getUserVocabularyPackages(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useAddWordToPackage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ packageId, payload }: { packageId: string; payload: any }) =>
+      readingApi.addWordToPackage(packageId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['vocabulary', 'my-packages'],
+      });
+    },
+  });
+}

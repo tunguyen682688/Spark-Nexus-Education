@@ -48,7 +48,10 @@ export const NewsContainer: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {heroArticle && (
-            <NewsHeroCard article={heroArticle} onTagClick={handleQuickTagClick} />
+            <NewsHeroCard
+              article={heroArticle}
+              onTagClick={handleQuickTagClick}
+            />
           )}
           {otherArticles.map((article) => (
             <div key={article.id} className="col-span-1">
@@ -61,7 +64,7 @@ export const NewsContainer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen font-sans">
+    <div className="max-w-full mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
       {/* Back Button */}
       <button
         onClick={() => navigate('/reading/explore')}
@@ -125,9 +128,12 @@ export const NewsContainer: React.FC = () => {
             </div>
           ) : error ? (
             <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-950 p-8 shadow-sm">
-              <p className="text-red-500 font-bold mb-2">{READING_UI_TEXT.news.ERROR_LOADING}</p>
+              <p className="text-red-500 font-bold mb-2">
+                {READING_UI_TEXT.news.ERROR_LOADING}
+              </p>
               <p className="text-slate-500 text-sm mb-4">
-                {(error as Error)?.message || READING_UI_TEXT.news.DEFAULT_ERROR}
+                {(error as Error)?.message ||
+                  READING_UI_TEXT.news.DEFAULT_ERROR}
               </p>
               <Button
                 onClick={() => window.location.reload()}

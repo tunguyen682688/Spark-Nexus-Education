@@ -1,10 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  useReadingDashboard,
-  useArticles,
-  useCommunityArticles,
-} from '../hooks/use-reading';
 import { TrendingPublications } from '../components/dashboard/TrendingPublications';
 import { ReadingStatsBar } from '../components/dashboard/ReadingStatsBar';
 import { BookNook } from '../components/dashboard/BookNook';
@@ -21,74 +16,35 @@ import {
   Input,
   Button,
 } from '@spark-nest-ed/frontend-shared-components';
-import { Search, Compass, Users, BookOpen, PenLine } from 'lucide-react';
+import { Search, Compass, Users, BookOpen, PenLine, Library } from 'lucide-react';
+import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { useArticleHub } from '../hooks/use-article-hub';
 
 export const ArticleHubContainer: React.FC = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState<{
-    category?: string;
-    difficulty?: string;
-    status?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }>({
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
 
-  // Fetch dashboard aggregate data
   const {
-    data: dashboardData,
-    isLoading: isDashboardLoading,
-    isError: isDashboardError,
-  } = useReadingDashboard();
-
-  // Prepare query parameters for discover articles list
-  const queryParams = {
-    page: 1,
-    pageSize: 6,
-    sortBy: activeFilters.sortBy,
-    sortOrder: activeFilters.sortOrder,
-    q: searchTerm || undefined,
-    filters: {
-      category: activeFilters.category || undefined,
-      difficulty: activeFilters.difficulty || undefined,
-      status: activeFilters.status || undefined,
-    },
-  };
-
-  // Fetch discover articles
-  const {
-    data: discoverData,
-    isLoading: isDiscoverLoading,
-    isError: isDiscoverError,
-  } = useArticles(queryParams);
-
-  // Fetch community articles
-  const [communitySort, setCommunitySort] = useState<
-    'trending' | 'newest' | 'top'
-  >('trending');
-  const {
-    data: communityData,
-    isLoading: isCommunityLoading,
-  } = useCommunityArticles(communitySort, 10);
-
-  const [activeTab, setActiveTab] = useState<'official' | 'community'>(
-    'official'
-  );
-
-  const handleFilterChange = (newFilters: Partial<typeof activeFilters>) => {
-    setActiveFilters((prev) => ({ ...prev, ...newFilters }));
-  };
+    searchTerm,
+    setSearchTerm,
+    activeFilters,
+    handleFilterChange,
+    isPageLoading,
+    isPageError,
+    dashboardData,
+    discoverData,
+    communitySort,
+    setCommunitySort,
+    communityData,
+    isCommunityLoading,
+    activeTab,
+    setActiveTab,
+  } = useArticleHub();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
   };
 
-  const isPageLoading = isDashboardLoading || isDiscoverLoading;
-
-  if (isDashboardError || isDiscoverError) {
+  if (isPageError) {
     return (
       <div className="p-8 text-center space-y-4">
         <h3 className="text-xl font-bold text-red-600">
@@ -103,7 +59,7 @@ export const ArticleHubContainer: React.FC = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto p-4 md:p-6 space-y-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen">
+    <div className="max-w-full mx-auto p-4 md:p-6 space-y-6 bg-background min-h-screen">
       {/* Search Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors">
         <div className="flex items-center gap-2.5">
@@ -134,6 +90,10 @@ export const ArticleHubContainer: React.FC = () => {
               className="pl-9 h-9 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 text-xs w-full bg-slate-50/50 dark:bg-slate-800/50 dark:text-slate-200 rounded-lg transition-colors"
             />
           </form>
+          <Button onClick={() => navigate(ROUTES.READING.MY_LIBRARY)} variant="outline" className="gap-2 shrink-0 h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+            <Library className="w-4 h-4" />
+            <span className="hidden sm:inline">Thư viện của tôi</span>
+          </Button>
           <Button onClick={() => navigate(ROUTES.READING.STUDIO)} className="gap-2 shrink-0 h-9 px-4 text-xs font-semibold">
             <PenLine className="w-4 h-4" />
             <span className="hidden sm:inline">{READING_UI_TEXT.hub.CREATE_STUDIO}</span>
@@ -188,22 +148,24 @@ export const ArticleHubContainer: React.FC = () => {
                   <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-4">
                     <button
                       onClick={() => setActiveTab('official')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all",
                         activeTab === 'official'
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                          : 'bg-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                      }`}
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/30"
+                          : "bg-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      )}
                     >
                       <BookOpen className="w-4 h-4" />
                       {READING_UI_TEXT.hub.TAB_OFFICIAL}
                     </button>
                     <button
                       onClick={() => setActiveTab('community')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all",
                         activeTab === 'community'
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                          : 'bg-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                      }`}
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/30"
+                          : "bg-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      )}
                     >
                       <Users className="w-4 h-4" />
                       {READING_UI_TEXT.hub.TAB_COMMUNITY}
@@ -247,11 +209,12 @@ export const ArticleHubContainer: React.FC = () => {
                             <button
                               key={sort}
                               onClick={() => setCommunitySort(sort)}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${
+                              className={cn(
+                                "px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors",
                                 communitySort === sort
-                                  ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                              }`}
+                                  ? "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                                  : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                              )}
                             >
                               {sort}
                             </button>

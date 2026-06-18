@@ -3,6 +3,12 @@ import { READING_UI_TEXT } from '../../constants';
 import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@spark-nest-ed/frontend-shared-components';
 import { BookOpen, Plus, Check, Loader2, X } from 'lucide-react';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { 
+  useVocabularyEntryDetail, 
+  useContextTranslation, 
+  useUserVocabularyPackages, 
+  useAddWordToPackage 
+} from '../../hooks/use-reading';
 
 interface WordSelectionPopoverProps {
   word: string;
@@ -10,6 +16,9 @@ interface WordSelectionPopoverProps {
   x: number;
   y: number;
   onClose: () => void;
+  initialDefinition?: string;
+  initialPronunciation?: string;
+  initialPartOfSpeech?: string;
 }
 
 export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
@@ -18,118 +27,115 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
   x,
   y,
   onClose,
+  initialDefinition,
+  initialPronunciation,
+  initialPartOfSpeech,
 }) => {
-  const [loading, setLoading] = useState(true);
   const [definition, setDefinition] = useState('');
   const [pronunciation, setPronunciation] = useState('');
   const [partOfSpeech, setPartOfSpeech] = useState('noun');
   const [userSets, setUserSets] = useState<Array<{ id: string; title: string }>>([]);
   const [selectedSetId, setSelectedSetId] = useState('');
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Context translation states
   const [contextTranslation, setContextTranslation] = useState('');
   const [contextExplanation, setContextExplanation] = useState('');
 
+  // Call React Query Hooks
+  const queryEnabled = !initialDefinition;
+  
+  const { data: dictData, isFetching: isFetchingDict } = useVocabularyEntryDetail(queryEnabled ? word : undefined);
+  const { data: contextData, isFetching: isFetchingContext } = useContextTranslation(
+    queryEnabled ? word : undefined,
+    queryEnabled ? sentenceContext : undefined
+  );
+  
+  const { data: packagesData, isFetching: isFetchingPackages } = useUserVocabularyPackages();
+  const addWordMutation = useAddWordToPackage();
+
+  // Populate initial values if provided
   useEffect(() => {
-    const fetchWordDetailsAndSets = async () => {
-      try {
-        setLoading(true);
-        const { getAxiosClient } = await import('@spark-nest-ed/frontend-core-api');
-        const axios = getAxiosClient();
-
-        let resolvedDefinition = '';
-
-        // 1. Fetch word definition from dictionary
-        try {
-          const dictResponse = await axios.get(`/vocabulary/entries/${word.toLowerCase().trim()}`);
-          if (dictResponse.data && dictResponse.data.data) {
-            const attributes = dictResponse.data.data.attributes;
-            resolvedDefinition = attributes.definition || attributes.notes || '';
-            setDefinition(resolvedDefinition);
-            setPronunciation(attributes.pronunciation || '');
-            setPartOfSpeech(attributes.partOfSpeech || 'noun');
-          }
-        } catch {
-          setDefinition('');
-          setPronunciation('');
-        }
-
-        // 2. Fetch Contextual Translation
-        if (sentenceContext) {
-          try {
-            const contextResponse = await axios.post('/reading/translate-context', {
-              word,
-              sentence: sentenceContext,
-            });
-            if (contextResponse.data && contextResponse.data.data) {
-              const attrs = contextResponse.data.data.attributes;
-              setContextTranslation(attrs.translation);
-              setContextExplanation(attrs.explanation);
-              // Auto-fill definition input if dictionary lookup returned empty
-              if (!resolvedDefinition) {
-                setDefinition(`${attrs.translation}`);
-              }
-            }
-          } catch (err) {
-            console.error('Failed to get contextual translation', err);
-          }
-        }
-
-        // 3. Fetch user's vocabulary sets to populate selector
-        const setsResponse = await axios.get('/vocabulary/packages/my/created');
-        if (setsResponse.data && setsResponse.data.data) {
-          const sets = setsResponse.data.data.map((item: { id: string; attributes: { title: string } }) => ({
-            id: item.id,
-            title: item.attributes.title,
-          }));
-          setUserSets(sets);
-          if (sets.length > 0) {
-            setSelectedSetId(sets[0].id);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching popover details', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (word) {
-      fetchWordDetailsAndSets();
+    if (initialDefinition) {
+      setDefinition(initialDefinition);
+      setPronunciation(initialPronunciation || '');
+      setPartOfSpeech(initialPartOfSpeech || 'noun');
     }
-  }, [word, sentenceContext]);
+  }, [initialDefinition, initialPronunciation, initialPartOfSpeech]);
+
+  // Set dictionary definitions
+  useEffect(() => {
+    if (dictData && !initialDefinition) {
+      const attributes = dictData.attributes || dictData;
+      const resolvedDefinition = attributes.definition || attributes.notes || '';
+      setDefinition(resolvedDefinition);
+      setPronunciation(attributes.pronunciation || '');
+      setPartOfSpeech(attributes.partOfSpeech || 'noun');
+    }
+  }, [dictData, initialDefinition]);
+
+  // Set context translation definitions
+  useEffect(() => {
+    if (contextData && !initialDefinition) {
+      const attrs = contextData.attributes || contextData;
+      setContextTranslation(attrs.translation);
+      setContextExplanation(attrs.explanation);
+      
+      // Auto-fill definition input if dictionary lookup returned empty
+      setDefinition(prev => prev || attrs.translation || '');
+    }
+  }, [contextData, initialDefinition]);
+
+  // Populate user sets options
+  useEffect(() => {
+    if (packagesData) {
+      const packagesList = packagesData.data || packagesData;
+      const arrayList = Array.isArray(packagesList) ? packagesList : (packagesData.data || []);
+      
+      const sets = arrayList.map((item: any) => {
+        const id = item.id;
+        const attributes = item.attributes || item;
+        return {
+          id,
+          title: attributes.title,
+        };
+      });
+      setUserSets(sets);
+      if (sets.length > 0) {
+        setSelectedSetId(sets[0].id);
+      }
+    }
+  }, [packagesData]);
 
   const handleSaveWord = async () => {
     if (!selectedSetId) return;
 
+    const payload = {
+      word: {
+        word: word.trim(),
+        definition: definition.trim() || `Definition for ${word}`,
+        example: sentenceContext.trim() || null,
+        partOfSpeech: partOfSpeech || null,
+        notes: 'Added from Interactive Reader',
+      },
+    };
+
     try {
-      setSaving(true);
-      const { getAxiosClient } = await import('@spark-nest-ed/frontend-core-api');
-      const axios = getAxiosClient();
-
-      const payload = {
-        word: {
-          word: word.trim(),
-          definition: definition.trim() || `Definition for ${word}`,
-          example: sentenceContext.trim() || null,
-          partOfSpeech: partOfSpeech || null,
-          notes: 'Added from Interactive Reader',
-        },
-      };
-
-      await axios.post(`/vocabulary/packages/${selectedSetId}/words`, payload);
+      await addWordMutation.mutateAsync({
+        packageId: selectedSetId,
+        payload,
+      });
       setSaved(true);
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err) {
       console.error('Failed to save word', err);
-    } finally {
-      setSaving(false);
     }
   };
+
+  const loading = isFetchingDict || isFetchingContext || isFetchingPackages;
+  const saving = addWordMutation.isPending;
 
   return (
     <Card 

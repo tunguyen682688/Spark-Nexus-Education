@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useArticles, useCommunityArticles } from '../hooks/use-reading';
+import React from 'react';
 import {
   Button,
   Input,
@@ -17,58 +16,33 @@ import { ArticleCard } from '../components/shared/ArticleCard';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL, ROUTES } from '@spark-nest-ed/frontend-core-constants';
 import { EXPLORE_DATA, READING_UI_TEXT } from '../constants';
+import { useExploreContainer } from '../hooks/use-explore-container';
 
 export const ExploreContainer: React.FC = () => {
   const navigate = useNavigate();
-  const [activeLevel, setActiveLevel] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
 
-  // Debounce search term
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
-
-  const commonFilters = activeLevel ? { difficulty: activeLevel } : {};
-
-  // Fetch Featured Research
-  const { data: featuredData, isLoading: isFeaturedLoading } = useArticles({
-    limit: 1,
-    search: debouncedSearch || undefined,
-    filters: { ...commonFilters, category: 'academic' },
-  });
-
-  // Fetch Latest News
-  const { data: newsData, isLoading: isNewsLoading } = useArticles({
-    limit: 2,
-    search: debouncedSearch || undefined,
-    filters: { ...commonFilters, category: 'news' },
-  });
-
-  // Fetch New Books
-  const { data: booksData, isLoading: isBooksLoading } = useArticles({
-    limit: 3,
-    search: debouncedSearch || undefined,
-    filters: { ...commonFilters, category: 'book' },
-  });
-
-  const { data: communityData, isLoading: isCommunityLoading } = useCommunityArticles('trending', 3);
+  const {
+    activeLevel,
+    setActiveLevel,
+    searchTerm,
+    setSearchTerm,
+    featuredArticle,
+    isFeaturedLoading,
+    latestNews,
+    isNewsLoading,
+    newBooks,
+    isBooksLoading,
+    topShared,
+    isCommunityLoading,
+  } = useExploreContainer();
 
   const levels = EXPLORE_DATA.LEVELS;
   const keywords = EXPLORE_DATA.KEYWORDS;
   const savedFilters = EXPLORE_DATA.SAVED_FILTERS;
   const topContributors = EXPLORE_DATA.TOP_CONTRIBUTORS;
 
-  const featuredArticle = featuredData?.data?.[0];
-  const latestNews = newsData?.data;
-  const newBooks = booksData?.data;
-  const topShared = communityData?.data?.slice(0, 3);
-
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen font-sans">
+    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
       
       {/* Header Section */}
       <div className="flex flex-col items-center mb-10 space-y-6">

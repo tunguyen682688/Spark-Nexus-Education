@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import EditorJS, { OutputData } from '@editorjs/editorjs';
+import EditorJS, { OutputData, ToolSettings, ToolConstructable } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
@@ -12,10 +12,8 @@ import VocabularyTool from './VocabularyTool';
 import BilingualBlock from './BilingualBlock';
 
 interface BlockEditorProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any; // OutputData object or null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (value: any) => void;
+  value: OutputData | null;
+  onChange: (value: OutputData) => void;
   placeholder?: string;
 }
 
@@ -114,8 +112,7 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
       holder: containerRef.current,
       placeholder: placeholder || 'Bắt đầu viết nội dung ở đây...',
       data: initialData,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tools: getToolConfig() as any,
+      tools: getToolConfig() as unknown as { [toolName: string]: ToolConstructable | ToolSettings },
       onChange: async (api) => {
         isInternalChange.current = true;
         try {

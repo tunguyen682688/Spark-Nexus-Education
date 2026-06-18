@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
 import { READING_UI_TEXT } from '../../constants';
 import type { Article } from '../../types';
+import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface NewsHeroCardProps {
   article: Article;
@@ -65,7 +66,7 @@ export const NewsHeroCard: React.FC<NewsHeroCardProps> = ({ article, onTagClick 
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] font-bold text-slate-400">
                 <span>{READING_UI_TEXT.components.news.HERO_PROGRESS}</span>
-                <span className={isCompleted ? 'text-emerald-500' : 'text-orange-500'}>{article.progress}%</span>
+                <span className={cn(isCompleted ? 'text-emerald-500' : 'text-orange-500')}>{article.progress}%</span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                 <div className={`h-full ${progressBarColor}`} style={{ width: `${article.progress}%` }} />

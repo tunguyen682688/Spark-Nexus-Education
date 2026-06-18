@@ -26,8 +26,8 @@ const ENDPOINTS = {
   studioCreate: '/reading/articles/studio',
   studioUpdate: (id: string) => `/reading/articles/${id}`,
   studioDraft: (id: string) => `/reading/articles/${id}/draft`,
-  studioDelete: (id: string) => `/reading/articles/${id}`,
-  myArticles: '/reading/articles/my',
+  studioDelete: (id: string) => `/reading/articles/${id}/delete`,
+  myArticles: '/reading/articles/my/list',
 } as const;
 
 type ResourceResponse<T> =
@@ -145,6 +145,17 @@ function buildQueryString(params?: ApiQueryParams): string {
   return queryString.trim().length > 0 ? `?${queryString}` : '';
 }
 
+function serializeContent(content: unknown): string {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  try {
+    return JSON.stringify(content);
+  } catch (e) {
+    console.error('Failed to stringify content', e);
+    return '';
+  }
+}
+
 export const readingApi = {
   async getDashboard(): Promise<ReadingDashboardData> {
     const axios = await getAxiosInstance();
@@ -205,25 +216,37 @@ export const readingApi = {
 
   async createStudioArticle(payload: CreateArticlePayload): Promise<Article> {
     const axios = await getAxiosInstance();
-    const response = await axios.post<ResourceResponse<Article>>(ENDPOINTS.studioCreate, payload);
+    const formattedPayload = {
+      ...payload,
+      content: serializeContent(payload.content),
+    };
+    const response = await axios.post<ResourceResponse<Article>>(ENDPOINTS.studioCreate, formattedPayload);
     return extractResource(response.data);
   },
 
   async updateArticle(id: string, payload: Partial<CreateArticlePayload>): Promise<Article> {
     const axios = await getAxiosInstance();
-    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioUpdate(id), payload);
+    const formattedPayload = {
+      ...payload,
+      content: payload.content !== undefined ? serializeContent(payload.content) : undefined,
+    };
+    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioUpdate(id), formattedPayload);
     return extractResource(response.data);
   },
 
   async saveDraft(id: string, payload: Partial<CreateArticlePayload>): Promise<Article> {
     const axios = await getAxiosInstance();
-    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioDraft(id), payload);
+    const formattedPayload = {
+      ...payload,
+      content: payload.content !== undefined ? serializeContent(payload.content) : undefined,
+    };
+    const response = await axios.put<ResourceResponse<Article>>(ENDPOINTS.studioDraft(id), formattedPayload);
     return extractResource(response.data);
   },
 
   async deleteArticle(id: string): Promise<void> {
     const axios = await getAxiosInstance();
-    await axios.delete(ENDPOINTS.studioDelete(id));
+    await axios.post(ENDPOINTS.studioDelete(id));
   },
 
   async getMyArticles(params?: ApiQueryParams): Promise<SimplifiedPaginatedResponse<Article>> {
@@ -233,5 +256,32 @@ export const readingApi = {
       `${ENDPOINTS.myArticles}${queryString}`
     );
     return extractPaginatedResponse(response.data);
+  },
+
+  async getEntryDetail(word: string): Promise<any> {
+    const axios = await getAxiosInstance();
+    const response = await axios.get<ResourceResponse<any>>(`/vocabulary/entries/${word.toLowerCase().trim()}`);
+    return extractResource(response.data);
+  },
+
+  async translateContext(word: string, sentence: string): Promise<any> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<any>>('/reading/translate-context', {
+      word,
+      sentence,
+    });
+    return extractResource(response.data);
+  },
+
+  async getUserVocabularyPackages(): Promise<any> {
+    const axios = await getAxiosInstance();
+    const response = await axios.get<ResourceResponse<any>>('/vocabulary/packages/my/created');
+    return extractResource(response.data);
+  },
+
+  async addWordToPackage(packageId: string, payload: any): Promise<any> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<any>>(`/vocabulary/packages/${packageId}/words`, payload);
+    return extractResource(response.data);
   },
 };

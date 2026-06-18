@@ -1,5 +1,4 @@
-import React, { useState, useMemo } from 'react';
-import { useArticles, useReadingDashboard } from '../hooks/use-reading';
+import React from 'react';
 import {
   Button,
   Input,
@@ -11,13 +10,9 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   BookOpen,
-  Eye,
   LayoutGrid,
   List,
   Bookmark,
-  TrendingUp,
-  Sparkles,
-  Award,
   BookmarkCheck,
   Percent,
 } from 'lucide-react';
@@ -25,120 +20,43 @@ import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL, ROUTES } from '@spark-nest-ed/frontend-core-constants';
 import { ACADEMIC_DATA, READING_UI_TEXT } from '../constants';
 import type { Article } from '../types';
+import { useBooks } from '../hooks/use-books';
 
-export const AcademicContainer: React.FC = () => {
+export const BooksContainer: React.FC = () => {
   const navigate = useNavigate();
-  
-  // States
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedCefr, setSelectedCefr] = useState<string[]>([]); // Multi-select CEFR
-  const [selectedTags, setSelectedTags] = useState<string[]>(['Neuroscience', 'Physics']); // Default tags highlighted
-  const [cefrSliderVal, setCefrSliderVal] = useState<number>(3); // Slider (0: A1, 1: B1, 2: C1, 3: C2)
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
 
-  // Range text for CEFR Slider
-  const cefrRangeText = useMemo(() => {
-    if (cefrSliderVal === 0) return 'A1';
-    if (cefrSliderVal === 1) return 'A1 - B1';
-    if (cefrSliderVal === 2) return 'B1 - C1';
-    return 'B2 - C2'; // Default matching mockup
-  }, [cefrSliderVal]);
+  const {
+    viewMode,
+    setViewMode,
+    searchTerm,
+    setSearchTerm,
+    selectedCefr,
+    setSelectedCefr,
+    selectedTags,
+    setSelectedTags,
+    cefrSliderVal,
+    setCefrSliderVal,
+    bookmarkedIds,
+    categoryFilter,
+    setCategoryFilter,
+    cefrRangeText,
+    isLoading,
+    error,
+    filteredBooks,
+    allBooks,
+    isFetchingNextPage,
+    loadMoreRef,
+    inProgressBooks,
+    handleToggleBookmark,
+    handleToggleTag,
+    handleToggleCefrButton,
+  } = useBooks();
 
-  // Fetch academic books
-  const { data: booksData, isLoading, error } = useArticles({
-    limit: 20,
-    filters: {
-      category: 'academic',
-    },
-  });
-
-  const allBooks = useMemo(() => booksData?.data || [], [booksData?.data]);
-  
-  // Fetch Dashboard Data for progress and trending
-  const { data: dashboardData } = useReadingDashboard();
-
-  // Filter books locally to support range slider and tag intersections matching the mockup
-  const filteredBooks = useMemo(() => {
-    return allBooks.filter((book) => {
-      // 1. Search Query
-      if (searchTerm) {
-        const query = searchTerm.toLowerCase();
-        const matchesTitle = book.title.toLowerCase().includes(query);
-        const matchesAuthor = book.author?.toLowerCase().includes(query) || false;
-        const matchesSummary = book.summary?.toLowerCase().includes(query) || false;
-        if (!matchesTitle && !matchesAuthor && !matchesSummary) return false;
-      }
-
-      // 2. CEFR Difficulty range mapping
-      const difficulty = book.difficulty.toUpperCase();
-      // Slider mapping filter:
-      // Slider level 0: A1, A2
-      // Slider level 1: A1, A2, B1
-      // Slider level 2: B1, B2, C1
-      // Slider level 3: B2, C1, C2
-      if (cefrSliderVal === 0 && !['A1', 'A2'].includes(difficulty)) return false;
-      if (cefrSliderVal === 1 && !['A1', 'A2', 'B1'].includes(difficulty)) return false;
-      if (cefrSliderVal === 2 && !['B1', 'B2', 'C1'].includes(difficulty)) return false;
-      if (cefrSliderVal === 3 && !['B2', 'C1', 'C2'].includes(difficulty)) return false;
-
-      // 3. Selectable CEFR button filters (if any selected)
-      if (selectedCefr.length > 0 && !selectedCefr.includes(difficulty)) return false;
-
-      // 4. Discipline Tags Filter (intersection check if active)
-      if (selectedTags.length > 0) {
-        const bookTagsLower = book.tags.map((t) => t.toLowerCase());
-        const hasMatchingTag = selectedTags.some((tag) =>
-          bookTagsLower.includes(tag.toLowerCase())
-        );
-        if (!hasMatchingTag) return false;
-      }
-
-      return true;
-    });
-  }, [allBooks, searchTerm, cefrSliderVal, selectedCefr, selectedTags]);
-
-  // Derive Reading Progress books dynamically from backend
-  const inProgressBooks = useMemo(() => {
-    return dashboardData?.bookNook || [];
-  }, [dashboardData?.bookNook]);
-
-  // Derive Trending Reads from backend
-  const trendingReads = useMemo(() => {
-    return dashboardData?.trendingPublications.slice(0, 2) || [];
-  }, [dashboardData?.trendingPublications]);
-
-  // Bookmark Toggle
-  const handleToggleBookmark = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setBookmarkedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  // Tag Toggle
-  const handleToggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
-
-  // Cefr Button Toggle
-  const handleToggleCefrButton = (level: string) => {
-    setSelectedCefr((prev) =>
-      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level]
-    );
-  };
-
-  // Rendering individual card
+  // Render individual book cover card
   const renderBookCard = (book: Article) => {
     const isBookmarked = bookmarkedIds.has(book.id);
+    const isCompleted = book.progress >= 100;
+
     const difficultyLabel =
       book.difficulty === 'C2'
         ? 'C2 MASTERY'
@@ -160,10 +78,13 @@ export const AcademicContainer: React.FC = () => {
         <div
           key={book.id}
           onClick={() => navigate(`/reading/article/${book.id}`)}
-          className="bg-white dark:bg-slate-900 border border-slate-250/50 dark:border-slate-800/80 p-5 rounded-2xl flex items-center justify-between gap-6 cursor-pointer hover:shadow-md transition-all duration-300 group"
+          className="bg-white dark:bg-[#121826]/80 backdrop-blur-xl border border-slate-100 dark:border-white/5 p-5 rounded-2xl flex items-center justify-between gap-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group"
         >
           <div className="flex items-center gap-5 min-w-0">
-            <div className="w-16 h-20 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-slate-200/60 dark:border-slate-800/80 relative group-hover:scale-[1.02] transition-transform shadow-sm">
+            {/* 3D cover container list mode */}
+            <div className="w-16 h-20 bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-white/5 relative group-hover:scale-[1.05] transition-transform shadow-sm">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-r from-black/25 via-white/5 to-transparent z-10" />
+              <div className="absolute top-0 left-2 w-0.5 h-full bg-black/10 z-10" />
               <img
                 src={book.thumbnailUrl || DEFAULT_ARTICLE_THUMBNAIL}
                 onError={(e) => {
@@ -177,15 +98,18 @@ export const AcademicContainer: React.FC = () => {
               <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100 leading-snug group-hover:text-blue-500 transition-colors line-clamp-1">
                 {book.title}
               </h3>
-              <p className="text-slate-450 dark:text-slate-450 text-xs font-semibold mt-0.5">
-                {book.author}
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-semibold mt-0.5">
+                {book.author || 'Tác giả ẩn danh'}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge className={`text-[9px] font-bold py-0.5 px-2 rounded-md ${difficultyColor} border`}>
                   {difficultyLabel}
                 </Badge>
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-transparent text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
+                  {book.category === 'academic' ? 'Sách học thuật' : 'Truyện đọc'}
+                </Badge>
                 {book.tags?.[0] && (
-                  <Badge className="bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-850 text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
+                  <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
                     {book.tags[0]}
                   </Badge>
                 )}
@@ -195,17 +119,17 @@ export const AcademicContainer: React.FC = () => {
 
           <div className="flex items-center gap-6 shrink-0">
             <div className="text-right text-xs font-semibold text-slate-450 dark:text-slate-500 space-y-1">
-              <p className="flex items-center justify-end gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" /> {book.wordCount} {READING_UI_TEXT.academic.PAGES}
+              <p className="flex items-center justify-end gap-1.5 text-blue-600 dark:text-blue-400">
+                <BookOpen className="w-3.5 h-3.5" /> {Math.ceil(book.wordCount / 200)} trang
               </p>
               <p className="flex items-center justify-end gap-1.5">
-                <Eye className="w-3.5 h-3.5" /> {book.viewCount || 0} {READING_UI_TEXT.academic.VIEWS}
+                <span className="font-medium text-slate-400 dark:text-slate-500">{book.wordCount} từ</span>
               </p>
             </div>
 
             <button
               onClick={(e) => handleToggleBookmark(book.id, e)}
-              className="p-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 rounded-xl transition-colors cursor-pointer border border-slate-150/40 dark:border-slate-800"
+              className="p-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-blue-500 rounded-xl transition-colors cursor-pointer border border-slate-200/20 dark:border-slate-850"
             >
               {isBookmarked ? (
                 <BookmarkCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
@@ -222,54 +146,72 @@ export const AcademicContainer: React.FC = () => {
       <div
         key={book.id}
         onClick={() => navigate(`/reading/article/${book.id}`)}
-        className="bg-white dark:bg-slate-900 border border-slate-250/50 dark:border-slate-800/80 p-5 rounded-2xl flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group min-h-[190px]"
+        className="bg-white dark:bg-[#121826]/80 backdrop-blur-xl border border-slate-100 dark:border-white/5 p-3.5 rounded-2xl flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-300 group min-h-[260px]"
       >
-        <div className="flex gap-4">
-          {/* 3D cover container */}
-          <div className="w-20 h-28 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-slate-250/60 dark:border-slate-800/80 relative shadow-md group-hover:scale-103 transition-transform">
+        <div className="space-y-3">
+          {/* 3D cover container grid mode */}
+          <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-slate-950 flex shadow-sm group-hover:shadow-md transition-all duration-300">
+            <div className="absolute top-0 left-0 w-2.5 h-full bg-gradient-to-r from-black/25 via-white/5 to-transparent z-10" />
+            <div className="absolute top-0 left-2.5 w-0.5 h-full bg-black/10 z-10" />
             <img
               src={book.thumbnailUrl || DEFAULT_ARTICLE_THUMBNAIL}
               onError={(e) => {
                 e.currentTarget.src = DEFAULT_ARTICLE_THUMBNAIL;
               }}
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               alt={book.title}
             />
+
+            {/* Top cover indicators */}
+            <div className="absolute top-2.5 right-2.5 flex gap-1 z-20">
+              <Badge className="bg-black/60 text-white font-bold text-[9px] px-2 py-0.5 rounded backdrop-blur-md border border-white/10">
+                {book.difficulty}
+              </Badge>
+            </div>
+
+            {/* Reading progress ribbon overlay */}
+            {book.progress > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent z-20 text-white">
+                <div className="flex justify-between items-center text-[9px] font-bold mb-1">
+                  <span>TIẾN ĐỘ</span>
+                  <span className={isCompleted ? 'text-emerald-400' : 'text-amber-400'}>
+                    {book.progress}%
+                  </span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-1 overflow-hidden">
+                  <div
+                    className={`h-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${book.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-1.5">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 leading-snug group-hover:text-blue-500 transition-colors line-clamp-2">
-              {book.title}
-            </h3>
-            <p className="text-slate-450 dark:text-slate-450 text-[11px] font-semibold">
-              {book.author}
-            </p>
-
-            <div className="flex flex-col gap-1.5 pt-1">
-              <div>
-                <Badge className={`text-[9px] font-bold py-0.5 px-2 rounded-md ${difficultyColor} border`}>
-                  {difficultyLabel}
-                </Badge>
-              </div>
-              {book.tags?.[0] && (
-                <div>
-                  <Badge className="bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
-                    {book.tags[0]}
-                  </Badge>
-                </div>
-              )}
+          {/* Text Details */}
+          <div className="space-y-1 px-1">
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">
+                {book.category === 'academic' ? 'Sách học thuật' : 'Truyện đọc'}
+              </span>
             </div>
+            <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm line-clamp-2 leading-tight min-h-[36px] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+              {book.title}
+            </h4>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate">
+              {book.author || 'Tác giả ẩn danh'}
+            </p>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="flex justify-between items-center mt-5 pt-3 border-t border-slate-100 dark:border-slate-850/60 text-[11px] text-slate-400 dark:text-slate-500 font-bold">
+        <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/40 text-[11px] text-slate-400 dark:text-slate-500 font-bold px-1">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5" /> {book.wordCount} {READING_UI_TEXT.academic.PAGES}
+            <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+              <BookOpen className="w-3.5 h-3.5" /> {Math.ceil(book.wordCount / 200)} trang
             </span>
-            <span className="flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5" /> {book.viewCount || 0} {READING_UI_TEXT.academic.VIEWS}
+            <span className="flex items-center gap-1 font-medium text-slate-400 dark:text-slate-500">
+              {book.wordCount} từ
             </span>
           </div>
 
@@ -289,7 +231,7 @@ export const AcademicContainer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen font-sans">
+    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
       {/* Back Button */}
       <button
         onClick={() => navigate(ROUTES.READING.EXPLORE)}
@@ -329,17 +271,17 @@ export const AcademicContainer: React.FC = () => {
             {READING_UI_TEXT.academic.FEATURED_CURRICULUM}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
-            {READING_UI_TEXT.academic.HERO_TITLE}
+            Văn học Hiện đại và Khủng hoảng Biểu đạt
           </h2>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
-            {READING_UI_TEXT.academic.HERO_DESC}
+          <p className="text-slate-450 text-sm leading-relaxed max-w-xl">
+            Tiến sĩ Sarah Jenkins khám phá những câu chuyện phân mảnh và mỹ học phức tạp của đầu thế kỷ 20 trong cuốn giáo trình kinh điển này.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">
             <Button
               className="bg-white hover:bg-slate-100 text-slate-950 font-bold rounded-xl px-6 py-5 flex items-center gap-2 border-none shadow-sm transition-colors cursor-pointer"
               onClick={() => {
-                const specBook = allBooks.find((b) => b.title.includes('Modernist')) || allBooks[0];
+                const specBook = allBooks.find((b) => b.category === 'academic') || allBooks[0];
                 if (specBook) navigate(`/reading/article/${specBook.id}`);
               }}
             >
@@ -349,7 +291,7 @@ export const AcademicContainer: React.FC = () => {
               variant="outline"
               className="border-slate-800 hover:bg-slate-850/60 text-slate-350 hover:text-white font-bold rounded-xl px-6 py-5 flex items-center gap-2"
               onClick={(e) => {
-                const specBook = allBooks.find((b) => b.title.includes('Modernist')) || allBooks[0];
+                const specBook = allBooks.find((b) => b.category === 'academic') || allBooks[0];
                 if (specBook) handleToggleBookmark(specBook.id, e);
               }}
             >
@@ -363,21 +305,21 @@ export const AcademicContainer: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 pb-4 border-b border-slate-200/60 dark:border-slate-850/60 gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            {READING_UI_TEXT.academic.TITLE}
+            Thư viện Sách & Truyện đọc
           </h1>
-          <p className="text-slate-450 dark:text-slate-400 text-xs font-semibold mt-1">
-            {READING_UI_TEXT.academic.SUBTITLE}
+          <p className="text-slate-400 dark:text-slate-400 text-xs font-semibold mt-1">
+            Tuyển tập sách học thuật giáo khoa, nghiên cứu khoa học và truyện đọc phân chia theo CEFR.
           </p>
         </div>
 
         {/* List/Grid Layout Toggle buttons */}
-        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-850 shrink-0 shadow-sm">
+        <div className="flex items-center gap-2 bg-white dark:bg-[#121826] p-1 rounded-xl border border-slate-200/50 dark:border-white/5 shrink-0 shadow-sm">
           <button
             onClick={() => setViewMode('list')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
               viewMode === 'list'
                 ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-                : 'text-slate-450 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             <List className="w-3.5 h-3.5" /> {READING_UI_TEXT.academic.LIST_VIEW}
@@ -387,7 +329,7 @@ export const AcademicContainer: React.FC = () => {
             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
               viewMode === 'grid'
                 ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-                : 'text-slate-450 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" /> {READING_UI_TEXT.academic.GRID_VIEW}
@@ -400,11 +342,13 @@ export const AcademicContainer: React.FC = () => {
         {/* Left column - Book listings (8/12) */}
         <div className="lg:col-span-8 space-y-6">
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Skeleton className="w-full h-44 rounded-2xl" />
-              <Skeleton className="w-full h-44 rounded-2xl" />
-              <Skeleton className="w-full h-44 rounded-2xl" />
-              <Skeleton className="w-full h-44 rounded-2xl" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="bg-white dark:bg-[#121826] rounded-2xl border border-slate-100 dark:border-white/5 p-3.5 space-y-4 animate-pulse">
+                  <Skeleton className="aspect-[3/4] w-full rounded-xl" />
+                  <Skeleton className="h-4 w-3/4 rounded" />
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="text-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 p-8 rounded-2xl shadow-sm">
@@ -414,13 +358,13 @@ export const AcademicContainer: React.FC = () => {
               </p>
             </div>
           ) : filteredBooks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-850 p-8 rounded-2xl shadow-sm">
-              <BookOpen className="h-16 w-16 text-slate-300 dark:text-slate-750 mb-4" />
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#121826] border border-slate-200/50 dark:border-white/5 p-8 rounded-2xl shadow-sm">
+              <BookOpen className="h-16 w-16 text-slate-300 dark:text-slate-700 mb-4" />
               <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-200">
-                {READING_UI_TEXT.academic.NO_RESULTS}
+                Không tìm thấy cuốn sách nào
               </h3>
-              <p className="text-slate-450 dark:text-slate-450 max-w-sm mt-1 text-xs leading-relaxed font-semibold">
-                {READING_UI_TEXT.academic.NO_RESULTS_SUB}
+              <p className="text-slate-400 dark:text-slate-400 max-w-sm mt-1 text-xs leading-relaxed font-semibold">
+                Không có cuốn sách nào khớp với bộ lọc CEFR hoặc chủ đề của bạn.
               </p>
               <Button
                 onClick={() => {
@@ -428,6 +372,7 @@ export const AcademicContainer: React.FC = () => {
                   setSelectedCefr([]);
                   setSelectedTags([]);
                   setCefrSliderVal(3);
+                  setCategoryFilter('all');
                 }}
                 className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-6 py-2 border-none"
               >
@@ -435,24 +380,73 @@ export const AcademicContainer: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div
-              className={
-                viewMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 gap-6'
-                  : 'flex flex-col gap-4'
-              }
-            >
-              {filteredBooks.map((book) => renderBookCard(book))}
+            <div className="space-y-8">
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-2 md:grid-cols-3 gap-6'
+                    : 'flex flex-col gap-4'
+                }
+              >
+                {filteredBooks.map((book) => renderBookCard(book))}
+              </div>
+
+              {/* Skeletons loading next page */}
+              {isFetchingNextPage && (
+                <div
+                  className={
+                    viewMode === 'grid'
+                      ? 'grid grid-cols-2 md:grid-cols-3 gap-6 pt-6 border-t border-slate-100 dark:border-white/5 animate-pulse'
+                      : 'flex flex-col gap-4 pt-6 border-t border-slate-100 dark:border-white/5 animate-pulse'
+                  }
+                >
+                  {Array.from({ length: 3 }).map((_, idx) => (
+                    <Skeleton key={idx} className="w-full h-44 rounded-2xl dark:bg-slate-800" />
+                  ))}
+                </div>
+              )}
+
+              {/* Sentinel observer target */}
+              <div ref={loadMoreRef} className="h-4 w-full" />
             </div>
           )}
         </div>
 
         {/* Right column - Filtering & Query */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-5">
-            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-105 dark:border-slate-850 text-sm">
+          <div className="bg-white dark:bg-[#121826] p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm space-y-5">
+            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-100 dark:border-white/5 text-sm">
               <SlidersHorizontal className="w-4 h-4 text-blue-500" /> {READING_UI_TEXT.academic.REFINE_SEARCH}
             </h4>
+
+            {/* Book category filter selector (Consolidated Book Types selector) */}
+            <div className="space-y-2.5">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                Phân loại tài liệu
+              </span>
+              <div className="flex gap-2">
+                {[
+                  { value: 'all', label: 'Tất cả' },
+                  { value: 'academic', label: 'Học thuật' },
+                  { value: 'book', label: 'Truyện đọc' },
+                ].map((item) => {
+                  const isSelected = categoryFilter === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setCategoryFilter(item.value as any)}
+                      className={`px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer flex-1 text-center ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                          : 'border-slate-250 dark:border-slate-850 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-350'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Advanced Search Input */}
             <div className="relative">
@@ -462,7 +456,7 @@ export const AcademicContainer: React.FC = () => {
                 placeholder={READING_UI_TEXT.academic.SEARCH_PLACEHOLDER}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 py-4.5 text-xs"
+                className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 py-4.5 text-xs focus-visible:ring-blue-500"
               />
             </div>
 
@@ -480,7 +474,7 @@ export const AcademicContainer: React.FC = () => {
                 onChange={(e) => setCefrSliderVal(parseInt(e.target.value))}
                 className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
-              <div className="flex justify-between text-[10px] font-extrabold text-slate-400 px-1 pt-1">
+              <div className="flex justify-between text-[10px] font-extrabold text-slate-450 px-1 pt-1">
                 <span>A1</span>
                 <span>B1</span>
                 <span>C1</span>
@@ -503,7 +497,7 @@ export const AcademicContainer: React.FC = () => {
                       className={`px-3 py-1.5 rounded-full text-xs font-extrabold border transition-all cursor-pointer flex-1 text-center ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50/80 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-350 dark:hover:border-slate-700'
                       }`}
                     >
                       {lvl}
@@ -550,15 +544,15 @@ export const AcademicContainer: React.FC = () => {
           </div>
 
           {/* Your Reading Progress */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-5">
-            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-105 dark:border-slate-850 text-sm">
+          <div className="bg-white dark:bg-[#121826] p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm space-y-5">
+            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-100 dark:border-white/5 text-sm">
               <Percent className="w-4 h-4 text-indigo-500" /> {READING_UI_TEXT.academic.YOUR_PROGRESS}
             </h4>
 
             {isLoading ? (
               Array(2)
                 .fill(0)
-                .map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
+                .map((_, i) => <Skeleton key={i} className="h-10 w-full animate-pulse" />)
             ) : inProgressBooks.length > 0 ? (
               <div className="space-y-4">
                 {inProgressBooks.map((book) => {
@@ -589,114 +583,15 @@ export const AcademicContainer: React.FC = () => {
             )}
 
             {/* Monthly goal */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-850/60 flex justify-between items-center text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase">
+            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex justify-between items-center text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase">
               <span>{READING_UI_TEXT.academic.MONTHLY_GOAL} {READING_UI_TEXT.academic.GOAL_PAGES}</span>
               <span className="text-slate-800 dark:text-slate-200">840 / 1200</span>
             </div>
           </div>
-
-          {/* Community Patterns */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-4">
-            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-105 dark:border-slate-850 text-sm">
-              <Sparkles className="w-4 h-4 text-amber-500" /> {READING_UI_TEXT.academic.COMMUNITY_PATTERNS}
-            </h4>
-
-            <div className="space-y-3">
-              {/* Trend 1 */}
-              <div className="bg-slate-50/50 dark:bg-slate-950/40 border border-slate-150/40 dark:border-slate-850 p-3.5 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-                <div>
-                  <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.MACRO_TITLE}
-                  </h5>
-                  <p className="text-[10px] font-bold text-emerald-500 mt-0.5">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.MACRO_SUB}
-                  </p>
-                </div>
-              </div>
-
-              {/* Trend 2 */}
-              <div className="bg-slate-50/50 dark:bg-slate-950/40 border border-slate-150/40 dark:border-slate-850 p-3.5 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
-                  “
-                </div>
-                <div>
-                  <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.ANNOTATION_TITLE}
-                  </h5>
-                  <p className="text-[10px] text-slate-450 dark:text-slate-500 font-semibold mt-0.5">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.ANNOTATION_SUB}
-                  </p>
-                </div>
-              </div>
-
-              {/* Trend 3 */}
-              <div className="bg-slate-50/50 dark:bg-slate-950/40 border border-slate-150/40 dark:border-slate-850 p-3.5 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div>
-                  <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.DISCUSSION_TITLE}
-                  </h5>
-                  <p className="text-[10px] text-slate-450 dark:text-slate-500 font-semibold mt-0.5">
-                    {READING_UI_TEXT.academic.COMMUNITY_TRENDS.DISCUSSION_SUB}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trending Faculty Reads */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-4">
-            <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-105 dark:border-slate-850 text-sm">
-              <TrendingUp className="w-4 h-4 text-emerald-500" /> {READING_UI_TEXT.academic.TRENDING_READS}
-            </h4>
-
-            {isLoading ? (
-              Array(2)
-                .fill(0)
-                .map((_, i) => <Skeleton key={i} className="h-12 w-full" />)
-            ) : trendingReads.length > 0 ? (
-              <div className="space-y-4">
-                {trendingReads.map((book) => (
-                  <div
-                    key={book.id}
-                    onClick={() => navigate(`/reading/article/${book.id}`)}
-                    className="flex gap-3 cursor-pointer group"
-                  >
-                    <div className="w-10 h-14 bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-slate-850 shadow-sm group-hover:scale-102 transition-transform">
-                      <img
-                        src={book.thumbnailUrl || DEFAULT_ARTICLE_THUMBNAIL}
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_ARTICLE_THUMBNAIL;
-                        }}
-                        className="w-full h-full object-cover"
-                        alt={book.title}
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center min-w-0 flex-1">
-                      <h5 className="font-extrabold text-xs text-slate-850 dark:text-slate-250 leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors">
-                        {book.title}
-                      </h5>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
-                        {book.author}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm font-medium text-slate-500">{READING_UI_TEXT.academic.NO_TRENDING}</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
-  
   );
 };
+
+export default BooksContainer;

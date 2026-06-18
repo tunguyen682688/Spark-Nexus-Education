@@ -52,8 +52,7 @@ export default class VocabularyTool {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const termWrapper = (this.api.selection as any).findParentTag(this.tag, this.class);
+    const termWrapper = this.api.selection.findParentTag(this.tag, this.class);
 
     if (termWrapper) {
       this.unwrap(termWrapper);

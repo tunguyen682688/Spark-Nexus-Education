@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import type { StudioFormValues } from '../../types';
+import type { StudioFormValues, EditorJsOutputData, EditorJsBlock } from '../../types';
+import { cn } from '@spark-nest-ed/frontend-shared-utils';
 
 interface StudioPreviewModalProps {
   isOpen: boolean;
@@ -9,20 +10,18 @@ interface StudioPreviewModalProps {
 }
 
 // Render EditorJS blocks into React elements
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function renderEditorBlocks(content: any): React.ReactNode {
+function renderEditorBlocks(content: EditorJsOutputData | null): React.ReactNode {
   if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) {
     // Fallback: if content is a string, render as paragraphs
-    if (typeof content === 'string' && content.trim()) {
-      return content.split(/\n+/).map((para: string, i: number) => (
+    if (typeof content === 'string' && (content as string).trim()) {
+      return (content as string).split(/\n+/).map((para: string, i: number) => (
         <p key={i} className="leading-relaxed">{para}</p>
       ));
     }
     return <p className="text-slate-400 italic">Chưa có nội dung để xem trước.</p>;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return content.blocks.map((block: any, index: number) => {
+  return content.blocks.map((block: EditorJsBlock, index: number) => {
     const key = block.id || index;
 
     switch (block.type) {
@@ -39,7 +38,7 @@ function renderEditorBlocks(content: any): React.ReactNode {
         const items = block.data?.items || [];
         const ListTag = block.data?.style === 'ordered' ? 'ol' : 'ul';
         return (
-          <ListTag key={key} className={ListTag === 'ol' ? 'list-decimal pl-6 space-y-1' : 'list-disc pl-6 space-y-1'}>
+          <ListTag key={key} className={cn("pl-6 space-y-1", ListTag === 'ol' ? 'list-decimal' : 'list-disc')}>
             {items.map((item: string, i: number) => (
               <li key={i} dangerouslySetInnerHTML={{ __html: item }} />
             ))}
@@ -87,12 +86,10 @@ function renderEditorBlocks(content: any): React.ReactNode {
 }
 
 // Calculate word count from EditorJS OutputData
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function calcWordCount(content: any): number {
+function calcWordCount(content: EditorJsOutputData | null): number {
   if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) return 0;
   let count = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content.blocks.forEach((b: any) => {
+  content.blocks.forEach((b: EditorJsBlock) => {
     if (b.data?.text) {
       const plain = b.data.text.replace(/<[^>]*>?/gm, '').trim();
       if (plain) count += plain.split(/\s+/).length;

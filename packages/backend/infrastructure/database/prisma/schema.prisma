@@ -38,6 +38,8 @@ model Article {
   publishedAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  contentType  String    @default("article") @map("content_type") // article, book, news, blog
+  vocabularySetId String?  @map("vocabulary_set_id")
 
   // Relations
   readingProgress  ReadingProgress[]
@@ -45,6 +47,7 @@ model Article {
   comments         ArticleComment[]
   votes            ArticleVote[]
   bookmarks        UserArticleBookmark[]
+  vocabularySet    VocabularySet? @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([difficulty])
@@ -186,6 +189,7 @@ model VocabularySet {
   ManualQuestion ManualQuestion[]
   QuizChallenge  QuizChallenge[]
   PackageReport  PackageReport[]
+  articles       Article[]
 
   @@index([userId])
   @@index([userId, language])

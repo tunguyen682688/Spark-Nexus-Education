@@ -1,6 +1,57 @@
 import { AggregateRoot } from '@spark-nest-ed/shared-libs';
 import { DifficultyVO } from '../value-objects/difficulty.vo';
 
+function calculateWordCount(content: string): number {
+  if (!content) return 0;
+  try {
+    const parsed = JSON.parse(content);
+    let count = 0;
+    
+    const countText = (text?: string) => {
+      if (!text) return;
+      const plain = text.replace(/<[^>]*>?/gm, '').trim();
+      if (plain) {
+        count += plain.split(/\s+/).length;
+      }
+    };
+
+    const countBlocks = (blocks: any[]) => {
+      if (!Array.isArray(blocks)) return;
+      blocks.forEach((block) => {
+        if (block.data?.text) {
+          countText(block.data.text);
+        }
+        if (block.type === 'list' && Array.isArray(block.data?.items)) {
+          block.data.items.forEach((item: string) => countText(item));
+        }
+        if (block.type === 'bilingualBlock' && block.data) {
+          countText(block.data.original);
+          countText(block.data.translation);
+        }
+      });
+    };
+
+    if (parsed.chapters && Array.isArray(parsed.chapters)) {
+      parsed.chapters.forEach((ch: any) => {
+        if (ch.content && Array.isArray(ch.content.blocks)) {
+          countBlocks(ch.content.blocks);
+        }
+      });
+    } else if (parsed.editorData && Array.isArray(parsed.editorData.blocks)) {
+      countBlocks(parsed.editorData.blocks);
+    } else if (parsed.blocks && Array.isArray(parsed.blocks)) {
+      countBlocks(parsed.blocks);
+    } else {
+      countText(content);
+    }
+    return count > 0 ? count : 1;
+  } catch {
+    const clean = content.replace(/<[^>]*>?/gm, '').trim();
+    if (!clean) return 1;
+    return clean.split(/\s+/).length;
+  }
+}
+
 export class ArticleEntity extends AggregateRoot<string> {
   private constructor(
     id: string,
@@ -21,6 +72,8 @@ export class ArticleEntity extends AggregateRoot<string> {
     private isCommunity: boolean,
     private isPublished: boolean,
     private publishedAt: Date | null,
+    private contentType: string,
+    private vocabularySetId: string | null,
     createdAt: Date,
     updatedAt: Date,
     version: bigint
@@ -41,9 +94,11 @@ export class ArticleEntity extends AggregateRoot<string> {
     tags?: string[];
     thumbnailUrl?: string | null;
     isCommunity?: boolean;
+    contentType?: string;
+    vocabularySetId?: string | null;
   }): ArticleEntity {
     const now = new Date();
-    const wordCount = params.content.trim().split(/\s+/).length;
+    const wordCount = calculateWordCount(params.content);
 
     return new ArticleEntity(
       params.id,
@@ -64,6 +119,8 @@ export class ArticleEntity extends AggregateRoot<string> {
       params.isCommunity || false,
       false, // isPublished defaults to false
       null, // publishedAt defaults to null
+      params.contentType || 'article',
+      params.vocabularySetId || null,
       now,
       now,
       BigInt(1)
@@ -89,6 +146,8 @@ export class ArticleEntity extends AggregateRoot<string> {
     isCommunity: boolean;
     isPublished: boolean;
     publishedAt: Date | null;
+    contentType: string;
+    vocabularySetId: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): ArticleEntity {
@@ -111,6 +170,8 @@ export class ArticleEntity extends AggregateRoot<string> {
       data.isCommunity,
       data.isPublished,
       data.publishedAt,
+      data.contentType,
+      data.vocabularySetId,
       data.createdAt,
       data.updatedAt,
       BigInt(1)
@@ -156,11 +217,12 @@ export class ArticleEntity extends AggregateRoot<string> {
     thumbnailUrl?: string | null;
     sourceUrl?: string | null;
     author?: string | null;
+    contentType?: string;
   }): void {
     if (params.title !== undefined) this.title = params.title;
     if (params.content !== undefined) {
       this.content = params.content;
-      this.wordCount = params.content.trim().split(/\s+/).length;
+      this.wordCount = calculateWordCount(params.content);
     }
     if (params.summary !== undefined) this.summary = params.summary;
     if (params.difficulty !== undefined) this.difficulty = params.difficulty;
@@ -169,6 +231,7 @@ export class ArticleEntity extends AggregateRoot<string> {
     if (params.thumbnailUrl !== undefined) this.thumbnailUrl = params.thumbnailUrl;
     if (params.sourceUrl !== undefined) this.sourceUrl = params.sourceUrl;
     if (params.author !== undefined) this.author = params.author;
+    if (params.contentType !== undefined) this.contentType = params.contentType;
 
     this.markAsUpdated();
   }
@@ -265,6 +328,8 @@ export class ArticleEntity extends AggregateRoot<string> {
       isCommunity: this.isCommunity,
       isPublished: this.isPublished,
       publishedAt: this.publishedAt,
+      contentType: this.contentType,
+      vocabularySetId: this.vocabularySetId,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
     };
@@ -272,5 +337,18 @@ export class ArticleEntity extends AggregateRoot<string> {
 
   toPlainObject(): Record<string, unknown> {
     return this.toPersistence() as unknown as Record<string, unknown>;
+  }
+
+  getContentType(): string {
+    return this.contentType;
+  }
+
+  getVocabularySetId(): string | null {
+    return this.vocabularySetId;
+  }
+
+  setVocabularySetId(id: string | null): void {
+    this.vocabularySetId = id;
+    this.markAsUpdated();
   }
 }
