@@ -1,6 +1,7 @@
 import React from 'react';
 import type { TestQuestion, TestSessionAnswer, TestCompletionStats, TestSessionConfig } from '../../types';
 import { TestDashboard } from './test/TestDashboard';
+import { VOCABULARY_UI_TEXT } from '../../constants/vocabulary-ui-text';
 import { TestSession } from './test/TestSession';
 import { TestCompletion } from './test/TestCompletion';
 
@@ -76,7 +77,7 @@ export const TestPractice: React.FC<TestPracticeProps> = (props) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] text-gray-400 bg-[#070b15] rounded-2xl p-8 border border-slate-850 text-center gap-4">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-2" />
-        <p className="text-lg font-bold">Đang tạo bài kiểm tra...</p>
+        <p className="text-lg font-bold">{VOCABULARY_UI_TEXT.LOADING.TEST}</p>
       </div>
     );
   }

@@ -21,7 +21,7 @@ import {
 import { VocabularySetFormValues } from "../../constants/editor";
 import { EDITOR_UI } from "../../constants/ui";
 import { DifficultyLevel, VocabularySetType } from "../../types";
-import { CATEGORY_LIST } from "@spark-nest-ed/frontend-core-constants";
+import { CATEGORY_LIST } from "../../constants";
 import { CheckCircle2, XCircle, Globe, Lock } from "lucide-react";
 
 interface VocabularySetInfoFormProps {

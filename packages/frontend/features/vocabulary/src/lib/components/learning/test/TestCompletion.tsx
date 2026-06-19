@@ -4,6 +4,7 @@ import {
   Sparkles, TrendingUp, ClipboardList, Type, Link2, BookOpen,
 } from 'lucide-react';
 import type { TestQuestion, TestSessionAnswer, TestCompletionStats, TestQuestionType } from '../../../types';
+import { VOCABULARY_UI_TEXT } from '../../../constants/vocabulary-ui-text';
 
 export interface TestCompletionProps {
   title: string;
@@ -17,9 +18,9 @@ export interface TestCompletionProps {
 }
 
 const TYPE_LABEL: Record<TestQuestionType, string> = {
-  mcq: 'Trắc nghiệm',
-  'fill-blank': 'Điền từ',
-  matching: 'Ghép cặp',
+  mcq: VOCABULARY_UI_TEXT.TEST_SESSION.MCQ,
+  'fill-blank': VOCABULARY_UI_TEXT.TEST_SESSION.FILL_BLANK,
+  matching: VOCABULARY_UI_TEXT.TEST_SESSION.MATCHING,
 };
 const TYPE_ICON: Record<TestQuestionType, React.ReactNode> = {
   mcq: <ClipboardList className="w-4 h-4" />,
@@ -33,10 +34,10 @@ const TYPE_COLOR: Record<TestQuestionType, string> = {
 };
 
 function gradeLabel(accuracy: number): { label: string; color: string; emoji: string } {
-  if (accuracy >= 90) return { label: 'Xuất sắc!', color: 'text-emerald-400', emoji: '🏆' };
-  if (accuracy >= 75) return { label: 'Tốt!', color: 'text-blue-400', emoji: '⭐' };
-  if (accuracy >= 60) return { label: 'Khá!', color: 'text-amber-400', emoji: '💪' };
-  return { label: 'Cần cố gắng thêm', color: 'text-red-400', emoji: '📚' };
+  if (accuracy >= 90) return { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.EXCELLENT, color: 'text-emerald-400', emoji: '🏆' };
+  if (accuracy >= 75) return { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.GOOD, color: 'text-blue-400', emoji: '⭐' };
+  if (accuracy >= 60) return { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.FAIR, color: 'text-amber-400', emoji: '💪' };
+  return { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.NEEDS_WORK, color: 'text-red-400', emoji: '📚' };
 }
 
 function formatTime(seconds: number): string {
@@ -101,7 +102,7 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
             {grade.label}
           </h1>
           <p className="text-slate-400 text-sm max-w-xs">
-            Hoàn thành bài kiểm tra <strong className="text-slate-200">{title}</strong>. Xem kết quả phân tích chi tiết bên dưới.
+            {VOCABULARY_UI_TEXT.TEST_COMPLETION.COMPLETED_TITLE} <strong className="text-slate-200">{title}</strong>. {VOCABULARY_UI_TEXT.TEST_COMPLETION.VIEW_ANALYSIS}
           </p>
         </div>
 
@@ -128,17 +129,17 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
           </svg>
           <div className="absolute flex flex-col items-center">
             <span className={`text-4xl font-black ${grade.color}`}>{completionStats.accuracy}%</span>
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Chính xác</span>
+            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{VOCABULARY_UI_TEXT.TEST_COMPLETION.ACCURACY}</span>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-3 w-full bg-slate-900/40 border border-slate-800/80 rounded-xl p-4">
           {[
-            { label: 'Tổng câu', value: completionStats.totalQuestions, icon: <ClipboardList className="w-3 h-3 text-slate-500" />, color: 'text-white' },
-            { label: 'Đúng', value: completionStats.correctCount, icon: <CheckCircle2 className="w-3 h-3 text-emerald-400" />, color: 'text-emerald-400' },
+            { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.TOTAL_QUESTIONS, value: completionStats.totalQuestions, icon: <ClipboardList className="w-3 h-3 text-slate-500" />, color: 'text-white' },
+            { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.CORRECT, value: completionStats.correctCount, icon: <CheckCircle2 className="w-3 h-3 text-emerald-400" />, color: 'text-emerald-400' },
             { label: 'Sai', value: completionStats.wrongCount, icon: <XCircle className="w-3 h-3 text-red-400" />, color: 'text-red-400' },
-            { label: 'Thời gian', value: formatTime(completionStats.totalTimeSeconds), icon: <Clock className="w-3 h-3 text-blue-400" />, color: 'text-blue-400' },
+            { label: VOCABULARY_UI_TEXT.TEST_COMPLETION.TIME, value: formatTime(completionStats.totalTimeSeconds), icon: <Clock className="w-3 h-3 text-blue-400" />, color: 'text-blue-400' },
           ].map((s) => (
             <div key={s.label} className="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-900/50 gap-1">
               <span className="flex items-center gap-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
@@ -153,7 +154,7 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
         {typesUsed.length > 1 && (
           <div className="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-3">
             <span className="text-sm font-bold text-slate-300 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-400" /> Kết quả theo loại câu hỏi
+              <TrendingUp className="w-4 h-4 text-blue-400" /> {VOCABULARY_UI_TEXT.TEST_COMPLETION.RESULTS_BY_TYPE}
             </span>
             <div className="flex flex-col gap-2">
               {typesUsed.map((type) => {
@@ -186,7 +187,7 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
         {wrongQuestions.length > 0 && (
           <div className="w-full bg-slate-900/40 border border-red-900/30 rounded-xl p-4 flex flex-col gap-3">
             <span className="text-sm font-semibold text-red-400 flex items-center gap-2">
-              <XCircle className="w-4 h-4" /> Cần ôn tập lại ({wrongQuestions.length} câu)
+              <XCircle className="w-4 h-4" /> {VOCABULARY_UI_TEXT.TEST_COMPLETION.NEEDS_REVIEW} ({wrongQuestions.length} {VOCABULARY_UI_TEXT.TEST_COMPLETION.QUESTIONS})
             </span>
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
               {wrongQuestions.map((q) => {
@@ -210,7 +211,7 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
                 className="w-full py-2.5 bg-red-950/20 hover:bg-red-950/40 border border-red-500/30 text-red-400 hover:text-red-300 rounded-xl font-bold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                Luyện tập lại {wrongQuestions.length} câu đã sai
+                {VOCABULARY_UI_TEXT.TEST_COMPLETION.PRACTICE_AGAIN_WRONG(wrongQuestions.length)}
               </button>
             )}
           </div>
@@ -221,11 +222,11 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
           <div className="flex items-center justify-center gap-2 p-3 bg-amber-950/20 border border-amber-800/30 rounded-xl">
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-400">
-              +{completionStats.correctCount * 15} XP kiếm được
+              +{completionStats.correctCount * 15} {VOCABULARY_UI_TEXT.TEST_COMPLETION.XP_EARNED}
             </span>
           </div>
 
-          <span className="text-sm font-semibold text-slate-300">💡 Gợi ý tiếp theo</span>
+          <span className="text-sm font-semibold text-slate-300"><span role="img" aria-label="idea">💡</span> {VOCABULARY_UI_TEXT.TEST_COMPLETION.NEXT_SUGGESTIONS}</span>
           <div className="grid grid-cols-2 gap-3">
             {onNavigateToFlashcards ? (
               <div
@@ -234,8 +235,8 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
               >
                 <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400"><BookOpen className="w-4 h-4" /></div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-200">Ôn Flashcards</span>
-                  <span className="text-[10px] text-slate-500">Tập trung từ chưa thuộc</span>
+                  <span className="text-xs font-bold text-slate-200">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_FLASHCARDS}</span>
+                  <span className="text-[10px] text-slate-500">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_FLASHCARDS_DESC}</span>
                 </div>
               </div>
             ) : (
@@ -245,8 +246,8 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
               >
                 <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400"><RotateCcw className="w-4 h-4" /></div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-200">Làm lại từ đầu</span>
-                  <span className="text-[10px] text-slate-500">Luyện tập lại bộ câu hỏi</span>
+                  <span className="text-xs font-bold text-slate-200">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_RETRY}</span>
+                  <span className="text-[10px] text-slate-500">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_RETRY_DESC}</span>
                 </div>
               </div>
             )}
@@ -256,8 +257,8 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
             >
               <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400"><TrendingUp className="w-4 h-4" /></div>
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-200">Nâng cao hơn</span>
-                <span className="text-[10px] text-slate-500">Thay đổi cài đặt kiểm tra</span>
+                <span className="text-xs font-bold text-slate-200">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_ADVANCED}</span>
+                <span className="text-[10px] text-slate-500">{VOCABULARY_UI_TEXT.TEST_COMPLETION.SUGGESTION_ADVANCED_DESC}</span>
               </div>
             </div>
           </div>
@@ -269,13 +270,13 @@ export const TestCompletion: React.FC<TestCompletionProps> = ({
             onClick={onGoHome}
             className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl font-bold transition-all border border-slate-700/50 cursor-pointer"
           >
-            <Home className="w-5 h-5" /> Về Tổng Quan
+            <Home className="w-5 h-5" /> {VOCABULARY_UI_TEXT.TEST_COMPLETION.BACK_TO_OVERVIEW}
           </button>
           <button
             onClick={onRestart}
             className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
           >
-            <RotateCcw className="w-5 h-5" /> Kiểm Tra Mới
+            <RotateCcw className="w-5 h-5" /> {VOCABULARY_UI_TEXT.TEST_COMPLETION.NEW_TEST}
           </button>
         </div>
       </div>

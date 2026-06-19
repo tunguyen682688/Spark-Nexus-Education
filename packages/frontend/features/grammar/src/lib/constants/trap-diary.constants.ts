@@ -1,5 +1,3 @@
-import type { UserGrammarTrap } from '../types';
-
 export const TRAP_CATEGORIES = [
   {
     key: 'syntax',

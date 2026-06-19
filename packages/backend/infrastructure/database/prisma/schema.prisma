@@ -29,13 +29,26 @@ model Article {
   thumbnailUrl String?
   sourceUrl    String?
   author       String?
+  creatorId    String?   @map("creator_id")
+  upvotes      Int       @default(0)
+  downvotes    Int       @default(0)
+  viewCount    Int       @default(0) @map("view_count")
+  isCommunity  Boolean   @default(false) @map("is_community")
   isPublished  Boolean   @default(false)
   publishedAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  contentType  String    @default("article") @map("content_type") // article, book, news, blog
+  vocabularySetId String?  @map("vocabulary_set_id")
 
   // Relations
-  readingProgress ReadingProgress[]
+  readingProgress  ReadingProgress[]
+  readingSessions  ReadingSession[]
+  comments         ArticleComment[]
+  votes            ArticleVote[]
+  bookmarks        UserArticleBookmark[]
+  vocabularySet    VocabularySet? @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  vocabularyHighlights ArticleVocabularyHighlight[]
 
   @@index([category])
   @@index([difficulty])
@@ -62,6 +75,82 @@ model ReadingProgress {
   @@index([userId])
   @@index([articleId])
   @@map("reading_progress")
+}
+
+model ReadingSession {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  articleId    String   @map("article_id")
+  startTime    DateTime @map("start_time")
+  endTime      DateTime @map("end_time")
+  duration     Int      // seconds
+  wordsRead    Int      @map("words_read")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  article      Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("reading_sessions")
+}
+
+model UserReadingStats {
+  userId        String   @id @map("user_id")
+  totalArticles Int      @default(0) @map("total_articles")
+  totalWords    Int      @default(0) @map("total_words")
+  totalTime     Int      @default(0) @map("total_time") // seconds
+  avgWpm        Int      @default(0) @map("avg_wpm")
+  masteryLevel  String   @default("A1") @map("mastery_level")
+  currentStreak Int      @default(0) @map("current_streak")
+  lastActiveAt  DateTime @default(now()) @map("last_active_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("user_reading_stats")
+}
+
+model ArticleComment {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  upvotes   Int      @default(0)
+  downvotes Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("article_comments")
+}
+
+model ArticleVote {
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  vote      Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+  @@map("article_votes")
+}
+
+model UserArticleBookmark {
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+  @@index([userId])
+  @@map("user_article_bookmarks")
 }
 
 // ============================================
@@ -101,6 +190,7 @@ model VocabularySet {
   ManualQuestion ManualQuestion[]
   QuizChallenge  QuizChallenge[]
   PackageReport  PackageReport[]
+  articles       Article[]
 
   @@index([userId])
   @@index([userId, language])
@@ -169,6 +259,7 @@ model Entry {
   examples           Example[]
   expressions        Expression[]
   variants           LexicalVariant[]
+  vocabularyHighlights ArticleVocabularyHighlight[]
   expressionMeanings ExpressionMeaning[]
   mnemonics          CommunityMnemonic[]
   communityExamples  CommunityExample[]
@@ -880,5 +971,38 @@ model UserGrammarTrap {
   @@index([userId])
   @@index([status])
   @@map("user_grammar_traps")
+}
+
+model TranslationCache {
+  id             String   @id @default(uuid())
+  hash           String   @unique @db.VarChar(64)
+  originalText   String   @map("original_text") @db.Text
+  translatedText String   @map("translated_text") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("translation_caches")
+}
+
+model ArticleVocabularyHighlight {
+  id                 String   @id @default(uuid())
+  articleId          String   @map("article_id")
+  entryId            String   @map("entry_id")
+  blockId            String   @map("block_id")
+  wordIndex          Int      @map("word_index")
+  occurrenceText     String   @map("occurrence_text") @db.VarChar(100)
+  customDefinition   String?  @db.Text
+  customExample      String?  @db.Text
+  customExampleTrans String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  article            Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  entry              Entry    @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  @@unique([articleId, blockId, wordIndex], map: "idx_article_block_word")
+  @@index([articleId])
+  @@index([entryId])
+  @@map("article_vocabulary_highlights")
 }
 

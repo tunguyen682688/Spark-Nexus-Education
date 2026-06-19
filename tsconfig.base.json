@@ -20,3 +20,4 @@
     "customConditions": ["@spark-nest-ed/source"]
   }
 }
+// Trigger TS Server reload

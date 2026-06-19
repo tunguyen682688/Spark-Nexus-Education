@@ -4,6 +4,7 @@ import {
   Type, ClipboardList, Link2, AlertTriangle, Volume2,
 } from 'lucide-react';
 import type { TestQuestion, TestSessionAnswer } from '../../../types';
+import { VOCABULARY_UI_TEXT } from '../../../constants/vocabulary-ui-text';
 
 export interface TestSessionProps {
   title: string;
@@ -36,7 +37,7 @@ const TYPE_ICON = {
   'fill-blank': <Type className="w-3.5 h-3.5" />,
   'matching': <Link2 className="w-3.5 h-3.5" />,
 };
-const TYPE_LABEL = { 'mcq': 'Trắc nghiệm', 'fill-blank': 'Điền từ', 'matching': 'Ghép cặp' };
+const TYPE_LABEL = { 'mcq': VOCABULARY_UI_TEXT.TEST_SESSION.MCQ, 'fill-blank': VOCABULARY_UI_TEXT.TEST_SESSION.FILL_BLANK, 'matching': VOCABULARY_UI_TEXT.TEST_SESSION.MATCHING };
 
 export const TestSession: React.FC<TestSessionProps> = ({
   title,
@@ -122,7 +123,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
         <div className="flex flex-col gap-4 w-full">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Nhập từ vựng tiếng Anh:
+              {VOCABULARY_UI_TEXT.TEST_SESSION.ENTER_ENGLISH}
             </label>
             <div className="flex gap-2">
               <input
@@ -136,7 +137,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
                     onSubmitFill();
                   }
                 }}
-                placeholder="Gõ câu trả lời..."
+                placeholder={VOCABULARY_UI_TEXT.TEST_SESSION.TYPE_ANSWER_PLACEHOLDER}
                 className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700/60 rounded-xl text-white placeholder-slate-600 font-semibold text-base focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all disabled:opacity-60"
               />
               {!isAnswered && (
@@ -145,14 +146,14 @@ export const TestSession: React.FC<TestSessionProps> = ({
                   disabled={!fillInput.trim()}
                   className="px-5 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all cursor-pointer"
                 >
-                  Xác nhận
+                  {VOCABULARY_UI_TEXT.TEST_SESSION.CONFIRM}
                 </button>
               )}
             </div>
           </div>
           <p className="text-xs text-slate-600 italic">
-            Gợi ý: Chữ cái đầu "<span className="text-slate-400 font-bold">{word.charAt(0).toUpperCase()}</span>"
-            {pronunciation && <> &nbsp;·&nbsp; phát âm: <span className="text-slate-400">/{pronunciation}/</span></>}
+            {VOCABULARY_UI_TEXT.TEST_SESSION.HINT_FIRST_LETTER} "<span className="text-slate-400 font-bold">{word.charAt(0).toUpperCase()}</span>"
+            {pronunciation && <> &nbsp;·&nbsp; {VOCABULARY_UI_TEXT.TEST_SESSION.PRONUNCIATION_HINT} <span className="text-slate-400">/{pronunciation}/</span></>}
           </p>
         </div>
       );
@@ -163,7 +164,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
       return (
         <div className="flex flex-col gap-4 w-full">
           <p className="text-xs text-slate-500 font-semibold">
-            Chọn đúng định nghĩa cho mỗi từ vựng bên trái:
+            {VOCABULARY_UI_TEXT.TEST_SESSION.CHOOSE_DEFINITION}
           </p>
           <div className="grid grid-cols-1 gap-3">
             {pairs.map((pair) => {
@@ -180,7 +181,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
                     onChange={(e) => onSetMatch(pair.left, e.target.value)}
                     className="flex-1 px-3 py-2.5 bg-slate-900/50 border border-slate-700/60 rounded-xl text-white text-sm font-semibold focus:outline-none focus:border-blue-500/60 transition-all disabled:opacity-60 cursor-pointer"
                   >
-                    <option value="" disabled>-- Chọn nghĩa --</option>
+                    <option value="" disabled>{VOCABULARY_UI_TEXT.TEST_SESSION.SELECT_MEANING}</option>
                     {availableRights.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
@@ -195,7 +196,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
               disabled={Object.keys(matchSelections).length < pairs.length}
               className="mt-1 w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all cursor-pointer"
             >
-              Xác nhận ghép cặp
+              {VOCABULARY_UI_TEXT.TEST_SESSION.CONFIRM_MATCHING}
             </button>
           )}
         </div>
@@ -220,7 +221,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
         {isCorrect
           ? <CheckCircle2 className="w-5 h-5 shrink-0" />
           : <XCircle className="w-5 h-5 shrink-0" />}
-        <span>{isCorrect ? 'Câu trả lời chính xác!' : 'Chưa chính xác. Tiếp tục nhé!'}</span>
+        <span>{isCorrect ? VOCABULARY_UI_TEXT.TEST_SESSION.CORRECT_ANSWER : VOCABULARY_UI_TEXT.TEST_SESSION.INCORRECT_ANSWER}</span>
       </div>
     );
   };
@@ -235,13 +236,13 @@ export const TestSession: React.FC<TestSessionProps> = ({
       {isTimeUp && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#070b15]/95 rounded-2xl gap-4">
           <AlertTriangle className="w-12 h-12 text-amber-400" />
-          <h2 className="text-2xl font-extrabold text-white">Hết thời gian!</h2>
-          <p className="text-slate-400 text-sm">Bài kiểm tra đã kết thúc. Xem kết quả bên dưới.</p>
+          <h2 className="text-2xl font-extrabold text-white">{VOCABULARY_UI_TEXT.TEST_SESSION.TIME_UP}</h2>
+          <p className="text-slate-400 text-sm">{VOCABULARY_UI_TEXT.TEST_SESSION.TEST_ENDED}</p>
           <button
             onClick={onSubmitExam}
             className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl cursor-pointer transition-all"
           >
-            Xem kết quả
+            {VOCABULARY_UI_TEXT.TEST_SESSION.VIEW_RESULTS}
           </button>
         </div>
       )}
@@ -258,7 +259,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
             </span>
           </div>
           <div className="text-xs text-slate-500 font-semibold">
-            Câu {currentIndex + 1} / {totalQuestions}
+            {VOCABULARY_UI_TEXT.TEST_SESSION.QUESTION} {currentIndex + 1} / {totalQuestions}
           </div>
         </div>
 
@@ -281,7 +282,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
           )}
           {/* Score badge */}
           <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400">
-            {score.correct}/{score.total} đúng
+            {score.correct}/{score.total} {VOCABULARY_UI_TEXT.TEST_SESSION.CORRECT_COUNT}
           </div>
         </div>
       </div>
@@ -299,8 +300,8 @@ export const TestSession: React.FC<TestSessionProps> = ({
         {/* Question Prompt */}
         <div className="flex flex-col gap-3 items-center text-center">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600">
-            {currentQuestion.type === 'mcq' && 'Chọn từ vựng phù hợp với định nghĩa:'}
-            {currentQuestion.type === 'fill-blank' && 'Định nghĩa:'}
+            {currentQuestion.type === 'mcq' && VOCABULARY_UI_TEXT.TEST_SESSION.CHOOSE_WORD_FOR_DEF}
+            {currentQuestion.type === 'fill-blank' && VOCABULARY_UI_TEXT.TEST_SESSION.DEFINITION}
             {currentQuestion.type === 'matching' && ''}
           </span>
           <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight leading-relaxed max-w-2xl">
@@ -311,7 +312,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
             <button
               onClick={onPlayAudio}
               className="p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800/80 transition-all duration-200 cursor-pointer"
-              title="Nghe phát âm"
+              title={VOCABULARY_UI_TEXT.TEST_SESSION.HEAR_PRONUNCIATION}
             >
               <Volume2 className="w-4 h-4" />
             </button>
@@ -333,7 +334,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 text-sm font-semibold transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <SkipForward className="w-4 h-4" />
-          Bỏ qua
+          {VOCABULARY_UI_TEXT.TEST_SESSION.SKIP}
         </button>
 
         {isAnswered && (
@@ -342,7 +343,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
               onClick={onSubmitExam}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
             >
-              Nộp bài & Xem kết quả
+              {VOCABULARY_UI_TEXT.TEST_SESSION.SUBMIT_AND_VIEW}
               <CheckCircle2 className="w-4 h-4" />
             </button>
           ) : (
@@ -350,7 +351,7 @@ export const TestSession: React.FC<TestSessionProps> = ({
               onClick={onNext}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm transition-all cursor-pointer shadow-lg shadow-blue-600/20"
             >
-              Câu tiếp theo
+              {VOCABULARY_UI_TEXT.TEST_SESSION.NEXT_QUESTION}
               <ArrowRight className="w-4 h-4" />
             </button>
           )

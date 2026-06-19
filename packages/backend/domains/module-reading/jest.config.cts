@@ -1,20 +1,21 @@
-/* eslint-disable */
-const { readFileSync } = require('fs');
-
-// Reading the SWC compilation config for the spec files
-const swcJestConfig = JSON.parse(
-  readFileSync(`${__dirname}/.spec.swcrc`, 'utf-8')
-);
-
-// Disable .swcrc look-up by SWC core because we're passing in swcJestConfig ourselves
-swcJestConfig.swcrc = false;
-
+/** @type {import('@jest/types').Config.InitialOptions} */
 module.exports = {
   displayName: 'module-reading',
   preset: '../../../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
+    '^.+\\.[tj]s$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+        isolatedModules: true,
+      },
+    ],
+  },
+  // Map @spark-nest-ed/shared-libs to a local mock so that ESM .js extension
+  // imports inside the real shared-libs package don't crash ts-jest / SWC.
+  moduleNameMapper: {
+    '^@spark-nest-ed/shared-libs$': '<rootDir>/src/lib/shared-libs.mock.ts',
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: 'test-output/jest/coverage',

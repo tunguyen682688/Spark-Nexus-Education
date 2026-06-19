@@ -12,10 +12,21 @@ export class GetEntryDetailQueryHandler implements IQueryHandler<GetEntryDetailQ
   ) {}
 
   async execute(query: GetEntryDetailQuery): Promise<WordFullDto> {
-    const entry = await this.entryRepository.findByIdWithDetails(query.entryId);
+    let entryId = query.entryId;
+
+    // Check if entryId is NOT a UUID (e.g. it is the word spelling)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entryId);
+    if (!isUuid) {
+      const entryByWord = await this.entryRepository.findByWord(entryId, 'en');
+      if (entryByWord) {
+        entryId = entryByWord.id;
+      }
+    }
+
+    const entry = await this.entryRepository.findByIdWithDetails(entryId);
     
     if (!entry) {
-      throw new NotFoundException('Entry not found');
+      throw new NotFoundException(`Entry not found for identifier: ${query.entryId}`);
     }
 
     // Map senses

@@ -1,11 +1,9 @@
 import { Outlet } from 'react-router-dom';
 
-const BlankLayout = () => {
+export const BlankLayout = () => {
   return (
-    <div className="w-screen overflow-auto bg-white dark:bg-gray-900 ">
+    <div className="w-screen h-screen bg-transparent overflow-hidden">
       <Outlet />
     </div>
   );
 };
-
-export default BlankLayout;
