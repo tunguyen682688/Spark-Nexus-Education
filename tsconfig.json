@@ -92,6 +92,12 @@
     },
     {
       "path": "./packages/frontend/features/reading"
+    },
+    {
+      "path": "./packages/frontend/features/listening"
+    },
+    {
+      "path": "./packages/backend/domains/module-listening"
     }
   ]
 }

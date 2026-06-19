@@ -41,13 +41,16 @@
       "path": "../../packages/frontend/core/api/tsconfig.lib.json"
     },
     {
-      "path": "../../packages/frontend/features/reading/tsconfig.lib.json"
+      "path": "../../packages/frontend/features/listening/tsconfig.lib.json"
     },
     {
       "path": "../../packages/frontend/features/grammar/tsconfig.lib.json"
     },
     {
       "path": "../../packages/frontend/features/vocabulary/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/frontend/features/reading/tsconfig.lib.json"
     },
     {
       "path": "../../packages/frontend/shared/pages/tsconfig.lib.json"

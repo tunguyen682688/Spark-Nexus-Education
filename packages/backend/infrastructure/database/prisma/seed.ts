@@ -22,6 +22,18 @@ async function main() {
     await prisma.article.deleteMany();
     await prisma.userGrammarTrap.deleteMany();
 
+    // Clean up listening domain tables
+    await prisma.listeningVote.deleteMany();
+    await prisma.listeningComment.deleteMany();
+    await prisma.listeningVocabularyHighlight.deleteMany();
+    await prisma.listeningSubtitle.deleteMany();
+    await prisma.listeningQuestion.deleteMany();
+    await prisma.listeningProgress.deleteMany();
+    await prisma.listeningSession.deleteMany();
+    await prisma.userListeningBookmark.deleteMany();
+    await prisma.listeningMaterial.deleteMany();
+    await prisma.userListeningStats.deleteMany();
+
     console.log('✅ Cleaned up old database entries.');
   } catch (e) {
     console.log('⚠️ Cleanup warning (might be empty database):', (e as Error).message);
@@ -865,6 +877,181 @@ async function main() {
     ]
   });
   console.log('✅ Seeding 2 sample user grammar traps for mock-user-123!');
+
+  // ============================================
+  // SEED LISTENING MATERIALS (Phân hệ Luyện nghe)
+  // ============================================
+  console.log('🌱 Seeding listening materials...');
+  
+  await prisma.listeningMaterial.create({
+    data: {
+      id: 'seed-listening-video-1',
+      title: 'Learn English with YouTube: 5 Travel Expressions',
+      description: 'In this video, you will learn 5 extremely common English idioms and expressions used during travel, with real-life context and bilingual subtitles.',
+      category: 'video',
+      difficulty: 'A2',
+      mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      youtubeId: 'dQw4w9WgXcQ',
+      thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg',
+      duration: 120,
+      author: 'Teacher Lucy',
+      isCommunity: false,
+      isPublished: true,
+      publishedAt: new Date(),
+      subtitles: {
+        create: [
+          {
+            id: 'seed-sub-v1-1',
+            startTime: 0.0,
+            endTime: 5.0,
+            text: 'Hello everyone! Welcome back to another English lesson.',
+            translation: 'Chào mọi người! Chào mừng trở lại với một bài học tiếng Anh khác.',
+            order: 1
+          },
+          {
+            id: 'seed-sub-v1-2',
+            startTime: 5.0,
+            endTime: 12.0,
+            text: 'Today, we are going to look at five extremely useful expressions for travel.',
+            translation: 'Hôm nay, chúng ta sẽ tìm hiểu năm cụm từ cực kỳ hữu ích cho việc đi du lịch.',
+            order: 2
+          },
+          {
+            id: 'seed-sub-v1-3',
+            startTime: 12.0,
+            endTime: 20.0,
+            text: 'The first expression is "to hit the road", which means to start a journey.',
+            translation: 'Cụm từ đầu tiên là "hit the road", có nghĩa là khởi hành hoặc bắt đầu một chuyến đi.',
+            order: 3
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.listeningMaterial.create({
+    data: {
+      id: 'seed-listening-podcast-1',
+      title: 'The Future of Artificial Intelligence - Spark Podcast #12',
+      description: 'Host John Doe discusses the rapid progress of deep learning models and their impact on global employment and education system with AI researchers.',
+      category: 'podcast',
+      difficulty: 'C1',
+      mediaUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=500&auto=format&fit=crop',
+      duration: 372,
+      author: 'John Doe & Dr. Sarah',
+      isCommunity: false,
+      isPublished: true,
+      publishedAt: new Date(),
+      subtitles: {
+        create: [
+          {
+            id: 'seed-sub-p1-1',
+            startTime: 0.0,
+            endTime: 6.5,
+            text: 'Welcome to the Spark Podcast, today we are discussing the evolution of technology.',
+            translation: 'Chào mừng đến với Spark Podcast, hôm nay chúng ta đang thảo luận về sự phát triển của công nghệ.',
+            order: 1
+          },
+          {
+            id: 'seed-sub-p1-2',
+            startTime: 6.5,
+            endTime: 13.0,
+            text: 'Many experts believe that neural networks will redefine computational limits by the next decade.',
+            translation: 'Nhiều chuyên gia tin rằng mạng nơ-ron sẽ định nghĩa lại các giới hạn tính toán vào thập kỷ tới.',
+            order: 2
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.listeningMaterial.create({
+    data: {
+      id: 'seed-listening-exam-1',
+      title: 'TOEIC Listening Practice Test: Short Conversations',
+      description: 'Test your listening comprehension with this standardized TOEIC Part 3 mock test. Listen to the conversation and answer the multiple-choice questions.',
+      category: 'exam',
+      difficulty: 'B2',
+      mediaUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=500&auto=format&fit=crop',
+      duration: 180,
+      author: 'ETS Mock Prep',
+      isCommunity: false,
+      isPublished: true,
+      publishedAt: new Date(),
+      subtitles: {
+        create: [
+          {
+            id: 'seed-sub-e1-1',
+            startTime: 0.0,
+            endTime: 8.0,
+            text: 'Hi Mark, did you finish printing the promotional brochures for the new product launch conference tomorrow?',
+            translation: 'Chào Mark, anh đã in xong các tờ quảng cáo cho hội nghị ra mắt sản phẩm mới vào ngày mai chưa?',
+            order: 1
+          },
+          {
+            id: 'seed-sub-e1-2',
+            startTime: 8.0,
+            endTime: 16.0,
+            text: 'I was about to, but the heavy-duty copier in the marketing department ran out of toner and started acting up.',
+            translation: 'Tôi định làm thế, nhưng máy photocopy công suất lớn ở phòng marketing hết mực và bắt đầu trục trặc.',
+            order: 2
+          },
+          {
+            id: 'seed-sub-e1-3',
+            startTime: 16.0,
+            endTime: 24.5,
+            text: 'Oh, that is unfortunate. I will call the facilities office to request an urgent maintenance team to replace the toner.',
+            translation: 'Ồ, thật không may. Tôi sẽ gọi cho văn phòng quản lý thiết bị yêu cầu đội bảo trì khẩn cấp đến thay mực.',
+            order: 3
+          }
+        ]
+      },
+      questions: {
+        create: [
+          {
+            id: 'seed-q-e1-1',
+            questionText: 'What are the speakers mainly discussing?',
+            options: ['A marketing campaign', 'A printing task', 'A product launch site', 'An upcoming corporate training'],
+            correctAnswer: 'A printing task',
+            explanation: 'The speakers are discussing printing promotional brochures for the conference.',
+            audioTimestamp: 0.0,
+            order: 1
+          },
+          {
+            id: 'seed-q-e1-2',
+            questionText: 'Why was the task delayed?',
+            options: ['The documents were not formatted correctly', 'The printer was missing ink or broken', 'The marketing staff was on leave', 'The manager changed the schedule'],
+            correctAnswer: 'The printer was missing ink or broken',
+            explanation: 'The speaker mentioned the copier ran out of toner and started acting up.',
+            audioTimestamp: 8.0,
+            order: 2
+          },
+          {
+            id: 'seed-q-e1-3',
+            questionText: 'What will the woman probably do next?',
+            options: ['Call the maintenance team', 'Buy a new printer online', 'Print the documents at home', 'Reschedule the conference'],
+            correctAnswer: 'Call the maintenance team',
+            explanation: 'She says "I will call the facilities office to request an urgent maintenance team."',
+            audioTimestamp: 16.0,
+            order: 3
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.userListeningStats.create({
+    data: {
+      userId: 'mock-user-123',
+      totalMaterials: 3,
+      totalTime: 672,
+      masteryLevel: 'B2',
+    }
+  });
+
+  console.log('✅ Created 3 sample listening materials (Video, Podcast, Exam) and user stats!');
 
   console.log('🎉 Seeding completed!');
 }

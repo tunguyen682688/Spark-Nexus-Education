@@ -640,15 +640,10 @@ export const createRouter = () =>
         {
           path: 'listening',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Nghe</h1>
-                <p className="text-muted-foreground">
-                  Trang nghe đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -656,15 +651,10 @@ export const createRouter = () =>
         {
           path: 'listening/podcasts',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Podcast</h1>
-                <p className="text-muted-foreground">
-                  Trang podcast đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -672,15 +662,10 @@ export const createRouter = () =>
         {
           path: 'listening/videos',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Video học tập</h1>
-                <p className="text-muted-foreground">
-                  Trang video học tập đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -688,15 +673,10 @@ export const createRouter = () =>
         {
           path: 'listening/audiobooks',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Audio books</h1>
-                <p className="text-muted-foreground">
-                  Trang audio books đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -704,15 +684,10 @@ export const createRouter = () =>
         {
           path: 'listening/practice',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Luyện nghe</h1>
-                <p className="text-muted-foreground">
-                  Trang luyện nghe đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -720,15 +695,10 @@ export const createRouter = () =>
         {
           path: 'listening/news',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Tin tức</h1>
-                <p className="text-muted-foreground">
-                  Trang tin tức đang được phát triển...
-                </p>
-              </div>
+            const { ListeningHubPage } = await import(
+              '@spark-nest-ed/feature-listening'
             );
-            return { Component: PlaceholderPage };
+            return { Component: ListeningHubPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
