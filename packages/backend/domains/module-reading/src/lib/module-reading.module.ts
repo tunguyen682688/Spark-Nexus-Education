@@ -14,6 +14,7 @@ import { GetArticleQuizQueryHandler } from './application/querys/get-article-qui
 import { TranslateWordInContextQueryHandler } from './application/querys/translate-word-in-context/translate-word-in-context.handler';
 import { GetCommunityArticlesHandler } from './application/querys/get-community-articles/get-community-articles.handler';
 import { GetMyArticlesHandler } from './application/querys/get-my-articles/get-my-articles.handler';
+import { TranslateParagraphQueryHandler } from './application/querys/translate-paragraph/translate-paragraph.handler';
 
 // Command Handlers
 import { UpdateReadingProgressCommandHandler } from './application/commands/update-reading-progress/update-reading-progress.handler';
@@ -61,6 +62,7 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
     TranslateWordInContextQueryHandler,
     GetCommunityArticlesHandler,
     GetMyArticlesHandler,
+    TranslateParagraphQueryHandler,
 
     // ===== APPLICATION LAYER: Command Handlers =====
     UpdateReadingProgressCommandHandler,

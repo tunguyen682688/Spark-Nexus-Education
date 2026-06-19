@@ -1,3 +1,5 @@
+import { ArticleHighlightDto } from '../../dtos/article-highlight.dto';
+
 export class CreateStudioArticleCommand {
   constructor(
     public readonly userId: string,
@@ -11,6 +13,9 @@ export class CreateStudioArticleCommand {
     public readonly sourceUrl?: string,
     public readonly author?: string,
     public readonly status?: string,
-    public readonly contentType?: string
+    public readonly contentType?: string,
+    public readonly vocabularySetId?: string,
+    public readonly highlights?: ArticleHighlightDto[]
   ) {}
 }
+

@@ -136,6 +136,35 @@ export class ReadingRepository implements IReadingRepository {
     return article ? ArticleEntity.fromPersistence(article) : null;
   }
 
+  async findArticleHighlights(articleId: string) {
+    const highlights = await this.prisma.articleVocabularyHighlight.findMany({
+      where: { articleId },
+      include: {
+        entry: {
+          select: {
+            id: true,
+            word: true,
+            pronunciation: true,
+            partOfSpeech: true,
+            notes: true,
+          },
+        },
+      },
+      orderBy: [{ blockId: 'asc' }, { wordIndex: 'asc' }],
+    });
+
+    return highlights.map((h) => ({
+      id: h.id,
+      blockId: h.blockId,
+      wordIndex: h.wordIndex,
+      occurrenceText: h.occurrenceText,
+      customDefinition: h.customDefinition,
+      customExample: h.customExample,
+      customExampleTrans: h.customExampleTrans,
+      entry: h.entry,
+    }));
+  }
+
   async findReadingProgress(
     userId: string,
     articleId: string
@@ -658,6 +687,129 @@ export class ReadingRepository implements IReadingRepository {
         entryId: { notIn: activeEntryIds },
       },
     });
+
+    // Update Entry Count
+    const currentCount = await this.prisma.vocabularySetItem.count({
+      where: { vocabularySetId: vocabSetId },
+    });
+    await this.prisma.vocabularySet.update({
+      where: { id: vocabSetId },
+      data: { entryCount: currentCount },
+    });
+  }
+
+  async syncArticleHighlights(
+    articleId: string,
+    creatorId: string,
+    highlights: Array<{
+      blockId: string;
+      wordIndex: number;
+      occurrenceText: string;
+      entryId: string;
+      customDefinition?: string;
+      customExample?: string;
+      customExampleTrans?: string;
+    }>
+  ): Promise<void> {
+    const article = await this.prisma.article.findUnique({
+      where: { id: articleId },
+    });
+    if (!article) return;
+
+    // 1. Sync ArticleVocabularyHighlight table
+    // Delete existing highlights for this article
+    await this.prisma.articleVocabularyHighlight.deleteMany({
+      where: { articleId },
+    });
+
+    if (highlights && highlights.length > 0) {
+      // Create new highlights
+      await this.prisma.articleVocabularyHighlight.createMany({
+        data: highlights.map((h) => ({
+          articleId,
+          entryId: h.entryId,
+          blockId: h.blockId,
+          wordIndex: h.wordIndex,
+          occurrenceText: h.occurrenceText,
+          customDefinition: h.customDefinition || null,
+          customExample: h.customExample || null,
+          customExampleTrans: h.customExampleTrans || null,
+        })),
+      });
+    }
+
+    // 2. Sync linked VocabularySet & VocabularySetItem
+    let vocabSetId = article.vocabularySetId;
+    if (!vocabSetId) {
+      const newSet = await this.prisma.vocabularySet.create({
+        data: {
+          title: `Vocabulary for: ${article.title}`,
+          description: `Automatically generated vocabulary set for the article "${article.title}"`,
+          language: 'en',
+          type: 'reading',
+          isPublic: false,
+          isActive: true,
+          userId: creatorId || 'system',
+          tags: [],
+        },
+      });
+      vocabSetId = newSet.id;
+      await this.prisma.article.update({
+        where: { id: articleId },
+        data: { vocabularySetId: vocabSetId },
+      });
+    }
+
+    if (!highlights || highlights.length === 0) {
+      // Delete all items in the vocabulary set
+      await this.prisma.vocabularySetItem.deleteMany({
+        where: { vocabularySetId: vocabSetId },
+      });
+    } else {
+      const activeEntryIds = highlights.map((h) => h.entryId);
+
+      for (const h of highlights) {
+        const entry = await this.prisma.entry.findUnique({
+          where: { id: h.entryId },
+        });
+        const def = h.customDefinition || entry?.notes || '';
+        const ex = h.customExample || '';
+        const exTrans = h.customExampleTrans || '';
+
+        await this.prisma.vocabularySetItem.upsert({
+          where: {
+            vocabularySetId_entryId: {
+              vocabularySetId: vocabSetId,
+              entryId: h.entryId,
+            },
+          },
+          update: {
+            word: h.occurrenceText,
+            definition: def,
+            example: ex,
+            notes: exTrans,
+            deleted: false,
+          },
+          create: {
+            vocabularySetId: vocabSetId,
+            entryId: h.entryId,
+            word: h.occurrenceText,
+            definition: def,
+            example: ex,
+            notes: exTrans,
+            deleted: false,
+          },
+        });
+      }
+
+      // Prune removed words from VocabularySetItem
+      await this.prisma.vocabularySetItem.deleteMany({
+        where: {
+          vocabularySetId: vocabSetId,
+          entryId: { notIn: activeEntryIds },
+        },
+      });
+    }
 
     // Update Entry Count
     const currentCount = await this.prisma.vocabularySetItem.count({

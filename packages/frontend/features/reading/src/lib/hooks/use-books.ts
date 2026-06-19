@@ -155,6 +155,7 @@ export function useBooks() {
     isFetchingNextPage,
     loadMoreRef,
     inProgressBooks,
+    dashboardData,
     handleToggleBookmark,
     handleToggleTag,
     handleToggleCefrButton,

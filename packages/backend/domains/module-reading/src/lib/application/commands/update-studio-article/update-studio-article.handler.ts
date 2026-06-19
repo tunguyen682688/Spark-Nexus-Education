@@ -37,6 +37,10 @@ export class UpdateStudioArticleHandler
       contentType: command.contentType,
     });
 
+    if (command.vocabularySetId !== undefined) {
+      article.setVocabularySetId(command.vocabularySetId || null);
+    }
+
     if (command.status === 'PUBLISHED' && !article.getIsPublished()) {
       article.publish();
     } else if (command.status === 'DRAFT' && article.getIsPublished()) {
@@ -44,11 +48,19 @@ export class UpdateStudioArticleHandler
     }
 
     await this.readingRepository.saveArticle(article);
-    await this.readingRepository.syncArticleVocabulary(
-      article.getId(),
-      command.userId,
-      article.getContent()
-    );
+    if (command.highlights) {
+      await this.readingRepository.syncArticleHighlights(
+        article.getId(),
+        command.userId,
+        command.highlights
+      );
+    } else {
+      await this.readingRepository.syncArticleVocabulary(
+        article.getId(),
+        command.userId,
+        article.getContent()
+      );
+    }
     return article.getId();
   }
 }

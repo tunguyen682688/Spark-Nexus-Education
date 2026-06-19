@@ -17,7 +17,10 @@ import {
   Percent,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { DEFAULT_ARTICLE_THUMBNAIL, ROUTES } from '@spark-nest-ed/frontend-core-constants';
+import {
+  DEFAULT_ARTICLE_THUMBNAIL,
+  ROUTES,
+} from '@spark-nest-ed/frontend-core-constants';
 import { ACADEMIC_DATA, READING_UI_TEXT } from '../constants';
 import type { Article } from '../types';
 import { useBooks } from '../hooks/use-books';
@@ -47,10 +50,20 @@ export const BooksContainer: React.FC = () => {
     isFetchingNextPage,
     loadMoreRef,
     inProgressBooks,
+    dashboardData,
     handleToggleBookmark,
     handleToggleTag,
     handleToggleCefrButton,
   } = useBooks();
+
+  const spotlightBook = React.useMemo(() => {
+    if (!allBooks || allBooks.length === 0) return null;
+    return (
+      allBooks.find((b) => b.tags?.includes('featured') || b.tags?.includes('spotlight')) ||
+      allBooks.find((b) => b.category === 'academic') ||
+      allBooks[0]
+    );
+  }, [allBooks]);
 
   // Render individual book cover card
   const renderBookCard = (book: Article) => {
@@ -66,12 +79,11 @@ export const BooksContainer: React.FC = () => {
         ? 'B2 UPPER INT.'
         : `${book.difficulty} INTERMEDIATE`;
 
-    const difficultyColor =
-      book.difficulty.startsWith('C')
-        ? book.difficulty === 'C2'
-          ? 'bg-red-500/10 text-red-500 border-red-500/20'
-          : 'bg-blue-600/10 text-blue-500 border-blue-500/20'
-        : 'bg-emerald-600/10 text-emerald-500 border-emerald-500/20';
+    const difficultyColor = book.difficulty.startsWith('C')
+      ? book.difficulty === 'C2'
+        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+        : 'bg-blue-600/10 text-blue-500 border-blue-500/20'
+      : 'bg-emerald-600/10 text-emerald-500 border-emerald-500/20';
 
     if (viewMode === 'list') {
       return (
@@ -102,11 +114,15 @@ export const BooksContainer: React.FC = () => {
                 {book.author || 'Tác giả ẩn danh'}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <Badge className={`text-[9px] font-bold py-0.5 px-2 rounded-md ${difficultyColor} border`}>
+                <Badge
+                  className={`text-[9px] font-bold py-0.5 px-2 rounded-md ${difficultyColor} border`}
+                >
                   {difficultyLabel}
                 </Badge>
                 <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-transparent text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
-                  {book.category === 'academic' ? 'Sách học thuật' : 'Truyện đọc'}
+                  {book.category === 'academic'
+                    ? 'Sách học thuật'
+                    : 'Truyện đọc'}
                 </Badge>
                 {book.tags?.[0] && (
                   <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
@@ -120,10 +136,13 @@ export const BooksContainer: React.FC = () => {
           <div className="flex items-center gap-6 shrink-0">
             <div className="text-right text-xs font-semibold text-slate-450 dark:text-slate-500 space-y-1">
               <p className="flex items-center justify-end gap-1.5 text-blue-600 dark:text-blue-400">
-                <BookOpen className="w-3.5 h-3.5" /> {Math.ceil(book.wordCount / 200)} trang
+                <BookOpen className="w-3.5 h-3.5" />{' '}
+                {Math.ceil(book.wordCount / 200)} trang
               </p>
               <p className="flex items-center justify-end gap-1.5">
-                <span className="font-medium text-slate-400 dark:text-slate-500">{book.wordCount} từ</span>
+                <span className="font-medium text-slate-400 dark:text-slate-500">
+                  {book.wordCount} từ
+                </span>
               </p>
             </div>
 
@@ -174,13 +193,19 @@ export const BooksContainer: React.FC = () => {
               <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent z-20 text-white">
                 <div className="flex justify-between items-center text-[9px] font-bold mb-1">
                   <span>TIẾN ĐỘ</span>
-                  <span className={isCompleted ? 'text-emerald-400' : 'text-amber-400'}>
+                  <span
+                    className={
+                      isCompleted ? 'text-emerald-400' : 'text-amber-400'
+                    }
+                  >
                     {book.progress}%
                   </span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-1 overflow-hidden">
                   <div
-                    className={`h-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    className={`h-full ${
+                      isCompleted ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}
                     style={{ width: `${book.progress}%` }}
                   />
                 </div>
@@ -208,7 +233,8 @@ export const BooksContainer: React.FC = () => {
         <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/40 text-[11px] text-slate-400 dark:text-slate-500 font-bold px-1">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-              <BookOpen className="w-3.5 h-3.5" /> {Math.ceil(book.wordCount / 200)} trang
+              <BookOpen className="w-3.5 h-3.5" />{' '}
+              {Math.ceil(book.wordCount / 200)} trang
             </span>
             <span className="flex items-center gap-1 font-medium text-slate-400 dark:text-slate-500">
               {book.wordCount} từ
@@ -231,7 +257,7 @@ export const BooksContainer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
+    <div className="max-w-full mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
       {/* Back Button */}
       <button
         onClick={() => navigate(ROUTES.READING.EXPLORE)}
@@ -242,64 +268,92 @@ export const BooksContainer: React.FC = () => {
       </button>
 
       {/* Hero Featured SPOTLIGHT Card */}
-      <div className="mb-8 bg-gradient-to-br from-slate-900 to-slate-950 dark:from-slate-900 dark:to-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col md:flex-row group shadow-lg min-h-[300px]">
-        {/* Cover fold backdrop */}
-        <div className="md:w-1/2 relative min-h-[200px] md:h-auto overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=800&auto=format&fit=crop"
-            className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:scale-102 transition-transform duration-700"
-            alt="Curriculum Background"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent"></div>
-          
-          {/* Spotlight Graphic Cover */}
-          <div className="absolute inset-0 flex items-center justify-center p-6 md:p-10">
-            <div className="w-36 h-48 bg-slate-950 rounded-xl shadow-2xl overflow-hidden border border-slate-850 relative group-hover:rotate-1 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-indigo-500/10 opacity-30"></div>
-              <img
-                src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop"
-                className="w-full h-full object-cover"
-                alt="Featured Book"
-              />
+      {isLoading ? (
+        <div className="mb-8 bg-gradient-to-br from-slate-900 to-slate-950 dark:from-slate-900 dark:to-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col md:flex-row shadow-lg min-h-[300px] animate-pulse">
+          <div className="md:w-1/2 relative min-h-[200px] md:h-auto overflow-hidden bg-slate-800/40" />
+          <div className="md:w-1/2 p-8 md:p-10 flex flex-col justify-center space-y-4">
+            <div className="h-4 w-24 rounded bg-slate-800/60" />
+            <div className="h-8 w-3/4 rounded bg-slate-800/60" />
+            <div className="h-4 w-full rounded bg-slate-800/60" />
+            <div className="h-4 w-5/6 rounded bg-slate-800/60" />
+          </div>
+        </div>
+      ) : spotlightBook ? (
+        <div className="mb-8 bg-gradient-to-br from-slate-900 to-slate-950 dark:from-slate-900 dark:to-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col md:flex-row group shadow-lg min-h-[300px]">
+          {/* Cover fold backdrop */}
+          <div className="md:w-1/2 relative min-h-[200px] md:h-auto overflow-hidden">
+            <img
+              src={spotlightBook.thumbnailUrl || DEFAULT_ARTICLE_THUMBNAIL}
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_ARTICLE_THUMBNAIL;
+              }}
+              className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:scale-102 transition-transform duration-700"
+              alt="Curriculum Background"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent"></div>
+            
+            {/* Spotlight Graphic Cover */}
+            <div className="absolute inset-0 flex items-center justify-center p-6 md:p-10">
+              <div 
+                className="w-36 h-48 bg-slate-950 rounded-xl shadow-2xl overflow-hidden border border-slate-805 relative group-hover:rotate-2 transition-transform duration-500"
+                style={{ perspective: '800px', transformStyle: 'preserve-3d' }}
+              >
+                {/* 3D spine overlay */}
+                <div className="absolute top-0 bottom-0 left-0 w-3 bg-gradient-to-r from-black/45 via-black/15 to-transparent z-10" />
+                <img
+                  src={spotlightBook.thumbnailUrl || DEFAULT_ARTICLE_THUMBNAIL}
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_ARTICLE_THUMBNAIL;
+                  }}
+                  className="w-full h-full object-cover"
+                  alt={spotlightBook.title}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Content Details */}
+          <div className="md:w-1/2 p-8 md:p-10 flex flex-col justify-center text-white space-y-4">
+            <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2.5 py-1 rounded-full uppercase tracking-widest w-fit shadow-sm">
+              {spotlightBook.category === 'academic' ? READING_UI_TEXT.academic.FEATURED_CURRICULUM : 'Sách nổi bật'}
+            </span>
+            <h2 className="text-2xl md:text-3.5xl font-extrabold tracking-tight leading-tight line-clamp-2">
+              {spotlightBook.title}
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xl line-clamp-3">
+              {spotlightBook.summary || 'Khám phá kiến thức mới từ cuốn sách được tuyển chọn đặc biệt tuần này.'}
+            </p>
+
+            <div className="flex flex-wrap gap-4 pt-4">
+              <Button
+                className="bg-white hover:bg-slate-100 text-slate-950 font-bold rounded-xl px-6 py-5 flex items-center gap-2 border-none shadow-sm transition-colors cursor-pointer text-xs h-10"
+                onClick={() => {
+                  navigate(`/reading/article/${spotlightBook.id}`);
+                }}
+              >
+                <BookOpen className="w-4 h-4" /> {READING_UI_TEXT.academic.READ_NOW}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-slate-800 hover:bg-slate-850/60 text-slate-350 hover:text-white font-bold rounded-xl px-6 py-5 flex items-center gap-2 text-xs h-10 transition-colors"
+                onClick={(e) => {
+                  handleToggleBookmark(spotlightBook.id, e);
+                }}
+              >
+                {bookmarkedIds.has(spotlightBook.id) ? (
+                  <>
+                    <BookmarkCheck className="w-4 h-4 text-emerald-400" /> Đã lưu
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-4 h-4" /> {READING_UI_TEXT.academic.ADD_TO_SHELF}
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
-
-        {/* Content Details */}
-        <div className="md:w-1/2 p-8 md:p-10 flex flex-col justify-center text-white space-y-4">
-          <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2.5 py-1 rounded-full uppercase tracking-widest w-fit shadow-sm">
-            {READING_UI_TEXT.academic.FEATURED_CURRICULUM}
-          </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
-            Văn học Hiện đại và Khủng hoảng Biểu đạt
-          </h2>
-          <p className="text-slate-450 text-sm leading-relaxed max-w-xl">
-            Tiến sĩ Sarah Jenkins khám phá những câu chuyện phân mảnh và mỹ học phức tạp của đầu thế kỷ 20 trong cuốn giáo trình kinh điển này.
-          </p>
-
-          <div className="flex flex-wrap gap-4 pt-4">
-            <Button
-              className="bg-white hover:bg-slate-100 text-slate-950 font-bold rounded-xl px-6 py-5 flex items-center gap-2 border-none shadow-sm transition-colors cursor-pointer"
-              onClick={() => {
-                const specBook = allBooks.find((b) => b.category === 'academic') || allBooks[0];
-                if (specBook) navigate(`/reading/article/${specBook.id}`);
-              }}
-            >
-              <BookOpen className="w-4 h-4" /> {READING_UI_TEXT.academic.READ_NOW}
-            </Button>
-            <Button
-              variant="outline"
-              className="border-slate-800 hover:bg-slate-850/60 text-slate-350 hover:text-white font-bold rounded-xl px-6 py-5 flex items-center gap-2"
-              onClick={(e) => {
-                const specBook = allBooks.find((b) => b.category === 'academic') || allBooks[0];
-                if (specBook) handleToggleBookmark(specBook.id, e);
-              }}
-            >
-              <Bookmark className="w-4 h-4" /> {READING_UI_TEXT.academic.ADD_TO_SHELF}
-            </Button>
-          </div>
-        </div>
-      </div>
+      ) : null}
 
       {/* Grid Layout (Header & Side split) */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 pb-4 border-b border-slate-200/60 dark:border-slate-850/60 gap-4">
@@ -308,7 +362,8 @@ export const BooksContainer: React.FC = () => {
             Thư viện Sách & Truyện đọc
           </h1>
           <p className="text-slate-400 dark:text-slate-400 text-xs font-semibold mt-1">
-            Tuyển tập sách học thuật giáo khoa, nghiên cứu khoa học và truyện đọc phân chia theo CEFR.
+            Tuyển tập sách học thuật giáo khoa, nghiên cứu khoa học và truyện
+            đọc phân chia theo CEFR.
           </p>
         </div>
 
@@ -322,7 +377,8 @@ export const BooksContainer: React.FC = () => {
                 : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <List className="w-3.5 h-3.5" /> {READING_UI_TEXT.academic.LIST_VIEW}
+            <List className="w-3.5 h-3.5" />{' '}
+            {READING_UI_TEXT.academic.LIST_VIEW}
           </button>
           <button
             onClick={() => setViewMode('grid')}
@@ -332,7 +388,8 @@ export const BooksContainer: React.FC = () => {
                 : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> {READING_UI_TEXT.academic.GRID_VIEW}
+            <LayoutGrid className="w-3.5 h-3.5" />{' '}
+            {READING_UI_TEXT.academic.GRID_VIEW}
           </button>
         </div>
       </div>
@@ -344,7 +401,10 @@ export const BooksContainer: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="bg-white dark:bg-[#121826] rounded-2xl border border-slate-100 dark:border-white/5 p-3.5 space-y-4 animate-pulse">
+                <div
+                  key={idx}
+                  className="bg-white dark:bg-[#121826] rounded-2xl border border-slate-100 dark:border-white/5 p-3.5 space-y-4 animate-pulse"
+                >
                   <Skeleton className="aspect-[3/4] w-full rounded-xl" />
                   <Skeleton className="h-4 w-3/4 rounded" />
                 </div>
@@ -352,9 +412,12 @@ export const BooksContainer: React.FC = () => {
             </div>
           ) : error ? (
             <div className="text-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 p-8 rounded-2xl shadow-sm">
-              <p className="text-red-500 font-bold mb-2">{READING_UI_TEXT.academic.ERROR_LOADING}</p>
+              <p className="text-red-500 font-bold mb-2">
+                {READING_UI_TEXT.academic.ERROR_LOADING}
+              </p>
               <p className="text-slate-450 text-sm">
-                {(error as Error)?.message || READING_UI_TEXT.academic.DEFAULT_ERROR}
+                {(error as Error)?.message ||
+                  READING_UI_TEXT.academic.DEFAULT_ERROR}
               </p>
             </div>
           ) : filteredBooks.length === 0 ? (
@@ -401,7 +464,10 @@ export const BooksContainer: React.FC = () => {
                   }
                 >
                   {Array.from({ length: 3 }).map((_, idx) => (
-                    <Skeleton key={idx} className="w-full h-44 rounded-2xl dark:bg-slate-800" />
+                    <Skeleton
+                      key={idx}
+                      className="w-full h-44 rounded-2xl dark:bg-slate-800"
+                    />
                   ))}
                 </div>
               )}
@@ -416,7 +482,8 @@ export const BooksContainer: React.FC = () => {
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white dark:bg-[#121826] p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm space-y-5">
             <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-100 dark:border-white/5 text-sm">
-              <SlidersHorizontal className="w-4 h-4 text-blue-500" /> {READING_UI_TEXT.academic.REFINE_SEARCH}
+              <SlidersHorizontal className="w-4 h-4 text-blue-500" />{' '}
+              {READING_UI_TEXT.academic.REFINE_SEARCH}
             </h4>
 
             {/* Book category filter selector (Consolidated Book Types selector) */}
@@ -425,11 +492,13 @@ export const BooksContainer: React.FC = () => {
                 Phân loại tài liệu
               </span>
               <div className="flex gap-2">
-                {([
-                  { value: 'all', label: 'Tất cả' },
-                  { value: 'academic', label: 'Học thuật' },
-                  { value: 'book', label: 'Truyện đọc' },
-                ] as { value: 'all' | 'academic' | 'book'; label: string }[]).map((item) => {
+                {(
+                  [
+                    { value: 'all', label: 'Tất cả' },
+                    { value: 'academic', label: 'Học thuật' },
+                    { value: 'book', label: 'Truyện đọc' },
+                  ] as { value: 'all' | 'academic' | 'book'; label: string }[]
+                ).map((item) => {
                   const isSelected = categoryFilter === item.value;
                   return (
                     <button
@@ -463,8 +532,12 @@ export const BooksContainer: React.FC = () => {
             {/* CEFR Difficulty range slider */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-[10px] font-bold text-slate-450 dark:text-slate-500">
-                <span>{READING_UI_TEXT.academic.DIFFICULTY_LEVEL.toUpperCase()}</span>
-                <span className="text-blue-500 dark:text-blue-400">{cefrRangeText}</span>
+                <span>
+                  {READING_UI_TEXT.academic.DIFFICULTY_LEVEL.toUpperCase()}
+                </span>
+                <span className="text-blue-500 dark:text-blue-400">
+                  {cefrRangeText}
+                </span>
               </div>
               <input
                 type="range"
@@ -513,27 +586,27 @@ export const BooksContainer: React.FC = () => {
                 {READING_UI_TEXT.academic.DISCIPLINE_TAGS}
               </span>
               <div className="flex flex-wrap gap-2">
-                {ACADEMIC_DATA.DISCIPLINES.map(
-                  (discipline) => {
-                    const isSelected = selectedTags.includes(discipline.value);
-                    return (
-                      <button
-                        key={discipline.value}
-                        onClick={() => handleToggleTag(discipline.value)}
-                        className={`text-[10px] font-bold py-1.5 px-3 rounded-lg border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50/80 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-350 dark:hover:border-slate-700'
-                        }`}
-                      >
-                        {discipline.label}
-                      </button>
-                    );
-                  }
-                )}
+                {ACADEMIC_DATA.DISCIPLINES.map((discipline) => {
+                  const isSelected = selectedTags.includes(discipline.value);
+                  return (
+                    <button
+                      key={discipline.value}
+                      onClick={() => handleToggleTag(discipline.value)}
+                      className={`text-[10px] font-bold py-1.5 px-3 rounded-lg border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50/80 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-350 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      {discipline.label}
+                    </button>
+                  );
+                })}
                 <button
                   onClick={() => {
-                    setSelectedTags(ACADEMIC_DATA.DISCIPLINES.map(d => d.value));
+                    setSelectedTags(
+                      ACADEMIC_DATA.DISCIPLINES.map((d) => d.value)
+                    );
                   }}
                   className="text-[10px] font-bold py-1.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-750 text-slate-400 hover:border-slate-400 transition-all cursor-pointer"
                 >
@@ -546,25 +619,35 @@ export const BooksContainer: React.FC = () => {
           {/* Your Reading Progress */}
           <div className="bg-white dark:bg-[#121826] p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm space-y-5">
             <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 pb-2.5 border-b border-slate-100 dark:border-white/5 text-sm">
-              <Percent className="w-4 h-4 text-indigo-500" /> {READING_UI_TEXT.academic.YOUR_PROGRESS}
+              <Percent className="w-4 h-4 text-indigo-500" />{' '}
+              {READING_UI_TEXT.academic.YOUR_PROGRESS}
             </h4>
 
             {isLoading ? (
               Array(2)
                 .fill(0)
-                .map((_, i) => <Skeleton key={i} className="h-10 w-full animate-pulse" />)
+                .map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full animate-pulse" />
+                ))
             ) : inProgressBooks.length > 0 ? (
               <div className="space-y-4">
                 {inProgressBooks.map((book) => {
-                  const barColor = book.progress > 50 ? 'bg-blue-500' : 'bg-orange-400';
+                  const barColor =
+                    book.progress > 50 ? 'bg-blue-500' : 'bg-orange-400';
                   const titleLabel =
-                    book.title.length > 20 ? book.title.substring(0, 18) + '...' : book.title;
+                    book.title.length > 20
+                      ? book.title.substring(0, 18) + '...'
+                      : book.title;
 
                   return (
                     <div key={book.id} className="space-y-1.5">
                       <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-slate-800 dark:text-slate-200">{titleLabel}</span>
-                        <span className="text-blue-500 dark:text-blue-400">{book.progress}%</span>
+                        <span className="text-slate-800 dark:text-slate-200">
+                          {titleLabel}
+                        </span>
+                        <span className="text-blue-500 dark:text-blue-400">
+                          {book.progress}%
+                        </span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-850 rounded-full h-1.5 overflow-hidden">
                         <div
@@ -578,15 +661,35 @@ export const BooksContainer: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm font-medium text-slate-500">{READING_UI_TEXT.academic.NO_IN_PROGRESS}</p>
+                <p className="text-sm font-medium text-slate-500">
+                  {READING_UI_TEXT.academic.NO_IN_PROGRESS}
+                </p>
               </div>
             )}
 
-            {/* Monthly goal */}
-            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex justify-between items-center text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase">
-              <span>{READING_UI_TEXT.academic.MONTHLY_GOAL} {READING_UI_TEXT.academic.GOAL_PAGES}</span>
-              <span className="text-slate-800 dark:text-slate-200">840 / 1200</span>
-            </div>
+            {/* Real stats from user reading history */}
+            {dashboardData?.stats && (
+              <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span>Từ vựng đã học</span>
+                  <span className="text-slate-850 dark:text-slate-200 font-extrabold font-mono">
+                    {dashboardData.stats.wordsLookedUp} từ
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span>Tài liệu hoàn thành</span>
+                  <span className="text-slate-855 dark:text-slate-200 font-extrabold font-mono">
+                    {dashboardData.stats.totalArticles} bài
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span>Tốc độ đọc trung bình</span>
+                  <span className="text-slate-855 dark:text-slate-200 font-extrabold font-mono text-blue-500 dark:text-blue-400">
+                    {dashboardData.stats.avgWpm} WPM
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

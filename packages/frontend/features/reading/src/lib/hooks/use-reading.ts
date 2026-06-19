@@ -179,3 +179,33 @@ export function useSubmitArticleQuiz() {
     },
   });
 }
+
+export function useWeakWords() {
+  return useQuery({
+    queryKey: ['reading', 'weak-words'],
+    queryFn: () => readingApi.getWeakWords(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useParseSyntax(sentence: string | null | undefined) {
+  return useQuery({
+    queryKey: ['reading', 'parse-syntax', sentence || ''],
+    queryFn: () => readingApi.parseSyntax(sentence as string),
+    enabled: !!sentence && sentence.trim().length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useCreateVocabularyPackage() {
+  const queryClient = useQueryClient();
+
+  return useMutation<VocabularySet, Error, { title: string; language: string; type: string }>({
+    mutationFn: (payload) => readingApi.createVocabularyPackage(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['vocabulary', 'my-packages'],
+      });
+    },
+  });
+}

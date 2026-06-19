@@ -309,4 +309,58 @@ export const readingApi = {
     });
     return extractResource(response.data);
   },
+
+  async getWeakWords(): Promise<Array<{
+    id: string;
+    word: string;
+    pronunciation: string | null;
+    partOfSpeech: string | null;
+    audioUrl: string | null;
+    definition: string;
+    example: string | null;
+    masteryLevel: number;
+    status: string;
+  }>> {
+    const axios = await getAxiosInstance();
+    const response = await axios.get<JsonApiListResponse<{
+      id: string;
+      word: string;
+      pronunciation: string | null;
+      partOfSpeech: string | null;
+      audioUrl: string | null;
+      definition: string;
+      example: string | null;
+      masteryLevel: number;
+      status: string;
+    }>>('/vocabulary/weak-words');
+    return extractPaginatedResponse(response.data).data;
+  },
+
+  async parseSyntax(sentence: string): Promise<{
+    label: string;
+    text?: string;
+    children?: any[];
+  }> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<{
+      label: string;
+      text?: string;
+      children?: any[];
+    }>>('/reading/parse-syntax', { sentence });
+    return extractResource(response.data);
+  },
+
+  async createVocabularyPackage(payload: { title: string; language: string; type: string }): Promise<VocabularySet> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<VocabularySet>>('/vocabulary/packages', payload);
+    return extractResource(response.data);
+  },
+
+  async translateParagraph(text: string): Promise<{ translation: string }> {
+    const axios = await getAxiosInstance();
+    const response = await axios.post<ResourceResponse<{ translation: string }>>('/reading/translate-paragraph', {
+      text,
+    });
+    return extractResource(response.data);
+  },
 };

@@ -1,13 +1,19 @@
-import React from 'react';
-import { cn } from '@spark-nest-ed/frontend-shared-utils';
-import type { EditorJsOutputData, EditorJsBlock } from '../../types';
-import { bionicTransformInner } from '../../utils/reader-parser';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Volume2 } from 'lucide-react';
+import type { EditorJsOutputData, EditorJsBlock, WeakWordItem, ArticleVocabularyHighlight } from '../../types';
+import { useWeakWords } from '../../hooks/use-reading';
+import { highlightAndBionicTransform } from '../../services/reading.service';
+import type { VocabHighlightInfo } from '../../services/reading.service';
+import { readingApi } from '../../api/reading-api';
+import { ReaderBlockItem } from './ReaderBlockItem';
 
 interface ReaderBlocksRendererProps {
   content: EditorJsOutputData | null | string;
   isBionicMode: boolean;
   fixation: number;
   saccade: number;
+  isBilingualView?: boolean;
+  vocabularyHighlights?: ArticleVocabularyHighlight[];
 }
 
 export const ReaderBlocksRenderer: React.FC<ReaderBlocksRendererProps> = ({
@@ -15,163 +21,230 @@ export const ReaderBlocksRenderer: React.FC<ReaderBlocksRendererProps> = ({
   isBionicMode,
   fixation,
   saccade,
+  isBilingualView = false,
+  vocabularyHighlights = [],
 }) => {
-  const transformText = (txt: string) => {
-    if (!txt) return '';
-    return isBionicMode ? bionicTransformInner(txt, fixation, saccade) : txt;
+  const { data: weakWords } = useWeakWords();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [hoveredWord, setHoveredWord] = useState<{
+    word: string;
+    definition: string;
+    pronunciation: string;
+    audioUrl: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [translatedBlocks, setTranslatedBlocks] = useState<Record<string | number, { text: string; loading: boolean }>>({});
+  const [activeTranslations, setActiveTranslations] = useState<Record<string | number, boolean>>({});
+
+  const weakWordsMap = useMemo(() => {
+    const map = new Map<string, WeakWordItem>();
+    if (weakWords) {
+      weakWords.forEach((item) => {
+        map.set(item.word.toLowerCase().trim(), item);
+      });
+    }
+    return map;
+  }, [weakWords]);
+
+  // Build a Map<blockId, Map<wordIndex, VocabHighlightInfo>> from decoupled highlights
+  const vocabHighlightsByBlock = useMemo(() => {
+    const map = new Map<string, Map<number, VocabHighlightInfo>>();
+    if (vocabularyHighlights && vocabularyHighlights.length > 0) {
+      vocabularyHighlights.forEach((h) => {
+        if (!map.has(h.blockId)) {
+          map.set(h.blockId, new Map());
+        }
+        map.get(h.blockId)!.set(h.wordIndex, {
+          word: h.entry.word,
+          definition: h.customDefinition || h.entry.notes || null,
+          pronunciation: h.entry.pronunciation || null,
+          partOfSpeech: h.entry.partOfSpeech || null,
+        });
+      });
+    }
+    return map;
+  }, [vocabularyHighlights]);
+
+  const createTransformText = useMemo(() => {
+    return (blockId?: string) => (txt: string) => {
+      if (!txt) return '';
+      const blockVocabMap = blockId ? vocabHighlightsByBlock.get(blockId) : undefined;
+      return highlightAndBionicTransform(txt, isBionicMode, fixation, saccade, weakWordsMap, blockVocabMap);
+    };
+  }, [isBionicMode, fixation, saccade, weakWordsMap, vocabHighlightsByBlock]);
+
+  const handleTranslateBlock = async (key: string | number, textContent: string) => {
+    if (activeTranslations[key]) {
+      setActiveTranslations(prev => ({ ...prev, [key]: false }));
+      return;
+    }
+
+    if (translatedBlocks[key]) {
+      setActiveTranslations(prev => ({ ...prev, [key]: true }));
+      return;
+    }
+
+    setTranslatedBlocks(prev => ({ ...prev, [key]: { text: '', loading: true } }));
+    try {
+      const res = await readingApi.translateParagraph(textContent);
+      setTranslatedBlocks(prev => ({ ...prev, [key]: { text: res.translation, loading: false } }));
+      setActiveTranslations(prev => ({ ...prev, [key]: true }));
+    } catch (err) {
+      console.error("Translation error:", err);
+      setTranslatedBlocks(prev => ({ ...prev, [key]: { text: 'Không thể dịch đoạn văn này. Vui lòng thử lại.', loading: false } }));
+      setActiveTranslations(prev => ({ ...prev, [key]: true }));
+    }
   };
 
-  if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) {
-    if (typeof content === 'string' && (content as string).trim()) {
-      return (
-        <>
-          {(content as string).split(/\n+/).map((para: string, i: number) => {
-            if (isBionicMode) {
-              return (
-                <p
-                  key={i}
-                  className="leading-relaxed mb-4 text-slate-700 dark:text-slate-355"
-                  dangerouslySetInnerHTML={{ __html: bionicTransformInner(para, fixation, saccade) }}
-                />
-              );
-            }
-            return (
-              <p key={i} className="leading-relaxed mb-4 text-slate-700 dark:text-slate-300">
-                {para}
-              </p>
-            );
-          })}
-        </>
-      );
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Support both weak-word-highlight and vocab-highlight
+      const highlightEl = target.closest('.weak-word-highlight, .vocab-highlight') as HTMLElement | null;
+      if (highlightEl) {
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        
+        const word = highlightEl.getAttribute('data-word') || '';
+        const definition = highlightEl.getAttribute('data-def') || '';
+        const pronunciation = highlightEl.getAttribute('data-pron') || '';
+        const audioUrl = highlightEl.getAttribute('data-audio') || '';
+
+        const rect = highlightEl.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        setHoveredWord({
+          word,
+          definition,
+          pronunciation,
+          audioUrl,
+          x: rect.left - containerRect.left + rect.width / 2,
+          y: rect.top - containerRect.top,
+        });
+      }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const highlightEl = target.closest('.weak-word-highlight, .vocab-highlight') as HTMLElement | null;
+      if (highlightEl) {
+        hideTimeoutRef.current = setTimeout(() => {
+          setHoveredWord(null);
+        }, 300);
+      }
+    };
+
+    container.addEventListener('mouseover', handleMouseOver);
+    container.addEventListener('mouseout', handleMouseOut);
+    return () => {
+      container.removeEventListener('mouseover', handleMouseOver);
+      container.removeEventListener('mouseout', handleMouseOut);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
+  }, []);
+
+  const handleTooltipMouseEnter = () => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+  };
+
+  const handleTooltipMouseLeave = () => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setHoveredWord(null);
+    }, 300);
+  };
+
+  const playAudio = (url: string, fallbackWord: string) => {
+    if (url) {
+      const audio = new Audio(url);
+      audio.play().catch(() => {
+        const utterance = new SpeechSynthesisUtterance(fallbackWord);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      });
+    } else {
+      const utterance = new SpeechSynthesisUtterance(fallbackWord);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
     }
-    return <p className="text-slate-400 italic">Chưa có nội dung để hiển thị.</p>;
-  }
+  };
+
+  // Normalization logic: unify string content and EditorJS output blocks
+  const blocks = useMemo((): EditorJsBlock[] => {
+    if (!content) return [];
+    if (typeof content !== 'object' || !Array.isArray(content.blocks)) {
+      if (typeof content === 'string' && content.trim()) {
+        return content.split(/\n+/).map((para, i) => ({
+          id: `str-para-${i}`,
+          type: 'paragraph',
+          data: { text: para },
+        }));
+      }
+      return [];
+    }
+    return content.blocks;
+  }, [content]);
 
   return (
-    <>
-      {content.blocks.map((block: EditorJsBlock, index: number) => {
-        const key = block.id || index;
+    <div ref={containerRef} className="relative w-full">
+      {blocks.length === 0 ? (
+        <p className="text-slate-400 italic">Chưa có nội dung để hiển thị.</p>
+      ) : (
+        blocks.map((block, index) => (
+          <ReaderBlockItem
+            key={block.id || index}
+            block={block}
+            index={index}
+            transformText={createTransformText(block.id)}
+            activeTranslations={activeTranslations}
+            translatedBlocks={translatedBlocks}
+            onTranslate={handleTranslateBlock}
+            isBilingualView={isBilingualView}
+          />
+        ))
+      )}
 
-        switch (block.type) {
-          case 'header': {
-            const level = block.data?.level || 2;
-            const text = block.data?.text || '';
-            const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-
-            let sizeClass = 'text-xl md:text-2xl mt-6 mb-3 font-serif';
-            if (level === 1) sizeClass = 'text-2xl md:text-3xl mt-8 mb-4 font-serif';
-            if (level === 3) sizeClass = 'text-lg md:text-xl mt-5 mb-2 font-serif';
-
-            return (
-              <Tag
-                key={key}
-                className={cn("font-bold text-slate-800 dark:text-slate-100", sizeClass)}
-                dangerouslySetInnerHTML={{ __html: transformText(text) }}
-              />
-            );
-          }
-
-          case 'paragraph': {
-            const text = block.data?.text || '';
-            return (
-              <p
-                key={key}
-                className="leading-relaxed mb-4 text-slate-700 dark:text-slate-300"
-                dangerouslySetInnerHTML={{ __html: transformText(text) }}
-              />
-            );
-          }
-
-          case 'list': {
-            const items = block.data?.items || [];
-            const ListTag = block.data?.style === 'ordered' ? 'ol' : 'ul';
-            const listClass = cn(
-              "pl-6 space-y-1 mb-4 text-slate-700 dark:text-slate-300",
-              ListTag === 'ol' ? "list-decimal" : "list-disc"
-            );
-
-            return (
-              <ListTag key={key} className={listClass}>
-                {items.map((item: string, i: number) => (
-                  <li
-                    key={i}
-                    dangerouslySetInnerHTML={{ __html: transformText(item) }}
-                  />
-                ))}
-              </ListTag>
-            );
-          }
-
-          case 'quote': {
-            const text = block.data?.text || '';
-            const caption = block.data?.caption || '';
-            return (
-              <blockquote key={key} className="border-l-4 border-blue-500 pl-4 py-1 pr-2 italic text-slate-650 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-r-lg my-4">
-                <p dangerouslySetInnerHTML={{ __html: transformText(text) }} />
-                {caption && (
-                  <cite
-                    className="text-sm not-italic text-slate-500 block mt-1"
-                    dangerouslySetInnerHTML={{ __html: transformText(`— ${caption}`) }}
-                  />
-                )}
-              </blockquote>
-            );
-          }
-
-          case 'delimiter':
-            return <hr key={key} className="border-slate-200 dark:border-slate-700 my-6" />;
-
-          case 'image': {
-            const url = block.data?.file?.url || block.data?.url;
-            const caption = block.data?.caption || '';
-            return (
-              <figure key={key} className="my-6">
-                <img src={url} alt={caption} className="rounded-lg w-full max-h-[450px] object-cover shadow-sm" />
-                {caption && (
-                  <figcaption className="text-sm text-center text-slate-500 mt-2 italic">
-                    {caption}
-                  </figcaption>
-                )}
-              </figure>
-            );
-          }
-
-          case 'bilingualBlock': {
-            const original = block.data?.original || '';
-            const translation = block.data?.translation || '';
-            return (
-              <div key={key} className="flex flex-col md:flex-row gap-4 p-4 border rounded-xl border-slate-200 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-800/20 my-4">
-                <div className="flex-1">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Bản gốc / Original</div>
-                  <div
-                    className="text-slate-800 dark:text-slate-200"
-                    dangerouslySetInnerHTML={{ __html: transformText(original) }}
-                  />
-                </div>
-                <div className="flex-1 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-3 md:pt-0 md:pl-4">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Bản dịch / Translation</div>
-                  <div
-                    className="text-slate-600 dark:text-slate-400 italic"
-                    dangerouslySetInnerHTML={{ __html: transformText(translation) }}
-                  />
-                </div>
-              </div>
-            );
-          }
-
-          default: {
-            const text = block.data?.text || '';
-            return (
-              <p
-                key={key}
-                className="leading-relaxed mb-4 text-slate-700 dark:text-slate-300"
-                dangerouslySetInnerHTML={{ __html: transformText(text) }}
-              />
-            );
-          }
-        }
-      })}
-    </>
+      {/* Weak Word Tooltip */}
+      {hoveredWord && (
+        <div
+          className="absolute bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-3 z-50 text-xs w-64 space-y-2 select-text"
+          style={{
+            left: `${hoveredWord.x}px`,
+            top: `${hoveredWord.y - 10}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+          onMouseEnter={handleTooltipMouseEnter}
+          onMouseLeave={handleTooltipMouseLeave}
+        >
+          <div className="flex justify-between items-start select-none">
+            <div>
+              <h5 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs capitalize">{hoveredWord.word}</h5>
+              {hoveredWord.pronunciation && (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium font-mono">
+                  /{hoveredWord.pronunciation}/
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => playAudio(hoveredWord.audioUrl, hoveredWord.word)}
+              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 transition-colors"
+              title="Phát âm"
+            >
+              <Volume2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 font-sans leading-normal text-[11px] bg-slate-50 dark:bg-slate-850 p-2 rounded-lg border border-slate-100 dark:border-slate-800/40">
+            {hoveredWord.definition || 'Không có định nghĩa sẵn.'}
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
+
 export default ReaderBlocksRenderer;

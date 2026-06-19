@@ -28,11 +28,13 @@ import { GetArticlesQueryDto } from '../../application/dtos/get-articles-query.d
 import { UpdateReadingProgressDto } from '../../application/dtos/update-reading-progress.dto';
 import { SubmitArticleQuizDto } from '../../application/dtos/submit-article-quiz.dto';
 import { TranslateContextDto } from '../../application/dtos/translate-context.dto';
+import { TranslateParagraphDto } from '../../application/dtos/translate-paragraph.dto';
 import { GetReadingDashboardQuery } from '../../application/querys/get-reading-dashboard/get-reading-dashboard.query';
 import { GetArticlesQuery } from '../../application/querys/get-articles/get-articles.query';
 import { GetArticleQuery } from '../../application/querys/get-article/get-article.query';
 import { GetArticleQuizQuery } from '../../application/querys/get-article-quiz/get-article-quiz.query';
 import { TranslateWordInContextQuery } from '../../application/querys/translate-word-in-context/translate-word-in-context.query';
+import { TranslateParagraphQuery } from '../../application/querys/translate-paragraph/translate-paragraph.query';
 import { UpdateReadingProgressCommand } from '../../application/commands/update-reading-progress/update-reading-progress.command';
 import { SubmitArticleQuizCommand } from '../../application/commands/submit-article-quiz/submit-article-quiz.command';
 import { CreateCommunityArticleDto } from '../../application/dtos/create-community-article.dto';
@@ -64,7 +66,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get reading dashboard summary',
-    description: 'Retrieves user progress stats, books being read, trending publications, weekly activity streak, and lookups.',
+    description:
+      'Retrieves user progress stats, books being read, trending publications, weekly activity streak, and lookups.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Reading dashboard retrieved successfully',
@@ -78,10 +81,10 @@ export class ReadingController {
     const result = await this.queryBus.execute(
       new GetReadingDashboardQuery(user.id)
     );
-    
+
     const dashboardEntity = {
       id: user.id,
-      ...result
+      ...result,
     };
 
     return convertEntityToJsonApi(dashboardEntity, 'reading-dashboard', {
@@ -96,7 +99,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'List and filter reading articles',
-    description: 'Retrieves paginated reading articles with filters for difficulty, category, status (in-progress/completed), and search query.',
+    description:
+      'Retrieves paginated reading articles with filters for difficulty, category, status (in-progress/completed), and search query.',
   })
   @ApiJsonApiPaginatedResponse({
     description: 'Articles retrieved successfully',
@@ -130,7 +134,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get article details by ID',
-    description: 'Retrieves detailed content of an article including the user\'s reading progress.',
+    description:
+      "Retrieves detailed content of an article including the user's reading progress.",
   })
   @ApiJsonApiSuccessResponse({
     description: 'Article retrieved successfully',
@@ -159,7 +164,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Update reading progress for an article',
-    description: 'Saves or updates the reading progress percent, scroll position, and time spent on a specific article.',
+    description:
+      'Saves or updates the reading progress percent, scroll position, and time spent on a specific article.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Reading progress updated successfully',
@@ -196,13 +202,17 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get reading comprehension quiz for an article',
-    description: 'Retrieves multiple choice questions without exposing correct answers.',
+    description:
+      'Retrieves multiple choice questions without exposing correct answers.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Article quiz retrieved successfully',
     resourceType: 'article-quiz',
   })
-  @ApiJsonApiErrorResponse({ status: 404, description: 'Article or quiz not found' })
+  @ApiJsonApiErrorResponse({
+    status: 404,
+    description: 'Article or quiz not found',
+  })
   @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
   async getArticleQuiz(
     @auth.CurrentUser() user: auth.AuthUser,
@@ -225,14 +235,18 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Submit reading comprehension quiz answers',
-    description: 'Evaluates user answers, calculates score, and provides explanations.',
+    description:
+      'Evaluates user answers, calculates score, and provides explanations.',
   })
   @ApiJsonApiCreatedResponse({
     description: 'Article quiz evaluated successfully',
     resourceType: 'article-quiz-result',
   })
   @ApiJsonApiErrorResponse({ status: 400, description: 'Bad Request' })
-  @ApiJsonApiErrorResponse({ status: 404, description: 'Article or quiz not found' })
+  @ApiJsonApiErrorResponse({
+    status: 404,
+    description: 'Article or quiz not found',
+  })
   @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
   async submitArticleQuiz(
     @auth.CurrentUser() user: auth.AuthUser,
@@ -256,7 +270,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Translate word in context',
-    description: 'Translates a vocabulary word using context clues from the sentence.',
+    description:
+      'Translates a vocabulary word using context clues from the sentence.',
   })
   @ApiJsonApiCreatedResponse({
     description: 'Contextual translation calculated successfully',
@@ -273,7 +288,7 @@ export class ReadingController {
     );
     const apiResult = {
       id: dto.word,
-      ...result
+      ...result,
     };
 
     return convertEntityToJsonApi(apiResult, 'contextual-translation', {
@@ -283,12 +298,294 @@ export class ReadingController {
     });
   }
 
+  @Post('translate-paragraph')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Translate paragraph of text',
+    description: 'Translates a paragraph from English to Vietnamese.',
+  })
+  @ApiJsonApiCreatedResponse({
+    description: 'Paragraph translation calculated successfully',
+    resourceType: 'paragraph-translation',
+  })
+  @ApiJsonApiErrorResponse({ status: 400, description: 'Bad Request' })
+  @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
+  async translateParagraph(
+    @Body() dto: TranslateParagraphDto,
+    @Req() req: express.Request
+  ) {
+    const result = await this.queryBus.execute(
+      new TranslateParagraphQuery(dto.text)
+    );
+    const apiResult = {
+      id: String(Date.now()),
+      translation: result,
+    };
+
+    return convertEntityToJsonApi(apiResult, 'paragraph-translation', {
+      selfLink: getSelfLinkFromRequest(req, 'translate-paragraph'),
+      message: 'Paragraph translation calculated successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('parse-syntax')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Parse sentence syntax tree',
+    description:
+      'Parses a sentence into a constituent grammatical syntax tree.',
+  })
+  @ApiJsonApiCreatedResponse({
+    description: 'Syntax tree parsed successfully',
+    resourceType: 'syntax-tree',
+  })
+  @ApiJsonApiErrorResponse({ status: 400, description: 'Bad Request' })
+  @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
+  async parseSyntax(
+    @Body() dto: { sentence: string },
+    @Req() req: express.Request
+  ) {
+    if (!dto.sentence || typeof dto.sentence !== 'string') {
+      throw new Error('Sentence is required');
+    }
+
+    const determiners = new Set([
+      'the',
+      'a',
+      'an',
+      'this',
+      'that',
+      'these',
+      'those',
+      'my',
+      'your',
+      'his',
+      'her',
+      'its',
+      'our',
+      'their',
+    ]);
+    const prepositions = new Set([
+      'in',
+      'on',
+      'at',
+      'by',
+      'with',
+      'about',
+      'against',
+      'between',
+      'into',
+      'through',
+      'during',
+      'before',
+      'after',
+      'above',
+      'below',
+      'to',
+      'from',
+      'for',
+      'of',
+    ]);
+    const pronouns = new Set([
+      'i',
+      'you',
+      'he',
+      'she',
+      'it',
+      'we',
+      'they',
+      'me',
+      'him',
+      'her',
+      'us',
+      'them',
+    ]);
+    const conjunctions = new Set([
+      'and',
+      'but',
+      'or',
+      'so',
+      'yet',
+      'for',
+      'nor',
+    ]);
+    const auxiliaryVerbs = new Set([
+      'am',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'can',
+      'could',
+      'will',
+      'would',
+      'shall',
+      'should',
+      'may',
+      'might',
+      'must',
+    ]);
+
+    const clean = dto.sentence
+      .trim()
+      .replace(/[.,\\/#!$%\\^&\\*;:{}=\-_`~()?]/g, '');
+    const words = clean.split(/\s+/).filter(Boolean);
+
+    const nodes = words.map((w) => {
+      const lw = w.toLowerCase();
+      let label = 'NN'; // Default Noun
+
+      if (determiners.has(lw)) label = 'DT';
+      else if (prepositions.has(lw)) label = 'IN';
+      else if (pronouns.has(lw)) label = 'PRP';
+      else if (conjunctions.has(lw)) label = 'CC';
+      else if (auxiliaryVerbs.has(lw)) label = 'MD';
+      else if (lw.endsWith('ly')) label = 'RB'; // Adverb
+      else if (
+        lw.endsWith('ed') ||
+        lw.endsWith('ing') ||
+        [
+          'run',
+          'chase',
+          'play',
+          'see',
+          'go',
+          'make',
+          'take',
+          'find',
+          'build',
+          'write',
+          'learn',
+          'study',
+          'transform',
+        ].includes(lw)
+      )
+        label = 'VB'; // Verb
+      else if (
+        [
+          'good',
+          'bad',
+          'big',
+          'small',
+          'happy',
+          'sad',
+          'beautiful',
+          'modern',
+          'advanced',
+          'crucial',
+          'weak',
+          'first',
+          'new',
+          'optimal',
+          'individual',
+        ].includes(lw)
+      )
+        label = 'JJ'; // Adjective
+
+      return { label, text: w };
+    });
+
+    const npNodes = [];
+    let i = 0;
+    while (i < nodes.length) {
+      if (
+        nodes[i].label === 'DT' ||
+        nodes[i].label === 'PRP' ||
+        nodes[i].label === 'JJ' ||
+        nodes[i].label === 'NN'
+      ) {
+        const npChildren = [nodes[i]];
+        let j = i + 1;
+        while (
+          j < nodes.length &&
+          (nodes[j].label === 'JJ' || nodes[j].label === 'NN')
+        ) {
+          npChildren.push(nodes[j]);
+          j++;
+        }
+        npNodes.push({ label: 'NP', children: npChildren });
+        i = j;
+      } else {
+        npNodes.push(nodes[i]);
+        i++;
+      }
+    }
+
+    const ppNodes = [];
+    i = 0;
+    while (i < npNodes.length) {
+      if (
+        npNodes[i].label === 'IN' &&
+        i + 1 < npNodes.length &&
+        npNodes[i + 1].label === 'NP'
+      ) {
+        ppNodes.push({ label: 'PP', children: [npNodes[i], npNodes[i + 1]] });
+        i += 2;
+      } else {
+        ppNodes.push(npNodes[i]);
+        i++;
+      }
+    }
+
+    const vpNodes = [];
+    i = 0;
+    while (i < ppNodes.length) {
+      if (ppNodes[i].label === 'VB' || ppNodes[i].label === 'MD') {
+        const vpChildren = [ppNodes[i]];
+        let j = i + 1;
+        while (
+          j < ppNodes.length &&
+          (ppNodes[j].label === 'NP' ||
+            ppNodes[j].label === 'PP' ||
+            ppNodes[j].label === 'RB')
+        ) {
+          vpChildren.push(ppNodes[j]);
+          j++;
+        }
+        vpNodes.push({ label: 'VP', children: vpChildren });
+        i = j;
+      } else {
+        vpNodes.push(ppNodes[i]);
+        i++;
+      }
+    }
+
+    const resultTree = {
+      label: 'S',
+      children: vpNodes,
+    };
+
+    const apiResult = {
+      id: String(Date.now()),
+      ...resultTree,
+    };
+
+    return convertEntityToJsonApi(apiResult, 'syntax-tree', {
+      selfLink: getSelfLinkFromRequest(req, 'parse-syntax'),
+      message: 'Syntax tree parsed successfully',
+      version: '1.0.0',
+    });
+  }
+
   @Get('articles/community/list')
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get community articles',
-    description: 'Retrieves a list of reading articles created by the community, sorted by trending, newest, or top.',
+    description:
+      'Retrieves a list of reading articles created by the community, sorted by trending, newest, or top.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Community articles retrieved successfully',
@@ -301,11 +598,17 @@ export class ReadingController {
     @Query('limit') limit: number,
     @Req() req: express.Request
   ) {
-    const safeSortBy = ['trending', 'newest', 'top'].includes(sortBy) ? sortBy : 'trending';
+    const safeSortBy = ['trending', 'newest', 'top'].includes(sortBy)
+      ? sortBy
+      : 'trending';
     const safeLimit = limit ? Number(limit) : 10;
-    
+
     const result = await this.queryBus.execute(
-      new GetCommunityArticlesQuery(safeSortBy as 'trending' | 'newest' | 'top', safeLimit, user.id)
+      new GetCommunityArticlesQuery(
+        safeSortBy as 'trending' | 'newest' | 'top',
+        safeLimit,
+        user.id
+      )
     );
 
     return createJsonApiPaginatedResponse(
@@ -326,7 +629,8 @@ export class ReadingController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Create a community article',
-    description: 'Allows a user to create and publish a new reading article to the community.',
+    description:
+      'Allows a user to create and publish a new reading article to the community.',
   })
   @ApiJsonApiCreatedResponse({
     description: 'Community article created successfully',
@@ -381,11 +685,15 @@ export class ReadingController {
       new InteractArticleCommand(id, user.id, dto.action)
     );
 
-    return convertEntityToJsonApi({ id, action: dto.action }, 'article-interaction', {
-      selfLink: `${getSelfLinkFromRequest(req, id)}/vote`,
-      message: 'Article interaction recorded successfully',
-      version: '1.0.0',
-    });
+    return convertEntityToJsonApi(
+      { id, action: dto.action },
+      'article-interaction',
+      {
+        selfLink: `${getSelfLinkFromRequest(req, id)}/vote`,
+        message: 'Article interaction recorded successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Post('articles/:id/comment')
@@ -451,7 +759,9 @@ export class ReadingController {
         dto.sourceUrl,
         dto.author,
         dto.status,
-        dto.contentType
+        dto.contentType,
+        dto.vocabularySetId,
+        dto.highlights
       )
     );
 
@@ -493,7 +803,9 @@ export class ReadingController {
         dto.sourceUrl,
         dto.author,
         dto.status,
-        dto.contentType
+        dto.contentType,
+        dto.vocabularySetId,
+        dto.highlights
       )
     );
 
@@ -535,7 +847,9 @@ export class ReadingController {
         dto.sourceUrl,
         dto.author,
         'DRAFT',
-        dto.contentType
+        dto.contentType,
+        dto.vocabularySetId,
+        dto.highlights
       )
     );
 
@@ -600,7 +914,12 @@ export class ReadingController {
       meta.total,
       'article',
       getBaseUrlFromRequest(req),
-      { total: meta.total, limit: meta.limit, page: meta.page, totalPages: meta.totalPages },
+      {
+        total: meta.total,
+        limit: meta.limit,
+        page: meta.page,
+        totalPages: meta.totalPages,
+      },
       {
         message: 'My articles retrieved successfully',
         version: '1.0.0',

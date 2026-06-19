@@ -4,11 +4,57 @@ import { transformWordToBionicHtml } from '../services/reading.service';
 export interface ParsedContent {
   isBook: boolean;
   chapters?: { id: string; title: string; content: EditorJsOutputData | null; isDraft?: boolean }[];
+  sections?: ReaderSection[];
   editorData?: EditorJsOutputData | null; // EditorJS OutputData
   audioUrl?: string | null;
   isBilingual?: boolean;
   plainText: string;
 }
+
+export interface ReaderSection {
+  id: string;
+  title: string;
+  level: number;
+  index: number;
+}
+
+export const stripHtml = (value: string): string =>
+  value.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+
+export const buildReaderHeadingId = (title: string, index: number): string => {
+  const normalized = stripHtml(title)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `reader-section-${normalized || 'section'}-${index}`;
+};
+
+export const extractSectionsFromBlocks = (
+  content: EditorJsOutputData | null | string
+): ReaderSection[] => {
+  if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) {
+    return [];
+  }
+
+  return content.blocks.reduce<ReaderSection[]>((sections, block, index) => {
+    if (block.type !== 'header') return sections;
+
+    const title = stripHtml(block.data?.text || '');
+    if (!title) return sections;
+
+    sections.push({
+      id: buildReaderHeadingId(title, index),
+      title,
+      level: Number(block.data?.level || 2),
+      index,
+    });
+
+    return sections;
+  }, []);
+};
 
 export const extractTextFromBlocks = (content: EditorJsOutputData | null | string): string => {
   if (!content || typeof content !== 'object' || !Array.isArray(content.blocks)) {
@@ -19,16 +65,16 @@ export const extractTextFromBlocks = (content: EditorJsOutputData | null | strin
   content.blocks.forEach((block: EditorJsBlock) => {
     if (block.type === 'paragraph' || block.type === 'header' || block.type === 'quote') {
       const text = block.data?.text || '';
-      const plain = text.replace(/<[^>]*>?/gm, '').trim();
+      const plain = stripHtml(text);
       if (plain) parts.push(plain);
     } else if (block.type === 'list' && Array.isArray(block.data?.items)) {
       block.data.items.forEach((item: string) => {
-        const plain = item.replace(/<[^>]*>?/gm, '').trim();
+        const plain = stripHtml(item);
         if (plain) parts.push(plain);
       });
     } else if (block.type === 'bilingualBlock' && block.data) {
-      const orig = (block.data.original || '').replace(/<[^>]*>?/gm, '').trim();
-      const trans = (block.data.translation || '').replace(/<[^>]*>?/gm, '').trim();
+      const orig = stripHtml(block.data.original || '');
+      const trans = stripHtml(block.data.translation || '');
       if (orig) parts.push(orig);
       if (trans) parts.push(trans);
     }
@@ -63,6 +109,7 @@ export const parseReaderContent = (contentString: string, category?: string): Pa
       return {
         isBook: false,
         editorData,
+        sections: extractSectionsFromBlocks(editorData),
         audioUrl: parsed.audioUrl || null,
         isBilingual: parsed.isBilingual || false,
         plainText,
@@ -75,6 +122,7 @@ export const parseReaderContent = (contentString: string, category?: string): Pa
       return {
         isBook: false,
         editorData: parsed,
+        sections: extractSectionsFromBlocks(parsed),
         plainText,
       };
     }

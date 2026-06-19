@@ -1,5 +1,7 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, IsArray, IsIn, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, IsArray, IsIn, IsBoolean, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ArticleHighlightDto } from './article-highlight.dto';
 
 export class CreateStudioArticleDto {
   @ApiProperty({ description: 'Title of the article', example: 'How to learn effectively' })
@@ -80,4 +82,16 @@ export class CreateStudioArticleDto {
   @IsOptional()
   @IsString()
   bookId?: string;
+
+  @ApiPropertyOptional({ description: 'Vocabulary Set ID' })
+  @IsOptional()
+  @IsString()
+  vocabularySetId?: string;
+
+  @ApiPropertyOptional({ description: 'Vocabulary highlights for this article', type: [ArticleHighlightDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ArticleHighlightDto)
+  highlights?: ArticleHighlightDto[];
 }

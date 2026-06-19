@@ -30,6 +30,7 @@ export class CreateStudioArticleHandler
       creatorId: command.userId,
       isCommunity: true,
       contentType: command.contentType,
+      vocabularySetId: command.vocabularySetId || null,
     });
 
     if (command.status === 'PUBLISHED') {
@@ -37,11 +38,19 @@ export class CreateStudioArticleHandler
     }
 
     const saved = await this.readingRepository.saveArticle(article);
-    await this.readingRepository.syncArticleVocabulary(
-      saved.getId(),
-      command.userId,
-      saved.getContent()
-    );
+    if (command.highlights) {
+      await this.readingRepository.syncArticleHighlights(
+        saved.getId(),
+        command.userId,
+        command.highlights
+      );
+    } else {
+      await this.readingRepository.syncArticleVocabulary(
+        saved.getId(),
+        command.userId,
+        saved.getContent()
+      );
+    }
     return saved.getId();
   }
 }

@@ -14,6 +14,7 @@ export default class VocabularyTool {
       mark: {
         class: 'vocab-highlight',
         'data-vocab-id': true,
+        'data-entry-id': true,
         'data-level': true,
         'data-def': true,
         'data-pron': true,
@@ -68,6 +69,7 @@ export default class VocabularyTool {
     // Generate a unique ID for this vocabulary word
     const vocabId = `vocab_${Math.random().toString(36).substr(2, 9)}`;
     mark.setAttribute('data-vocab-id', vocabId);
+    mark.setAttribute('data-entry-id', '');
     
     // Add default empty data attributes
     mark.setAttribute('data-level', '');

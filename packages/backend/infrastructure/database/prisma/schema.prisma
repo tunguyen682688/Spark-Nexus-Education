@@ -48,6 +48,7 @@ model Article {
   votes            ArticleVote[]
   bookmarks        UserArticleBookmark[]
   vocabularySet    VocabularySet? @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  vocabularyHighlights ArticleVocabularyHighlight[]
 
   @@index([category])
   @@index([difficulty])
@@ -258,6 +259,7 @@ model Entry {
   examples           Example[]
   expressions        Expression[]
   variants           LexicalVariant[]
+  vocabularyHighlights ArticleVocabularyHighlight[]
   expressionMeanings ExpressionMeaning[]
   mnemonics          CommunityMnemonic[]
   communityExamples  CommunityExample[]
@@ -969,5 +971,38 @@ model UserGrammarTrap {
   @@index([userId])
   @@index([status])
   @@map("user_grammar_traps")
+}
+
+model TranslationCache {
+  id             String   @id @default(uuid())
+  hash           String   @unique @db.VarChar(64)
+  originalText   String   @map("original_text") @db.Text
+  translatedText String   @map("translated_text") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("translation_caches")
+}
+
+model ArticleVocabularyHighlight {
+  id                 String   @id @default(uuid())
+  articleId          String   @map("article_id")
+  entryId            String   @map("entry_id")
+  blockId            String   @map("block_id")
+  wordIndex          Int      @map("word_index")
+  occurrenceText     String   @map("occurrence_text") @db.VarChar(100)
+  customDefinition   String?  @db.Text
+  customExample      String?  @db.Text
+  customExampleTrans String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  article            Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  entry              Entry    @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  @@unique([articleId, blockId, wordIndex], map: "idx_article_block_word")
+  @@index([articleId])
+  @@index([entryId])
+  @@map("article_vocabulary_highlights")
 }
 

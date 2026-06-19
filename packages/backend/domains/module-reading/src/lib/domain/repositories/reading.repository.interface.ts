@@ -18,6 +18,23 @@ export interface IReadingRepository {
 
   findArticleById(id: string): Promise<ArticleEntity | null>;
 
+  findArticleHighlights(articleId: string): Promise<Array<{
+    id: string;
+    blockId: string;
+    wordIndex: number;
+    occurrenceText: string;
+    customDefinition: string | null;
+    customExample: string | null;
+    customExampleTrans: string | null;
+    entry: {
+      id: string;
+      word: string;
+      pronunciation: string | null;
+      partOfSpeech: string | null;
+      notes: string | null;
+    };
+  }>>;
+
   saveArticle(article: ArticleEntity): Promise<ArticleEntity>;
 
   deleteArticle(id: string): Promise<void>;
@@ -92,5 +109,19 @@ export interface IReadingRepository {
     articleId: string,
     creatorId: string,
     content: string
+  ): Promise<void>;
+
+  syncArticleHighlights(
+    articleId: string,
+    creatorId: string,
+    highlights: Array<{
+      blockId: string;
+      wordIndex: number;
+      occurrenceText: string;
+      entryId: string;
+      customDefinition?: string;
+      customExample?: string;
+      customExampleTrans?: string;
+    }>
   ): Promise<void>;
 }

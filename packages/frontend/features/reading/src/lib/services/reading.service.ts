@@ -1,3 +1,5 @@
+import type { WeakWordItem } from '../types';
+
 /**
  * Transforms a single word into HTML with the first part bolded (Bionic Reading style).
  */
@@ -119,3 +121,82 @@ export class TextToSpeechPlayer {
     }
   }
 }
+
+/**
+ * Represents a single vocabulary highlight for a block, keyed by wordIndex.
+ */
+export interface VocabHighlightInfo {
+  word: string;
+  definition: string | null;
+  pronunciation: string | null;
+  partOfSpeech: string | null;
+}
+
+/**
+ * Transforms text by highlighting weak words, vocabulary highlights, and applying Bionic Reading formatting.
+ * @param vocabHighlightsMap – Map of wordIndex → VocabHighlightInfo for the current block (optional)
+ */
+export function highlightAndBionicTransform(
+  text: string,
+  isBionicMode: boolean,
+  fixation: number,
+  saccade: number,
+  weakWordsMap: Map<string, WeakWordItem>,
+  vocabHighlightsMap?: Map<number, VocabHighlightInfo>
+): string {
+  if (!text) return '';
+
+  const tokens = text.split(/(\s+)/);
+  let wordCounter = 0; // counts actual words (non-whitespace, non-tag tokens)
+
+  const processedTokens = tokens.map((token) => {
+    if (/^\s+$/.test(token)) return token;
+    if (token.startsWith('<') && token.endsWith('>')) return token;
+
+    const cleanWordMatch = token.match(/[a-zA-Z0-9'-]+/);
+    const cleanWord = cleanWordMatch ? cleanWordMatch[0].toLowerCase() : '';
+
+    const isWeakWord = cleanWord && weakWordsMap.has(cleanWord);
+    const currentWordIndex = wordCounter;
+    wordCounter++;
+
+    // Check for decoupled vocabulary highlight by wordIndex
+    const vocabHighlight = vocabHighlightsMap?.get(currentWordIndex);
+
+    let transformedToken = token;
+    if (isBionicMode) {
+      const step = Math.round(1 / saccade);
+      const shouldBionic = step <= 1 || (currentWordIndex + 1) % step === 0;
+      if (shouldBionic) {
+        transformedToken = transformWordToBionicHtml(token, fixation);
+      }
+    }
+
+    // Vocabulary highlight (article-level, from creator studio) takes precedence
+    if (vocabHighlight) {
+      const def = vocabHighlight.definition ? vocabHighlight.definition.replace(/"/g, '&quot;') : '';
+      const pron = vocabHighlight.pronunciation ? vocabHighlight.pronunciation.replace(/"/g, '&quot;') : '';
+      const pos = vocabHighlight.partOfSpeech || '';
+
+      return `<span class="vocab-highlight border-b-2 border-solid border-emerald-500 bg-emerald-500/10 cursor-pointer font-semibold inline-block transition-all hover:bg-emerald-500/20" data-word="${cleanWord}" data-def="${def}" data-pron="${pron}" data-pos="${pos}" data-word-index="${currentWordIndex}">${transformedToken}</span>`;
+    }
+
+    // Weak word highlight (user-level, from personal weak words)
+    if (isWeakWord) {
+      const weakWordData = weakWordsMap.get(cleanWord);
+      if (!weakWordData) return transformedToken;
+
+      const def = weakWordData.definition ? weakWordData.definition.replace(/"/g, '&quot;') : '';
+      const pron = weakWordData.pronunciation ? weakWordData.pronunciation.replace(/"/g, '&quot;') : '';
+      const audio = weakWordData.audioUrl ? weakWordData.audioUrl : '';
+      const wordId = weakWordData.id;
+
+      return `<span class="weak-word-highlight border-b-2 border-dotted border-red-500 bg-red-500/10 cursor-pointer font-semibold inline-block transition-all hover:bg-red-500/20" data-word-id="${wordId}" data-word="${cleanWord}" data-def="${def}" data-pron="${pron}" data-audio="${audio}">${transformedToken}</span>`;
+    }
+
+    return transformedToken;
+  });
+
+  return processedTokens.join('');
+}
+

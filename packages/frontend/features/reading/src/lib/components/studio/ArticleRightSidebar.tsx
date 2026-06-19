@@ -1,10 +1,11 @@
-import React, { KeyboardEvent } from 'react';
+import React, { KeyboardEvent, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { Calendar, Settings2 } from 'lucide-react';
+import { Calendar, Settings2, BookOpen } from 'lucide-react';
 import { STUDIO_UI_TEXT } from '../../constants/studio-ui-text';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@spark-nest-ed/frontend-shared-components';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent, useToast } from '@spark-nest-ed/frontend-shared-components';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
 import type { StudioFormValues, EditorJsBlock, EditorJsOutputData } from '../../types';
+import { useUserVocabularyPackages, useCreateVocabularyPackage } from '../../hooks/use-reading';
 
 interface ArticleRightSidebarProps {
   form: UseFormReturn<StudioFormValues>;
@@ -15,6 +16,36 @@ export const ArticleRightSidebar: React.FC<ArticleRightSidebarProps> = ({ form }
   const tags = watch('tags') || [];
   const title = watch('title') || '';
   const content = watch('content');
+
+  const { toast } = useToast();
+  const [newVocabTitle, setNewVocabTitle] = useState('');
+  const { data: vocabSetsResponse } = useUserVocabularyPackages();
+  const createVocabMutation = useCreateVocabularyPackage();
+
+  const vocabSets = vocabSetsResponse?.data || [];
+
+  const handleCreateVocabSet = async () => {
+    if (!newVocabTitle.trim()) return;
+    try {
+      const newSet = await createVocabMutation.mutateAsync({
+        title: newVocabTitle.trim(),
+        language: 'en',
+        type: 'reading',
+      });
+      toast({
+        title: 'Tạo thành công',
+        description: `Đã tạo bộ từ vựng "${newSet.title}"`,
+      });
+      setValue('vocabularySetId', newSet.id, { shouldValidate: true, shouldDirty: true });
+      setNewVocabTitle('');
+    } catch {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo bộ từ vựng mới',
+        variant: 'destructive',
+      });
+    }
+  };
   
   // Dynamic SEO Calc
   const hasGoodTitle = title.length > 10;
@@ -251,6 +282,60 @@ export const ArticleRightSidebar: React.FC<ArticleRightSidebarProps> = ({ form }
                     </option>
                   ))}
                 </select>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Vocabulary Set */}
+          <AccordionItem value="vocabularySet" className="border-b border-slate-200/60 dark:border-white/5 px-5">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5" />
+                Bộ Từ Vựng
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pb-2 space-y-3">
+                <select 
+                  {...register('vocabularySetId')}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all duration-200"
+                >
+                  <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                    Tự động tạo bộ từ vựng mới
+                  </option>
+                  {vocabSets.map((set) => (
+                    <option key={set.id} value={set.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                      {set.title} ({set.entryCount} từ)
+                    </option>
+                  ))}
+                </select>
+
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 italic pl-1">
+                  Mặc định hệ thống tự động tạo một bộ từ vựng riêng cho bài viết. Bạn có thể chọn liên kết với bộ từ vựng có sẵn của mình.
+                </div>
+
+                <div className="border-t border-slate-200/60 dark:border-white/5 pt-3">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5 pl-1">
+                    Hoặc tạo nhanh bộ từ vựng mới
+                  </span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Tên bộ từ vựng..."
+                      value={newVocabTitle}
+                      onChange={(e) => setNewVocabTitle(e.target.value)}
+                      className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateVocabSet}
+                      disabled={createVocabMutation.isPending || !newVocabTitle.trim()}
+                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50 transition-all"
+                    >
+                      {createVocabMutation.isPending ? '...' : 'Tạo'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

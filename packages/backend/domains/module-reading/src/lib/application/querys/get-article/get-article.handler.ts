@@ -32,12 +32,21 @@ export class GetArticleQueryHandler implements IQueryHandler<GetArticleQuery> {
       }
     }
 
+    // Load decoupled vocabulary highlights with entry data
+    let vocabularyHighlights: Awaited<ReturnType<typeof this.repository.findArticleHighlights>> = [];
+    try {
+      vocabularyHighlights = await this.repository.findArticleHighlights(id);
+    } catch {
+      // Gracefully fallback if highlights table is empty or query fails
+    }
+
     return {
       ...article.toPersistence(),
       progress,
       lastPosition,
       timeSpent,
       readTime: `${Math.ceil(article.getWordCount() / 200)} min read`,
+      vocabularyHighlights,
     };
   }
 }

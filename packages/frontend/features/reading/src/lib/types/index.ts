@@ -1,3 +1,20 @@
+export interface ArticleVocabularyHighlight {
+  id: string;
+  blockId: string;
+  wordIndex: number;
+  occurrenceText: string;
+  customDefinition: string | null;
+  customExample: string | null;
+  customExampleTrans: string | null;
+  entry: {
+    id: string;
+    word: string;
+    pronunciation: string | null;
+    partOfSpeech: string | null;
+    notes: string | null;
+  };
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -22,6 +39,8 @@ export interface Article {
   readTime?: string; // e.g. "5 min read"
   viewCount?: number;
   contentType?: string;
+  vocabularySetId?: string | null;
+  vocabularyHighlights?: ArticleVocabularyHighlight[];
 }
 
 export interface ReadingProgress {
@@ -148,6 +167,7 @@ export interface StudioFormValues {
   chapters?: { id: string; title: string; content: EditorJsOutputData | null; isDraft: boolean }[];
   chapterTitle?: string;
   chapterContent?: EditorJsOutputData | null;
+  vocabularySetId?: string | null;
 }
 
 export interface ArticleTemplate {
@@ -157,6 +177,16 @@ export interface ArticleTemplate {
   icon: string; // emoji
   contentType: ContentType;
   defaultValues: Partial<StudioFormValues>;
+}
+
+export interface ArticleHighlightPayload {
+  blockId: string;
+  wordIndex: number;
+  occurrenceText: string;
+  entryId: string;
+  customDefinition?: string;
+  customExample?: string;
+  customExampleTrans?: string;
 }
 
 export interface CreateArticlePayload {
@@ -174,6 +204,8 @@ export interface CreateArticlePayload {
   targetLanguage?: string;
   audioUrl?: string;
   isBilingual?: boolean;
+  vocabularySetId?: string;
+  highlights?: ArticleHighlightPayload[];
 }
 
 export interface UpdateArticlePayload extends Partial<CreateArticlePayload> {
@@ -287,6 +319,18 @@ export interface QuizResponse {
 
 export interface ArticleQuizData {
   questions: QuizQuestion[];
+}
+
+export interface WeakWordItem {
+  id: string;
+  word: string;
+  pronunciation?: string | null;
+  partOfSpeech?: string | null;
+  audioUrl?: string | null;
+  definition: string;
+  example?: string | null;
+  masteryLevel?: number;
+  status?: string;
 }
 
 

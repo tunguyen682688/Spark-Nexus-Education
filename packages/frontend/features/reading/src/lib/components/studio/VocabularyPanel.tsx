@@ -95,6 +95,7 @@ export const VocabularyPanel: React.FC = () => {
         if (updated.level) activeMark.setAttribute('data-level', updated.level);
         if (updated.def) activeMark.setAttribute('data-def', updated.def);
         if (updated.pron) activeMark.setAttribute('data-pron', updated.pron);
+        activeMark.setAttribute('data-entry-id', dictData.id);
 
         triggerSaveEvent();
         return updated;
