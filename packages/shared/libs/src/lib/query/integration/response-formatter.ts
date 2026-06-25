@@ -316,13 +316,13 @@ export function entityToResourceObject<
 
   // Use toPlainObject() if it exists on the entity (e.g. for DDD entities extending Entity base class)
   let entityRecord: Record<string, unknown>;
-  if (entity && typeof (entity as any).toPlainObject === 'function') {
-    entityRecord = (entity as any).toPlainObject() as Record<string, unknown>;
+  if (entity && typeof (entity as unknown as { toPlainObject?: () => unknown }).toPlainObject === 'function') {
+    entityRecord = (entity as unknown as { toPlainObject: () => Record<string, unknown> }).toPlainObject();
   } else {
     entityRecord = entity as Record<string, unknown>;
   }
 
-  const id = String(entityRecord[idField] ?? entityRecord.id ?? (entity as any).id ?? '');
+  const id = String(entityRecord[idField] ?? entityRecord.id ?? (entity as unknown as { id?: unknown }).id ?? '');
   if (!id) {
     throw new Error(`Entity must have an id field (tried: ${idField}, id)`);
   }

@@ -1,12 +1,13 @@
 import { ListeningMaterial } from '../types';
-import { Play, Headset, Video, Award, Eye, ThumbsUp, HelpCircle } from 'lucide-react';
+import { Play, Headset, Video, Award, Eye, ThumbsUp, Keyboard } from 'lucide-react';
 
 interface ListeningCardProps {
   material: ListeningMaterial;
   onClick: (id: string) => void;
+  onDictationClick?: (id: string) => void;
 }
 
-export default function ListeningCard({ material, onClick }: ListeningCardProps) {
+export default function ListeningCard({ material, onClick, onDictationClick }: ListeningCardProps) {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'podcast':
@@ -49,10 +50,10 @@ export default function ListeningCard({ material, onClick }: ListeningCardProps)
   return (
     <div
       onClick={() => onClick(material.id)}
-      className="group relative flex flex-col bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300 cursor-pointer"
+      className="group relative flex flex-col bg-card border border-border rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300 cursor-pointer"
     >
       {/* Thumbnail or Category Placeholder */}
-      <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+      <div className="relative aspect-video w-full bg-muted overflow-hidden">
         {material.thumbnailUrl ? (
           <img
             src={material.thumbnailUrl}
@@ -60,18 +61,18 @@ export default function ListeningCard({ material, onClick }: ListeningCardProps)
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900">
-            {material.category === 'podcast' && <Headset className="w-12 h-12 text-purple-500/40" />}
-            {material.category === 'video' && <Video className="w-12 h-12 text-red-500/40" />}
-            {material.category === 'exam' && <Award className="w-12 h-12 text-emerald-500/40" />}
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/60">
+            {material.category === 'podcast' && <Headset className="w-12 h-12 text-purple-550/40" />}
+            {material.category === 'video' && <Video className="w-12 h-12 text-red-550/40" />}
+            {material.category === 'exam' && <Award className="w-12 h-12 text-emerald-550/40" />}
             {material.category !== 'podcast' && material.category !== 'video' && material.category !== 'exam' && (
-              <Play className="w-12 h-12 text-blue-500/40" />
+              <Play className="w-12 h-12 text-blue-550/40" />
             )}
           </div>
         )}
 
         {/* Hover overlay with Play button */}
-        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+        <div className="absolute inset-0 bg-background/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
           <div className="p-4 bg-purple-600 text-white rounded-full shadow-lg shadow-purple-600/30 transform scale-90 group-hover:scale-100 transition-transform duration-300">
             <Play className="w-6 h-6 fill-current" />
           </div>
@@ -82,20 +83,20 @@ export default function ListeningCard({ material, onClick }: ListeningCardProps)
           <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${getDifficultyColor(material.difficulty)}`}>
             {material.difficulty}
           </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-slate-950/80 backdrop-blur-md text-slate-300 rounded-full border border-slate-800">
+          <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-background/80 backdrop-blur-md text-foreground rounded-full border border-border">
             {getCategoryIcon(material.category)}
             <span className="capitalize">{material.category}</span>
           </span>
         </div>
 
         {/* Duration badge */}
-        <span className="absolute bottom-3 right-3 px-2 py-0.5 text-xs font-medium bg-slate-950/80 backdrop-blur-md text-slate-300 rounded-md border border-slate-800/60">
+        <span className="absolute bottom-3 right-3 px-2 py-0.5 text-xs font-medium bg-background/80 backdrop-blur-md text-foreground rounded-md border border-border/60">
           {formatDuration(material.duration)}
         </span>
 
         {/* Community contribution label */}
         {material.isCommunity && (
-          <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-violet-600 text-white rounded shadow-sm shadow-violet-600/20">
+          <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-violet-650 text-white rounded shadow-sm shadow-violet-600/20">
             Cộng đồng
           </span>
         )}
@@ -103,50 +104,61 @@ export default function ListeningCard({ material, onClick }: ListeningCardProps)
 
       {/* Content */}
       <div className="flex-1 flex flex-col p-5">
-        <span className="text-xs font-medium text-slate-500 mb-2 truncate">
+        <span className="text-xs font-medium text-muted-foreground mb-2 truncate">
           {material.author || 'Danh mục Luyện nghe'}
         </span>
-        <h3 className="text-base font-bold text-slate-200 group-hover:text-purple-400 transition-colors line-clamp-2 mb-3">
+        <h3 className="text-base font-bold text-foreground group-hover:text-purple-500 transition-colors line-clamp-2 mb-3">
           {material.title}
         </h3>
 
         {/* Description fallback */}
         {material.description && (
-          <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
             {material.description}
           </p>
         )}
 
         <div className="flex-1 flex items-end">
-          <div className="w-full flex items-center justify-between pt-3 border-t border-slate-800/80">
+          <div className="w-full flex items-center justify-between pt-3 border-t border-border/80">
             {/* Stats */}
-            <div className="flex items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="w-3.5 h-3.5" />
                 {material.viewCount}
               </span>
               {(material.upvotes > 0 || material.downvotes > 0) && (
                 <span className="flex items-center gap-1">
-                  <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
+                  <ThumbsUp className="w-3.5 h-3.5" />
                   {material.upvotes}
                 </span>
               )}
             </div>
 
-            {/* Questions Indicator */}
-            {material.questions && material.questions.length > 0 && (
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full">
-                <HelpCircle className="w-3 h-3" />
-                {material.questions.length} CH
-              </span>
-            )}
+            {/* Questions Indicator & Dictation CTA */}
+            <div className="flex items-center gap-2 shrink-0">
+              {material.questions && material.questions.length > 0 && (
+                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  {material.questions.length} CH
+                </span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDictationClick?.(material.id);
+                }}
+                className="flex items-center gap-1 text-[11px] font-bold text-purple-500 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-600 hover:text-white hover:border-purple-500 px-3 py-1 rounded-full transition-all duration-200"
+              >
+                <Keyboard className="w-3.5 h-3.5" />
+                Chép chính tả
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Progress Bar overlay */}
       {hasProgress && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-950">
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-border">
           <div
             className={`h-full transition-all duration-300 ${
               progressPercent >= 100 ? 'bg-emerald-500' : 'bg-purple-500'

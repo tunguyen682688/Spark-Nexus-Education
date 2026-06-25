@@ -1,7 +1,11 @@
 import { useRef, useState, useEffect } from 'react';
 import { ListeningMaterial } from '../types';
 import { useUpdateListeningProgress } from '../hooks';
-import { Play, Pause, RotateCcw, Volume2, Languages, HelpCircle, FileText, CheckCircle2, XCircle, Info, Gauge } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Languages, HelpCircle, FileText, Gauge, Sparkles } from 'lucide-react';
+import { LISTENING_WORKSPACE_TEXT } from '../constants';
+import PlayerTranscriptTab from './PlayerTranscriptTab';
+import PlayerDictationTab from './PlayerDictationTab';
+import PlayerQuizTab from './PlayerQuizTab';
 
 interface BilingualAudioPlayerProps {
   material: ListeningMaterial;
@@ -17,11 +21,17 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
   const [duration, setDuration] = useState(material.duration || 0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showTranslation, setShowTranslation] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcript' | 'quiz'>('transcript');
+  const [activeTab, setActiveTab] = useState<'transcript' | 'quiz' | 'dictation'>('transcript');
 
   // Quiz state
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, boolean>>({});
+
+  // Dictation/Shadow Writing states
+  const [selectedSubIndex, setSelectedSubIndex] = useState(0);
+  const [typedTexts, setTypedTexts] = useState<Record<string, string>>({});
+  const [submittedDictations, setSubmittedDictations] = useState<Record<string, boolean>>({});
+  const [singleSentenceLimit, setSingleSentenceLimit] = useState<{ start: number; end: number } | null>(null);
 
   const updateProgressMutation = useUpdateListeningProgress();
 
@@ -83,18 +93,27 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
     const time = audioRef.current.currentTime;
     setCurrentTime(time);
 
-    // Auto-scroll active subtitle row into view
-    const activeSub = material.subtitles?.find(
-      (sub) => time >= sub.startTime && time <= sub.endTime
-    );
+    // Stop if we hit the limit of a single sentence play
+    if (singleSentenceLimit && time >= singleSentenceLimit.end) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      setSingleSentenceLimit(null);
+    }
 
-    if (activeSub) {
-      const activeEl = subtitleRefs.current[activeSub.id];
-      if (activeEl) {
-        activeEl.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
+    // Auto-scroll active subtitle row into view
+    if (activeTab !== 'dictation') {
+      const activeSub = material.subtitles?.find(
+        (sub) => time >= sub.startTime && time <= sub.endTime
+      );
+
+      if (activeSub) {
+        const activeEl = subtitleRefs.current[activeSub.id];
+        if (activeEl) {
+          activeEl.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+        }
       }
     }
   };
@@ -132,6 +151,16 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
     setPlaybackSpeed(nextSpeed);
   };
+
+  const playSentence = (startTime: number, endTime: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = startTime;
+    setCurrentTime(startTime);
+    setSingleSentenceLimit({ start: startTime, end: endTime });
+    audioRef.current.play().catch((err: any) => console.error('Play sentence failed:', err));
+    setIsPlaying(true);
+  };
+
 
   const getActiveSubtitleId = () => {
     const active = material.subtitles?.find(
@@ -190,186 +219,87 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
         </div>
 
         {/* Tab switcher */}
-        {material.questions && material.questions.length > 0 && (
-          <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveTab('transcript')}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                activeTab === 'transcript'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              Lời thoại
-            </button>
+        <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 shrink-0">
+          <button
+            onClick={() => setActiveTab('transcript')}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === 'transcript'
+                ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            {LISTENING_WORKSPACE_TEXT.PLAYER.TRANSCRIPT_TAB}
+          </button>
+          <button
+            onClick={() => setActiveTab('dictation')}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === 'dictation'
+                ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            {LISTENING_WORKSPACE_TEXT.PLAYER.SHADOW_WRITING_TAB}
+          </button>
+          {material.questions && material.questions.length > 0 && (
             <button
               onClick={() => setActiveTab('quiz')}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeTab === 'quiz'
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              Bài tập ({material.questions.length})
+              {LISTENING_WORKSPACE_TEXT.PLAYER.QUIZ_TAB(material.questions.length)}
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Main Body */}
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-950/40">
+          )}
+        </div>
+      </div>      {/* Main Body */}
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-955/40">
         {activeTab === 'transcript' ? (
-          /* Subtitles list */
-          <div className="space-y-4 max-w-3xl mx-auto">
-            {material.subtitles && material.subtitles.length > 0 ? (
-              material.subtitles.map((sub) => {
-                const isActive = activeSubId === sub.id;
-                return (
-                  <div
-                    key={sub.id}
-                    ref={(el) => {
-                      subtitleRefs.current[sub.id] = el;
-                    }}
-                    onClick={() => handleSubtitleClick(sub.startTime)}
-                    className={`group p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
-                      isActive
-                        ? 'bg-purple-600/10 border-purple-500/40 shadow-lg shadow-purple-500/5'
-                        : 'bg-slate-900/30 border-slate-800/80 hover:bg-slate-900/60 hover:border-slate-700/80'
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Seek timing indicator */}
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        isActive 
-                          ? 'bg-purple-500 text-white' 
-                          : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
-                      }`}>
-                        {formatTime(sub.startTime)}
-                      </span>
-
-                      {/* Transcripts Text */}
-                      <div className="flex-1 space-y-1.5">
-                        <p className={`text-base font-semibold transition-colors duration-300 leading-relaxed ${
-                          isActive ? 'text-slate-100' : 'text-slate-300'
-                        }`}>
-                          {sub.text}
-                        </p>
-                        {showTranslation && sub.translation && (
-                          <p className={`text-sm transition-colors duration-300 leading-relaxed ${
-                            isActive ? 'text-purple-300/90' : 'text-slate-500'
-                          }`}>
-                            {sub.translation}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-20 text-slate-500">
-                <Info className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-                Không tìm thấy phụ đề cho tài liệu nghe này.
-              </div>
-            )}
-          </div>
+          <PlayerTranscriptTab
+            subtitles={material.subtitles}
+            activeSubId={activeSubId}
+            showTranslation={showTranslation}
+            onSubtitleClick={handleSubtitleClick}
+            onRegisterRef={(id, el) => {
+              subtitleRefs.current[id] = el;
+            }}
+            formatTime={formatTime}
+          />
+        ) : activeTab === 'dictation' ? (
+          <PlayerDictationTab
+            subtitles={material.subtitles}
+            selectedSubIndex={selectedSubIndex}
+            onSelectSubIndex={(idx) => {
+              setSelectedSubIndex(idx);
+              setSingleSentenceLimit(null);
+            }}
+            typedTexts={typedTexts}
+            onTypedTextChange={(id, value) => {
+              setTypedTexts((prev) => ({ ...prev, [id]: value }));
+              if (submittedDictations[id]) {
+                setSubmittedDictations((prev) => ({ ...prev, [id]: false }));
+              }
+            }}
+            submittedDictations={submittedDictations}
+            onSubmittedDictationChange={(id, submitted) => {
+              setSubmittedDictations((prev) => ({ ...prev, [id]: submitted }));
+            }}
+            playSentence={playSentence}
+            showTranslation={showTranslation}
+          />
         ) : (
-          /* Quiz questions list */
-          <div className="space-y-8 max-w-2xl mx-auto pb-12">
-            {material.questions?.map((q, idx) => {
-              const selectedOption = selectedAnswers[q.id];
-              const isSubmitted = submittedAnswers[q.id];
-              const isCorrect = isSubmitted && selectedOption === q.correctAnswer;
-
-              return (
-                <div
-                  key={q.id}
-                  className="p-6 bg-slate-900/40 border border-slate-800 rounded-2xl shadow-md"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-base font-bold text-slate-200 leading-relaxed">
-                      Câu hỏi {idx + 1}: {q.questionText}
-                    </h3>
-
-                    {/* Question audio timestamp seeker */}
-                    {q.audioTimestamp !== undefined && q.audioTimestamp !== null && (
-                      <button
-                        onClick={() => handleSubtitleClick(q.audioTimestamp!)}
-                        className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20"
-                      >
-                        <Volume2 className="w-3.5 h-3.5" />
-                        Nghe lại
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Options */}
-                  <div className="space-y-3 mb-5">
-                    {q.options.map((opt) => {
-                      const isSelected = selectedOption === opt;
-                      const isOptionCorrectAnswer = opt === q.correctAnswer;
-                      
-                      let optionStyle = 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300';
-                      if (isSelected) {
-                        optionStyle = 'border-purple-500 bg-purple-500/10 text-purple-300';
-                      }
-                      if (isSubmitted) {
-                        if (isOptionCorrectAnswer) {
-                          optionStyle = 'border-emerald-500 bg-emerald-500/10 text-emerald-400';
-                        } else if (isSelected) {
-                          optionStyle = 'border-red-500 bg-red-500/10 text-red-400';
-                        } else {
-                          optionStyle = 'border-slate-800 text-slate-500 opacity-60';
-                        }
-                      }
-
-                      return (
-                        <div
-                          key={opt}
-                          onClick={() => handleSelectOption(q.id, opt)}
-                          className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all ${optionStyle}`}
-                        >
-                          <span className="text-sm font-semibold">{opt}</span>
-                          {isSubmitted && isOptionCorrectAnswer && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                          {isSubmitted && isSelected && !isOptionCorrectAnswer && <XCircle className="w-5 h-5 text-red-500" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Actions */}
-                  {!isSubmitted ? (
-                    <button
-                      onClick={() => handleSubmitAnswer(q.id)}
-                      disabled={!selectedOption}
-                      className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-md shadow-purple-600/10"
-                    >
-                      Kiểm tra đáp án
-                    </button>
-                  ) : (
-                    /* Explanation block */
-                    <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl space-y-2">
-                      <div className="flex items-center gap-2">
-                        {isCorrect ? (
-                          <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Chính xác</span>
-                        ) : (
-                          <span className="text-red-400 font-bold text-xs bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">Sai rồi</span>
-                        )}
-                        <span className="text-xs text-slate-500">Đáp án: <strong className="text-emerald-400">{q.correctAnswer}</strong></span>
-                      </div>
-                      {q.explanation && (
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          <strong>Giải thích:</strong> {q.explanation}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <PlayerQuizTab
+            questions={material.questions}
+            selectedAnswers={selectedAnswers}
+            onSelectAnswer={handleSelectOption}
+            submittedAnswers={submittedAnswers}
+            onSubmitAnswer={handleSubmitAnswer}
+            onPlayTimestamp={handleSubtitleClick}
+          />
         )}
       </div>
 
@@ -406,7 +336,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
               }`}
             >
               <Languages className="w-4 h-4" />
-              Song ngữ
+              {LISTENING_WORKSPACE_TEXT.PLAYER.BILINGUAL}
             </button>
 
             {/* Playback speed control */}
@@ -415,7 +345,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-950/40 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl transition-all"
             >
               <Gauge className="w-4 h-4" />
-              Tốc độ: {playbackSpeed}x
+              {LISTENING_WORKSPACE_TEXT.PLAYER.SPEED_LABEL(playbackSpeed)}
             </button>
           </div>
 
@@ -434,7 +364,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
           {/* Right spacer for centering */}
           <div className="w-36 flex items-center justify-end gap-2 text-slate-500 text-xs font-medium">
             <Volume2 className="w-4 h-4" />
-            <span>Âm lượng</span>
+            <span>{LISTENING_WORKSPACE_TEXT.PLAYER.VOLUME}</span>
           </div>
         </div>
       </div>

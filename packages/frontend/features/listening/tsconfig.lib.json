@@ -17,6 +17,12 @@
   },
   "references": [
     {
+      "path": "../vocabulary/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/components/tsconfig.lib.json"
+    },
+    {
       "path": "../../core/api/tsconfig.lib.json"
     }
   ],

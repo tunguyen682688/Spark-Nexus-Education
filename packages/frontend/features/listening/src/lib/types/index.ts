@@ -52,3 +52,25 @@ export interface ListeningMaterial {
   isBookmarked?: boolean;
   userVote?: number; // 0, 1, -1
 }
+
+export interface ListeningUserStats {
+  id?: string;
+  totalMaterials: number;
+  totalTime: number;
+  masteryLevel: string;
+  streak: number;
+}
+
+export interface WeeklyActivityItem {
+  day: string;
+  minutes: number;
+}
+
+export interface ListeningLeaderboardEntry {
+  userId: string;
+  totalTime: number;
+  masteryLevel: string;
+  userName: string;
+  userPicture: string | null;
+}
+

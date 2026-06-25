@@ -32,6 +32,11 @@ import { GetListeningMaterialDetailQuery } from '../../application/querys/get-ma
 import { UpdateListeningProgressCommand } from '../../application/commands/update-progress/update-progress.command';
 import { VoteListeningMaterialCommand } from '../../application/commands/vote-material/vote-material.command';
 import { CreateListeningMaterialCommand } from '../../application/commands/create-material/create-material.command';
+import { ToggleListeningBookmarkCommand } from '../../application/commands/toggle-bookmark/toggle-bookmark.command';
+import { GetUserStatsQuery } from '../../application/querys/get-user-stats/get-user-stats.query';
+import { GetWeeklyActivityQuery } from '../../application/querys/get-weekly-activity/get-weekly-activity.query';
+import { GetListeningLeaderboardQuery } from '../../application/querys/get-leaderboard/get-leaderboard.query';
+
 
 @ApiTags('Listening')
 @Controller('listening')
@@ -72,6 +77,62 @@ export class ListeningController {
         version: '1.0.0',
       }
     );
+  }
+
+  @Get('user-stats')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get user listening statistics' })
+  async getUserStats(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.queryBus.execute(
+      new GetUserStatsQuery(user.id)
+    );
+    const statsWithId = { id: user.id, ...result };
+    return convertEntityToJsonApi(statsWithId, 'listening-user-stats', {
+      selfLink: getSelfLinkFromRequest(req, user.id),
+      message: 'User listening stats retrieved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('weekly-activity')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get user weekly activity' })
+  async getWeeklyActivity(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.queryBus.execute(
+      new GetWeeklyActivityQuery(user.id)
+    );
+    return convertEntityToJsonApi({ id: user.id, activity: result }, 'listening-weekly-activity', {
+      selfLink: getSelfLinkFromRequest(req, user.id),
+      message: 'Weekly activity retrieved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('leaderboard')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get listening leaderboard' })
+  async getLeaderboard(
+    @Query('limit') limit: string,
+    @Req() req: express.Request
+  ) {
+    const limitNum = limit ? parseInt(limit, 10) : 5;
+    const result = await this.queryBus.execute(
+      new GetListeningLeaderboardQuery(limitNum)
+    );
+    return convertEntityToJsonApi({ id: 'global-leaderboard', entries: result }, 'listening-leaderboard', {
+      selfLink: getSelfLinkFromRequest(req, 'global-leaderboard'),
+      message: 'Listening leaderboard retrieved successfully',
+      version: '1.0.0',
+    });
   }
 
   @Get('materials/:id')
@@ -162,7 +223,39 @@ export class ListeningController {
     });
   }
 
+  @Post('materials/:id/bookmark')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Toggle bookmark status for a listening material',
+    description: 'Bookmarks or unbookmarks a material for the current user.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Listening bookmark toggled successfully',
+    resourceType: 'listening-bookmark-result',
+  })
+  @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Material not found' })
+  async toggleBookmark(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new ToggleListeningBookmarkCommand(id, user.id)
+    );
+
+    const resultWithId = { id: `${user.id}_${id}`, ...result };
+
+    return convertEntityToJsonApi(resultWithId, 'listening-bookmark-result', {
+      selfLink: getSelfLinkFromRequest(req, id),
+      message: 'Listening bookmark toggled successfully',
+      version: '1.0.0',
+    });
+  }
+
   @Post('materials')
+
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
   @ApiOperation({

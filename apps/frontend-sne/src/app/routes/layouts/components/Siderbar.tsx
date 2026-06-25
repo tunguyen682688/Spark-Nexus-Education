@@ -64,6 +64,8 @@ const menuItems: MenuItem[] = [
     label: 'Nghe',
     path: '/listening',
     children: [
+      { label: 'Thư viện của tôi', path: '/listening/library' },
+      { label: 'Khám phá', path: '/listening/explore', badge: 'Hot' },
       { label: 'Podcast', path: '/listening/podcasts' },
       { label: 'Video học tập', path: '/listening/videos' },
       { label: 'Audio books', path: '/listening/audiobooks' },

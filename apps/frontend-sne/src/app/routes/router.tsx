@@ -649,12 +649,45 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'listening/podcasts',
+          path: 'listening/library',
           lazy: async () => {
-            const { ListeningHubPage } = await import(
+            const { ListeningLibraryPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningHubPage };
+            return { Component: ListeningLibraryPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/contribute',
+          lazy: async () => {
+            const { ListeningContributePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: ListeningContributePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/explore',
+          lazy: async () => {
+            const { ListeningExplorePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: ListeningExplorePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/podcasts',
+          lazy: async () => {
+            const { ListeningExplorePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: ListeningExplorePage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -662,10 +695,10 @@ export const createRouter = () =>
         {
           path: 'listening/videos',
           lazy: async () => {
-            const { ListeningHubPage } = await import(
+            const { ListeningExplorePage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningHubPage };
+            return { Component: ListeningExplorePage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -673,10 +706,10 @@ export const createRouter = () =>
         {
           path: 'listening/audiobooks',
           lazy: async () => {
-            const { ListeningHubPage } = await import(
+            const { ListeningExplorePage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningHubPage };
+            return { Component: ListeningExplorePage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -684,10 +717,10 @@ export const createRouter = () =>
         {
           path: 'listening/practice',
           lazy: async () => {
-            const { ListeningHubPage } = await import(
+            const { ListeningExplorePage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningHubPage };
+            return { Component: ListeningExplorePage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -695,10 +728,87 @@ export const createRouter = () =>
         {
           path: 'listening/news',
           lazy: async () => {
-            const { ListeningHubPage } = await import(
+            const { ListeningExplorePage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningHubPage };
+            return { Component: ListeningExplorePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/dictation/:id',
+          lazy: async () => {
+            const { DictationWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: DictationWorkspacePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id',
+          lazy: async () => {
+            const { ListeningStudyDashboardPage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: ListeningStudyDashboardPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id/transcript',
+          lazy: async () => {
+            const { TranscriptWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: TranscriptWorkspacePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id/dictation',
+          lazy: async () => {
+            const { DictationWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: DictationWorkspacePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id/quiz',
+          lazy: async () => {
+            const { QuizWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: QuizWorkspacePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id/shadowing',
+          lazy: async () => {
+            const { ShadowingWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: ShadowingWorkspacePage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'listening/study/:id/gapfill',
+          lazy: async () => {
+            const { GapFillWorkspacePage } = await import(
+              '@spark-nest-ed/feature-listening'
+            );
+            return { Component: GapFillWorkspacePage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

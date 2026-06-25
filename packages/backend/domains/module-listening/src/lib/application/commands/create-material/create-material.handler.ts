@@ -1,70 +1,39 @@
-import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { ICommandHandler, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { CreateListeningMaterialCommand } from './create-material.command';
-import { PrismaService } from '@spark-nest-ed/infrastructure-database';
+import { ListeningService } from '../../../domain/services/listening.service';
+import { ListeningMaterialCreatedEvent } from '../../../domain/events/listening-material-created.event';
+import { Logger } from '@nestjs/common';
 
 @CommandHandler(CreateListeningMaterialCommand)
 export class CreateListeningMaterialCommandHandler implements ICommandHandler<CreateListeningMaterialCommand> {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(CreateListeningMaterialCommandHandler.name);
+
+  constructor(
+    private readonly listeningService: ListeningService,
+    private readonly eventBus: EventBus
+  ) {}
 
   async execute(command: CreateListeningMaterialCommand) {
     const { dto, creatorId } = command;
-    const {
-      title,
-      description,
-      category,
-      difficulty,
-      mediaUrl,
-      youtubeId,
-      thumbnailUrl,
-      duration,
-      author,
-      isCommunity,
-      tags,
-      vocabularySetId,
-      subtitles,
-      questions,
-    } = dto;
+    const material = await this.listeningService.createMaterial(dto, creatorId);
 
-    return this.prisma.listeningMaterial.create({
-      data: {
-        title,
-        description,
-        category,
-        difficulty,
-        mediaUrl,
-        youtubeId,
-        thumbnailUrl,
-        duration,
-        author,
-        isCommunity: isCommunity || false,
-        isPublished: true, // Auto publish for seeded / contributed materials
-        tags: tags || [],
-        creatorId,
-        vocabularySetId,
-        subtitles: subtitles && subtitles.length > 0 ? {
-          create: subtitles.map((s) => ({
-            startTime: s.startTime,
-            endTime: s.endTime,
-            text: s.text,
-            translation: s.translation,
-            order: s.order,
-          })),
-        } : undefined,
-        questions: questions && questions.length > 0 ? {
-          create: questions.map((q) => ({
-            questionText: q.questionText,
-            options: q.options,
-            correctAnswer: q.correctAnswer,
-            explanation: q.explanation,
-            audioTimestamp: q.audioTimestamp,
-            order: q.order,
-          })),
-        } : undefined,
-      },
-      include: {
-        subtitles: true,
-        questions: true,
-      },
+    // Publish domain event asynchronously
+    setImmediate(async () => {
+      try {
+        await this.eventBus.publish(
+          new ListeningMaterialCreatedEvent(
+            material.id,
+            creatorId,
+            material.title,
+            material.category,
+            material.difficulty
+          )
+        );
+      } catch (error) {
+        this.logger.error('Failed to publish ListeningMaterialCreatedEvent', error);
+      }
     });
+
+    return material;
   }
 }

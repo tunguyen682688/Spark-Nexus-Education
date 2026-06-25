@@ -1036,6 +1036,15 @@ async function main() {
             explanation: 'She says "I will call the facilities office to request an urgent maintenance team."',
             audioTimestamp: 16.0,
             order: 3
+          },
+          {
+            id: 'seed-q-e1-4',
+            questionText: 'Điền vào chỗ trống: The woman will call the __________ office to request urgent maintenance.',
+            options: [],
+            correctAnswer: 'facilities',
+            explanation: 'Trong hội thoại, người phụ nữ nói: "I will call the facilities office to request an urgent maintenance team."',
+            audioTimestamp: 16.0,
+            order: 4
           }
         ]
       }
