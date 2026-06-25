@@ -29,13 +29,26 @@ model Article {
   thumbnailUrl String?
   sourceUrl    String?
   author       String?
+  creatorId    String?   @map("creator_id")
+  upvotes      Int       @default(0)
+  downvotes    Int       @default(0)
+  viewCount    Int       @default(0) @map("view_count")
+  isCommunity  Boolean   @default(false) @map("is_community")
   isPublished  Boolean   @default(false)
   publishedAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  contentType  String    @default("article") @map("content_type") // article, book, news, blog
+  vocabularySetId String?  @map("vocabulary_set_id")
 
   // Relations
-  readingProgress ReadingProgress[]
+  readingProgress  ReadingProgress[]
+  readingSessions  ReadingSession[]
+  comments         ArticleComment[]
+  votes            ArticleVote[]
+  bookmarks        UserArticleBookmark[]
+  vocabularySet    VocabularySet? @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  vocabularyHighlights ArticleVocabularyHighlight[]
 
   @@index([category])
   @@index([difficulty])
@@ -62,6 +75,82 @@ model ReadingProgress {
   @@index([userId])
   @@index([articleId])
   @@map("reading_progress")
+}
+
+model ReadingSession {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  articleId    String   @map("article_id")
+  startTime    DateTime @map("start_time")
+  endTime      DateTime @map("end_time")
+  duration     Int      // seconds
+  wordsRead    Int      @map("words_read")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  article      Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("reading_sessions")
+}
+
+model UserReadingStats {
+  userId        String   @id @map("user_id")
+  totalArticles Int      @default(0) @map("total_articles")
+  totalWords    Int      @default(0) @map("total_words")
+  totalTime     Int      @default(0) @map("total_time") // seconds
+  avgWpm        Int      @default(0) @map("avg_wpm")
+  masteryLevel  String   @default("A1") @map("mastery_level")
+  currentStreak Int      @default(0) @map("current_streak")
+  lastActiveAt  DateTime @default(now()) @map("last_active_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("user_reading_stats")
+}
+
+model ArticleComment {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  upvotes   Int      @default(0)
+  downvotes Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("article_comments")
+}
+
+model ArticleVote {
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  vote      Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+  @@map("article_votes")
+}
+
+model UserArticleBookmark {
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+  @@index([userId])
+  @@map("user_article_bookmarks")
 }
 
 // ============================================
@@ -101,6 +190,8 @@ model VocabularySet {
   ManualQuestion ManualQuestion[]
   QuizChallenge  QuizChallenge[]
   PackageReport  PackageReport[]
+  articles       Article[]
+  listeningMaterials ListeningMaterial[]
 
   @@index([userId])
   @@index([userId, language])
@@ -169,6 +260,8 @@ model Entry {
   examples           Example[]
   expressions        Expression[]
   variants           LexicalVariant[]
+  vocabularyHighlights ArticleVocabularyHighlight[]
+  listeningHighlights ListeningVocabularyHighlight[]
   expressionMeanings ExpressionMeaning[]
   mnemonics          CommunityMnemonic[]
   communityExamples  CommunityExample[]
@@ -881,4 +974,238 @@ model UserGrammarTrap {
   @@index([status])
   @@map("user_grammar_traps")
 }
+
+model TranslationCache {
+  id             String   @id @default(uuid())
+  hash           String   @unique @db.VarChar(64)
+  originalText   String   @map("original_text") @db.Text
+  translatedText String   @map("translated_text") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("translation_caches")
+}
+
+model ArticleVocabularyHighlight {
+  id                 String   @id @default(uuid())
+  articleId          String   @map("article_id")
+  entryId            String   @map("entry_id")
+  blockId            String   @map("block_id")
+  wordIndex          Int      @map("word_index")
+  occurrenceText     String   @map("occurrence_text") @db.VarChar(100)
+  customDefinition   String?  @db.Text
+  customExample      String?  @db.Text
+  customExampleTrans String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  article            Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  entry              Entry    @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  @@unique([articleId, blockId, wordIndex], map: "idx_article_block_word")
+  @@index([articleId])
+  @@index([entryId])
+  @@map("article_vocabulary_highlights")
+}
+
+
+// ============================================
+// LISTENING DOMAIN (Phân hệ Luyện nghe)
+// ============================================
+
+model ListeningMaterial {
+  id              String    @id @default(uuid())
+  title           String    @db.VarChar(255)
+  description     String?   @db.Text
+  category        String    @db.VarChar(50) // podcast, audio, exam, video
+  difficulty      String    @db.VarChar(10) // A1, A2, B1, B2, C1, C2
+  mediaUrl        String    @map("media_url") @db.VarChar(500) // Đường dẫn file audio hoặc video stream
+  youtubeId       String?   @map("youtube_id") @db.VarChar(100) // ID video YouTube (nếu có)
+  thumbnailUrl    String?   @map("thumbnail_url") @db.VarChar(500) // Ảnh đại diện
+  duration        Int       // Thời lượng tính bằng giây
+  author          String?   @db.VarChar(100) // Tác giả, diễn giả hoặc host
+  viewCount       Int       @default(0) @map("view_count")
+  isCommunity     Boolean   @default(false) @map("is_community") // Đánh dấu tài liệu do cộng đồng đóng góp
+  upvotes         Int       @default(0)
+  downvotes       Int       @default(0)
+  isPublished     Boolean   @default(false) @map("is_published")
+  publishedAt     DateTime? @map("published_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deleted         Boolean   @default(false)
+  creatorId       String?   @map("creator_id") // ID người tạo (GV/CTV/Thành viên cộng đồng)
+  vocabularySetId String?   @map("vocabulary_set_id") // Bộ từ vựng đi kèm bài học (nếu có)
+  tags            String[]  @default([])
+
+  // Quan hệ
+  vocabularySet   VocabularySet?               @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  subtitles       ListeningSubtitle[]
+  questions       ListeningQuestion[]
+  progress        ListeningProgress[]
+  sessions        ListeningSession[]
+  bookmarks       UserListeningBookmark[]
+  comments        ListeningComment[]
+  highlights      ListeningVocabularyHighlight[]
+  votes           ListeningVote[]
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([isPublished])
+  @@index([isCommunity])
+  @@index([deleted])
+  @@index([createdAt])
+  @@map("listening_materials")
+}
+
+model ListeningVote {
+  userId     String   @map("user_id")
+  materialId String   @map("material_id")
+  vote       Int      // 1: upvote, -1: downvote
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Quan hệ
+  material   ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@id([userId, materialId])
+  @@index([materialId])
+  @@map("listening_votes")
+}
+
+model ListeningSubtitle {
+  id          String   @id @default(uuid())
+  materialId  String   @map("material_id")
+  startTime   Float    @map("start_time") // Thời gian bắt đầu (giây, ví dụ: 12.34)
+  endTime     Float    @map("end_time")   // Thời gian kết thúc (giây)
+  text        String   @db.Text           // Tiếng Anh bản xứ
+  translation String?  @db.Text           // Bản dịch tiếng Việt song ngữ
+  order       Int      // Thứ tự sắp xếp câu trong bài nghe
+
+  // Quan hệ
+  material    ListeningMaterial              @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  highlights  ListeningVocabularyHighlight[]
+
+  @@index([materialId])
+  @@index([materialId, order])
+  @@map("listening_subtitles")
+}
+
+model ListeningQuestion {
+  id             String   @id @default(uuid())
+  materialId     String   @map("material_id")
+  questionText   String   @map("question_text") @db.Text
+  options        Json     // Mảng các lựa chọn: ["A", "B", "C", "D"] hoặc ["Option A", "Option B", ...]
+  correctAnswer  String   @map("correct_answer") @db.VarChar(255) // Đáp án đúng
+  explanation    String?  @db.Text // Giải thích chi tiết
+  audioTimestamp Float?   @map("audio_timestamp") // Tua lại đúng đoạn audio phát ra đáp án
+  order          Int      // Thứ tự câu hỏi trong đề thi/bài tập
+
+  // Quan hệ
+  material       ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@index([materialId, order])
+  @@map("listening_questions")
+}
+
+model ListeningProgress {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  materialId   String    @map("material_id")
+  progress     Int       @default(0) // Tiến độ từ 0 - 100%
+  lastPosition Float     @default(0) @map("last_position") // Vị trí giây nghe cuối cùng để resume
+  timeSpent    Int       @default(0) @map("time_spent") // Tổng thời gian đã nghe (giây)
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Quan hệ
+  material     ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, materialId], name: "idx_user_listening_material")
+  @@index([userId])
+  @@index([materialId])
+  @@map("listening_progress")
+}
+
+model ListeningSession {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  materialId String   @map("material_id")
+  duration   Int      // Số giây đã nghe trong phiên này
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Quan hệ
+  material   ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("listening_sessions")
+}
+
+model UserListeningBookmark {
+  userId     String   @map("user_id")
+  materialId String   @map("material_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Quan hệ
+  material   ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@id([userId, materialId])
+  @@index([userId])
+  @@map("user_listening_bookmarks")
+}
+
+model ListeningComment {
+  id         String   @id @default(uuid())
+  materialId String   @map("material_id")
+  userId     String   @map("user_id")
+  content    String   @db.Text
+  upvotes    Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Quan hệ
+  material   ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("listening_comments")
+}
+
+model ListeningVocabularyHighlight {
+  id                 String   @id @default(uuid())
+  materialId         String   @map("material_id")
+  subtitleId         String   @map("subtitle_id")
+  entryId            String   @map("entry_id")
+  wordIndex          Int      @map("word_index") // Vị trí của từ trong subtitle text (0-indexed)
+  occurrenceText     String   @map("occurrence_text") @db.VarChar(100)
+  customDefinition   String?  @db.Text
+  customExample      String?  @db.Text
+  customExampleTrans String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Quan hệ
+  material           ListeningMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  subtitle           ListeningSubtitle @relation(fields: [subtitleId], references: [id], onDelete: Cascade)
+  entry              Entry             @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  @@unique([subtitleId, wordIndex], map: "idx_listening_sub_word")
+  @@index([materialId])
+  @@index([entryId])
+  @@map("listening_vocabulary_highlights")
+}
+
+model UserListeningStats {
+  userId         String   @id @map("user_id")
+  totalMaterials Int      @default(0) @map("total_materials")
+  totalTime      Int      @default(0) @map("total_time") // Tổng thời lượng nghe tính bằng giây
+  masteryLevel   String   @default("A1") @map("mastery_level")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("user_listening_stats")
+}
+
 

@@ -313,8 +313,16 @@ export function entityToResourceObject<
   }
 ): ResourceObject<Record<string, unknown>> {
   const idField = options?.idField || 'id';
-  const entityRecord = entity as Record<string, unknown>;
-  const id = String(entityRecord[idField] ?? entityRecord.id ?? '');
+
+  // Use toPlainObject() if it exists on the entity (e.g. for DDD entities extending Entity base class)
+  let entityRecord: Record<string, unknown>;
+  if (entity && typeof (entity as unknown as { toPlainObject?: () => unknown }).toPlainObject === 'function') {
+    entityRecord = (entity as unknown as { toPlainObject: () => Record<string, unknown> }).toPlainObject();
+  } else {
+    entityRecord = entity as Record<string, unknown>;
+  }
+
+  const id = String(entityRecord[idField] ?? entityRecord.id ?? (entity as unknown as { id?: unknown }).id ?? '');
   if (!id) {
     throw new Error(`Entity must have an id field (tried: ${idField}, id)`);
   }
@@ -327,10 +335,16 @@ export function entityToResourceObject<
   // Extract attributes (all fields except id and excluded fields)
   const attributes: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(entityRecord)) {
-    if (!excludeFields.includes(key)) {
-      attributes[key] = value;
+    if (!excludeFields.includes(key) && !key.startsWith('_')) {
+      // Safely serialize BigInt values to prevent JSON serialization errors
+      if (typeof value === 'bigint') {
+        attributes[key] = Number(value);
+      } else {
+        attributes[key] = value;
+      }
     }
   }
+
 
   const resource: ResourceObject<Record<string, unknown>> = {
     id,

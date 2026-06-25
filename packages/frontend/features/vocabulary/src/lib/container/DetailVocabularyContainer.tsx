@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast, Skeleton } from '@spark-nest-ed/frontend-shared-components';
 import { ROUTES } from '@spark-nest-ed/frontend-core-constants';
-import { useEntryDetail } from '../hooks/use-vocabulary-sets';
+import {
+  useEntryDetail,
+  useUpdateWordInSet,
+  useToggleFavorite,
+  useVocabularySet,
+  useSetWords,
+} from '../hooks/use-vocabulary-sets';
 import { DETAIL_VOCABULARY_TEXT } from '../constants';
 import {
   DetailVocabularyHeader,
@@ -20,10 +26,70 @@ export default function DetailVocabularyContainer() {
   const [isSaved, setIsSaved] = useState(false);
 
   const { data: word, isLoading, error } = useEntryDetail(wordId);
+  const { data: vocabularySet } = useVocabularySet(id);
+  const { data: wordsData } = useSetWords(id);
+
+  const toggleFavorite = useToggleFavorite();
+  const updateWordMutation = useUpdateWordInSet();
+
+  const matchingItem = useMemo(() => {
+    if (!wordsData?.data || !wordId) return null;
+    return wordsData.data.find(
+      (item) =>
+        item.entryId === wordId ||
+        item.wordDetails?.id === wordId ||
+        item.wordMinimum?.id === wordId
+    );
+  }, [wordsData, wordId]);
+
+  const itemId = matchingItem?.id;
+
+  const mergedWord = useMemo(() => {
+    if (!word) return null;
+    if (!matchingItem) return word;
+    return {
+      ...word,
+      definition: matchingItem.customDefinition || word.definition,
+      example: matchingItem.customExample || word.example,
+      notes: matchingItem.notes || word.notes,
+    };
+  }, [word, matchingItem]);
+
+  useEffect(() => {
+    if (vocabularySet) {
+      setIsSaved((vocabularySet as any)?.isFavorited || false);
+    }
+  }, [vocabularySet]);
 
   const handleSaveWord = () => {
-    setIsSaved(!isSaved);
-    // TODO: Call API to save/unsave the word
+    if (!id || !vocabularySet) return;
+    const currentFavorited = (vocabularySet as any)?.isFavorited || false;
+    toggleFavorite.mutate(
+      {
+        setId: id,
+        isFavorited: !currentFavorited,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: !currentFavorited
+              ? 'Added to favorites'
+              : 'Removed from favorites',
+            description: !currentFavorited
+              ? 'The vocabulary set has been added to your favorites.'
+              : 'The vocabulary set has been removed from your favorites.',
+          });
+        },
+        onError: (err) => {
+          toast({
+            title: 'Error',
+            description:
+              err instanceof Error ? err.message : 'Failed to toggle favorite.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const handlePracticeClick = () => {
@@ -53,11 +119,44 @@ export default function DetailVocabularyContainer() {
   };
 
   const handleSaveNotes = (notes: string) => {
-    // TODO: Call API to save notes
-    toast({
-      title: 'Success',
-      description: 'Notes saved successfully.',
-    });
+    if (!id || !itemId) {
+      toast({
+        title: 'Error',
+        description: 'Cannot update notes for this word in the current set.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    updateWordMutation.mutate(
+      {
+        setId: id,
+        wordId: itemId,
+        payload: {
+          word: {
+            word: word?.word || '',
+            definition: matchingItem?.customDefinition || word?.definition || '',
+            notes: notes,
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Success',
+            description: 'Notes saved successfully.',
+          });
+        },
+        onError: (err) => {
+          toast({
+            title: 'Error',
+            description:
+              err instanceof Error ? err.message : 'Failed to save notes.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   useEffect(() => {
@@ -91,7 +190,7 @@ export default function DetailVocabularyContainer() {
     );
   }
 
-  if (!word) {
+  if (!mergedWord) {
     return (
       <div className="w-full max-w-none mx-0 px-2 py-8 sm:px-4 lg:px-6">
         <div className="text-center">
@@ -113,7 +212,7 @@ export default function DetailVocabularyContainer() {
   return (
     <div className=" py-8 max-w-full">
       <DetailVocabularyHeader
-        word={word}
+        word={mergedWord}
         isSaved={isSaved}
         onSaveClick={handleSaveWord}
         onPracticeClick={handlePracticeClick}
@@ -123,14 +222,18 @@ export default function DetailVocabularyContainer() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <DetailVocabularyDefinitionCard word={word} />
-          <DetailVocabularyTabs word={word} onSaveNotes={handleSaveNotes} />
+          <DetailVocabularyDefinitionCard word={mergedWord} />
+          <DetailVocabularyTabs
+            key={`${mergedWord.id}-${mergedWord.notes || ''}`}
+            word={mergedWord}
+            onSaveNotes={handleSaveNotes}
+          />
         </div>
 
         <div className="space-y-6">
-          <DetailVocabularySynonymsAntonymsCard word={word} />
-          <DetailVocabularyDifficultyCard word={word} />
-          <DetailVocabularyExternalResourcesCard word={word} />
+          <DetailVocabularySynonymsAntonymsCard word={mergedWord} />
+          <DetailVocabularyDifficultyCard word={mergedWord} />
+          <DetailVocabularyExternalResourcesCard word={mergedWord} />
         </div>
       </div>
     </div>

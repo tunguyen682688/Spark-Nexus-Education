@@ -33,6 +33,11 @@
     {
       "path": "../../packages/backend/domains/module-grammar/tsconfig.lib.json"
     },
+      "path": "../../packages/backend/domains/module-listening/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/domains/module-reading/tsconfig.lib.json"
+    },
     {
       "path": "../../packages/backend/domains/module-vocabulary/tsconfig.lib.json"
     },

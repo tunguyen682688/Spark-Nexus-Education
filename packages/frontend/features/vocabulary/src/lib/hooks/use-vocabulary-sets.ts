@@ -16,7 +16,10 @@ import {
   type MutationFunction,
   type QueryKey,
 } from '@tanstack/react-query';
-import type { ApiQueryParams, SimplifiedPaginatedResponse } from '@spark-nest-ed/frontend-core-api';
+import type {
+  ApiQueryParams,
+  SimplifiedPaginatedResponse,
+} from '@spark-nest-ed/frontend-core-api';
 
 import type {
   CommunityVocabularySet,
@@ -40,7 +43,8 @@ export const vocabularyKeys = {
   root: ['vocabulary'] as const,
   sets: () => [...vocabularyKeys.root, 'sets'] as const,
   list: () => [...vocabularyKeys.sets(), 'list'] as const,
-  detail: (setId: string) => [...vocabularyKeys.sets(), 'detail', setId] as const,
+  detail: (setId: string) =>
+    [...vocabularyKeys.sets(), 'detail', setId] as const,
   words: (setId: string, params?: ApiQueryParams) =>
     [...vocabularyKeys.detail(setId), 'words', params] as const,
   community: () => [...vocabularyKeys.root, 'community'] as const,
@@ -54,7 +58,8 @@ export const vocabularyKeys = {
   myFavoritesList: (params?: ApiQueryParams) =>
     [...vocabularyKeys.myFavorites(), 'list', params] as const,
   // Entry/word details
-  entry: (entryId: string) => [...vocabularyKeys.root, 'entry', entryId] as const,
+  entry: (entryId: string) =>
+    [...vocabularyKeys.root, 'entry', entryId] as const,
 } as const;
 
 // =============================================================================
@@ -85,6 +90,7 @@ interface ToggleFavoriteContext {
     key: QueryKey;
     data?: SimplifiedPaginatedResponse<CommunityVocabularySet>;
   }>;
+  previousDetail?: VocabularySet;
 }
 
 function buildOptimisticSet(variables: CreateVocabularySetDto): VocabularySet {
@@ -125,7 +131,10 @@ function updateFavoriteSnapshot(
         ? {
             ...set,
             isFavorited,
-            favoriteCount: Math.max(0, set.favoriteCount + (isFavorited ? 1 : -1)),
+            favoriteCount: Math.max(
+              0,
+              set.favoriteCount + (isFavorited ? 1 : -1)
+            ),
           }
         : set
     ),
@@ -175,13 +184,20 @@ export function useCreateVocabularySet() {
     payload
   ) => vocabularyApi.createSet(payload);
 
-  return useMutation<VocabularySet, Error, CreateVocabularySetDto, CreateSetContext>({
+  return useMutation<
+    VocabularySet,
+    Error,
+    CreateVocabularySetDto,
+    CreateSetContext
+  >({
     mutationFn,
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: listKey });
 
       const previous =
-        queryClient.getQueryData<SimplifiedPaginatedResponse<VocabularySet>>(listKey);
+        queryClient.getQueryData<SimplifiedPaginatedResponse<VocabularySet>>(
+          listKey
+        );
 
       const optimisticSet = buildOptimisticSet(variables);
       queryClient.setQueryData(listKey, addSetToCache(previous, optimisticSet));
@@ -238,9 +254,17 @@ export function useInfiniteSetWords(
   params?: ApiQueryParams
 ) {
   return useInfiniteQuery<SimplifiedPaginatedResponse<VocabularySetItem>>({
-    queryKey: [...vocabularyKeys.detail(setId ?? 'unknown'), 'words', 'infinite', params],
-    queryFn: ({ pageParam = 1 }) => 
-      vocabularyApi.getSetWords(setId as string, { ...params, page: pageParam as number }),
+    queryKey: [
+      ...vocabularyKeys.detail(setId ?? 'unknown'),
+      'words',
+      'infinite',
+      params,
+    ],
+    queryFn: ({ pageParam = 1 }) =>
+      vocabularyApi.getSetWords(setId as string, {
+        ...params,
+        page: pageParam as number,
+      }),
     getNextPageParam: (lastPage) => {
       if (lastPage.meta.page < lastPage.meta.totalPages) {
         return lastPage.meta.page + 1;
@@ -270,7 +294,12 @@ export function useCommunityVocabularySets(params?: ApiQueryParams) {
 export function useToggleFavorite() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, ToggleFavoriteVariables, ToggleFavoriteContext>({
+  return useMutation<
+    void,
+    Error,
+    ToggleFavoriteVariables,
+    ToggleFavoriteContext
+  >({
     mutationFn: ({ setId, isFavorited }) =>
       vocabularyApi.toggleCommunityFavorite(setId, isFavorited),
     onMutate: async (variables) => {
@@ -287,17 +316,39 @@ export function useToggleFavorite() {
         );
       });
 
-      return { snapshots };
+      const detailKey = vocabularyKeys.detail(variables.setId);
+      const previousDetail = queryClient.getQueryData<VocabularySet>(detailKey);
+      if (previousDetail) {
+        queryClient.setQueryData<any>(detailKey, {
+          ...previousDetail,
+          isFavorited: variables.isFavorited,
+          favoriteCount: Math.max(
+            0,
+            previousDetail.favoriteCount + (variables.isFavorited ? 1 : -1)
+          ),
+        });
+      }
+
+      return { snapshots, previousDetail };
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
       context?.snapshots.forEach(({ key, data }) => {
         queryClient.setQueryData(key, data);
       });
+      if (context?.previousDetail) {
+        queryClient.setQueryData(
+          vocabularyKeys.detail(variables.setId),
+          context.previousDetail
+        );
+      }
     },
-    onSettled: () => {
+    onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.community() });
       // Also invalidate favorites list when toggling
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.myFavorites() });
+      queryClient.invalidateQueries({
+        queryKey: vocabularyKeys.detail(variables.setId),
+      });
     },
   });
 }
@@ -308,7 +359,7 @@ export function useToggleFavorite() {
 
 /**
  * Fetch vocabulary sets created by the current user.
- * 
+ *
  * Usage:
  * ```tsx
  * const { data, isLoading, error } = useMyCreatedSets({ page: 1, pageSize: 10 });
@@ -325,7 +376,7 @@ export function useMyCreatedSets(params?: ApiQueryParams) {
 
 /**
  * Fetch vocabulary sets favorited by the current user from community.
- * 
+ *
  * Usage:
  * ```tsx
  * const { data, isLoading, error } = useMyFavoriteSets({ page: 1, pageSize: 10 });
@@ -346,7 +397,7 @@ export function useMyFavoriteSets(params?: ApiQueryParams) {
 
 /**
  * Update vocabulary set information.
- * 
+ *
  * Usage:
  * ```tsx
  * const updateSet = useUpdateVocabularySet();
@@ -356,11 +407,17 @@ export function useMyFavoriteSets(params?: ApiQueryParams) {
 export function useUpdateVocabularySet() {
   const queryClient = useQueryClient();
 
-  return useMutation<VocabularySet, Error, { setId: string; payload: UpdateVocabularySetDto }>({
+  return useMutation<
+    VocabularySet,
+    Error,
+    { setId: string; payload: UpdateVocabularySetDto }
+  >({
     mutationFn: ({ setId, payload }) => vocabularyApi.updateSet(setId, payload),
     onSuccess: (data, variables) => {
       // Invalidate and refetch related queries
-      queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(variables.setId) });
+      queryClient.invalidateQueries({
+        queryKey: vocabularyKeys.detail(variables.setId),
+      });
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.myCreated() });
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.list() });
     },
@@ -369,26 +426,33 @@ export function useUpdateVocabularySet() {
 
 /**
  * Add a word to vocabulary set.
- * 
+ *
  * Usage:
  * ```tsx
  * const addWord = useAddWordToSet();
- * await addWord.mutateAsync({ 
- *   setId: '123', 
- *   payload: { word: { word: 'hello', definition: 'greeting' } } 
+ * await addWord.mutateAsync({
+ *   setId: '123',
+ *   payload: { word: { word: 'hello', definition: 'greeting' } }
  * });
  * ```
  */
 export function useAddWordToSet() {
   const queryClient = useQueryClient();
 
-  return useMutation<VocabularySetItem, Error, { setId: string; payload: AddWordToSetDto }>({
-    mutationFn: ({ setId, payload }) => vocabularyApi.addWordToSet(setId, payload),
+  return useMutation<
+    VocabularySetItem,
+    Error,
+    { setId: string; payload: AddWordToSetDto }
+  >({
+    mutationFn: ({ setId, payload }) =>
+      vocabularyApi.addWordToSet(setId, payload),
     onSuccess: (data, variables) => {
       // Invalidate words list and set detail
       const wordsKey = [...vocabularyKeys.detail(variables.setId), 'words'];
       queryClient.invalidateQueries({ queryKey: wordsKey });
-      queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(variables.setId) });
+      queryClient.invalidateQueries({
+        queryKey: vocabularyKeys.detail(variables.setId),
+      });
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.myCreated() });
     },
   });
@@ -396,14 +460,14 @@ export function useAddWordToSet() {
 
 /**
  * Update a word in vocabulary set.
- * 
+ *
  * Usage:
  * ```tsx
  * const updateWord = useUpdateWordInSet();
- * await updateWord.mutateAsync({ 
- *   setId: '123', 
+ * await updateWord.mutateAsync({
+ *   setId: '123',
  *   wordId: '456',
- *   payload: { word: { definition: 'new definition' } } 
+ *   payload: { word: { definition: 'new definition' } }
  * });
  * ```
  */
@@ -421,14 +485,16 @@ export function useUpdateWordInSet() {
       // Invalidate words list and set detail
       const wordsKey = [...vocabularyKeys.detail(variables.setId), 'words'];
       queryClient.invalidateQueries({ queryKey: wordsKey });
-      queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(variables.setId) });
+      queryClient.invalidateQueries({
+        queryKey: vocabularyKeys.detail(variables.setId),
+      });
     },
   });
 }
 
 /**
  * Delete a word from vocabulary set.
- * 
+ *
  * Usage:
  * ```tsx
  * const deleteWord = useDeleteWordFromSet();
@@ -439,12 +505,15 @@ export function useDeleteWordFromSet() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { setId: string; wordId: string }>({
-    mutationFn: ({ setId, wordId }) => vocabularyApi.deleteWordFromSet(setId, wordId),
+    mutationFn: ({ setId, wordId }) =>
+      vocabularyApi.deleteWordFromSet(setId, wordId),
     onSuccess: (data, variables) => {
       // Invalidate words list and set detail
       const wordsKey = [...vocabularyKeys.detail(variables.setId), 'words'];
       queryClient.invalidateQueries({ queryKey: wordsKey });
-      queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(variables.setId) });
+      queryClient.invalidateQueries({
+        queryKey: vocabularyKeys.detail(variables.setId),
+      });
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.myCreated() });
     },
   });
@@ -452,7 +521,7 @@ export function useDeleteWordFromSet() {
 
 /**
  * Delete a vocabulary set.
- * 
+ *
  * Usage:
  * ```tsx
  * const deleteSet = useDeleteVocabularySet();
@@ -480,8 +549,17 @@ export function useDeleteVocabularySet() {
 export function useSyncVocabularySetItems() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { setId: string; payload: SyncVocabularySetItemsDto; config?: Record<string, unknown> }>({
-    mutationFn: ({ setId, payload, config }) => vocabularyApi.syncSetItems(setId, payload, config),
+  return useMutation<
+    void,
+    Error,
+    {
+      setId: string;
+      payload: SyncVocabularySetItemsDto;
+      config?: Record<string, unknown>;
+    }
+  >({
+    mutationFn: ({ setId, payload, config }) =>
+      vocabularyApi.syncSetItems(setId, payload, config),
     onSuccess: (_data, { setId }) => {
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(setId) });
       queryClient.invalidateQueries({ queryKey: vocabularyKeys.words(setId) });
@@ -517,10 +595,19 @@ export function useEntryDetail(entryId: string | null | undefined) {
 /**
  * Fetch flashcard session (words + study progress)
  */
-export function useFlashcardSession(setId: string | null | undefined, reviewAll?: boolean) {
+export function useFlashcardSession(
+  setId: string | null | undefined,
+  reviewAll?: boolean
+) {
   return useQuery<FlashcardSessionResponse>({
-    queryKey: [...vocabularyKeys.detail(setId ?? 'unknown'), 'flashcards', 'session', { reviewAll }] as const,
-    queryFn: () => vocabularyApi.getFlashcardSession(setId as string, reviewAll),
+    queryKey: [
+      ...vocabularyKeys.detail(setId ?? 'unknown'),
+      'flashcards',
+      'session',
+      { reviewAll },
+    ] as const,
+    queryFn: () =>
+      vocabularyApi.getFlashcardSession(setId as string, reviewAll),
     enabled: Boolean(setId),
     staleTime: 0, // Always load fresh details for study session
   });

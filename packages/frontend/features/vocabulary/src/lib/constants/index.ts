@@ -287,3 +287,28 @@ export const EXTERNAL_DICTIONARY_URLS = {
   THESAURUS: (word: string) => `https://www.thesaurus.com/browse/${word.toLowerCase()}`,
 } as const;
 
+export const CATEGORY_LIST = [
+  { label: "General Vocabulary", value: "GENERAL" },
+  { label: "Academic", value: "ACADEMIC" },
+  { label: "Business", value: "BUSINESS" },
+  { label: "Technology", value: "TECHNOLOGY" },
+  { label: "Medical", value: "MEDICAL" },
+  { label: "IELTS", value: "IELTS" },
+  { label: "TOEIC", value: "TOEIC" },
+  { label: "TOEFL", value: "TOEFL" },
+  { label: "Travel", value: "TRAVEL" },
+  { label: "Food & Drink", value: "FOOD_AND_DRINK" },
+  { label: "Science", value: "SCIENCE" },
+  { label: "Arts", value: "ARTS" },
+  { label: "Sports", value: "SPORTS" },
+  { label: "Entertainment", value: "ENTERTAINMENT" },
+  { label: "Social Media", value: "SOCIAL_MEDIA" },
+  { label: "Environment", value: "ENVIRONMENT" },
+  { label: "Education", value: "EDUCATION" },
+  { label: "Daily Conversation", value: "DAILY_CONVERSATION" },
+  { label: "Literature", value: "LITERATURE" },
+  { label: "Music", value: "MUSIC" },
+  { label: "Other", value: "OTHER" },
+];
+
+

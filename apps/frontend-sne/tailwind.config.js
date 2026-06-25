@@ -23,6 +23,11 @@ module.exports = {
       perspective: {
         1000: '1000px',
       },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['Merriweather', 'Georgia', 'serif'],
+        mono: ['Roboto Mono', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -96,11 +101,6 @@ module.exports = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Georgia', 'serif'],
-        mono: ['Roboto Mono', 'monospace'],
       },
       boxShadow: {
         soft: '0 2px 15px rgba(0, 0, 0, 0.05)',

@@ -1,1 +1,1 @@
-export * from './lib/feature-reading';
+export * from './lib/index';

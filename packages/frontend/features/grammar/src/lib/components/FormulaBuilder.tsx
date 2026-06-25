@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@spark-nest-ed/frontend-shared-components';
+import { SUGGESTED_FORMULA_ELEMENTS } from '../constants';
 
 interface FormulaBuilderProps {
   elements: string[];
@@ -71,17 +72,7 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
     setDeleteIndex(index);
   };
 
-  const SUGGESTED_ELEMENTS = [
-    { label: 'Subject', value: '[Subject]', color: 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20 hover:bg-emerald-500/20' },
-    { label: 'Verb', value: 'verb', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20' },
-    { label: 'Object', value: '[Object]', color: 'bg-amber-500/10 text-amber-450 border-amber-500/20 hover:bg-amber-500/20' },
-    { label: 'have / has', value: 'have / has', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20' },
-    { label: 'Past Simple', value: 'Past Simple', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20' },
-    { label: 'V3 / V-ed', value: 'Past Participle (V3)', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20' },
-    { label: 'would', value: 'would', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20' },
-    { label: '+', value: '+', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20' },
-    { label: ',', value: ',', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20' },
-  ];
+  const SUGGESTED_ELEMENTS = SUGGESTED_FORMULA_ELEMENTS;
 
   return (
     <div className="bg-[#0b1022]/80 border border-blue-500/20 rounded-2xl p-6 flex flex-col gap-4">

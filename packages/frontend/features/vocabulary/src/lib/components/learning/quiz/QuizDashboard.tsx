@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flame, Award, BookOpen, Sparkles } from 'lucide-react';
+import { VOCABULARY_UI_TEXT } from '../../../constants/vocabulary-ui-text';
 
 export interface QuizDashboardProps {
   title: string;
@@ -28,29 +29,29 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/60 pb-5 relative z-10">
         <div className="flex flex-col gap-1 text-left">
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Award className="w-6.5 h-6.5 text-blue-400 animate-pulse" /> Tiến độ Bộ từ vựng (Trắc nghiệm)
+            <Award className="w-6.5 h-6.5 text-blue-400 animate-pulse" /> {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.PROGRESS_TITLE}
           </h1>
           <p className="text-xs text-slate-400">
-            Bộ từ vựng: <span className="font-semibold text-slate-200">{title}</span>
+            {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.VOCAB_SET} <span className="font-semibold text-slate-200">{title}</span>
           </p>
         </div>
         <button
           onClick={onGoHome}
           className="self-start sm:self-center flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700/50 transition-all cursor-pointer"
         >
-          Quay lại
+          {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.BACK}
         </button>
       </div>
 
       {/* Real-time Statistics Dashboard Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 relative z-10">
         <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng số từ</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.TOTAL_WORDS}</span>
           <span className="text-2xl font-black mt-2 text-slate-100">{statsDashboard.total}</span>
         </div>
 
         <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
-          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Đã thành thạo</span>
+          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.MASTERED}</span>
           <div className="flex items-baseline justify-between mt-2">
             <span className="text-2xl font-black text-emerald-400">{statsDashboard.mastered}</span>
             <span className="text-[9px] font-extrabold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">{masteredPercent}%</span>
@@ -58,12 +59,12 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
         </div>
 
         <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
-          <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Đang học tập</span>
+          <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.LEARNING}</span>
           <span className="text-2xl font-black mt-2 text-blue-400">{statsDashboard.learning}</span>
         </div>
 
         <div className="flex flex-col p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl justify-between text-left">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Chưa bắt đầu</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.NOT_STARTED}</span>
           <span className="text-2xl font-black mt-2 text-slate-400">{statsDashboard.newCount}</span>
         </div>
       </div>
@@ -76,13 +77,13 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
           </svg>
         </div>
         <p className="text-xs font-semibold text-slate-300">
-          Tuyệt vời! Hiện tại không có từ vựng nào đến hạn ôn tập SRS hôm nay. Hãy chọn chế độ học bên dưới để luyện tập phản xạ trắc nghiệm nhé.
+          {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.ALL_CAUGHT_UP}
         </p>
       </div>
 
       {/* Premium Study options list */}
       <div className="flex flex-col gap-3.5 relative z-10">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">Chọn chế độ luyện tập tối ưu:</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.SELECT_MODE}</span>
 
         <div className="grid grid-cols-1 gap-3">
           {/* Mode 1: Study All */}
@@ -96,9 +97,9 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
               </div>
               <div className="flex flex-col gap-0.5 text-left">
                 <span className="text-sm sm:text-base font-bold text-slate-200">
-                  Luyện tập Toàn bộ từ vựng ({statsDashboard.total} từ)
+                  {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.PRACTICE_ALL(statsDashboard.total)}
                 </span>
-                <span className="text-[11px] text-slate-400">Luyện tập trắc nghiệm tất cả {statsDashboard.total} từ trong bộ từ để củng cố phản xạ.</span>
+                <span className="text-[11px] text-slate-400">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.PRACTICE_ALL_DESC(statsDashboard.total)}</span>
               </div>
             </div>
             <svg className="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -126,12 +127,12 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
               </div>
               <div className="flex flex-col gap-0.5 text-left">
                 <span className="text-sm sm:text-base font-bold text-slate-200">
-                  Thách thức Ôn tập Từ khó / Yếu ({statsDashboard.difficultCount} từ)
+                  {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.CHALLENGE_WEAK(statsDashboard.difficultCount)}
                 </span>
                 <span className="text-[11px] text-slate-400">
                   {statsDashboard.difficultCount > 0
-                    ? 'Tập trung ôn tập các từ có điểm thông thạo thấp để ghi nhớ bền bỉ hơn.'
-                    : 'Tuyệt vời! Bạn không có từ khó nào cần ôn tập trắc nghiệm thêm lúc này.'}
+                    ? VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.CHALLENGE_WEAK_DESC_HAS
+                    : VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.CHALLENGE_WEAK_DESC_EMPTY}
                 </span>
               </div>
             </div>
@@ -140,7 +141,7 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             ) : (
-              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">Đã sạch!</span>
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.CLEARED}</span>
             )}
           </button>
 
@@ -164,12 +165,12 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
               </div>
               <div className="flex flex-col gap-0.5 text-left">
                 <span className="text-sm sm:text-base font-bold text-slate-200">
-                  Học Từ vựng Mới ({statsDashboard.newCount} từ)
+                  {VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.LEARN_NEW(statsDashboard.newCount)}
                 </span>
                 <span className="text-[11px] text-slate-400">
                   {statsDashboard.newCount > 0
-                    ? `Chỉ làm quen trắc nghiệm cho ${statsDashboard.newCount} từ vựng bạn chưa từng học qua.`
-                    : 'Tuyệt vời! Bạn đã bắt đầu làm quen trắc nghiệm tất cả các từ.'}
+                    ? VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.LEARN_NEW_DESC_HAS(statsDashboard.newCount)
+                    : VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.LEARN_NEW_DESC_EMPTY}
                 </span>
               </div>
             </div>
@@ -178,7 +179,7 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             ) : (
-              <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded">Hoàn thành!</span>
+              <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded">{VOCABULARY_UI_TEXT.QUIZ_DASHBOARD.COMPLETED}</span>
             )}
           </button>
         </div>

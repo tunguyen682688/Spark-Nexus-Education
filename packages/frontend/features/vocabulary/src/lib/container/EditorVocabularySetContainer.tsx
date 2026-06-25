@@ -6,7 +6,7 @@ import { WordListEditor } from '../components/editor/WordListEditor';
 import { AutoSaveIndicator } from '../components/editor/AutoSaveIndicator';
 import { Button, Badge, useToast } from "@spark-nest-ed/frontend-shared-components";
 import { VocabularySetFormValues } from '../constants/editor';
-import { EDITOR_UI } from '../constants/ui';
+import { VOCABULARY_UI_TEXT } from '../constants/vocabulary-ui-text';
 import { ArrowLeft, Globe, Lock, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,8 +63,8 @@ const EditorVocabularySetContainer: React.FC<EditorVocabularySetContainerProps> 
         const result = await saveDraft(form.getValues(), false);
         if (result.success) {
             toast({
-                title: "Đã lưu bản nháp",
-                description: "Các thay đổi của bạn đã được lưu thành công.",
+                title: VOCABULARY_UI_TEXT.EDITOR.DRAFT_SAVED_TITLE,
+                description: VOCABULARY_UI_TEXT.EDITOR.DRAFT_SAVED_DESC,
                 variant: "default"
             });
         }
@@ -75,8 +75,8 @@ const EditorVocabularySetContainer: React.FC<EditorVocabularySetContainerProps> 
         const result = await saveDraft(form.getValues(), false);
         if (result.success) {
             toast({
-                title: "Đã chuyển về riêng tư",
-                description: "Bộ từ vựng đã được chuyển thành chế độ riêng tư thành công.",
+                title: VOCABULARY_UI_TEXT.EDITOR.PRIVATE_SET_TITLE,
+                description: VOCABULARY_UI_TEXT.EDITOR.PRIVATE_SET_DESC,
                 variant: "default"
             });
         }
@@ -92,16 +92,16 @@ const EditorVocabularySetContainer: React.FC<EditorVocabularySetContainerProps> 
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                             <h1 className="text-2xl font-bold flex items-center gap-3">
-                                <span>{EDITOR_UI.CONTAINER.TITLE}</span>
+                                <span>Bộ từ vựng</span>
                                 {visibility === "PUBLIC" ? (
                                     <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/15 border border-green-500/20 px-2 py-0.5 text-xs font-semibold flex items-center space-x-1 shrink-0">
                                         <Globe className="h-3 w-3 shrink-0" />
-                                        <span>Công khai</span>
+                                        <span>{VOCABULARY_UI_TEXT.EDITOR.PUBLIC}</span>
                                     </Badge>
                                 ) : (
                                     <Badge className="bg-muted text-muted-foreground hover:bg-muted border px-2 py-0.5 text-xs font-semibold flex items-center space-x-1 shrink-0">
                                         <Lock className="h-3 w-3 shrink-0" />
-                                        <span>Bản nháp riêng tư</span>
+                                        <span>{VOCABULARY_UI_TEXT.EDITOR.PRIVATE_DRAFT}</span>
                                     </Badge>
                                 )}
                             </h1>
@@ -116,7 +116,7 @@ const EditorVocabularySetContainer: React.FC<EditorVocabularySetContainerProps> 
                                     className="flex items-center space-x-1.5"
                                 >
                                     <Lock className="h-4 w-4" />
-                                    <span>Đặt làm riêng tư</span>
+                                    <span>{VOCABULARY_UI_TEXT.EDITOR.MAKE_PRIVATE}</span>
                                 </Button>
                             ) : (
                                 <>
@@ -127,23 +127,23 @@ const EditorVocabularySetContainer: React.FC<EditorVocabularySetContainerProps> 
                                         className="flex items-center space-x-1.5"
                                     >
                                         <Save className="h-4 w-4" />
-                                        <span>Lưu bản nháp</span>
+                                        <span>{VOCABULARY_UI_TEXT.EDITOR.SAVE_DRAFT}</span>
                                     </Button>
                                     <Button 
                                         onClick={handlePublish} 
                                         disabled={!canPublish || saveStatus === 'saving'}
                                         className="flex items-center space-x-1.5"
                                     >
-                                        <span>Xuất bản cộng đồng</span>
+                                        <span>{VOCABULARY_UI_TEXT.EDITOR.PUBLISH_COMMUNITY}</span>
                                     </Button>
                                 </>
                             )}
                         </div>
                     </div>
                     <div className="flex space-x-6 text-sm text-muted-foreground">
-                        <span>{EDITOR_UI.CONTAINER.STATS.TOTAL}: <span className="font-medium text-foreground">{stats.serverTotal > 0 ? `${stats.total} / ${stats.serverTotal}` : stats.total}</span></span>
-                        <span>{EDITOR_UI.CONTAINER.STATS.WITH_DEF}: <span className="font-medium text-foreground">{stats.withDefinition}</span></span>
-                        <span>{EDITOR_UI.CONTAINER.STATS.WITH_EX}: <span className="font-medium text-foreground">{stats.withExample}</span></span>
+                        <span>Tổng số: <span className="font-medium text-foreground">{stats.serverTotal > 0 ? `${stats.total} / ${stats.serverTotal}` : stats.total}</span></span>
+                        <span>Đã có định nghĩa: <span className="font-medium text-foreground">{stats.withDefinition}</span></span>
+                        <span>Đã có ví dụ: <span className="font-medium text-foreground">{stats.withExample}</span></span>
                     </div>
                 </div>
 

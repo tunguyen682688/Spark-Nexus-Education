@@ -3,6 +3,7 @@ import type { LearningQuizQuestion } from '../../types';
 import { QuizDashboard } from './quiz/QuizDashboard';
 import { QuizCompletion } from './quiz/QuizCompletion';
 import { QuizSession } from './quiz/QuizSession';
+import { VOCABULARY_UI_TEXT } from '../../constants/vocabulary-ui-text';
 
 export interface QuizPracticeProps {
   title: string;
@@ -104,7 +105,7 @@ export const QuizPractice: React.FC<QuizPracticeProps> = (props) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] text-gray-400 bg-[#070b15] rounded-2xl p-8 border border-slate-850 text-center gap-4">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-2" />
-        <p className="text-lg font-bold">Đang tải câu hỏi trắc nghiệm...</p>
+        <p className="text-lg font-bold">{VOCABULARY_UI_TEXT.LOADING.QUIZ}</p>
       </div>
     );
   }

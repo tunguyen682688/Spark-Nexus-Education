@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Skeleton } from '@spark-nest-ed/frontend-shared-components';
 import LearningToolsList from './LearningToolsList';
 import type { MasteryLevelData } from '../../services/vocabulary-stats.service';
+import { VOCABULARY_UI_TEXT } from '../../constants/vocabulary-ui-text';
 
 export type { MasteryLevelData };
 
@@ -48,7 +49,7 @@ const WeekActivityChart: React.FC<WeekActivityChartProps> = ({ bars }) => {
   return (
     <div className="flex items-end justify-between h-48 space-x-2">
       {activeBars.map((bar, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center group h-full justify-end" title={`${bar.count ?? 0} từ đã ôn tập`}>
+        <div key={i} className="flex-1 flex flex-col items-center group h-full justify-end" title={VOCABULARY_UI_TEXT.OVERVIEW.REVIEWED_WORDS(bar.count ?? 0)}>
           <div className="w-full bg-[#1e293b]/50 rounded-t-lg relative overflow-hidden h-full flex flex-col justify-end border border-white/5">
             <div 
               className={`w-full transition-all duration-1000 ${bar.fillClass}`} 
@@ -137,7 +138,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
           <div className="flex items-center space-x-3 mb-2 flex-wrap gap-y-1.5">
             {isOwner && (
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-[#b1c5ff] border border-blue-500/30">
-                OWNER
+                {VOCABULARY_UI_TEXT.OVERVIEW.OWNER}
               </span>
             )}
             <span className="flex items-center text-xs text-slate-400 gap-1 bg-[#1e293b]/40 border border-white/5 px-2 py-0.5 rounded">
@@ -145,25 +146,25 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
                 <path strokeLinecap="round" d="M12 6c-3.866 0-7 1.79-7 4s3.134 4 7 4 7-1.79 7-4-3.134-4-7-4z" />
                 <path strokeLinecap="round" d="M12 14c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
               </svg>
-              {isPublic ? 'Public' : 'Private'}
+              {isPublic ? VOCABULARY_UI_TEXT.OVERVIEW.PUBLIC : VOCABULARY_UI_TEXT.OVERVIEW.PRIVATE}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight truncate">
-            {vocabularySetTitle || 'TOEFL Essential Vocabulary'}
+            {vocabularySetTitle || VOCABULARY_UI_TEXT.OVERVIEW.DEFAULT_TITLE}
           </h1>
           <p className="text-slate-400 text-sm max-w-2xl mb-4 leading-relaxed line-clamp-2">
-            {vocabularySetDescription || 'A comprehensive collection of high-frequency words required for advanced reading and listening comprehension.'}
+            {vocabularySetDescription || VOCABULARY_UI_TEXT.OVERVIEW.DEFAULT_DESC}
           </p>
           
           <div className="flex items-center space-x-6 text-sm text-slate-450">
             <div className="flex items-center gap-1">
-              <span className="text-slate-500">🌐</span>
+              <span className="text-slate-500" role="img" aria-label="globe">🌐</span>
               <span>{targetLanguage} → VI</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-slate-500">📚</span>
-              <span>{totalCount} Words</span>
+              <span className="text-slate-500" role="img" aria-label="books">📚</span>
+              <span>{totalCount} {VOCABULARY_UI_TEXT.OVERVIEW.WORDS}</span>
             </div>
           </div>
         </div>
@@ -176,7 +177,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Practice Quiz
+            {VOCABULARY_UI_TEXT.OVERVIEW.PRACTICE_QUIZ}
           </button>
           
           <button
@@ -186,7 +187,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Start Learning
+            {VOCABULARY_UI_TEXT.OVERVIEW.START_LEARNING}
           </button>
         </div>
       </div>
@@ -197,22 +198,22 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
         {/* SRS Progress Chart (Span 2) */}
         <div className="p-6 rounded-xl bg-[#1e293b]/60 backdrop-blur-md border border-white/10 md:col-span-2">
           <h3 className="text-white font-bold text-sm mb-6 flex items-center">
-            <span className="mr-2 text-blue-500">📊</span>
-            Lịch sử ôn tập 7 ngày
+            <span className="mr-2 text-blue-500" role="img" aria-label="chart">📊</span>
+            {VOCABULARY_UI_TEXT.OVERVIEW.STUDY_HISTORY_7_DAYS}
           </h3>
           <WeekActivityChart bars={last7DaysHistory} />
         </div>
 
         {/* Mastery Breakdown */}
         <div className="p-6 rounded-xl bg-[#1e293b]/60 backdrop-blur-md border border-white/10">
-          <h3 className="text-white font-bold text-sm mb-4">Trạng thái từ vựng</h3>
+          <h3 className="text-white font-bold text-sm mb-4">{VOCABULARY_UI_TEXT.OVERVIEW.VOCAB_STATUS}</h3>
           <div className="space-y-4">
             {/* Mastered */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500 mr-2" />
-                  <span className="text-slate-400 font-semibold">Mastered</span>
+                  <span className="text-slate-400 font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.MASTERED}</span>
                 </div>
                 <span className="font-bold text-white">{mastered}</span>
               </div>
@@ -229,7 +230,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2" />
-                  <span className="text-slate-400 font-semibold">Learning</span>
+                  <span className="text-slate-400 font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.LEARNING}</span>
                 </div>
                 <span className="font-bold text-white">{learning}</span>
               </div>
@@ -246,7 +247,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-slate-500 mr-2" />
-                  <span className="text-slate-400 font-semibold">New</span>
+                  <span className="text-slate-400 font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.NEW}</span>
                 </div>
                 <span className="font-bold text-white">{notStarted}</span>
               </div>
@@ -262,10 +263,10 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
 
         {/* SRS Metrics */}
         <div className="p-6 rounded-xl bg-[#1e293b]/60 backdrop-blur-md border border-white/10 flex flex-col justify-between">
-          <h3 className="text-white font-bold text-sm mb-4">SRS Metrics</h3>
+          <h3 className="text-white font-bold text-sm mb-4">{VOCABULARY_UI_TEXT.OVERVIEW.SRS_METRICS}</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">Retention Rate</p>
+              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.RETENTION_RATE}</p>
               <div className="flex items-baseline space-x-2">
                 <span className="text-3xl font-bold text-green-400">
                   {srsRetentionRate > 0 ? `${srsRetentionRate}%` : '92%'}
@@ -277,7 +278,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
             </div>
             
             <div className="pt-2 border-t border-white/5">
-              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">Average Ease Factor</p>
+              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.AVG_EASE_FACTOR}</p>
               <div className="flex items-baseline space-x-1.5">
                 <span className="text-2xl font-bold text-blue-400">{displayEaseFactor.toFixed(2)}</span>
                 <span className="text-xs text-slate-500 font-medium">/ 3.0</span>
@@ -285,12 +286,12 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
             </div>
             
             <div className="pt-2 border-t border-white/5">
-              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">Due Tomorrow</p>
+              <p className="text-slate-400 text-[10px] mb-1 uppercase tracking-wider font-semibold">{VOCABULARY_UI_TEXT.OVERVIEW.DUE_TOMORROW}</p>
               <div className="flex items-baseline space-x-1.5">
                 <span className="text-2xl font-bold text-red-300">
                   {displayDueTomorrow}
                 </span>
-                <span className="text-xs text-slate-500 font-medium">words</span>
+                <span className="text-xs text-slate-500 font-medium">{VOCABULARY_UI_TEXT.OVERVIEW.DUE_TOMORROW_UNIT}</span>
               </div>
             </div>
           </div>
@@ -306,7 +307,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
       {masteryLevelData.some((d) => d.count > 0) && (
         <div className="p-6 bg-[#1e293b]/60 backdrop-blur-md border border-white/10 rounded-xl shadow-lg flex flex-col gap-4">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-            Phân bổ cấp độ nhớ
+            {VOCABULARY_UI_TEXT.OVERVIEW.MEMORY_LEVEL_DISTRIBUTION}
           </span>
           <div className="flex flex-col gap-2.5">
             {masteryLevelData.map((item, idx) => {
@@ -322,7 +323,7 @@ const OverviewLearningVocabularySet: React.FC<OverviewLearningVocabularySetProps
                 <div key={idx} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400 font-semibold">{item.level}</span>
-                    <span className="text-slate-350 font-extrabold">{item.count} từ ({pct}%)</span>
+                    <span className="text-slate-350 font-extrabold">{VOCABULARY_UI_TEXT.OVERVIEW.WORD_COUNT(item.count, pct)}</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-800/60 rounded-full overflow-hidden">
                     <div

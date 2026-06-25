@@ -3,6 +3,7 @@ import type { FlashcardWord } from '../../types';
 import { FlashcardDashboard } from './flashcard/FlashcardDashboard';
 import { FlashcardCompletion } from './flashcard/FlashcardCompletion';
 import { FlashcardSession } from './flashcard/FlashcardSession';
+import { VOCABULARY_UI_TEXT } from '../../constants/vocabulary-ui-text';
 
 export interface FlashcardPracticeProps {
   title: string;
@@ -143,7 +144,7 @@ export const FlashcardPractice: React.FC<FlashcardPracticeProps> = (props) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-400 bg-[#070b15] rounded-2xl p-8 border border-slate-800">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4" />
-        <p className="text-lg">Đang tải phiên học từ vựng...</p>
+        <p className="text-lg">{VOCABULARY_UI_TEXT.FLASHCARD_PRACTICE.LOADING_SESSION}</p>
       </div>
     );
   }
