@@ -67,7 +67,8 @@ const OverviewLearningVocabularySetContainer = () => {
     let mastered = 0;
     let learning = 0;
     for (const w of words) {
-      const status = (w as any)?.userProgress?.status;
+      const prog = (w as Record<string, any>)?.userProgress as Record<string, unknown> | undefined;
+      const status = prog?.status;
       if (status === 'MASTERED') mastered++;
       else if (status === 'LEARNING') learning++;
     }
@@ -78,11 +79,14 @@ const OverviewLearningVocabularySetContainer = () => {
   const averageEaseFactor = useMemo(() => {
     const words = wordsData?.data ?? [];
     const learnedWords = words.filter((w) => {
-      const prog = (w as any)?.userProgress;
-      return prog && prog.status !== 'NEW' && prog.repetitions > 0;
+      const prog = (w as Record<string, any>)?.userProgress as Record<string, unknown> | undefined;
+      return prog && prog.status !== 'NEW' && prog.repetitions && (prog.repetitions as number) > 0;
     });
     if (learnedWords.length === 0) return 2.50;
-    const sum = learnedWords.reduce((acc, w) => acc + ((w as any).userProgress.easeFactor ?? 2.5), 0);
+    const sum = learnedWords.reduce((acc, w) => {
+      const prog = (w as Record<string, any>)?.userProgress as Record<string, unknown> | undefined;
+      return acc + ((prog?.easeFactor as number) ?? 2.5);
+    }, 0);
     return sum / learnedWords.length;
   }, [wordsData]);
 
@@ -96,10 +100,10 @@ const OverviewLearningVocabularySetContainer = () => {
     tomorrow.setHours(23, 59, 59, 999);
     
     return words.filter((w) => {
-      const prog = (w as any)?.userProgress;
+      const prog = (w as Record<string, any>)?.userProgress as Record<string, unknown> | undefined;
       if (!prog || prog.status === 'NEW') return false;
       if (!prog.nextReviewAt) return false;
-      return new Date(prog.nextReviewAt) <= tomorrow;
+      return new Date(prog.nextReviewAt as string) <= tomorrow;
     }).length;
   }, [wordsData]);
 
@@ -126,9 +130,9 @@ const OverviewLearningVocabularySetContainer = () => {
       const endOfDay = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59, 999);
       
       const count = words.filter((w) => {
-        const prog = (w as any)?.userProgress;
+        const prog = (w as Record<string, any>)?.userProgress as Record<string, unknown> | undefined;
         if (!prog || !prog.lastReview) return false;
-        const lastRev = new Date(prog.lastReview);
+        const lastRev = new Date(prog.lastReview as string);
         return lastRev >= startOfDay && lastRev <= endOfDay;
       }).length;
       
@@ -247,7 +251,7 @@ const OverviewLearningVocabularySetContainer = () => {
                   }
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Xem chi tiết bộ từ vựng
+                  {VOCABULARY_UI_TEXT.OVERVIEW.VIEW_DETAIL}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -260,7 +264,7 @@ const OverviewLearningVocabularySetContainer = () => {
                   }
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Xem trạng thái học
+                  {VOCABULARY_UI_TEXT.OVERVIEW.VIEW_STATUS}
                 </DropdownMenuItem>
                 {canEdit && (
                   <>
@@ -276,14 +280,14 @@ const OverviewLearningVocabularySetContainer = () => {
                       }
                     >
                       <Pencil className="h-4 w-4 mr-2" />
-                      Cập nhật bộ từ vựng
+                      {VOCABULARY_UI_TEXT.OVERVIEW.UPDATE_SET}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleDeleteClick}
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Xóa bộ từ vựng
+                      {VOCABULARY_UI_TEXT.OVERVIEW.DELETE_SET}
                     </DropdownMenuItem>
                   </>
                 )}

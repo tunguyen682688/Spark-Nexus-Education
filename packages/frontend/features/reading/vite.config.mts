@@ -23,6 +23,7 @@ export default defineConfig(() => ({
   build: {
     outDir: './dist',
     emptyOutDir: true,
+    sourcemap: true,
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
@@ -47,6 +48,7 @@ export default defineConfig(() => ({
         /^@radix-ui\/.*/,
         '@auth0/auth0-react',
         '@tanstack/react-query',
+        'react-textarea-autosize',
         '@spark-nest-ed/frontend-shared-components',
         '@spark-nest-ed/frontend-shared-hooks',
         '@spark-nest-ed/frontend-shared-utils',

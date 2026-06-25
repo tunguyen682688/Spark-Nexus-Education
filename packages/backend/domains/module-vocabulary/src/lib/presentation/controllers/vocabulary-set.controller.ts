@@ -1,4 +1,5 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { PrismaService } from '@spark-nest-ed/infrastructure-database';
 import {
   Body,
   Controller,
@@ -63,7 +64,8 @@ export class VocabularySetController {
     @Inject(vocabularySetItemRepositoryInterface.VOCABULARY_SET_ITEM_REPOSITORY)
     private readonly vocabularySetItemRepository: vocabularySetItemRepositoryInterface.IVocabularySetItemRepository,
     @Inject(entryRepositoryInterface.ENTRY_REPOSITORY)
-    private readonly entryRepository: entryRepositoryInterface.IEntryRepository
+    private readonly entryRepository: entryRepositoryInterface.IEntryRepository,
+    private readonly prisma: PrismaService
   ) {}
   // Create a new vocabulary set
   @Post('packages')
@@ -926,5 +928,77 @@ Get complete details of a vocabulary word/entry including all relationships.
       message: 'Flashcard review recorded successfully',
       version: '1.0.0',
     });
+  }
+
+  // Get user weak words
+  @Get('weak-words')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get user weak words',
+    description: 'Retrieve vocabulary words that the user frequently forgets or has low mastery on.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Weak words retrieved successfully',
+    resourceType: 'weak-word',
+  })
+  async getWeakWords(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const records = await this.prisma.userVocabularyProgress.findMany({
+      where: {
+        userId: user.id,
+        OR: [
+          { status: 'LEARNING' },
+          { easeFactor: { lt: 2.0 } },
+          { masteryLevel: { lt: 0.6 } },
+        ],
+      },
+      include: {
+        item: {
+          include: {
+            entry: {
+              include: {
+                senses: true,
+              },
+            },
+          },
+        },
+      },
+      take: 50,
+    });
+
+    const words = records.map((rec) => {
+      const entry = rec.item.entry;
+      return {
+        id: entry.id,
+        word: entry.word,
+        pronunciation: entry.pronunciation,
+        partOfSpeech: entry.partOfSpeech,
+        audioUrl: entry.audioUrl,
+        definition: rec.item.definition || entry.senses?.[0]?.definition || '',
+        example: rec.item.example,
+        masteryLevel: rec.masteryLevel,
+        status: rec.status,
+      };
+    });
+
+    return createJsonApiPaginatedResponse(
+      words,
+      words.length,
+      'weak-word',
+      getBaseUrlFromRequest(req),
+      {
+        page: 1,
+        limit: 50,
+        total: words.length,
+        totalPages: 1,
+      },
+      {
+      message: 'User weak words retrieved successfully',
+      version: '1.0.0',
+      }
+    );
   }
 }

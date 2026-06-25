@@ -16,7 +16,7 @@ import {
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import type { GrammarLessonDetailResponse, GrammarBlock } from '../types';
 import { toast } from 'sonner';
-import { GRAMMAR_UI_TEXT } from '../constants';
+import { GRAMMAR_UI_TEXT, MOCK_LEADERBOARD } from '../constants';
 
 // Import các modular UI components
 import FormulaBuilder from '../components/FormulaBuilder';
@@ -181,39 +181,8 @@ export const GrammarLessonDetailContainer: FC<
     );
   };
 
-  // Mock dữ liệu bảng xếp hạng thi đấu bài học
-  const mockLeaderboard = [
-    {
-      rank: 1,
-      name: 'Alex Johnson',
-      score: '100%',
-      time: '2m 14s',
-      avatar:
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150',
-      medal: '💎',
-    },
-    {
-      rank: 2,
-      name: 'Emily Stone',
-      score: '100%',
-      time: '2m 45s',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150',
-      medal: '🥇',
-    },
-    {
-      rank: 3,
-      name: 'David Miller',
-      score: '90%',
-      time: '1m 58s',
-      avatar:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150',
-      medal: '🥈',
-    },
-  ];
-
   const getDynamicLeaderboard = () => {
-    const list = [...mockLeaderboard];
+    const list = [...MOCK_LEADERBOARD];
     if (lesson.proficiency && lesson.proficiency > 0) {
       const userProf = lesson.proficiency;
       let medal = '🥉';

@@ -41,20 +41,61 @@ const menuItems: MenuItem[] = [
   {
     icon: Home,
     label: 'Trang chủ',
-    path: '/dashboard',
+    path: ROUTES.DASHBOARD,
     badge: 'Mới',
   },
+  // --- Kỹ năng chính (4 Skills) ---
   {
-    icon: BookTemplate,
-    label: 'Thư viện',
-    path: '/library',
+    icon: BookOpen,
+    label: 'Đọc',
+    path: ROUTES.READING.HUB,
     children: [
-      { label: 'Tài liệu', path: '/library/documents' },
-      { label: 'Sách', path: '/library/books' },
-      { label: 'Video', path: '/library/videos' },
-      { label: 'Yêu thích', path: '/library/favorites' },
+      { label: 'Thư viện của tôi', path: ROUTES.READING.MY_LIBRARY },
+      { label: 'Khám phá', path: ROUTES.READING.EXPLORE, badge: 'Hot' },
+      { label: 'Bài đọc', path: '/reading/articles' },
+      { label: 'Sách & Truyện', path: ROUTES.READING.BOOKS },
+      { label: 'Báo chí', path: ROUTES.READING.NEWS },
+      { label: 'Lịch sử đọc', path: '/reading/history' },
+      { label: 'Content Studio', path: ROUTES.READING.STUDIO, badge: 'Mới' },
     ],
   },
+  {
+    icon: Headphones,
+    label: 'Nghe',
+    path: '/listening',
+    children: [
+      { label: 'Thư viện của tôi', path: '/listening/library' },
+      { label: 'Khám phá', path: '/listening/explore', badge: 'Hot' },
+      { label: 'Podcast', path: '/listening/podcasts' },
+      { label: 'Video học tập', path: '/listening/videos' },
+      { label: 'Audio books', path: '/listening/audiobooks' },
+      { label: 'Luyện nghe', path: '/listening/practice' },
+      { label: 'Tin tức', path: '/listening/news' },
+    ],
+  },
+  {
+    icon: Mic,
+    label: 'Nói',
+    path: '/speaking',
+    children: [
+      { label: 'Luyện phát âm', path: '/speaking/pronunciation' },
+      { label: 'Hội thoại', path: '/speaking/conversations' },
+      { label: 'Ghi âm', path: '/speaking/recording' },
+      { label: 'Đánh giá phát âm', path: '/speaking/assessment' },
+    ],
+  },
+  {
+    icon: PenTool,
+    label: 'Viết',
+    path: '/writing',
+    children: [
+      { label: 'Luyện viết', path: '/writing/practice' },
+      { label: 'Chấm điểm tự động', path: '/writing/grading' },
+      { label: 'Mẫu bài viết', path: '/writing/samples' },
+      { label: 'Bài viết của tôi', path: '/writing/my-writings' },
+    ],
+  },
+  // --- Bổ trợ kiến thức (Knowledge Base) ---
   {
     icon: BookAIcon,
     label: 'Từ vựng',
@@ -76,50 +117,16 @@ const menuItems: MenuItem[] = [
       { label: 'Phân tích học tập', path: '/grammar/analytics' },
     ],
   },
+  // --- Tài nguyên & Học tập (Resources) ---
   {
-    icon: Headphones,
-    label: 'Nghe',
-    path: '/listening',
+    icon: BookTemplate,
+    label: 'Thư viện',
+    path: ROUTES.LIBRARY,
     children: [
-      { label: 'Podcast', path: '/listening/podcasts' },
-      { label: 'Video học tập', path: '/listening/videos' },
-      { label: 'Audio books', path: '/listening/audiobooks' },
-      { label: 'Luyện nghe', path: '/listening/practice' },
-      { label: 'Tin tức', path: '/listening/news' },
-    ],
-  },
-  {
-    icon: Mic,
-    label: 'Nói',
-    path: '/speaking',
-    children: [
-      { label: 'Luyện phát âm', path: '/speaking/pronunciation' },
-      { label: 'Hội thoại', path: '/speaking/conversations' },
-      { label: 'Ghi âm', path: '/speaking/recording' },
-      { label: 'Đánh giá phát âm', path: '/speaking/assessment' },
-    ],
-  },
-  {
-    icon: BookOpen,
-    label: 'Đọc',
-    path: '/reading',
-    children: [
-      { label: 'Bài đọc', path: '/reading/articles' },
-      { label: 'Truyện', path: '/reading/stories' },
-      { label: 'Báo chí', path: '/reading/news' },
-      { label: 'Tài liệu học thuật', path: '/reading/academic' },
-      { label: 'Lịch sử đọc', path: '/reading/history' },
-    ],
-  },
-  {
-    icon: PenTool,
-    label: 'Viết',
-    path: '/writing',
-    children: [
-      { label: 'Luyện viết', path: '/writing/practice' },
-      { label: 'Chấm điểm tự động', path: '/writing/grading' },
-      { label: 'Mẫu bài viết', path: '/writing/samples' },
-      { label: 'Bài viết của tôi', path: '/writing/my-writings' },
+      { label: 'Tài liệu', path: '/library/documents' },
+      { label: 'Sách', path: '/library/books' },
+      { label: 'Video', path: '/library/videos' },
+      { label: 'Yêu thích', path: '/library/favorites' },
     ],
   },
   {
@@ -143,6 +150,7 @@ const menuItems: MenuItem[] = [
       { label: 'Báo cáo kết quả', path: '/assessments/reports' },
     ],
   },
+  // --- Cộng đồng & Giải trí (Community & Play) ---
   {
     icon: Users,
     label: 'Cộng đồng',
@@ -170,8 +178,71 @@ const menuItems: MenuItem[] = [
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
+  const [width, setWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedWidth = localStorage.getItem('sidebar_width');
+      return savedWidth ? parseInt(savedWidth, 10) : 256;
+    }
+    return 256;
+  });
+  const [isResizing, setIsResizing] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Sync collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed', String(collapsed));
+  }, [collapsed]);
+
+  // Sync width state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebar_width', String(width));
+  }, [width]);
+
+  // Auto collapse on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    // Initial check
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsResizing(true);
+    const startX = mouseDownEvent.clientX;
+    const startWidth = width;
+
+    const doDrag = (mouseMoveEvent: MouseEvent) => {
+      const newWidth = startWidth + (mouseMoveEvent.clientX - startX);
+      if (newWidth < 120) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+        setWidth(Math.min(450, Math.max(200, newWidth)));
+      }
+    };
+
+    const stopDrag = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    };
+
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', stopDrag);
+  }, [width]);
 
   const isActive = useCallback((path?: string) => {
     if (!path) return false;
@@ -217,20 +288,82 @@ const Sidebar = () => {
     const hasChildren = item.children && item.children.length > 0;
 
     if (collapsed) {
-  return (
-          <button
+      return (
+        <div
           key={index}
-          onClick={() => item.path && navigate(item.path)}
+          className="relative w-full flex justify-center animate-in fade-in duration-350"
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          <button
+            onClick={() => {
+              if (item.path) {
+                navigate(item.path);
+              } else if (hasChildren && item.children && item.children.length > 0) {
+                navigate(item.children[0].path);
+              }
+            }}
             className={cn(
-              'w-full flex items-center justify-center rounded-lg transition-all duration-200 relative p-3',
+              'w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 relative',
               active || childActive
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-l-primary'
+                ? 'bg-sidebar-accent text-primary'
                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
             )}
-          title={item.label}
+            title={item.label}
           >
-          <Icon className={cn('h-5 w-5', (active || childActive) && 'text-primary')} />
+            <Icon className={cn('h-5 w-5', (active || childActive) && 'text-primary')} />
           </button>
+
+          {(active || childActive) && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-md" />
+          )}
+
+          {/* Floating Submenu Popover */}
+          {hoveredIndex === index && (
+            <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 py-2 transition-all duration-200 animate-in fade-in slide-in-from-left-2">
+              <div className="px-3 py-1 border-b border-slate-100 dark:border-slate-800 mb-1">
+                <span className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider">{item.label}</span>
+              </div>
+              {hasChildren && item.children ? (
+                <div className="space-y-0.5 px-1.5">
+                  {item.children.map((child, childIdx) => {
+                    const childActive = isActive(child.path);
+                    return (
+                      <button
+                        key={childIdx}
+                        onClick={() => navigate(child.path)}
+                        className={cn(
+                          'w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-all duration-200 text-left',
+                          childActive
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground'
+                        )}
+                      >
+                        <span>{child.label}</span>
+                        {child.badge && (
+                          <Badge variant="secondary" className="ml-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[9px] px-1 py-0">
+                            {child.badge}
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                item.path && (
+                  <div className="px-1.5">
+                    <button
+                      onClick={() => navigate(item.path!)}
+                      className="w-full text-left rounded-lg px-2.5 py-1.5 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+                    >
+                      Mở trang
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -265,7 +398,7 @@ const Sidebar = () => {
                   (active || childActive) && 'text-primary'
                 )}
               />
-              <span className="font-medium text-sm flex-1 text-left">
+              <span className="font-medium text-sm flex-1 text-left truncate">
                 {item.label}
               </span>
               {item.badge && (
@@ -298,7 +431,7 @@ const Sidebar = () => {
                         : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground'
                     )}
                   >
-                    <span>{child.label}</span>
+                    <span className="truncate">{child.label}</span>
                     {child.badge && (
                       <Badge
                         variant="secondary"
@@ -333,7 +466,7 @@ const Sidebar = () => {
             active && 'text-primary'
           )}
         />
-        <span className="font-medium text-sm flex-1 text-left">
+        <span className="font-medium text-sm flex-1 text-left truncate">
           {item.label}
         </span>
         {item.badge && (
@@ -351,11 +484,12 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        'flex-shrink-0 bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col',
-        collapsed ? 'w-16' : 'w-64'
+        'flex-shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col relative no-scrollbar',
+        !isResizing && 'transition-all duration-300'
       )}
+      style={{ width: collapsed ? '64px' : `${width}px` }}
     >
-      <div className="flex flex-col h-full p-4 space-y-4">
+      <div className={cn("flex flex-col h-full space-y-4 overflow-hidden no-scrollbar", collapsed ? "py-4 px-2" : "p-4")}>
         {/* Create New Button */}
         {/* <div className={cn('transition-all', collapsed && 'px-2')}>
           <Button
@@ -371,29 +505,37 @@ const Sidebar = () => {
           </Button>
         </div> */}
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 space-y-1 overflow-y-auto">
-          {menuItems.map((item, index) => renderMenuItem(item, index))}
-        </nav>
+        {/* Navigation Menu Wrapper with Gradient Fade Masks */}
+        <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden no-scrollbar">
+          {/* Top Fade Mask */}
+          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-sidebar to-transparent pointer-events-none z-10" />
+
+          <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar py-2">
+            {menuItems.map((item, index) => renderMenuItem(item, index))}
+          </nav>
+
+          {/* Bottom Fade Mask */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent pointer-events-none z-10" />
+        </div>
 
         {/* Pro Upgrade Card */}
         {!collapsed && (
-          <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 rounded-xl border border-cyan-200/50 dark:border-cyan-800/50">
+          <div className="flex-shrink-0 p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 rounded-xl border border-cyan-200/50 dark:border-cyan-800/50">
             <div className="flex items-start space-x-3 mb-3">
               <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg">
                 <Sparkles className="h-4 w-4 text-white" />
-      </div>
+              </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-          Nâng cấp Pro
-        </h3>
+                  Nâng cấp Pro
+                </h3>
                 <p className="text-xs text-muted-foreground">
-          Mở khóa tất cả tính năng cao cấp
-        </p>
+                  Mở khóa tất cả tính năng cao cấp
+                </p>
               </div>
             </div>
             <Button
-              onClick={() => navigate('/plans')}
+              onClick={() => navigate(ROUTES.PLANS)}
               variant="outline"
               size="sm"
               className="w-full border-primary/20 hover:bg-primary/5"
@@ -408,7 +550,7 @@ const Sidebar = () => {
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="mt-auto self-start"
+          className={cn("mt-auto flex-shrink-0", collapsed ? "mx-auto" : "self-start")}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? (
@@ -422,6 +564,14 @@ const Sidebar = () => {
           )}
         </Button>
       </div>
+      {/* Drag Resize Handle */}
+      <div
+        onMouseDown={startResizing}
+        className={cn(
+          "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/50 active:bg-blue-600 transition-colors z-50",
+          isResizing && "bg-blue-500"
+        )}
+      />
     </aside>
   );
 };

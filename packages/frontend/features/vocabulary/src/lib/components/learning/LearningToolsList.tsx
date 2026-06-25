@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@spark-nest-ed/frontend-core-constants';
 import { LEARNING_TOOL_CONFIG } from '../../constants';
+import { VOCABULARY_UI_TEXT } from '../../constants/vocabulary-ui-text';
 
 export interface LearningTool {
   name: string;
@@ -116,7 +117,7 @@ const LearningToolsList: React.FC<LearningToolsListProps> = ({
   return (
     <div className="flex flex-col gap-3">
       <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
-        Công cụ học tập
+        {VOCABULARY_UI_TEXT.LEARNING_TOOLS.TITLE}
       </span>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {defaultTools.map((tool, index) => (

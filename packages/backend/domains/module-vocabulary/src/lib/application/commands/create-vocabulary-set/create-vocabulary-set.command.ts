@@ -3,7 +3,6 @@ import { VocabularySetResponseDto } from '../../dtos/reponse-vocabulary-set.dto'
 import { DifficultyLevel } from '../../../domain/value-objects/difficulty.vo';
 import { Language } from '../../../domain/value-objects/language.vo';
 import { SetType } from '../../../domain/value-objects/set-type.vo';
-import { VocabularySetResponseDto } from '../../dtos/reponse-vocabulary-set.dto';
 
 
 /**

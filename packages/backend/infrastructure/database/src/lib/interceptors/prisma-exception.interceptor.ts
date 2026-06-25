@@ -9,7 +9,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Observable, catchError, throwError } from 'rxjs';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaExceptionInterceptor implements NestInterceptor {
@@ -40,7 +39,7 @@ export class PrismaExceptionInterceptor implements NestInterceptor {
         }
 
         // Handle validation errors
-        if (error instanceof Prisma.PrismaClientValidationError) {
+        if (error?.name === 'PrismaClientValidationError') {
           throw new BadRequestException('Invalid data provided');
         }
 

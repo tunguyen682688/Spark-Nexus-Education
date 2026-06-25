@@ -1,6 +1,7 @@
 import React from 'react';
 import { Volume2, Flame, Lightbulb, Settings, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import type { FlashcardWord } from '../../../types';
+import { VOCABULARY_UI_TEXT } from '../../../constants/vocabulary-ui-text';
 
 export interface FlashcardSessionProps {
   title: string;
@@ -125,7 +126,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 onPageSelect(index);
               }}
               className={`h-6.5 min-w-[26px] px-2 rounded-full transition-all duration-300 ${dotColor} ${borderStyle} text-[10px] font-black flex items-center justify-center text-white/90 select-none shadow-sm hover:scale-105 cursor-pointer`}
-              title={`Thẻ ${index + 1}`}
+              title={`${VOCABULARY_UI_TEXT.FLASHCARD_SESSION.CARD} ${index + 1}`}
             >
               {index + 1}
             </button>
@@ -145,7 +146,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
           </span>
           <span className="h-4 w-px bg-slate-800" />
           <span className="text-sm text-slate-400 font-medium">
-            Thẻ {currentIndex + 1} / {totalCards}
+            {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.CARD} {currentIndex + 1} / {totalCards}
           </span>
           {onChangeStudyMode && (
             <>
@@ -154,7 +155,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 onClick={onChangeStudyMode}
                 className="text-xs text-blue-400 hover:text-blue-300 font-bold uppercase tracking-wider transition-colors cursor-pointer"
               >
-                Đổi chế độ
+                {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.SWITCH_MODE}
               </button>
             </>
           )}
@@ -188,7 +189,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
             }`}
           >
             <Lightbulb className="h-3.5 w-3.5" />
-            HIỂN THỊ GỢI Ý
+            {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.SHOW_HINT}
           </button>
         </div>
       </div>
@@ -252,7 +253,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                       <button
                         onClick={onPlayAudio}
                         className="p-2 rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/25 transition-colors duration-200 cursor-pointer"
-                        title="Phát âm"
+                        title={VOCABULARY_UI_TEXT.FLASHCARD_SESSION.PRONUNCIATION}
                       >
                         <Volume2 className="h-5 w-5" />
                       </button>
@@ -264,11 +265,11 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 <div className="p-4 flex flex-col items-center justify-center w-full gap-2">
                   {(showHint || autoShowHint) && notes && (
                     <p className="text-xs text-amber-400 bg-amber-500/5 px-4 py-2 rounded-lg border border-amber-500/10 text-center max-w-lg mb-2">
-                      Gợi ý: {notes}
+                      {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.HINT} {notes}
                     </p>
                   )}
                   <span className="text-xs text-slate-500 font-medium animate-pulse">
-                    Nhấn vào thẻ hoặc phím Cách để xem nghĩa
+                    {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.PRESS_SPACE_TO_FLIP}
                   </span>
                 </div>
               </div>
@@ -278,7 +279,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 {/* Header labels */}
                 <div className="flex items-center justify-between w-full p-4">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Định nghĩa & Ví dụ
+                    {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.DEFINITION_AND_EXAMPLE}
                   </span>
                   {partOfSpeech && (
                     <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-purple-600/20 text-purple-400 border border-purple-600/30 capitalize">
@@ -292,7 +293,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                   {/* Definition */}
                   <div className="flex flex-col gap-1 text-left">
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
-                      Định nghĩa
+                      {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.DEFINITION}
                     </span>
                     <p className="text-lg sm:text-xl text-slate-100 font-semibold select-text leading-relaxed">
                       {definition}
@@ -303,7 +304,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                   {example && (
                     <div className="flex flex-col gap-1 border-t border-slate-800/50 pt-3 text-left">
                       <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                        Ví dụ minh họa
+                        {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.ILLUSTRATIVE_EXAMPLE}
                       </span>
                       <p className="text-sm sm:text-base text-slate-300 italic select-text leading-relaxed">
                         "{example}"
@@ -315,7 +316,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                   {currentCard.progress && (
                     <div className="flex items-center justify-between gap-4 border-t border-slate-800/50 pt-3 text-xs select-text">
                       <div className="flex flex-col gap-1.5 text-left">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left">Tiến độ nhớ</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.MEMORY_PROGRESS}</span>
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500" style={{ width: `${(currentCard.progress.masteryLevel || 0) * 100}%` }} />
@@ -324,15 +325,15 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                         </div>
                       </div>
                       <div className="flex flex-col gap-0.5 text-left">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lần lặp</span>
-                        <span className="font-extrabold text-blue-400">{currentCard.progress.repetitions || 0} lần</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.REPETITION}</span>
+                        <span className="font-extrabold text-blue-400">{currentCard.progress.repetitions || 0} {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.REPETITION_UNIT}</span>
                       </div>
                       <div className="flex flex-col gap-0.5 text-left">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chu kỳ (SRS)</span>
-                        <span className="font-extrabold text-amber-500">{currentCard.progress.interval || 1} ngày</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.INTERVAL}</span>
+                        <span className="font-extrabold text-amber-500">{currentCard.progress.interval || 1} {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.INTERVAL_UNIT}</span>
                       </div>
                       <div className="flex flex-col gap-0.5 text-left">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chuỗi nhớ</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.STREAK}</span>
                         <span className="font-extrabold text-rose-500">{currentCard.progress.streak || 0} <span role="img" aria-label="fire">🔥</span></span>
                       </div>
                     </div>
@@ -342,7 +343,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 {/* Footer notes */}
                 <div className="w-full text-center p-2">
                   <span className="text-xs text-slate-500 font-medium">
-                    Nhấn vào thẻ để xem lại mặt trước
+                    {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.CLICK_TO_FLIP_BACK}
                   </span>
                 </div>
               </div>
@@ -358,10 +359,10 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 className="flex flex-col items-center justify-center py-4 px-6 rounded-xl border border-red-500/25 bg-red-950/20 hover:bg-red-950/45 text-red-400 hover:border-red-500/50 shadow-md shadow-red-950/10 transition-all duration-300 group hover:scale-[1.01] cursor-pointer"
               >
                 <span className="text-lg font-black tracking-wide group-hover:scale-105 transition-transform duration-200">
-                  Chưa thuộc
+                  {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.DIFFICULTY_AGAIN}
                 </span>
                 <span className="text-[10px] text-red-500/70 font-bold mt-1 uppercase tracking-widest">
-                  Lặp lại sớm trong phiên học
+                  {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.AGAIN_DESC}
                 </span>
               </button>
 
@@ -370,22 +371,22 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 className="flex flex-col items-center justify-center py-4 px-6 rounded-xl border border-emerald-500/25 bg-emerald-950/20 hover:bg-emerald-950/45 text-emerald-400 hover:border-emerald-500/50 shadow-md shadow-emerald-950/10 transition-all duration-300 group hover:scale-[1.01] cursor-pointer"
               >
                 <span className="text-lg font-black tracking-wide group-hover:scale-105 transition-transform duration-200">
-                  Đã thuộc
+                  {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.DIFFICULTY_GOOD}
                 </span>
                 <span className="text-[10px] text-emerald-500/70 font-bold mt-1 uppercase tracking-widest">
-                  Lên lịch ôn tập (Spaced Repetition)
+                  {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.GOOD_DESC}
                 </span>
               </button>
             </div>
             
             <div className="flex items-center justify-between px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-              <span>Nhấn phím 1 để báo Chưa thuộc, phím 2 để báo Đã thuộc</span>
+              <span>{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.KEYBOARD_INSTRUCTION}</span>
               <div className="flex gap-2">
                 <button 
                   onClick={(e) => { e.stopPropagation(); onPrev(); }}
                   disabled={currentIndex === 0}
                   className="flex items-center p-1 rounded hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
-                  title="Thẻ trước"
+                  title={VOCABULARY_UI_TEXT.FLASHCARD_SESSION.PREV_CARD}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -393,7 +394,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                   onClick={(e) => { e.stopPropagation(); onNext(); }}
                   disabled={currentIndex === totalCards - 1}
                   className="flex items-center p-1 rounded hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
-                  title="Thẻ sau"
+                  title={VOCABULARY_UI_TEXT.FLASHCARD_SESSION.NEXT_CARD}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -411,7 +412,7 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
             <div className="flex flex-col p-5 bg-[#0b1324] border border-slate-800/80 rounded-2xl gap-5 shadow-lg">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-extrabold tracking-wider uppercase text-slate-300">
-                  Thông tin phiên học
+                  {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.SESSION_INFO}
                 </h3>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </div>
@@ -478,21 +479,21 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-slate-500" />
-                    <span className="text-slate-400">Mới</span>
+                    <span className="text-slate-400">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.NEW}</span>
                   </div>
                   <span className="font-bold text-slate-200">{stats.newCount}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    <span className="text-slate-400">Đang học</span>
+                    <span className="text-slate-400">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.LEARNING}</span>
                   </div>
                   <span className="font-bold text-blue-400">{stats.learningCount}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <span className="text-slate-400">Đã thành thạo</span>
+                    <span className="text-slate-400">{VOCABULARY_UI_TEXT.FLASHCARD_SESSION.MASTERED}</span>
                   </div>
                   <span className="font-bold text-emerald-400">{stats.masteredCount}</span>
                 </div>
@@ -548,10 +549,10 @@ export const FlashcardSession: React.FC<FlashcardSessionProps> = ({
                 </div>
                 <div className="flex flex-col text-left">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    CHUỖI NGÀY HỌC
+                    {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.STUDY_STREAK}
                   </span>
                   <span className="text-2xl font-extrabold text-white leading-tight">
-                    {userStreak} Ngày
+                    {userStreak} {VOCABULARY_UI_TEXT.FLASHCARD_SESSION.DAYS}
                   </span>
                 </div>
               </div>

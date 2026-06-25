@@ -1,9 +1,9 @@
 import React from 'react';
 import { Search, Filter, Plus, X } from 'lucide-react';
 import { Button, Input, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, Badge } from '@spark-nest-ed/frontend-shared-components';
-import { CATEGORY_LIST, ROUTES } from '@spark-nest-ed/frontend-core-constants';
+import { ROUTES } from '@spark-nest-ed/frontend-core-constants';
 import { useNavigate } from 'react-router-dom';
-import { COMMUNITY_TEXT } from '../../constants';
+import { COMMUNITY_TEXT, CATEGORY_LIST } from '../../constants';
 
 export interface CommunityVocabularySetHeaderProps {
   searchTerm: string;

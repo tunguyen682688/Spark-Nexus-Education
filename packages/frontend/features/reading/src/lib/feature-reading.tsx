@@ -1,4 +1,4 @@
-import { Route, Link } from 'react-router-dom';
+import { Route, Link, Routes } from 'react-router-dom';
 
 export function FeatureReading() {
   return (
@@ -9,10 +9,12 @@ export function FeatureReading() {
           <Link to="/">feature-reading root</Link>
         </li>
       </ul>
-      <Route
-        path="/"
-        element={<div>This is the feature-reading root route.</div>}
-      />
+      <Routes>
+        <Route
+          path="/"
+          element={<div>This is the feature-reading root route.</div>}
+        />
+      </Routes>
     </div>
   );
 }
