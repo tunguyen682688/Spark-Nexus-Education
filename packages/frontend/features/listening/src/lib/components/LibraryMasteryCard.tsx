@@ -10,7 +10,7 @@ export const LibraryMasteryCard: React.FC<LibraryMasteryCardProps> = ({ masteryL
   const rank = CEFR_RANK_DETAILS[masteryLevel] || CEFR_RANK_DETAILS.unknown;
 
   return (
-    <div className={`bg-gradient-to-br ${rank.colorClass} border rounded-3xl p-6 flex flex-col justify-between shadow-lg shadow-purple-500/5`}>
+    <div className={`bg-gradient-to-br ${rank.colorClass} border rounded-3xl p-6 flex flex-col justify-between shadow-lg shadow-primary/5`}>
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground opacity-80">Thứ Hạng Luyện Nghe</span>

@@ -44,20 +44,20 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
         
         {/* Search Input */}
         <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder={text.SEARCH_PLACEHOLDER}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder-slate-555 focus:border-purple-500 focus:outline-none transition-all"
+            className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none transition-all"
           />
         </div>
 
         {/* Level Filter & Source Filter */}
         <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          <div className="flex items-center gap-2 text-xs text-slate-400 font-bold shrink-0">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-purple-400" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-bold shrink-0">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
             {text.LEVEL_LABEL}
           </div>
           <div className="flex gap-1 overflow-x-auto">
@@ -67,7 +67,7 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
                 onClick={() => setSelectedDifficulty(diff)}
                 className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all uppercase ${
                   selectedDifficulty === diff
-                    ? 'bg-purple-650 border-purple-500 text-white'
+                    ? 'bg-primary border-primary text-primary-foreground'
                     : getDifficultyColor(diff)
                 }`}
               >
@@ -90,7 +90,7 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
               else if (val === 'community') setIsCommunity(true);
               else setIsCommunity(false);
             }}
-            className="bg-slate-950 border border-slate-800 text-slate-355 text-xs rounded-xl px-3 py-2 focus:border-purple-500 focus:outline-none"
+            className="bg-card border border-border text-foreground text-xs rounded-xl px-3 py-2 focus:border-primary focus:outline-none"
           >
             <option value="all">{text.SOURCE_LABEL}</option>
             <option value="system">{text.SOURCE_SYSTEM}</option>

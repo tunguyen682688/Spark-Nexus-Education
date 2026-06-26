@@ -21,11 +21,11 @@ export const ExploreCategoryTabs: React.FC<ExploreCategoryTabsProps> = ({
             onClick={() => handleCategoryChange(cat.value)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold border shrink-0 transition-all ${
               isSelected
-                ? 'bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-purple-500 text-white shadow-lg'
+                ? 'bg-gradient-to-r from-primary to-primary/85 border-primary text-primary-foreground shadow-lg shadow-primary/10'
                 : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
-            <Icon className={`w-4 h-4 ${isSelected ? 'text-purple-400' : 'text-slate-500'}`} />
+            <Icon className={`w-4 h-4 ${isSelected ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
             {cat.label}
           </button>
         );

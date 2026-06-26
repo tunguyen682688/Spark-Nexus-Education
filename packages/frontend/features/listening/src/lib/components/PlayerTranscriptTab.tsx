@@ -40,7 +40,7 @@ export const PlayerTranscriptTab: React.FC<PlayerTranscriptTabProps> = ({
         <span
           key={idx}
           onClick={(e) => handleWordClick(e, word)}
-          className="hover:text-purple-400 cursor-help transition-colors select-none font-semibold"
+          className="hover:text-primary cursor-help transition-colors select-none font-semibold"
         >
           {word}
         </span>
@@ -60,16 +60,16 @@ export const PlayerTranscriptTab: React.FC<PlayerTranscriptTabProps> = ({
               onClick={() => onSubtitleClick(sub.startTime)}
               className={`group p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
                 isActive
-                  ? 'bg-purple-600/10 border-purple-500/40 shadow-lg shadow-purple-500/5'
-                  : 'bg-slate-900/30 border-slate-800/80 hover:bg-slate-900/60 hover:border-slate-700/80'
+                  ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5'
+                  : 'bg-muted/20 border-border hover:bg-muted hover:border-border/80'
               }`}
             >
               <div className="flex items-start gap-4">
                 {/* Seek timing indicator */}
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                   isActive 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground group-hover:bg-muted/80'
                 }`}>
                   {formatTime(sub.startTime)}
                 </span>
@@ -77,13 +77,13 @@ export const PlayerTranscriptTab: React.FC<PlayerTranscriptTabProps> = ({
                 {/* Transcripts Text */}
                 <div className="flex-1 space-y-1.5">
                   <p className={`text-base font-semibold transition-colors duration-300 leading-relaxed ${
-                    isActive ? 'text-slate-100' : 'text-slate-300'
+                    isActive ? 'text-foreground' : 'text-foreground/90'
                   }`}>
                     {renderInteractiveText(sub.text)}
                   </p>
                   {showTranslation && sub.translation && (
                     <p className={`text-sm transition-colors duration-300 leading-relaxed ${
-                      isActive ? 'text-purple-300/90' : 'text-slate-500'
+                      isActive ? 'text-primary/90' : 'text-muted-foreground'
                     }`}>
                       {sub.translation}
                     </p>
@@ -94,8 +94,8 @@ export const PlayerTranscriptTab: React.FC<PlayerTranscriptTabProps> = ({
           );
         })
       ) : (
-        <div className="text-center py-20 text-slate-500">
-          <Info className="w-12 h-12 mx-auto text-slate-600 mb-3" />
+        <div className="text-center py-20 text-muted-foreground">
+          <Info className="w-12 h-12 mx-auto text-muted-foreground/60 mb-3" />
           {LISTENING_WORKSPACE_TEXT.PLAYER.NO_SUBTITLES}
         </div>
       )}

@@ -52,14 +52,14 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
   const currentStats = getDictationStats(currentSub.text, typedTexts[currentSub.id] || '');
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6 shadow-xl backdrop-blur-md min-h-fit">
+    <div className="bg-card/40 border border-border rounded-2xl p-6 flex flex-col gap-6 shadow-xl backdrop-blur-md min-h-fit">
       {/* Timeline Header and Sentence controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
         <div>
-          <span className="text-[10px] font-bold text-slate-505 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
             CURRENT FOCUS
           </span>
-          <h2 className="text-lg font-extrabold text-slate-202 mt-0.5">
+          <h2 className="text-lg font-extrabold text-foreground mt-0.5">
             {text.FOCUS_LABEL(selectedSubIndex + 1, subtitles.length)}
           </h2>
         </div>
@@ -67,14 +67,14 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={changeSpeed}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-202 rounded-xl transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-background border border-border text-muted-foreground hover:text-foreground rounded-xl transition-all"
           >
             <Gauge className="w-3.5 h-3.5" />
             {common.SPEED_LABEL(playbackSpeed)}
           </button>
           <button
             onClick={() => playSentence(currentSub.startTime, currentSub.endTime)}
-            className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-all shadow-md shadow-purple-650/10"
+            className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md shadow-primary/10"
           >
             <Volume2 className="w-4 h-4" />
             {text.REPEAT_BUTTON}
@@ -87,19 +87,19 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
         <div className="flex items-center justify-between">
           <button
             onClick={() => setShowTranslation(!showTranslation)}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-300"
+            className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
           >
-            <Languages className="w-3.5 h-3.5 text-purple-400" />
+            <Languages className="w-3.5 h-3.5 text-primary" />
             {showTranslation ? text.HIDE_TRANSLATION : text.SHOW_TRANSLATION}
           </button>
         </div>
 
         {showTranslation && currentSub.translation && (
-          <div className="p-4 bg-slate-950/40 border border-slate-855 rounded-xl leading-relaxed">
-            <p className="text-xs text-purple-300 font-bold uppercase tracking-wider mb-1">
+          <div className="p-4 bg-background/40 border border-border rounded-xl leading-relaxed">
+            <p className="text-xs text-primary font-bold uppercase tracking-wider mb-1">
               {text.TRANSLATION_TITLE}
             </p>
-            <p className="text-xs text-slate-400 font-semibold">
+            <p className="text-xs text-muted-foreground font-semibold">
               {currentSub.translation}
             </p>
           </div>
@@ -108,9 +108,9 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
 
       {/* Workspace typing box */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+        <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <Keyboard className="w-4 h-4 text-purple-400" />
+            <Keyboard className="w-4 h-4 text-primary" />
             {text.INPUT_TITLE}
           </span>
           {typedTexts[currentSub.id]?.length > 0 && (
@@ -138,13 +138,13 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
             }
           }}
           placeholder={text.INPUT_PLACEHOLDER}
-          className="w-full min-h-[140px] bg-slate-955 border border-slate-800 rounded-xl p-4 text-sm text-slate-202 placeholder-slate-700 focus:border-purple-500 focus:outline-none transition-all leading-relaxed resize-none"
+          className="w-full min-h-[140px] bg-background border border-border rounded-xl p-4 text-sm text-foreground placeholder-muted-foreground/60 focus:border-primary focus:outline-none transition-all leading-relaxed resize-none"
         />
       </div>
 
       {/* Dynamic checking diffuser */}
       {isChecked && (
-        <div className="space-y-3 p-4 bg-slate-950/40 border border-slate-855 rounded-xl">
+        <div className="space-y-3 p-4 bg-background/45 border border-border rounded-xl">
           <div className="flex items-center justify-between text-xs font-bold">
             <div className="flex items-center gap-2">
               <span
@@ -168,14 +168,14 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
                   [currentSub.id]: true,
                 });
               }}
-              className="text-purple-400 hover:text-purple-300"
+              className="text-primary hover:text-primary/80"
             >
               {text.ORIGINAL_ANSWER}
             </button>
           </div>
 
           {/* Word matching comparison output */}
-          <div className="flex flex-wrap gap-x-2 gap-y-1.5 p-3.5 bg-slate-955 border border-slate-800 rounded-xl mt-2 leading-relaxed">
+          <div className="flex flex-wrap gap-x-2 gap-y-1.5 p-3.5 bg-background border border-border rounded-xl mt-2 leading-relaxed">
             {currentSub.text
               .split(/\s+/)
               .filter(Boolean)
@@ -193,7 +193,7 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
                     key={idx}
                     className={`text-sm px-1 rounded transition-all ${
                       !userTypedWords[idx]
-                        ? 'text-slate-500 line-through decoration-dotted'
+                        ? 'text-muted-foreground line-through decoration-dotted'
                         : isCorrect
                         ? 'text-emerald-400 font-bold bg-emerald-500/5'
                         : 'text-red-400 font-semibold bg-red-500/5 border border-red-500/10'
@@ -213,7 +213,7 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
       )}
 
       {/* Action and Navigator controls */}
-      <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-800/80 mt-auto">
+      <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/80 mt-auto">
         <div className="flex gap-2">
           <button
             onClick={() => {
@@ -221,7 +221,7 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
               setSelectedSubIndex(prev);
             }}
             disabled={selectedSubIndex === 0}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-850 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             {text.PREV_BUTTON}
@@ -232,7 +232,7 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
               setSelectedSubIndex(next);
             }}
             disabled={selectedSubIndex === subtitles.length - 1}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-855 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             {text.NEXT_BUTTON}
             <ArrowRight className="w-4 h-4" />
@@ -255,14 +255,14 @@ export const DictationExerciseCard: React.FC<DictationExerciseCardProps> = ({
               const allCompleted = subtitles.length > 0 && subtitles.every((sub) => updatedSubmitted[sub.id]);
               saveProgress(updatedSubmitted, allCompleted);
             }}
-            className="px-4 py-2 text-xs font-bold text-slate-300 bg-slate-850 hover:bg-slate-800 rounded-xl transition-all border border-slate-800"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border"
           >
             {text.ANSWERS_BUTTON}
           </button>
           <button
             onClick={handleSubmitDictation}
             disabled={!typedTexts[currentSub.id]?.trim()}
-            className="px-5 py-2 text-xs font-bold text-white bg-purple-650 hover:bg-purple-600 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-650/20"
+            className="px-5 py-2 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-primary/20"
           >
             {text.CHECK_BUTTON}
           </button>

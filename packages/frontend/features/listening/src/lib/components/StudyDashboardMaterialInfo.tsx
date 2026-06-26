@@ -31,9 +31,9 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
   return (
     <div className="lg:col-span-2 space-y-6">
       {/* Main Info Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 sm:p-8 flex flex-col sm:flex-row gap-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-card backdrop-blur-md p-6 sm:p-8 flex flex-col sm:flex-row gap-6 shadow-2xl">
         {/* Thumbnail Container */}
-        <div className="w-full sm:w-48 aspect-video sm:aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shrink-0">
+        <div className="w-full sm:w-48 aspect-video sm:aspect-square bg-muted rounded-2xl overflow-hidden border border-border shrink-0">
           {material.thumbnailUrl ? (
             <img
               src={material.thumbnailUrl}
@@ -41,8 +41,8 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-955 to-purple-950/20">
-              <Clock className="w-12 h-12 text-purple-500/30" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted">
+              <Clock className="w-12 h-12 text-primary/30" />
             </div>
           )}
         </div>
@@ -51,7 +51,7 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
         <div className="flex-1 flex flex-col justify-between space-y-4">
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
-              <span className="text-[10px] font-extrabold uppercase text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-extrabold uppercase text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
                 {getCategoryLabel(material.category)}
               </span>
               <span
@@ -62,20 +62,20 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
                 {LISTENING_DASHBOARD_TEXT.LEVEL_LABEL}: {material.difficulty}
               </span>
               {material.isCommunity && (
-                <span className="text-[9px] font-bold tracking-wider uppercase bg-violet-600 text-white px-2 py-0.5 rounded shadow-sm shadow-violet-650/20">
+                <span className="text-[9px] font-bold tracking-wider uppercase bg-primary text-primary-foreground px-2 py-0.5 rounded shadow-sm shadow-primary/25">
                   {LISTENING_DASHBOARD_TEXT.COMMUNITY_CONTRIBUTED}
                 </span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-100 leading-snug">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-foreground leading-snug">
               {material.title}
             </h1>
           </div>
 
           {/* Metadata Row */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-400 font-semibold border-t border-slate-800/60 pt-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground font-semibold border-t border-border/60 pt-4">
             <span className="flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-purple-400" />
+              <User className="w-3.5 h-3.5 text-primary" />
               {material.author || 'Spark Nexus'}
             </span>
             <span className="flex items-center gap-1.5">
@@ -91,21 +91,21 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
       </div>
 
       {/* Description Card */}
-      <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4 backdrop-blur-md">
-        <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-300">
+      <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-4 backdrop-blur-md">
+        <h2 className="text-sm font-extrabold uppercase tracking-wider text-foreground">
           {LISTENING_DASHBOARD_TEXT.DESCRIPTION_TITLE}
         </h2>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {material.description || LISTENING_DASHBOARD_TEXT.DEFAULT_DESCRIPTION}
         </p>
 
         {/* Tags */}
         {material.tags && material.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-800/40">
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-border/40">
             {material.tags.map((tag: string) => (
               <span
                 key={tag}
-                className="text-[10px] font-bold text-slate-400 bg-slate-950 border border-slate-850 px-2.5 py-1 rounded-lg"
+                className="text-[10px] font-bold text-muted-foreground bg-background border border-border px-2.5 py-1 rounded-lg"
               >
                 #{tag}
               </span>
@@ -120,8 +120,8 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
           onClick={handleToggleBookmark}
           className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${
             isBookmarked
-              ? 'bg-purple-600 border-purple-500 text-white'
-              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-205'
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           <Bookmark
@@ -133,7 +133,7 @@ export const StudyDashboardMaterialInfo: React.FC<StudyDashboardMaterialInfoProp
         </Button>
         <Button
           onClick={() => handleVote(1)}
-          className="flex items-center gap-2 text-xs font-bold bg-slate-900/60 border border-slate-850 hover:bg-slate-800/60 text-slate-400 hover:text-slate-205 px-4 py-2.5 rounded-xl transition-all"
+          className="flex items-center gap-2 text-xs font-bold bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground px-4 py-2.5 rounded-xl transition-all"
         >
           <ThumbsUp className="w-4 h-4 text-emerald-400" />
           {LISTENING_DASHBOARD_TEXT.FAVORITE_BUTTON} ({material.upvotes})

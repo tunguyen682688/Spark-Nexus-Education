@@ -74,7 +74,7 @@ export default function ListeningHubContainer() {
         {/* LOADING & ERROR LAYOUT */}
         {isLoadingList ? (
           <div className="flex flex-col items-center justify-center py-32 text-slate-500 gap-3">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-sm font-semibold animate-pulse">{text.LOADING}</p>
           </div>
         ) : listError ? (
@@ -82,7 +82,7 @@ export default function ListeningHubContainer() {
             {text.ERROR}
           </div>
         ) : allItems.length === 0 ? (
-          <div className="text-center py-24 bg-slate-900/10 border border-slate-800 rounded-3xl text-slate-500">
+          <div className="text-center py-24 bg-muted/10 border border-border rounded-3xl text-muted-foreground">
             {text.EMPTY}
           </div>
         ) : isSearchActive ? (
@@ -91,12 +91,12 @@ export default function ListeningHubContainer() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                <Library className="w-5 h-5 text-purple-500" />
+                <Library className="w-5 h-5 text-primary" />
                 {text.SEARCH_RESULTS(allItems.length)}
               </h2>
               <button
                 onClick={handleResetSearch}
-                className="text-xs text-purple-400 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 {text.RESET_SEARCH_CTA}
               </button>

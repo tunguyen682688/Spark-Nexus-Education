@@ -189,7 +189,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
   const activeSubId = getActiveSubtitleId();
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
+    <div className="flex flex-col h-full bg-background text-foreground rounded-3xl overflow-hidden border border-border shadow-2xl">
       {/* Audio player ref */}
       <audio
         ref={audioRef}
@@ -200,32 +200,32 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
       />
 
       {/* Header Info */}
-      <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md">
+      <div className="flex items-center justify-between p-6 border-b border-border bg-card/60 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="flex items-center justify-center p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-xl transition-all"
+            className="flex items-center justify-center p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-all"
           >
             <RotateCcw className="w-5 h-5" />
           </button>
           <div>
-            <span className="text-[10px] tracking-wider font-bold uppercase text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+            <span className="text-[10px] tracking-wider font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
               {material.difficulty} • {material.category}
             </span>
-            <h1 className="text-lg font-extrabold text-slate-200 truncate max-w-lg mt-1">
+            <h1 className="text-lg font-extrabold text-foreground truncate max-w-lg mt-1">
               {material.title}
             </h1>
           </div>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 shrink-0">
+        <div className="flex bg-background/85 p-1 rounded-xl border border-border shrink-0">
           <button
             onClick={() => setActiveTab('transcript')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'transcript'
-                ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-primary text-primary-foreground shadow shadow-primary/20'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -235,11 +235,11 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
             onClick={() => setActiveTab('dictation')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'dictation'
-                ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-primary text-primary-foreground shadow shadow-primary/20'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
             {LISTENING_WORKSPACE_TEXT.PLAYER.SHADOW_WRITING_TAB}
           </button>
           {material.questions && material.questions.length > 0 && (
@@ -247,8 +247,8 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
               onClick={() => setActiveTab('quiz')}
               className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeTab === 'quiz'
-                  ? 'bg-purple-600 text-white shadow shadow-purple-600/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-primary text-primary-foreground shadow shadow-primary/20'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
@@ -256,8 +256,10 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
             </button>
           )}
         </div>
-      </div>      {/* Main Body */}
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-955/40">
+      </div>
+
+      {/* Main Body */}
+      <div className="flex-1 overflow-y-auto p-6 bg-card/25">
         {activeTab === 'transcript' ? (
           <PlayerTranscriptTab
             subtitles={material.subtitles}
@@ -304,10 +306,10 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
       </div>
 
       {/* Footer Player Controls */}
-      <div className="p-6 bg-slate-900 border-t border-slate-800 space-y-4">
+      <div className="p-6 bg-card border-t border-border space-y-4">
         {/* Seekbar */}
         <div className="flex items-center gap-4">
-          <span className="text-xs text-slate-500 font-mono w-10 text-right">
+          <span className="text-xs text-muted-foreground font-mono w-10 text-right">
             {formatTime(currentTime)}
           </span>
           <input
@@ -316,9 +318,9 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-1.5 bg-slate-950 rounded-full appearance-none cursor-pointer accent-purple-500 focus:outline-none"
+            className="flex-1 h-1.5 bg-muted rounded-full appearance-none cursor-pointer accent-primary focus:outline-none"
           />
-          <span className="text-xs text-slate-500 font-mono w-10">
+          <span className="text-xs text-muted-foreground font-mono w-10">
             {formatTime(duration)}
           </span>
         </div>
@@ -331,8 +333,8 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
               onClick={() => setShowTranslation(!showTranslation)}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all ${
                 showTranslation
-                  ? 'bg-purple-500/10 border-purple-500/30 text-purple-300'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'bg-background/40 border-border text-muted-foreground hover:text-foreground'
               }`}
             >
               <Languages className="w-4 h-4" />
@@ -342,7 +344,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
             {/* Playback speed control */}
             <button
               onClick={changeSpeed}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-950/40 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-background/40 border border-border text-muted-foreground hover:text-foreground rounded-xl transition-all"
             >
               <Gauge className="w-4 h-4" />
               {LISTENING_WORKSPACE_TEXT.PLAYER.SPEED_LABEL(playbackSpeed)}
@@ -352,7 +354,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
           {/* Core play control */}
           <button
             onClick={handlePlayPause}
-            className="flex items-center justify-center w-12 h-12 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all shadow-lg shadow-purple-600/20 transform hover:scale-105"
+            className="flex items-center justify-center w-12 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full transition-all shadow-lg shadow-primary/20 transform hover:scale-105"
           >
             {isPlaying ? (
               <Pause className="w-5 h-5 fill-current" />
@@ -362,7 +364,7 @@ export default function BilingualAudioPlayer({ material, onBack }: BilingualAudi
           </button>
 
           {/* Right spacer for centering */}
-          <div className="w-36 flex items-center justify-end gap-2 text-slate-500 text-xs font-medium">
+          <div className="w-36 flex items-center justify-end gap-2 text-muted-foreground text-xs font-medium">
             <Volume2 className="w-4 h-4" />
             <span>{LISTENING_WORKSPACE_TEXT.PLAYER.VOLUME}</span>
           </div>
