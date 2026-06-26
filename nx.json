@@ -1,9 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "defaultBase": "master",
-  "sync": {
-    "applyChanges": true
-  },
+  "sync": { "applyChanges": true },
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
@@ -25,9 +23,7 @@
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        },
+        "typecheck": { "targetName": "typecheck" },
         "build": {
           "targetName": "build",
           "configName": "tsconfig.lib.json",
@@ -47,17 +43,10 @@
         "serveStaticTargetName": "serve-static"
       }
     },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
     {
       "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
+      "options": { "targetName": "test" },
       "exclude": ["apps/api-sne-e2e/**/*"]
     },
     {
@@ -73,30 +62,14 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    },
+    { "plugin": "@nx/playwright/plugin", "options": { "targetName": "e2e" } },
     {
       "plugin": "@nx/vitest",
-      "options": {
-        "testTargetName": "vitest:test",
-        "ciTargetName": "test-ci"
-      }
+      "options": { "testTargetName": "vitest:test", "ciTargetName": "test-ci" }
     }
   ],
-  "targetDefaults": {
-    "test": {
-      "dependsOn": ["^build"]
-    }
-  },
-  "release": {
-    "version": {
-      "preVersionCommand": "npx nx run-many -t build"
-    }
-  },
+  "targetDefaults": { "test": { "dependsOn": ["^build"] } },
+  "release": { "version": { "preVersionCommand": "npx nx run-many -t build" } },
   "generators": {
     "@nx/react": {
       "application": {
@@ -105,9 +78,7 @@
         "linter": "eslint",
         "bundler": "vite"
       },
-      "component": {
-        "style": "css"
-      },
+      "component": { "style": "css" },
       "library": {
         "style": "css",
         "linter": "eslint",
@@ -115,5 +86,6 @@
       }
     }
   },
-  "analytics": true
+  "analytics": true,
+  "nxCloudId": "6a3e1cac667fe74dc5aaab1e"
 }
