@@ -1,7 +1,8 @@
 import React from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { Input } from '@spark-nest-ed/frontend-shared-components';
+import { Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@spark-nest-ed/frontend-shared-components';
 import { CEFR_LEVELS, LISTENING_HUB_TEXT } from '../constants';
+import { getDifficultyColor } from '../utils/listening-helpers';
 
 interface HubFilterToolbarProps {
   searchQuery: string;
@@ -21,22 +22,6 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
   setIsCommunity,
 }) => {
   const text = LISTENING_HUB_TEXT.FILTERS;
-
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'border-green-500/35 text-green-400 bg-green-500/5';
-      case 'B1':
-      case 'B2':
-        return 'border-blue-500/35 text-blue-450 bg-blue-500/5';
-      case 'C1':
-      case 'C2':
-        return 'border-purple-500/35 text-purple-400 bg-purple-500/5';
-      default:
-        return 'border-slate-800 text-slate-400 bg-slate-900/35';
-    }
-  };
 
   return (
     <div className="flex flex-col gap-4 p-5 bg-card border border-border rounded-2xl backdrop-blur-md">
@@ -76,7 +61,7 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
             ))}
           </div>
 
-          <select
+          <Select
             value={
               isCommunity === undefined
                 ? 'all'
@@ -84,18 +69,21 @@ export const HubFilterToolbar: React.FC<HubFilterToolbarProps> = ({
                 ? 'community'
                 : 'system'
             }
-            onChange={(e) => {
-              const val = e.target.value;
+            onValueChange={(val) => {
               if (val === 'all') setIsCommunity(undefined);
               else if (val === 'community') setIsCommunity(true);
               else setIsCommunity(false);
             }}
-            className="bg-card border border-border text-foreground text-xs rounded-xl px-3 py-2 focus:border-primary focus:outline-none"
           >
-            <option value="all">{text.SOURCE_LABEL}</option>
-            <option value="system">{text.SOURCE_SYSTEM}</option>
-            <option value="community">{text.SOURCE_COMMUNITY}</option>
-          </select>
+            <SelectTrigger className="bg-card border border-border text-foreground text-xs rounded-xl px-3 py-2 h-9 focus:border-primary focus:outline-none w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{text.SOURCE_LABEL}</SelectItem>
+              <SelectItem value="system">{text.SOURCE_SYSTEM}</SelectItem>
+              <SelectItem value="community">{text.SOURCE_COMMUNITY}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

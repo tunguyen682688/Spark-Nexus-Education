@@ -1,6 +1,8 @@
 import React from 'react';
 import { Flame, ChevronLeft, ChevronRight, Headset, Sparkle } from 'lucide-react';
-import { LISTENING_ROUTES, LISTENING_HUB_TEXT } from '../constants';
+import { LISTENING_ROUTES, LISTENING_HUB_TEXT, HUB_TRENDING_TEXT } from '../constants';
+import { getDifficultyColor } from '../utils/listening-helpers';
+import { Badge, Button } from '@spark-nest-ed/frontend-shared-components';
 
 interface HubTrendingCarouselProps {
   trendingItems: any[];
@@ -17,22 +19,6 @@ export const HubTrendingCarousel: React.FC<HubTrendingCarouselProps> = ({
 }) => {
   const text = LISTENING_HUB_TEXT.TRENDING;
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'border-green-500/35 text-green-400 bg-green-500/5';
-      case 'B1':
-      case 'B2':
-        return 'border-blue-500/35 text-blue-450 bg-blue-500/5';
-      case 'C1':
-      case 'C2':
-        return 'border-purple-500/35 text-purple-400 bg-purple-500/5';
-      default:
-        return 'border-slate-800 text-slate-400 bg-slate-900/35';
-    }
-  };
-
   if (trendingItems.length === 0) return null;
 
   return (
@@ -48,18 +34,22 @@ export const HubTrendingCarousel: React.FC<HubTrendingCarouselProps> = ({
         
         {/* Nav Arrows */}
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(trendingScrollRef, 'left')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground active:scale-95 transition-all h-8 w-8"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(trendingScrollRef, 'right')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground active:scale-95 transition-all h-8 w-8"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -88,16 +78,16 @@ export const HubTrendingCarousel: React.FC<HubTrendingCarouselProps> = ({
                 </div>
               )}
               <div className="absolute top-3 left-3 flex gap-2">
-                <span className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-full border ${getDifficultyColor(material.difficulty)}`}>
+                <Badge className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-full border ${getDifficultyColor(material.difficulty)}`}>
                   {material.difficulty}
-                </span>
-                <span className="px-2.5 py-0.5 text-[10px] font-extrabold bg-background/60 backdrop-blur-md rounded-full text-muted-foreground capitalize border border-border">
+                </Badge>
+                <Badge variant="outline" className="px-2.5 py-0.5 text-[10px] font-extrabold bg-background/60 backdrop-blur-md rounded-full text-muted-foreground capitalize border border-border">
                   {material.category}
-                </span>
+                </Badge>
               </div>
               
               <span className="absolute top-3 right-3 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-600 text-white rounded shadow-sm">
-                TRENDING
+                {HUB_TRENDING_TEXT.TRENDING_BADGE}
               </span>
             </div>
 

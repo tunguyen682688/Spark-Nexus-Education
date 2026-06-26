@@ -1,5 +1,8 @@
 import { ListeningMaterial } from '../types';
-import { Play, Headset, Video, Award, Eye, ThumbsUp, Keyboard } from 'lucide-react';
+import { Play, Eye, ThumbsUp, Keyboard } from 'lucide-react';
+import { getDifficultyColor, formatDuration, getCategoryIcon } from '../utils/listening-helpers';
+import { LISTENING_CARD_TEXT } from '../constants';
+import { Badge, Button } from '@spark-nest-ed/frontend-shared-components';
 
 interface ListeningCardProps {
   material: ListeningMaterial;
@@ -8,42 +11,6 @@ interface ListeningCardProps {
 }
 
 export default function ListeningCard({ material, onClick, onDictationClick }: ListeningCardProps) {
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'podcast':
-        return <Headset className="w-4 h-4 text-primary" />;
-      case 'video':
-        return <Video className="w-4 h-4 text-red-400" />;
-      case 'exam':
-        return <Award className="w-4 h-4 text-emerald-400" />;
-      default:
-        return <Play className="w-4 h-4 text-blue-400" />;
-    }
-  };
-
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case 'B1':
-      case 'B2':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'C1':
-      case 'C2':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-    }
-  };
-
-  // Safe division for duration formatting
-  const formatDuration = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainingSecs = secs % 60;
-    return `${mins}:${remainingSecs.toString().padStart(2, '0')}`;
-  };
-
   const hasProgress = material.userProgress && material.userProgress.progress > 0;
   const progressPercent = material.userProgress?.progress || 0;
 
@@ -62,12 +29,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/60">
-            {material.category === 'podcast' && <Headset className="w-12 h-12 text-primary/40" />}
-            {material.category === 'video' && <Video className="w-12 h-12 text-red-500/40" />}
-            {material.category === 'exam' && <Award className="w-12 h-12 text-emerald-500/40" />}
-            {material.category !== 'podcast' && material.category !== 'video' && material.category !== 'exam' && (
-              <Play className="w-12 h-12 text-blue-500/40" />
-            )}
+            {getCategoryIcon(material.category)}
           </div>
         )}
 
@@ -80,13 +42,13 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${getDifficultyColor(material.difficulty)}`}>
+          <Badge className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${getDifficultyColor(material.difficulty)}`}>
             {material.difficulty}
-          </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-background/80 backdrop-blur-md text-foreground rounded-full border border-border">
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-background/80 backdrop-blur-md text-foreground rounded-full border border-border">
             {getCategoryIcon(material.category)}
             <span className="capitalize">{material.category}</span>
-          </span>
+          </Badge>
         </div>
 
         {/* Duration badge */}
@@ -97,7 +59,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
         {/* Community contribution label */}
         {material.isCommunity && (
           <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-primary text-primary-foreground rounded shadow-sm shadow-primary/20">
-            Cộng đồng
+            {LISTENING_CARD_TEXT.COMMUNITY_LABEL}
           </span>
         )}
       </div>
@@ -105,7 +67,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
       {/* Content */}
       <div className="flex-1 flex flex-col p-5">
         <span className="text-xs font-medium text-muted-foreground mb-2 truncate">
-          {material.author || 'Danh mục Luyện nghe'}
+          {material.author || LISTENING_CARD_TEXT.DEFAULT_AUTHOR}
         </span>
         <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-3">
           {material.title}
@@ -141,16 +103,18 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
                   {material.questions.length} CH
                 </span>
               )}
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDictationClick?.(material.id);
                 }}
-                className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary px-3 py-1 rounded-full transition-all duration-200"
+                className="h-7 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary px-3 py-1 rounded-full transition-all duration-200"
               >
                 <Keyboard className="w-3.5 h-3.5" />
-                Chép chính tả
-              </button>
+                {LISTENING_CARD_TEXT.DICTATION_CTA}
+              </Button>
             </div>
           </div>
         </div>

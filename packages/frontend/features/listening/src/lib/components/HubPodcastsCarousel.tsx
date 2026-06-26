@@ -1,6 +1,8 @@
 import React from 'react';
 import { Headset, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import { LISTENING_ROUTES, LISTENING_HUB_TEXT } from '../constants';
+import { getDifficultyColor } from '../utils/listening-helpers';
+import { Badge, Button } from '@spark-nest-ed/frontend-shared-components';
 
 interface HubPodcastsCarouselProps {
   podcasts: any[];
@@ -17,22 +19,6 @@ export const HubPodcastsCarousel: React.FC<HubPodcastsCarouselProps> = ({
 }) => {
   const text = LISTENING_HUB_TEXT.PODCASTS;
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'border-green-500/35 text-green-400 bg-green-500/5';
-      case 'B1':
-      case 'B2':
-        return 'border-blue-500/35 text-blue-450 bg-blue-500/5';
-      case 'C1':
-      case 'C2':
-        return 'border-purple-500/35 text-purple-400 bg-purple-500/5';
-      default:
-        return 'border-slate-800 text-slate-400 bg-slate-900/35';
-    }
-  };
-
   if (podcasts.length === 0) return null;
 
   return (
@@ -45,28 +31,34 @@ export const HubPodcastsCarousel: React.FC<HubPodcastsCarouselProps> = ({
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-xs text-muted-foreground font-medium">{text.SUBTITLE}</p>
-            <button
+            <Button
+              variant="link"
+              size="sm"
               onClick={() => navigate('/listening/explore?category=podcast')}
-              className="text-[10px] font-black text-primary hover:text-primary/80 hover:underline shrink-0"
+              className="text-[10px] font-black text-primary hover:text-primary/80 p-0 h-auto"
             >
               {text.VIEW_ALL}
-            </button>
+            </Button>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(podcastsScrollRef, 'left')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground h-8 w-8"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(podcastsScrollRef, 'right')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground h-8 w-8"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -108,9 +100,9 @@ export const HubPodcastsCarousel: React.FC<HubPodcastsCarouselProps> = ({
                 </h3>
                 <p className="text-[10px] text-muted-foreground text-left truncate">{podcast.author || text.DEFAULT_AUTHOR}</p>
               </div>
-              <span className={`mt-2 block w-fit text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border ${getDifficultyColor(podcast.difficulty)}`}>
+              <Badge className={`mt-2 w-fit text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border ${getDifficultyColor(podcast.difficulty)}`}>
                 {podcast.difficulty}
-              </span>
+              </Badge>
             </div>
           </div>
         ))}

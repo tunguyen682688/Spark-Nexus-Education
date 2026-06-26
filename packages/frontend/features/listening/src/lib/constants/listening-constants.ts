@@ -544,3 +544,48 @@ export const LISTENING_WORKSPACE_TEXT = {
   }
 } as const;
 
+/**
+ * Text strings and labels for Word Lookup Popover
+ */
+export const WORD_LOOKUP_TEXT = {
+  DEFAULT_DEFINITION: 'Chưa có định nghĩa',
+  ERROR_NOT_FOUND: 'Word not found',
+  SAVE_SUCCESS_TITLE: 'Đã lưu từ vựng! 🎯',
+  SAVE_SUCCESS_DESC: (word: string, setTitle: string) => `Đã thêm từ "${word}" vào bộ "${setTitle}"`,
+  SAVE_ERROR_TITLE: 'Thao tác thất bại',
+  SAVE_ERROR_DESC: 'Không thể thêm từ vào bộ từ vựng. Vui lòng thử lại.',
+  PLAY_AUDIO_TOOLTIP: 'Nghe phát âm',
+  LOADING: 'Đang tra từ điển...',
+  NOT_FOUND_TITLE: 'Không tìm thấy từ này',
+  NOT_FOUND_DESC: 'Từ vựng hiện chưa có trong cơ sở dữ liệu từ điển. Bạn có muốn nghe phát âm?',
+  DEFINITION_LABEL: 'Định nghĩa',
+  EXAMPLE_LABEL: 'Ví dụ',
+  SAVE_TO_SET_TOOLTIP: 'Lưu từ vào bộ',
+  CREATE_SET_WARNING: 'Hãy tạo một bộ từ vựng trước để lưu từ.',
+} as const;
+
+/**
+ * Text strings and labels for Listening Card
+ */
+export const LISTENING_CARD_TEXT = {
+  DEFAULT_AUTHOR: 'Danh mục Luyện nghe',
+  COMMUNITY_LABEL: 'Cộng đồng',
+  DICTATION_CTA: 'Chép chính tả',
+} as const;
+
+/**
+ * Text strings and labels for Library Achievements Grid
+ */
+export const LIBRARY_ACHIEVEMENTS_TEXT = {
+  TITLE: 'Huy Hiệu Học Tập',
+  SUBTITLE: 'Mở khóa huy hiệu dựa trên nỗ lực của bạn',
+} as const;
+
+/**
+ * Text strings and labels for Hub Trending Carousel
+ */
+export const HUB_TRENDING_TEXT = {
+  TRENDING_BADGE: 'TRENDING',
+} as const;
+
+

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Search, ListFilter } from 'lucide-react';
-import { Input } from '@spark-nest-ed/frontend-shared-components';
+import { Input, Button, Badge, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@spark-nest-ed/frontend-shared-components';
 import { CEFR_LEVELS, LISTENING_EXPLORE_TEXT } from '../constants';
+import { getDifficultyColor } from '../utils/listening-helpers';
 
 interface ExploreFiltersSidebarProps {
   category: string;
@@ -29,22 +30,6 @@ export const ExploreFiltersSidebar: React.FC<ExploreFiltersSidebarProps> = ({
   const text = LISTENING_EXPLORE_TEXT.SIDEBAR;
   const difficulties = ['all', ...CEFR_LEVELS] as const;
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'border-green-500/35 text-green-400 bg-green-500/5';
-      case 'B1':
-      case 'B2':
-        return 'border-blue-500/35 text-blue-455 bg-blue-500/5';
-      case 'C1':
-      case 'C2':
-        return 'border-purple-500/35 text-purple-400 bg-purple-500/5';
-      default:
-        return 'border-slate-800 text-slate-400 bg-slate-900/35';
-    }
-  };
-
   const isFiltered = category !== 'all' || difficulty !== 'all' || searchQuery !== '' || sortBy !== 'newest';
 
   return (
@@ -56,12 +41,14 @@ export const ExploreFiltersSidebar: React.FC<ExploreFiltersSidebarProps> = ({
           {text.TITLE}
         </span>
         {isFiltered && (
-          <button
+          <Button
+            variant="link"
+            size="sm"
             onClick={handleResetFilters}
-            className="text-[10px] font-bold text-primary hover:underline"
+            className="text-[10px] font-bold text-primary hover:underline h-auto p-0"
           >
             {text.RESET_CTA}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -85,15 +72,16 @@ export const ExploreFiltersSidebar: React.FC<ExploreFiltersSidebarProps> = ({
       {/* Sắp xếp */}
       <div className="space-y-2">
         <label className="text-[10px] text-muted-foreground uppercase font-extrabold tracking-wider">{text.SORT_LABEL}</label>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="w-full bg-background border border-border text-foreground text-xs font-bold rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none"
-        >
-          <option value="newest">{text.SORT_OPTIONS.NEWEST}</option>
-          <option value="views">{text.SORT_OPTIONS.VIEWS}</option>
-          <option value="subtitles">{text.SORT_OPTIONS.SUBTITLES}</option>
-        </select>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-full bg-background border border-border text-foreground text-xs font-bold rounded-xl px-3 py-2.5 h-10 focus:border-primary focus:outline-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">{text.SORT_OPTIONS.NEWEST}</SelectItem>
+            <SelectItem value="views">{text.SORT_OPTIONS.VIEWS}</SelectItem>
+            <SelectItem value="subtitles">{text.SORT_OPTIONS.SUBTITLES}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Lọc cấp độ */}
@@ -101,17 +89,19 @@ export const ExploreFiltersSidebar: React.FC<ExploreFiltersSidebarProps> = ({
         <label className="text-[10px] text-muted-foreground uppercase font-extrabold tracking-wider block">{text.CEFR_LABEL}</label>
         <div className="grid grid-cols-3 gap-2">
           {difficulties.map((diff) => (
-            <button
+            <Button
               key={diff}
+              variant="outline"
+              size="sm"
               onClick={() => handleDifficultyChange(diff)}
-              className={`py-2 text-[10px] font-black rounded-xl border transition-all uppercase text-center ${
+              className={`py-2 h-auto text-[10px] font-black rounded-xl border transition-all uppercase text-center ${
                 difficulty === diff
-                  ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/10'
+                  ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/10 hover:bg-primary/90'
                   : getDifficultyColor(diff)
               }`}
             >
               {diff === 'all' ? text.ALL_LEVELS : diff}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -126,14 +116,15 @@ export const ExploreFiltersSidebar: React.FC<ExploreFiltersSidebarProps> = ({
             { label: 'Tin tức học thuật (C1)', category: 'news', difficulty: 'C1' },
             { label: 'Tiếng Anh sơ cấp (A2)', category: 'video', difficulty: 'A2' },
           ].map((preset, idx) => (
-            <button
+            <Button
               key={idx}
+              variant="outline"
               onClick={() => handleApplyPreset(preset.category, preset.difficulty)}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-border bg-secondary/20 hover:bg-secondary/50 text-left text-xs font-bold text-foreground transition-all"
+              className="w-full flex items-center justify-between p-2.5 h-auto rounded-xl border border-border bg-secondary/20 hover:bg-secondary/50 text-left text-xs font-bold text-foreground transition-all"
             >
               <span>{preset.label}</span>
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{preset.difficulty}</span>
-            </button>
+              <Badge className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{preset.difficulty}</Badge>
+            </Button>
           ))}
         </div>
       </div>

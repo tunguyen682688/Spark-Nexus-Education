@@ -1,6 +1,8 @@
 import React from 'react';
 import { Video, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import { LISTENING_ROUTES, LISTENING_HUB_TEXT } from '../constants';
+import { getDifficultyColor } from '../utils/listening-helpers';
+import { Badge, Button } from '@spark-nest-ed/frontend-shared-components';
 
 interface HubVideosCarouselProps {
   videos: any[];
@@ -17,22 +19,6 @@ export const HubVideosCarousel: React.FC<HubVideosCarouselProps> = ({
 }) => {
   const text = LISTENING_HUB_TEXT.VIDEOS;
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'border-green-500/35 text-green-400 bg-green-500/5';
-      case 'B1':
-      case 'B2':
-        return 'border-blue-500/35 text-blue-450 bg-blue-500/5';
-      case 'C1':
-      case 'C2':
-        return 'border-purple-500/35 text-purple-400 bg-purple-500/5';
-      default:
-        return 'border-slate-800 text-slate-400 bg-slate-900/35';
-    }
-  };
-
   if (videos.length === 0) return null;
 
   return (
@@ -45,28 +31,34 @@ export const HubVideosCarousel: React.FC<HubVideosCarouselProps> = ({
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-xs text-muted-foreground font-medium">{text.SUBTITLE}</p>
-            <button
+            <Button
+              variant="link"
+              size="sm"
               onClick={() => navigate('/listening/explore?category=video')}
-              className="text-[10px] font-black text-primary hover:text-primary/80 hover:underline shrink-0"
+              className="text-[10px] font-black text-primary hover:text-primary/80 p-0 h-auto"
             >
               {text.VIEW_ALL}
-            </button>
+            </Button>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(videosScrollRef, 'left')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground h-8 w-8"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleScroll(videosScrollRef, 'right')}
-            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground h-8 w-8"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -103,9 +95,9 @@ export const HubVideosCarousel: React.FC<HubVideosCarouselProps> = ({
               </h3>
               <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-2 border-t border-border/65">
                 <span>{text.DEFAULT_AUTHOR}</span>
-                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${getDifficultyColor(video.difficulty)}`}>
+                <Badge className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${getDifficultyColor(video.difficulty)}`}>
                   {video.difficulty}
-                </span>
+                </Badge>
               </div>
             </div>
           </div>

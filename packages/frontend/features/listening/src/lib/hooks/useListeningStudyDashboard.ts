@@ -4,6 +4,8 @@ import {
   useVoteListeningMaterial,
   useToggleListeningBookmark,
 } from './index';
+import { getDifficultyColor } from '../utils/listening-helpers';
+
 
 export function useListeningStudyDashboard() {
   const { id } = useParams<{ id: string }>();
@@ -45,21 +47,7 @@ export function useListeningStudyDashboard() {
     }
   };
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case 'B1':
-      case 'B2':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'C1':
-      case 'C2':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      default:
-        return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-    }
-  };
+
 
   const formatDuration = (secs: number) => {
     const mins = Math.floor(secs / 60);

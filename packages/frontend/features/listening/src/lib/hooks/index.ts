@@ -335,3 +335,5 @@ export * from './useGapFillWorkspace';
 export * from './useQuizWorkspace';
 export * from './useShadowingWorkspace';
 export * from './useTranscriptWorkspace';
+export * from './useWordLookup';
+

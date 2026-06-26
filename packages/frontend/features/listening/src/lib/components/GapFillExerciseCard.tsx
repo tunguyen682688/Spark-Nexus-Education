@@ -1,11 +1,11 @@
+import React from 'react';
 import { Volume2, ArrowLeft } from 'lucide-react';
 import { LISTENING_WORKSPACE_TEXT } from '../constants';
 import { ListeningSubtitle } from '../types';
-
+import { Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 
 interface GapFillExerciseCardProps {
   currentSub: ListeningSubtitle;
-
   wordsList: string[];
   blankedIndices: number[];
   userAnswers: Record<number, string>;
@@ -51,13 +51,13 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
           <span className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest">
             {text.EXERCISE_TITLE}
           </span>
-          <button
+          <Button
             onClick={() => playSentence(currentSub.startTime, currentSub.endTime)}
-            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md shadow-primary/15"
+            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md shadow-primary/15 h-8"
           >
             <Volume2 className="w-4 h-4" />
             {text.REPEAT_BUTTON}
-          </button>
+          </Button>
         </div>
 
         {/* Sentence with Inputs */}
@@ -121,15 +121,16 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
         <div className="space-y-4">
           {isSubmitted && (
             <div className="p-4 bg-background border border-border rounded-xl flex items-center justify-between text-xs font-bold transition-all">
-              <span
-                className={`px-2.5 py-1 rounded border ${
+              <Badge
+                variant="outline"
+                className={`px-2.5 py-1 rounded border font-semibold ${
                   scoreStats.accuracy >= 90
                     ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                     : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                 }`}
               >
                 {text.ACCURACY_LABEL(scoreStats.accuracy)}
-              </span>
+              </Badge>
               <span className="text-muted-foreground">
                 {text.ACCURACY_STATS(scoreStats.correct, scoreStats.total)}
               </span>
@@ -152,37 +153,45 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
       {/* Action buttons */}
       <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/80 mt-auto">
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               const prev = Math.max(0, selectedSubIndex - 1);
               setSelectedSubIndex(prev);
             }}
             disabled={selectedSubIndex === 0}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all h-9"
           >
             <ArrowLeft className="w-4 h-4" />
             {text.PREV_BUTTON}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               const next = Math.min(subtitleCount - 1, selectedSubIndex + 1);
               setSelectedSubIndex(next);
             }}
             disabled={selectedSubIndex === subtitleCount - 1}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all h-9"
           >
             {text.NEXT_BUTTON}
-          </button>
+          </Button>
         </div>
 
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowHints(!showHints)}
-            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border h-9"
           >
             {showHints ? text.HIDE_HINT : text.SHOW_HINT}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               const answers: Record<number, string> = {};
               blankedIndices.forEach((idx) => {
@@ -191,17 +200,17 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               setUserAnswers(answers);
               handleSubmitGapFill();
             }}
-            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border h-9"
           >
             {text.ANSWERS_BUTTON}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmitGapFill}
             disabled={blankedIndices.length === 0}
-            className="px-5 py-2 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-primary/15"
+            className="px-5 py-2 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-primary/15 h-9"
           >
             {text.CHECK_BUTTON}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
