@@ -26,8 +26,8 @@ export default function ListeningStudyDashboardContainer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-955 flex flex-col items-center justify-center text-slate-400 gap-3">
-        <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
         <p className="text-sm font-medium animate-pulse">
           {LISTENING_DASHBOARD_TEXT.LOADING_MATERIAL}
         </p>
@@ -37,15 +37,15 @@ export default function ListeningStudyDashboardContainer() {
 
   if (error || !material) {
     return (
-      <div className="min-h-screen bg-slate-955 flex flex-col items-center justify-center text-red-400 p-6 text-center">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-red-400 p-6 text-center">
         <Info className="w-12 h-12 text-red-500/80 mb-3" />
         <h2 className="text-lg font-bold">{LISTENING_DASHBOARD_TEXT.ERROR_NOT_FOUND_TITLE}</h2>
-        <p className="text-sm text-slate-500 mt-1 max-w-sm">
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
           {LISTENING_DASHBOARD_TEXT.ERROR_NOT_FOUND_DESC}
         </p>
         <button
           onClick={() => navigate(LISTENING_ROUTES.HUB)}
-          className="mt-6 px-5 py-2.5 bg-slate-900 border border-slate-800 text-slate-350 hover:text-slate-200 rounded-xl text-xs font-bold transition-all"
+          className="mt-6 px-5 py-2.5 bg-secondary hover:bg-secondary/80 border border-border text-muted-foreground hover:text-foreground rounded-xl text-xs font-bold transition-all"
         >
           {LISTENING_DASHBOARD_TEXT.BACK_TO_HOME}
         </button>
@@ -57,12 +57,12 @@ export default function ListeningStudyDashboardContainer() {
   const progressPercent = material.userProgress?.progress || 0;
 
   return (
-    <div className="min-h-screen bg-slate-955 text-slate-100 flex flex-col p-6 sm:p-8">
+    <div className="min-h-screen bg-background text-foreground flex flex-col p-6 sm:p-8">
       <div className="max-w-full mx-auto w-full space-y-6">
         {/* Header Back Link */}
         <Button
           onClick={() => navigate(LISTENING_ROUTES.HUB)}
-          className="flex items-center gap-2 text-xs font-extrabold text-slate-400 hover:text-slate-250 transition-colors w-fit bg-slate-900/60 border border-slate-850 px-4 py-2 rounded-xl"
+          className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground hover:text-foreground transition-colors w-fit bg-secondary hover:bg-secondary/80 border border-border px-4 py-2 rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" />
           {LISTENING_DASHBOARD_TEXT.BACK_TO_LIST}

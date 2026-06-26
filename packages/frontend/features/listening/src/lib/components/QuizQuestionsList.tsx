@@ -39,11 +39,11 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
           return (
             <div
               key={q.id}
-              className="p-6 bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-md space-y-4"
+              className="p-6 bg-card/40 border border-border rounded-2xl shadow-xl backdrop-blur-md space-y-4"
             >
               {/* Question header */}
               <div className="flex items-start justify-between gap-4">
-                <h3 className="text-sm sm:text-base font-extrabold text-slate-202 leading-relaxed">
+                <h3 className="text-sm sm:text-base font-extrabold text-foreground leading-relaxed">
                   {text.QUESTION_LABEL(idx + 1)}: {q.questionText}
                 </h3>
 
@@ -56,7 +56,7 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                           handleReplaySegment(q.audioTimestamp);
                         }
                       }}
-                      className="flex items-center gap-1 text-[11px] font-bold text-purple-400 hover:text-white bg-purple-500/10 border border-purple-500/20 hover:bg-purple-650 hover:border-purple-500 px-3 py-1.5 rounded-lg shrink-0 transition-all"
+                      className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary-foreground bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary px-3 py-1.5 rounded-lg shrink-0 transition-all"
                     >
                       <Volume2 className="w-3.5 h-3.5" />
                       {text.REPEAT_BUTTON}
@@ -75,7 +75,7 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                     onChange={(e) =>
                       handleSelectOption(q.id, e.target.value)
                     }
-                    className="w-full bg-slate-955 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-202 placeholder-slate-655 focus:border-purple-500 focus:outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder-muted-foreground/60 focus:border-primary focus:outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
               ) : (
@@ -85,10 +85,10 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                     const isOptionCorrectAnswer = opt === q.correctAnswer;
 
                     let optionStyle =
-                      'border-slate-800/80 hover:border-slate-700 bg-slate-955/20 text-slate-350';
+                      'border-border hover:border-border/80 bg-muted/20 text-muted-foreground';
                     if (isSelected) {
                       optionStyle =
-                        'border-purple-500 bg-purple-500/10 text-purple-300';
+                        'border-primary bg-primary/10 text-primary';
                     }
                     if (isSubmitted) {
                       if (isOptionCorrectAnswer) {
@@ -99,7 +99,7 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                           'border-red-500 bg-red-500/10 text-red-400';
                       } else {
                         optionStyle =
-                          'border-slate-900 text-slate-600 opacity-50';
+                          'border-border/40 text-muted-foreground opacity-55';
                       }
                     }
 
@@ -131,12 +131,12 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                 <button
                   onClick={() => handleSubmitAnswer(q.id)}
                   disabled={!selectedOption || !selectedOption.trim()}
-                  className="w-full py-2.5 bg-purple-650 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-purple-650/15"
+                  className="w-full py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-primary/15"
                 >
                   {text.CHECK_BUTTON}
                 </button>
               ) : (
-                <div className="p-4 bg-slate-950 border border-slate-850 rounded-xl space-y-2.5">
+                <div className="p-4 bg-background border border-border rounded-xl space-y-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {isCorrect ? (
                       <span className="text-emerald-400 font-extrabold text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -147,7 +147,7 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                         {text.RESULT_INCORRECT}
                       </span>
                     )}
-                    <span className="text-xs text-slate-505">
+                    <span className="text-xs text-muted-foreground">
                       {text.RESULT_ANSWER_LABEL}{' '}
                       <strong className="text-emerald-400 font-bold">
                         {q.correctAnswer}
@@ -155,7 +155,7 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
                     </span>
                   </div>
                   {q.explanation && (
-                    <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+                    <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
                       <strong>{text.RESULT_EXPLANATION}</strong> {q.explanation}
                     </p>
                   )}
@@ -165,8 +165,8 @@ export const QuizQuestionsList: React.FC<QuizQuestionsListProps> = ({
           );
         })
       ) : (
-        <div className="text-center py-32 bg-slate-900/20 border border-slate-800 rounded-2xl text-slate-505">
-          <Info className="w-12 h-12 mx-auto text-slate-700 mb-3" />
+        <div className="text-center py-32 bg-muted/10 border border-border rounded-2xl text-muted-foreground">
+          <Info className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-sm font-medium">
             {LISTENING_WORKSPACE_TEXT.COMMON.EMPTY_QUESTIONS}
           </p>

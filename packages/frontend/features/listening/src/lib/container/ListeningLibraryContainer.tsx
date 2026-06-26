@@ -77,7 +77,7 @@ export default function ListeningLibraryContainer() {
             </Button>
             <div className="pt-2">
               <h1 className="text-2xl sm:text-3xl font-black text-foreground flex items-center gap-2.5">
-                <Library className="w-7 h-7 text-purple-400 animate-pulse" />
+                <Library className="w-7 h-7 text-primary animate-pulse" />
                 {text.TITLE}
               </h1>
               <p className="text-xs text-muted-foreground font-medium">{text.SUBTITLE}</p>
@@ -112,7 +112,7 @@ export default function ListeningLibraryContainer() {
             {/* Recently Studied Section */}
             {recentlyStudiedItems.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-2">
                   <PlayCircle className="w-4 h-4" />
                   {text.RECENTLY_STUDIED.TITLE}
                 </h3>
@@ -121,24 +121,24 @@ export default function ListeningLibraryContainer() {
                     <div
                       key={item.id}
                       onClick={() => navigate(LISTENING_ROUTES.STUDY(item.id))}
-                      className="flex bg-slate-900/30 hover:bg-slate-900/50 border border-slate-855 hover:border-purple-500/25 p-3 rounded-2xl transition-all duration-300 cursor-pointer justify-between items-center gap-3"
+                      className="flex bg-card/45 hover:bg-card/70 border border-border hover:border-primary/25 p-3 rounded-2xl transition-all duration-300 cursor-pointer justify-between items-center gap-3"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-850 shrink-0 bg-slate-955 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
                           {item.thumbnailUrl ? (
                             <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover" />
                           ) : (
-                            <BookOpen className="w-4 h-4 text-purple-400/40" />
+                            <BookOpen className="w-4 h-4 text-primary/40" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-[11px] font-extrabold text-slate-200 truncate group-hover:text-purple-400">{item.title}</h4>
-                          <span className="text-[9px] font-bold text-slate-500 capitalize">
+                          <h4 className="text-[11px] font-extrabold text-foreground truncate group-hover:text-primary">{item.title}</h4>
+                          <span className="text-[9px] font-bold text-muted-foreground capitalize">
                             {item.category || text.RECENTLY_STUDIED.DEFAULT_CATEGORY} • {item.userProgress?.progress || 0}%
                           </span>
                         </div>
                       </div>
-                      <div className="text-[10px] font-black text-purple-400 border border-purple-500/20 bg-purple-500/5 px-2.5 py-1 rounded-xl shrink-0 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                      <div className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-2.5 py-1 rounded-xl shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                         {text.RECENTLY_STUDIED.CONTINUE_CTA}
                       </div>
                     </div>
@@ -157,7 +157,7 @@ export default function ListeningLibraryContainer() {
                   onClick={() => setActiveTab('in-progress')}
                   className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold border-b-2 transition-all ${
                     activeTab === 'in-progress'
-                      ? 'border-purple-500 text-purple-400 font-black'
+                      ? 'border-primary text-primary font-black'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -194,7 +194,7 @@ export default function ListeningLibraryContainer() {
               {/* TAB CONTAINER GRID */}
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-24 text-slate-500 gap-3">
-                  <Compass className="w-8 h-8 text-purple-500 animate-spin" />
+                  <Compass className="w-8 h-8 text-primary animate-spin" />
                   <p className="text-xs font-bold">{text.SYNCING_LIBRARY}</p>
                 </div>
               ) : error ? (
@@ -211,7 +211,7 @@ export default function ListeningLibraryContainer() {
                         <p className="text-xs font-bold">{text.IN_PROGRESS_EMPTY.TITLE}</p>
                         <button
                           onClick={() => navigate(LISTENING_ROUTES.HUB)}
-                          className="text-xs text-purple-400 hover:underline font-extrabold flex items-center justify-center gap-1.5 mx-auto"
+                          className="text-xs text-primary hover:underline font-extrabold flex items-center justify-center gap-1.5 mx-auto"
                         >
                           <Compass className="w-3.5 h-3.5" /> {text.IN_PROGRESS_EMPTY.EXPLORE_CTA}
                         </button>
@@ -233,10 +233,10 @@ export default function ListeningLibraryContainer() {
                   {/* COMPLETED TAB */}
                   {activeTab === 'completed' && (
                     completedItems.length === 0 ? (
-                      <div className="text-center py-20 bg-slate-900/10 border border-slate-800 border-dashed rounded-3xl text-slate-500 space-y-3">
-                        <Trophy className="w-12 h-12 text-slate-700 mx-auto" />
+                      <div className="text-center py-20 bg-muted/10 border border-border border-dashed rounded-3xl text-muted-foreground space-y-3">
+                        <Trophy className="w-12 h-12 text-muted-foreground/60 mx-auto" />
                         <p className="text-xs font-bold">{text.COMPLETED_EMPTY.TITLE}</p>
-                        <p className="text-[10px] text-slate-655 font-semibold max-w-xs mx-auto">
+                        <p className="text-[10px] text-muted-foreground font-semibold max-w-xs mx-auto">
                           {text.COMPLETED_EMPTY.DESC}
                         </p>
                       </div>
@@ -257,10 +257,10 @@ export default function ListeningLibraryContainer() {
                   {/* BOOKMARKS TAB */}
                   {activeTab === 'bookmarks' && (
                     bookmarkedItems.length === 0 ? (
-                      <div className="text-center py-20 bg-slate-900/10 border border-slate-800 border-dashed rounded-3xl text-slate-500 space-y-3">
-                        <Bookmark className="w-12 h-12 text-slate-700 mx-auto" />
+                      <div className="text-center py-20 bg-muted/10 border border-border border-dashed rounded-3xl text-muted-foreground space-y-3">
+                        <Bookmark className="w-12 h-12 text-muted-foreground/60 mx-auto" />
                         <p className="text-xs font-bold">{text.BOOKMARKS_EMPTY.TITLE}</p>
-                        <p className="text-[10px] text-slate-650 font-semibold max-w-xs mx-auto">
+                        <p className="text-[10px] text-muted-foreground font-semibold max-w-xs mx-auto">
                           {text.BOOKMARKS_EMPTY.DESC}
                         </p>
                       </div>
@@ -270,28 +270,28 @@ export default function ListeningLibraryContainer() {
                           <div
                             key={item.id}
                             onClick={() => navigate(LISTENING_ROUTES.STUDY(item.id))}
-                            className="group relative flex items-center bg-slate-900/30 hover:bg-slate-900/60 border border-slate-855 hover:border-blue-500/25 p-4 rounded-2xl transition-all duration-300 cursor-pointer gap-4 justify-between"
+                            className="group relative flex items-center bg-card/45 hover:bg-card/70 border border-border hover:border-primary/25 p-4 rounded-2xl transition-all duration-300 cursor-pointer gap-4 justify-between"
                           >
                             <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-12 h-12 rounded-xl bg-slate-950 overflow-hidden border border-slate-855 shrink-0 flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
                                 {item.thumbnailUrl ? (
                                   <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover" />
                                 ) : (
-                                  <BookOpen className="w-5 h-5 text-blue-400/40" />
+                                  <BookOpen className="w-5 h-5 text-primary/40" />
                                 )}
                               </div>
 
                               <div className="min-w-0 space-y-1">
-                                <h3 className="text-xs font-extrabold text-slate-200 line-clamp-1 group-hover:text-blue-400 transition-colors">
+                                <h3 className="text-xs font-extrabold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                                   {item.title}
                                 </h3>
-                                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
                                   <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${
                                     item.difficulty === 'A1' || item.difficulty === 'A2'
                                       ? 'border-green-500/30 text-green-400'
                                       : item.difficulty === 'B1' || item.difficulty === 'B2'
                                       ? 'border-blue-500/30 text-blue-400'
-                                      : 'border-purple-500/30 text-purple-400'
+                                      : 'border-primary/30 text-primary'
                                     }`}>
                                     {item.difficulty}
                                   </span>
@@ -305,7 +305,7 @@ export default function ListeningLibraryContainer() {
 
                             <button
                               onClick={(e) => handleRemoveBookmark(item.id, e)}
-                              className="p-2 rounded-xl bg-slate-955 border border-slate-855 text-slate-500 hover:text-red-400 hover:border-red-500/30 active:scale-95 transition-all shrink-0"
+                              className="p-2 rounded-xl bg-muted border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/30 active:scale-95 transition-all shrink-0"
                               title={text.BOOKMARK_ITEM.REMOVE_TITLE}
                             >
                               <Trash2 className="w-4 h-4" />

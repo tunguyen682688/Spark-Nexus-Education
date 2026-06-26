@@ -12,6 +12,17 @@ function getInitialCategory(pathname: string, searchParams: URLSearchParams): st
   return searchParams.get('category') || 'all';
 }
 
+function getPathFromCategory(cat: string): string {
+  switch (cat) {
+    case 'podcast': return '/listening/podcasts';
+    case 'video': return '/listening/videos';
+    case 'audio': return '/listening/audiobooks';
+    case 'exam': return '/listening/practice';
+    case 'news': return '/listening/news';
+    default: return '/listening/explore';
+  }
+}
+
 export function useListeningExplore() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,20 +35,48 @@ export function useListeningExplore() {
   const [sortBy, setSortBy] = useState<string>('newest'); // 'newest' | 'views' | 'subtitles'
   const limit = 6; // Reduced limit for optimization
 
-  // Update states if category or difficulty changes in URL
+  // Update states if category, difficulty or query changes in URL (e.g. back/forward button)
   useEffect(() => {
     const cat = getInitialCategory(location.pathname, searchParams);
     setCategory(cat);
+
+    const diff = searchParams.get('difficulty') || 'all';
+    setDifficulty(diff);
+
+    const q = searchParams.get('q') || '';
+    setSearchQuery(q);
   }, [location.pathname, searchParams]);
 
   // Sync state changes with URL Search Params
   useEffect(() => {
     const params: Record<string, string> = {};
-    if (category !== 'all') params.category = category;
+
+    // Only set category search param if we are on the base '/listening/explore' page
+    // and the category is not 'all'.
+    const isSpecificPath = 
+      location.pathname.includes('/podcasts') ||
+      location.pathname.includes('/videos') ||
+      location.pathname.includes('/audiobooks') ||
+      location.pathname.includes('/practice') ||
+      location.pathname.includes('/news');
+
+    if (!isSpecificPath && category !== 'all') {
+      params.category = category;
+    }
+
     if (difficulty !== 'all') params.difficulty = difficulty;
     if (searchQuery) params.q = searchQuery;
-    setSearchParams(params);
-  }, [category, difficulty, searchQuery, setSearchParams]);
+
+    const currentParams = Object.fromEntries(searchParams.entries());
+    const hasChanged = 
+      params.category !== currentParams.category ||
+      params.difficulty !== currentParams.difficulty ||
+      params.q !== currentParams.q;
+
+    if (hasChanged) {
+      setSearchParams(params);
+    }
+  }, [category, difficulty, searchQuery, location.pathname, searchParams, setSearchParams]);
 
   // Fetch materials params
   const apiParams: {
@@ -94,18 +133,56 @@ export function useListeningExplore() {
   const sortedMaterials = getSortedMaterials();
 
   const handleResetFilters = () => {
-    setCategory('all');
-    setDifficulty('all');
-    setSearchQuery('');
     setSortBy('newest');
+    navigate('/listening/explore');
   };
 
   const handleDifficultyChange = (newDiff: string) => {
-    setDifficulty(newDiff);
+    const params = new URLSearchParams(searchParams);
+    if (newDiff === 'all') {
+      params.delete('difficulty');
+    } else {
+      params.set('difficulty', newDiff);
+    }
+    setSearchParams(params);
   };
 
   const handleCategoryChange = (newCat: string) => {
-    setCategory(newCat);
+    const newPath = getPathFromCategory(newCat);
+    const params = new URLSearchParams(searchParams);
+
+    if (newCat === 'community') {
+      params.set('category', 'community');
+    } else {
+      params.delete('category');
+    }
+
+    navigate({
+      pathname: newPath,
+      search: params.toString() ? `?${params.toString()}` : '',
+    });
+  };
+
+  const handleApplyPreset = (presetCat: string, presetDiff: string) => {
+    const newPath = getPathFromCategory(presetCat);
+    const params = new URLSearchParams(searchParams);
+
+    if (presetCat === 'community') {
+      params.set('category', 'community');
+    } else {
+      params.delete('category');
+    }
+
+    if (presetDiff === 'all') {
+      params.delete('difficulty');
+    } else {
+      params.set('difficulty', presetDiff);
+    }
+
+    navigate({
+      pathname: newPath,
+      search: params.toString() ? `?${params.toString()}` : '',
+    });
   };
 
   // Intersection Observer callback ref for infinite scroll
@@ -140,6 +217,7 @@ export function useListeningExplore() {
     handleResetFilters,
     handleDifficultyChange,
     handleCategoryChange,
+    handleApplyPreset,
     navigate,
     hasNextPage,
     isFetchingNextPage,

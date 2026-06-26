@@ -36,24 +36,24 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
   const text = LISTENING_WORKSPACE_TEXT.SHADOWING;
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between flex-1 shadow-xl backdrop-blur-md min-h-fit gap-6">
+    <div className="bg-card/40 border border-border rounded-2xl p-6 flex flex-col justify-between flex-1 shadow-xl backdrop-blur-md min-h-fit gap-6">
       {/* Target subtitle sentence display */}
       <div className="space-y-4">
-        <div className="pb-3 border-b border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs font-extrabold text-slate-505 uppercase tracking-widest">
+        <div className="pb-3 border-b border-border/80 flex items-center justify-between">
+          <span className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest">
             {text.EXERCISE_TITLE}
           </span>
-          <span className="text-[10px] font-bold text-slate-400 font-mono">
+          <span className="text-[10px] font-bold text-muted-foreground font-mono">
             {text.TIMESTAMP_LABEL(formatTime(currentSub.startTime), formatTime(currentSub.endTime))}
           </span>
         </div>
 
-        <div className="p-6 bg-slate-955/50 border border-slate-850 rounded-2xl space-y-3">
-          <p className="text-lg sm:text-xl font-bold leading-relaxed text-slate-250">
+        <div className="p-6 bg-muted/50 border border-border rounded-2xl space-y-3">
+          <p className="text-lg sm:text-xl font-bold leading-relaxed text-foreground">
             {currentSub.text}
           </p>
           {currentSub.translation && (
-            <p className="text-sm text-slate-500 leading-relaxed font-semibold border-t border-slate-800/50 pt-2">
+            <p className="text-sm text-muted-foreground leading-relaxed font-semibold border-t border-border/50 pt-2">
               {currentSub.translation}
             </p>
           )}
@@ -61,7 +61,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
       </div>
 
       {/* Interaction Center */}
-      <div className="flex flex-col items-center justify-center p-8 bg-slate-950/20 border border-slate-850 rounded-2xl gap-6">
+      <div className="flex flex-col items-center justify-center p-8 bg-muted/10 border border-border rounded-2xl gap-6">
         {micError && (
           <div className="w-full flex items-start gap-2.5 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-semibold">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -71,7 +71,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
 
         {/* Status Indicator */}
         <div className="text-center space-y-1">
-          <p className="text-xs font-bold text-slate-550 uppercase tracking-widest">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {text.STATUS_TITLE}
           </p>
           {isRecording ? (
@@ -89,7 +89,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
               </span>
             </div>
           ) : (
-            <p className="text-sm text-slate-400 font-semibold">
+            <p className="text-sm text-muted-foreground font-semibold">
               {text.STATUS_READY}
             </p>
           )}
@@ -99,23 +99,23 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
         {isRecording && (
           <div className="flex items-end gap-1.5 h-10">
             <span
-              className="w-1.5 bg-purple-500 rounded-full animate-bounce h-8"
+              className="w-1.5 bg-primary rounded-full animate-bounce h-8"
               style={{ animationDelay: '0.1s' }}
             />
             <span
-              className="w-1.5 bg-purple-500 rounded-full animate-bounce h-5"
+              className="w-1.5 bg-primary rounded-full animate-bounce h-5"
               style={{ animationDelay: '0.3s' }}
             />
             <span
-              className="w-1.5 bg-purple-500 rounded-full animate-bounce h-9"
+              className="w-1.5 bg-primary rounded-full animate-bounce h-9"
               style={{ animationDelay: '0.2s' }}
             />
             <span
-              className="w-1.5 bg-purple-500 rounded-full animate-bounce h-6"
+              className="w-1.5 bg-primary rounded-full animate-bounce h-6"
               style={{ animationDelay: '0.5s' }}
             />
             <span
-              className="w-1.5 bg-purple-500 rounded-full animate-bounce h-8"
+              className="w-1.5 bg-primary rounded-full animate-bounce h-8"
               style={{ animationDelay: '0.4s' }}
             />
           </div>
@@ -126,7 +126,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
           <button
             onClick={() => playSentence(currentSub.startTime, currentSub.endTime)}
             disabled={isRecording}
-            className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-white bg-purple-650 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md shadow-purple-650/15"
+            className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md shadow-primary/15"
           >
             <Volume2 className="w-4 h-4" />
             {text.PLAY_SAMPLE_BUTTON}
@@ -135,7 +135,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
           {!isRecording ? (
             <button
               onClick={startRecording}
-              className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-white bg-slate-905 border border-slate-800 hover:bg-slate-800/80 rounded-xl transition-all"
+              className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-foreground bg-background border border-border hover:bg-muted rounded-xl transition-all"
             >
               <Mic className="w-4 h-4 text-red-500" />
               {text.RECORD_BUTTON}
@@ -153,7 +153,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
           {recordedAudioUrl && !isRecording && (
             <button
               onClick={handlePlayUserAudio}
-              className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-slate-300 bg-slate-950 border border-slate-850 hover:bg-slate-900/60 rounded-xl transition-all"
+              className="flex items-center gap-2 px-5 py-3 text-xs font-extrabold text-muted-foreground bg-background border border-border hover:bg-muted rounded-xl transition-all"
             >
               <Play className="w-4 h-4 text-emerald-400" />
               {text.PLAY_USER_BUTTON}
@@ -163,19 +163,19 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-800/80 mt-auto">
+      <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/80 mt-auto">
         <button
           onClick={() => {
             const prev = Math.max(0, selectedSubIndex - 1);
             setSelectedSubIndex(prev);
           }}
           disabled={selectedSubIndex === 0}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-855 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           {text.PREV_BUTTON}
         </button>
-        <span className="text-xs text-slate-505 font-extrabold">
+        <span className="text-xs text-muted-foreground font-extrabold">
           Câu {selectedSubIndex + 1} / {subtitles.length}
         </span>
         <button
@@ -184,7 +184,7 @@ export const ShadowingExerciseCard: React.FC<ShadowingExerciseCardProps> = ({
             setSelectedSubIndex(next);
           }}
           disabled={selectedSubIndex === subtitles.length - 1}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-855 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           {text.NEXT_BUTTON}
           <Play className="w-3.5 h-3.5" />

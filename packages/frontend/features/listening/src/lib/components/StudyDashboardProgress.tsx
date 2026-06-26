@@ -14,44 +14,44 @@ export const StudyDashboardProgress: React.FC<StudyDashboardProgressProps> = ({
   sentenceCount,
 }) => {
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between">
+    <div className="bg-card/40 border border-border rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between">
       <div>
-        <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+        <h3 className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
           {LISTENING_DASHBOARD_TEXT.PROGRESS_TITLE}
         </h3>
 
         {/* Horizontal Progress */}
         <div className="mt-4 space-y-2">
-          <div className="flex justify-between items-baseline text-slate-300">
+          <div className="flex justify-between items-baseline text-foreground">
             <span className="text-2xl font-black">
               {progressPercent}%
             </span>
-            <span className="text-xs font-bold text-slate-500">
+            <span className="text-xs font-bold text-muted-foreground">
               {LISTENING_DASHBOARD_TEXT.PROGRESS_COMPLETED}
             </span>
           </div>
           <Progress
             value={progressPercent}
-            className="h-2 bg-slate-950 border border-slate-850"
+            className="h-2 bg-background border border-border"
           />
         </div>
       </div>
 
       {/* Progress details stats */}
-      <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-800/60 text-slate-400">
+      <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-border/60 text-muted-foreground">
         <div>
-          <span className="text-[10px] text-slate-500 font-bold uppercase block">
+          <span className="text-[10px] text-muted-foreground font-bold uppercase block">
             {LISTENING_DASHBOARD_TEXT.STATS_PRACTICE}
           </span>
-          <span className="text-xs font-extrabold text-slate-200">
+          <span className="text-xs font-extrabold text-foreground">
             {timeSpent} {LISTENING_DASHBOARD_TEXT.STATS_TIME_UNIT}
           </span>
         </div>
         <div>
-          <span className="text-[10px] text-slate-500 font-bold uppercase block">
+          <span className="text-[10px] text-muted-foreground font-bold uppercase block">
             {LISTENING_DASHBOARD_TEXT.STATS_SUBTITLES}
           </span>
-          <span className="text-xs font-extrabold text-slate-200">
+          <span className="text-xs font-extrabold text-foreground">
             {sentenceCount} {LISTENING_DASHBOARD_TEXT.STATS_SUBTITLES_UNIT}
           </span>
         </div>

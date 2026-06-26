@@ -47,8 +47,8 @@ export default function DictationWorkspaceContainer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
-        <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
         <p className="text-sm font-medium">
           {common.LOADING_DICTATION}
         </p>
@@ -58,15 +58,15 @@ export default function DictationWorkspaceContainer() {
 
   if (error || !material) {
     return (
-      <div className="min-h-screen bg-slate-955 flex flex-col items-center justify-center text-red-400 p-6 text-center">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-red-400 p-6 text-center">
         <Info className="w-12 h-12 text-red-500/80 mb-3" />
         <h2 className="text-lg font-bold">{common.ERROR_MATERIAL_TITLE}</h2>
-        <p className="text-sm text-slate-505 mt-1 max-w-sm">
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
           {common.ERROR_DICTATION_DESC}
         </p>
         <button
           onClick={() => navigate(LISTENING_ROUTES.HUB)}
-          className="mt-6 px-5 py-2.5 bg-slate-900 border border-slate-800 text-slate-350 hover:text-slate-202 rounded-xl text-xs font-bold"
+          className="mt-6 px-5 py-2.5 bg-secondary border border-border text-muted-foreground hover:text-foreground rounded-xl text-xs font-bold"
         >
           {common.BACK_TO_HOME}
         </button>
@@ -79,7 +79,7 @@ export default function DictationWorkspaceContainer() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-slate-955 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Hidden Audio Ref */}
       <audio
         ref={audioRef}
@@ -89,37 +89,37 @@ export default function DictationWorkspaceContainer() {
       />
 
       {/* Main Header */}
-      <header className="bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <header className="bg-card border-b border-border backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(LISTENING_ROUTES.STUDY(material.id))}
-            className="flex items-center justify-center p-2 text-slate-400 hover:text-slate-202 hover:bg-slate-800/60 rounded-xl transition-all"
+            className="flex items-center justify-center p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-extrabold uppercase text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+              <span className="text-[9px] font-extrabold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
                 {text.MODE_LABEL}
               </span>
-              <span className="text-xs text-slate-505">
+              <span className="text-xs text-muted-foreground">
                 • {material.difficulty}
               </span>
             </div>
-            <h1 className="text-base font-extrabold text-slate-202 mt-0.5 truncate max-w-md">
+            <h1 className="text-base font-extrabold text-foreground mt-0.5 truncate max-w-md">
               {material.title}
             </h1>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-6 text-slate-400">
+        <div className="hidden sm:flex items-center gap-6 text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-purple-400" />
+            <Clock className="w-4 h-4 text-primary" />
             <div className="text-left">
-              <p className="text-[10px] text-slate-500 font-bold uppercase">
+              <p className="text-[10px] text-muted-foreground/60 font-bold uppercase">
                 {text.STATS_TIME}
               </p>
-              <p className="text-xs font-bold text-slate-202">
+              <p className="text-xs font-bold text-foreground">
                 {formatTime(secondsSpent)}
               </p>
             </div>
@@ -127,10 +127,10 @@ export default function DictationWorkspaceContainer() {
           <div className="flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-emerald-400" />
             <div className="text-left">
-              <p className="text-[10px] text-slate-505 font-bold uppercase">
+              <p className="text-[10px] text-muted-foreground/60 font-bold uppercase">
                 {text.STATS_COMPLETED}
               </p>
-              <p className="text-xs font-bold text-slate-202">
+              <p className="text-xs font-bold text-foreground">
                 {text.STATS_COMPLETED_VAL(totalCompleted, subtitles.length)}
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function DictationWorkspaceContainer() {
         {/* Right column: Dictation Workspace */}
         <div className="flex-1 flex flex-col gap-6 overflow-y-auto pr-1 h-full">
           {totalCompleted === subtitles.length && subtitles.length > 0 && (
-            <div className="p-8 bg-gradient-to-br from-purple-500/10 to-indigo-950/40 border border-purple-500/30 rounded-2xl text-center space-y-5 backdrop-blur-md shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="p-8 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl text-center space-y-5 backdrop-blur-md shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
               <Trophy className="w-16 h-16 text-yellow-455 mx-auto animate-bounce" />
               <div className="space-y-1">
                 <h3 className="text-xl font-black text-slate-100">{common.CONGRATS_TITLE}</h3>
@@ -161,7 +161,7 @@ export default function DictationWorkspaceContainer() {
               </div>
               <button
                 onClick={() => navigate(LISTENING_ROUTES.STUDY(material.id))}
-                className="px-6 py-3 bg-purple-650 hover:bg-purple-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-650/15 hover:scale-102 active:scale-98"
+                className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-primary/15 hover:scale-102 active:scale-98"
               >
                 {common.CONGRATS_GO_BACK}
               </button>
@@ -190,8 +190,8 @@ export default function DictationWorkspaceContainer() {
               getDictationStats={getDictationStats}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-505 py-32 bg-slate-900/20 border border-slate-800 rounded-2xl">
-              <Info className="w-12 h-12 text-slate-700 mb-3" />
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground py-32 bg-muted/20 border border-border rounded-2xl">
+              <Info className="w-12 h-12 text-muted-foreground/60 mb-3" />
               <p className="text-sm font-medium">
                 {common.EMPTY_SUBTITLES}
               </p>

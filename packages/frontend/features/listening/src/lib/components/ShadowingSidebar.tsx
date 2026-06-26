@@ -19,10 +19,10 @@ export const ShadowingSidebar: React.FC<ShadowingSidebarProps> = ({
   const common = LISTENING_WORKSPACE_TEXT.COMMON;
 
   return (
-    <div className="w-full lg:w-4/12 bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-col h-[260px] lg:h-full overflow-hidden backdrop-blur-md">
+    <div className="w-full lg:w-4/12 bg-card/40 border border-border rounded-2xl p-4 flex flex-col h-[260px] lg:h-full overflow-hidden backdrop-blur-md">
       <div className="flex items-center gap-2 mb-3 px-2">
-        <BookOpen className="w-4 h-4 text-purple-400" />
-        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-350">
+        <BookOpen className="w-4 h-4 text-primary" />
+        <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
           {text.SIDEBAR_TITLE}
         </span>
       </div>
@@ -36,15 +36,15 @@ export const ShadowingSidebar: React.FC<ShadowingSidebarProps> = ({
               onClick={() => setSelectedSubIndex(idx)}
               className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
                 isCurrent
-                  ? 'bg-purple-600/10 border-purple-500/50 text-slate-100'
-                  : 'bg-slate-955/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800 text-slate-400 hover:text-slate-202'
+                  ? 'bg-primary/10 border-primary/50 text-foreground'
+                  : 'bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border text-muted-foreground hover:text-foreground'
               }`}
             >
               <span
                 className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                   isCurrent
-                    ? 'bg-purple-505 text-white'
-                    : 'bg-slate-800 text-slate-500'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {common.SENTENCE_NUMBER(idx + 1)}

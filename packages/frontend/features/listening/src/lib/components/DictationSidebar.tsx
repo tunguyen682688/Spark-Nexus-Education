@@ -25,15 +25,15 @@ export const DictationSidebar: React.FC<DictationSidebarProps> = ({
   const common = LISTENING_WORKSPACE_TEXT.COMMON;
 
   return (
-    <div className="w-full lg:w-4/12 bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-col h-[280px] lg:h-full overflow-hidden backdrop-blur-md">
+    <div className="w-full lg:w-4/12 bg-card/40 border border-border rounded-2xl p-4 flex flex-col h-[280px] lg:h-full overflow-hidden backdrop-blur-md">
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-purple-400" />
-          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
+          <BookOpen className="w-4 h-4 text-primary" />
+          <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
             {text.SIDEBAR_TITLE}
           </span>
         </div>
-        <span className="text-[11px] font-bold text-slate-505 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+        <span className="text-[11px] font-bold text-muted-foreground bg-background px-2 py-0.5 rounded border border-border">
           {text.SIDEBAR_ROWS(subtitles.length)}
         </span>
       </div>
@@ -52,16 +52,16 @@ export const DictationSidebar: React.FC<DictationSidebarProps> = ({
               onClick={() => setSelectedSubIndex(idx)}
               className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
                 isCurrent
-                  ? 'bg-purple-600/10 border-purple-500/50 text-slate-100 shadow-sm'
-                  : 'bg-slate-955/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-850 text-slate-400 hover:text-slate-202'
+                  ? 'bg-primary/10 border-primary/50 text-foreground shadow-sm'
+                  : 'bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border text-muted-foreground hover:text-foreground'
               }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span
                   className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                     isCurrent
-                      ? 'bg-purple-505 text-white'
-                      : 'bg-slate-800 text-slate-500'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {common.SENTENCE_NUMBER(idx + 1)}

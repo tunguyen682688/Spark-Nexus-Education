@@ -39,15 +39,15 @@ export const HubExamsCarousel: React.FC<HubExamsCarouselProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-black text-slate-100 flex items-center gap-2">
+          <h2 className="text-lg font-black text-foreground flex items-center gap-2">
             <Award className="w-5.5 h-5.5 text-emerald-455" />
             {text.TITLE}
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-slate-500 font-medium">{text.SUBTITLE}</p>
+            <p className="text-xs text-muted-foreground font-medium">{text.SUBTITLE}</p>
             <button
               onClick={() => navigate('/listening/explore?category=exam')}
-              className="text-[10px] font-black text-purple-400 hover:text-purple-300 hover:underline shrink-0"
+              className="text-[10px] font-black text-primary hover:text-primary/80 hover:underline shrink-0"
             >
               {text.VIEW_ALL}
             </button>
@@ -57,13 +57,13 @@ export const HubExamsCarousel: React.FC<HubExamsCarouselProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleScroll(examsScrollRef, 'left')}
-            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-455 hover:text-slate-200"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleScroll(examsScrollRef, 'right')}
-            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-455 hover:text-slate-200"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -78,9 +78,9 @@ export const HubExamsCarousel: React.FC<HubExamsCarouselProps> = ({
           <div
             key={exam.id}
             onClick={() => navigate(LISTENING_ROUTES.STUDY(exam.id))}
-            className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-start group relative flex items-center bg-slate-900/30 hover:bg-slate-900/60 border border-slate-850 hover:border-emerald-500/35 p-4 rounded-2xl transition-all duration-300 cursor-pointer gap-4"
+            className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-start group relative flex items-center bg-card border border-border hover:border-emerald-500/35 p-4 rounded-2xl transition-all duration-300 cursor-pointer gap-4"
           >
-            <div className="w-16 h-16 rounded-xl bg-slate-950 overflow-hidden border border-slate-850 shrink-0 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
               {exam.thumbnailUrl ? (
                 <img src={exam.thumbnailUrl} alt={exam.title} className="w-full h-full object-cover" />
               ) : (
@@ -89,7 +89,7 @@ export const HubExamsCarousel: React.FC<HubExamsCarouselProps> = ({
             </div>
 
             <div className="flex-1 min-w-0 space-y-1.5">
-              <h3 className="text-xs font-extrabold text-slate-200 line-clamp-1 group-hover:text-emerald-455 transition-colors">
+              <h3 className="text-xs font-extrabold text-foreground line-clamp-1 group-hover:text-emerald-455 transition-colors">
                 {exam.title}
               </h3>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -102,9 +102,9 @@ export const HubExamsCarousel: React.FC<HubExamsCarouselProps> = ({
                   </span>
                 )}
               </div>
-              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-slate-850">
+              <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/60">
                 <span>{exam.viewCount} {text.VIEWS_UNIT}</span>
-                <span className="text-slate-400 font-semibold">{text.MINUTES_UNIT(Math.floor(exam.duration / 60))}</span>
+                <span className="text-muted-foreground font-semibold">{text.MINUTES_UNIT(Math.floor(exam.duration / 60))}</span>
               </div>
             </div>
           </div>

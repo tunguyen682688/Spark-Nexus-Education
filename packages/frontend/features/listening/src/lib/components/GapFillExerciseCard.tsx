@@ -44,16 +44,16 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
   const text = LISTENING_WORKSPACE_TEXT.GAPFILL;
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between flex-1 shadow-xl backdrop-blur-md min-h-fit gap-6">
+    <div className="bg-card/40 border border-border rounded-2xl p-6 flex flex-col justify-between flex-1 shadow-xl backdrop-blur-md min-h-fit gap-6">
       <div className="space-y-6">
         {/* Mode header */}
-        <div className="pb-3 border-b border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs font-extrabold text-slate-505 uppercase tracking-widest">
+        <div className="pb-3 border-b border-border/80 flex items-center justify-between">
+          <span className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest">
             {text.EXERCISE_TITLE}
           </span>
           <button
             onClick={() => playSentence(currentSub.startTime, currentSub.endTime)}
-            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-purple-650 hover:bg-purple-500 rounded-xl transition-all shadow-md shadow-purple-650/15"
+            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md shadow-primary/15"
           >
             <Volume2 className="w-4 h-4" />
             {text.REPEAT_BUTTON}
@@ -61,7 +61,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
         </div>
 
         {/* Sentence with Inputs */}
-        <div className="p-6 bg-slate-955/50 border border-slate-850 rounded-2xl leading-loose flex flex-wrap items-center gap-x-2 gap-y-3">
+        <div className="p-6 bg-muted/50 border border-border rounded-2xl leading-loose flex flex-wrap items-center gap-x-2 gap-y-3">
           {wordsList.map((word, idx) => {
             const isBlanked = blankedIndices.includes(idx);
             if (isBlanked) {
@@ -70,7 +70,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               const userClean = cleanWord(userVal);
               const isCorrect = originalClean === userClean;
 
-              let inputStyle = 'border-slate-800 text-slate-202 focus:border-purple-500';
+              let inputStyle = 'border-border text-foreground focus:border-primary';
               if (isSubmitted) {
                 inputStyle = isCorrect
                   ? 'border-emerald-500 bg-emerald-500/5 text-emerald-400 font-bold'
@@ -98,10 +98,10 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
                     style={{
                       width: `${Math.max(originalClean.length, 4) * 11 + 24}px`,
                     }}
-                    className={`h-9 px-3 text-center text-sm font-semibold bg-slate-955 border rounded-lg focus:outline-none transition-all placeholder-slate-700 ${inputStyle}`}
+                    className={`h-9 px-3 text-center text-sm font-semibold bg-background border border-border rounded-lg focus:outline-none transition-all placeholder-muted-foreground/60 ${inputStyle}`}
                   />
                   {isSubmitted && !isCorrect && (
-                    <span className="absolute -top-6 text-[10px] text-emerald-400 font-bold bg-slate-955 px-1 py-0.5 rounded border border-slate-850 truncate max-w-fit">
+                    <span className="absolute -top-6 text-[10px] text-emerald-400 font-bold bg-background px-1 py-0.5 rounded border border-border truncate max-w-fit">
                       {originalClean}
                     </span>
                   )}
@@ -109,7 +109,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               );
             } else {
               return (
-                <span key={idx} className="text-base sm:text-lg font-semibold text-slate-300">
+                <span key={idx} className="text-base sm:text-lg font-semibold text-foreground">
                   {word}
                 </span>
               );
@@ -120,7 +120,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
         {/* Translation & Score blocks */}
         <div className="space-y-4">
           {isSubmitted && (
-            <div className="p-4 bg-slate-955 border border-slate-850 rounded-xl flex items-center justify-between text-xs font-bold transition-all">
+            <div className="p-4 bg-background border border-border rounded-xl flex items-center justify-between text-xs font-bold transition-all">
               <span
                 className={`px-2.5 py-1 rounded border ${
                   scoreStats.accuracy >= 90
@@ -130,18 +130,18 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               >
                 {text.ACCURACY_LABEL(scoreStats.accuracy)}
               </span>
-              <span className="text-slate-400">
+              <span className="text-muted-foreground">
                 {text.ACCURACY_STATS(scoreStats.correct, scoreStats.total)}
               </span>
             </div>
           )}
 
           {currentSub.translation && (
-            <div className="p-4 bg-slate-955/40 border border-slate-850 rounded-xl space-y-1">
-              <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">
+            <div className="p-4 bg-background/40 border border-border rounded-xl space-y-1">
+              <p className="text-[10px] text-primary font-bold uppercase tracking-wider">
                 {text.TRANSLATION_TITLE}
               </p>
-              <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+              <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
                 {currentSub.translation}
               </p>
             </div>
@@ -150,7 +150,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-800/80 mt-auto">
+      <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/80 mt-auto">
         <div className="flex gap-2">
           <button
             onClick={() => {
@@ -158,7 +158,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               setSelectedSubIndex(prev);
             }}
             disabled={selectedSubIndex === 0}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-855 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             {text.PREV_BUTTON}
@@ -169,7 +169,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               setSelectedSubIndex(next);
             }}
             disabled={selectedSubIndex === subtitleCount - 1}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-400 bg-slate-900 border border-slate-855 hover:bg-slate-800/60 hover:text-slate-202 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-muted-foreground bg-background border border-border hover:bg-muted hover:text-foreground rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             {text.NEXT_BUTTON}
           </button>
@@ -178,7 +178,7 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
         <div className="flex gap-2">
           <button
             onClick={() => setShowHints(!showHints)}
-            className="px-4 py-2 text-xs font-bold text-slate-350 bg-slate-950 hover:bg-slate-900 rounded-xl transition-all border border-slate-850"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border"
           >
             {showHints ? text.HIDE_HINT : text.SHOW_HINT}
           </button>
@@ -191,14 +191,14 @@ export const GapFillExerciseCard: React.FC<GapFillExerciseCardProps> = ({
               setUserAnswers(answers);
               handleSubmitGapFill();
             }}
-            className="px-4 py-2 text-xs font-bold text-slate-300 bg-slate-850 hover:bg-slate-800 rounded-xl transition-all border border-slate-800"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground bg-background hover:bg-muted rounded-xl transition-all border border-border"
           >
             {text.ANSWERS_BUTTON}
           </button>
           <button
             onClick={handleSubmitGapFill}
             disabled={blankedIndices.length === 0}
-            className="px-5 py-2 text-xs font-bold text-white bg-purple-650 hover:bg-purple-600 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-650/15"
+            className="px-5 py-2 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-primary/15"
           >
             {text.CHECK_BUTTON}
           </button>

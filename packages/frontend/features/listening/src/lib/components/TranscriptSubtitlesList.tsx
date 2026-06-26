@@ -40,7 +40,7 @@ export const TranscriptSubtitlesList: React.FC<TranscriptSubtitlesListProps> = (
         <span
           key={idx}
           onClick={(e) => handleWordClick(e, word)}
-          className="hover:text-purple-400 cursor-help transition-colors select-none font-semibold"
+          className="hover:text-primary cursor-help transition-colors select-none font-semibold"
         >
           {word}
         </span>
@@ -64,28 +64,28 @@ export const TranscriptSubtitlesList: React.FC<TranscriptSubtitlesListProps> = (
               onClick={() => handleSubtitleClick(sub.startTime)}
               className={`group p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
                 isActive
-                  ? 'bg-purple-600/10 border-purple-500/40 shadow-lg shadow-purple-500/5'
-                  : 'bg-slate-900/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800'
+                  ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5'
+                  : 'bg-secondary/40 border-border hover:bg-secondary/70'
               }`}
             >
               <div className="flex items-start gap-4">
                 <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded shrink-0 ${
                   isActive 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-slate-950 border border-slate-850 text-slate-500 group-hover:text-slate-400'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-secondary border border-border text-muted-foreground/80 group-hover:text-muted-foreground'
                 }`}>
                   {formatTime(sub.startTime)}
                 </span>
 
                 <div className="flex-1 space-y-1">
                   <p className={`text-base font-semibold leading-relaxed transition-colors duration-300 ${
-                    isActive ? 'text-slate-100' : 'text-slate-350 group-hover:text-slate-202'
+                    isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
                   }`}>
                     {renderInteractiveText(sub.text)}
                   </p>
                   {showTranslation && sub.translation && (
                     <p className={`text-sm leading-relaxed transition-colors duration-300 ${
-                      isActive ? 'text-purple-300/90' : 'text-slate-500 group-hover:text-slate-400'
+                      isActive ? 'text-primary/95 font-semibold' : 'text-muted-foreground/60 group-hover:text-muted-foreground/80'
                     }`}>
                       {sub.translation}
                     </p>
