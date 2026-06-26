@@ -136,23 +136,23 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
         zIndex: 999,
       }}
       onClick={(e) => e.stopPropagation()}
-      className="w-80 bg-slate-900/95 border border-slate-800 backdrop-blur-md shadow-2xl rounded-2xl p-5 text-slate-100 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+      className="w-80 bg-card border border-border backdrop-blur-md shadow-2xl rounded-2xl p-5 text-foreground flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
     >
       {/* Header */}
-      <div className="flex items-start justify-between border-b border-slate-800 pb-2.5">
+      <div className="flex items-start justify-between border-b border-border pb-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-black text-slate-50 tracking-tight capitalize">
+            <h3 className="text-lg font-black text-foreground tracking-tight capitalize">
               {cleanWord}
             </h3>
             {wordData?.partOfSpeech && (
-              <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 {wordData.partOfSpeech}
               </span>
             )}
           </div>
           {wordData?.pronunciation && (
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">
               /{wordData.pronunciation}/
             </p>
           )}
@@ -160,14 +160,14 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
         <div className="flex items-center gap-1.5">
           <button
             onClick={handlePlayAudio}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-purple-400 transition-all"
+            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-primary transition-all"
             title="Nghe phát âm"
           >
             <Volume2 className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-all"
+            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -177,18 +177,18 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
       {/* Body Content */}
       <div className="flex-1 flex flex-col justify-center min-h-[90px]">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-6 text-slate-500">
-            <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+          <div className="flex flex-col items-center justify-center gap-2 py-6 text-muted-foreground">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
             <p className="text-[10px] font-bold uppercase tracking-wider animate-pulse">
               Đang tra từ điển...
             </p>
           </div>
         ) : error || !wordData ? (
           <div className="text-center py-4 space-y-1">
-            <p className="text-sm font-semibold text-slate-400">
+            <p className="text-sm font-semibold text-muted-foreground">
               Không tìm thấy từ này
             </p>
-            <p className="text-xs text-slate-505 leading-relaxed">
+            <p className="text-xs text-muted-foreground/80 leading-relaxed">
               Từ vựng hiện chưa có trong cơ sở dữ liệu từ điển. Bạn có muốn nghe phát âm?
             </p>
           </div>
@@ -196,25 +196,25 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
           <div className="space-y-3">
             {/* Definition */}
             <div>
-              <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wide">
+              <p className="text-xs text-muted-foreground font-extrabold uppercase tracking-wide">
                 Định nghĩa
               </p>
-              <p className="text-sm text-slate-205 font-medium leading-relaxed mt-0.5">
+              <p className="text-sm text-foreground font-medium leading-relaxed mt-0.5">
                 {wordData.definition}
               </p>
             </div>
 
             {/* Example sentence */}
             {wordData.example && (
-              <div className="border-t border-slate-850 pt-2.5 space-y-0.5">
-                <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wide">
+              <div className="border-t border-border pt-2.5 space-y-0.5">
+                <p className="text-xs text-muted-foreground font-extrabold uppercase tracking-wide">
                   Ví dụ
                 </p>
-                <p className="text-xs text-slate-300 italic font-semibold leading-relaxed">
+                <p className="text-xs text-foreground italic font-semibold leading-relaxed">
                   "{wordData.example}"
                 </p>
                 {wordData.exampleTranslation && (
-                  <p className="text-[11px] text-slate-505 leading-relaxed font-medium">
+                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed font-medium">
                     {wordData.exampleTranslation}
                   </p>
                 )}
@@ -226,13 +226,13 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
 
       {/* Add word to set Section */}
       {wordData && (
-        <div className="border-t border-slate-800 pt-3 flex flex-col gap-2">
+        <div className="border-t border-border pt-3 flex flex-col gap-2">
           {userSets.length > 0 ? (
             <div className="flex items-center gap-2">
               <select
                 value={selectedSetId}
                 onChange={(e) => setSelectedSetId(e.target.value)}
-                className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-purple-500/50"
+                className="flex-1 text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-primary/50"
               >
                 {userSets.map((set) => (
                   <option key={set.id} value={set.id}>
@@ -246,7 +246,7 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
                 className={`flex items-center justify-center p-2 rounded-xl border transition-all ${
                   isSaved
                     ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-400'
-                    : 'bg-purple-650 hover:bg-purple-600 border-purple-500 text-white hover:scale-102 active:scale-98 disabled:opacity-50'
+                    : 'bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:scale-102 active:scale-98 disabled:opacity-50'
                 }`}
                 title="Lưu từ vào bộ"
               >
@@ -260,7 +260,7 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
               </button>
             </div>
           ) : (
-            <div className="text-[11px] text-slate-505 flex items-center gap-1.5 justify-center py-1">
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 justify-center py-1">
               <Bookmark className="w-3.5 h-3.5" />
               <span>Hãy tạo một bộ từ vựng trước để lưu từ.</span>
             </div>

@@ -16,7 +16,7 @@ export const LibraryAchievementsGrid: React.FC<LibraryAchievementsGridProps> = (
   const getIcon = (id: string) => {
     switch (id) {
       case 'first-step':
-        return <Rocket className="w-5 h-5 text-purple-400" />;
+        return <Rocket className="w-5 h-5 text-primary" />;
       case 'listening-pro':
         return <Zap className="w-5 h-5 text-yellow-400" />;
       case 'streak-consistency':
@@ -29,13 +29,13 @@ export const LibraryAchievementsGrid: React.FC<LibraryAchievementsGridProps> = (
   };
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 shadow-lg space-y-4">
+    <div className="bg-card/40 border border-border rounded-3xl p-6 shadow-lg space-y-4">
       <div>
-        <h3 className="text-xs font-black uppercase tracking-wider text-slate-455 flex items-center gap-2">
+        <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
           <Trophy className="w-4 h-4 text-amber-500" />
           Huy Hiệu Học Tập
         </h3>
-        <p className="text-[10px] text-slate-500 mt-0.5">Mở khóa huy hiệu dựa trên nỗ lực của bạn</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">Mở khóa huy hiệu dựa trên nỗ lực của bạn</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -44,12 +44,12 @@ export const LibraryAchievementsGrid: React.FC<LibraryAchievementsGridProps> = (
             key={item.id}
             className={`p-3 rounded-2xl border flex flex-col justify-between items-center text-center transition-all ${
               item.unlocked
-                ? 'bg-slate-950/60 border-slate-800 text-slate-200'
-                : 'bg-slate-950/20 border-slate-900/60 text-slate-600 grayscale opacity-40'
+                ? 'bg-background border-border text-foreground'
+                : 'bg-muted/20 border-border/40 text-muted-foreground grayscale opacity-40'
             }`}
             title={item.description}
           >
-            <div className="p-2 rounded-xl bg-slate-900/50 mb-2 border border-slate-850">
+            <div className="p-2 rounded-xl bg-muted/50 mb-2 border border-border">
               {getIcon(item.id)}
             </div>
             <span className="text-[10px] font-black">{item.title}</span>

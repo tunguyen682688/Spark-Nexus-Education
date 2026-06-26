@@ -11,7 +11,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'podcast':
-        return <Headset className="w-4 h-4 text-purple-400" />;
+        return <Headset className="w-4 h-4 text-primary" />;
       case 'video':
         return <Video className="w-4 h-4 text-red-400" />;
       case 'exam':
@@ -50,7 +50,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
   return (
     <div
       onClick={() => onClick(material.id)}
-      className="group relative flex flex-col bg-card border border-border rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300 cursor-pointer"
+      className="group relative flex flex-col bg-card border border-border rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
     >
       {/* Thumbnail or Category Placeholder */}
       <div className="relative aspect-video w-full bg-muted overflow-hidden">
@@ -62,18 +62,18 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/60">
-            {material.category === 'podcast' && <Headset className="w-12 h-12 text-purple-550/40" />}
-            {material.category === 'video' && <Video className="w-12 h-12 text-red-550/40" />}
-            {material.category === 'exam' && <Award className="w-12 h-12 text-emerald-550/40" />}
+            {material.category === 'podcast' && <Headset className="w-12 h-12 text-primary/40" />}
+            {material.category === 'video' && <Video className="w-12 h-12 text-red-500/40" />}
+            {material.category === 'exam' && <Award className="w-12 h-12 text-emerald-500/40" />}
             {material.category !== 'podcast' && material.category !== 'video' && material.category !== 'exam' && (
-              <Play className="w-12 h-12 text-blue-550/40" />
+              <Play className="w-12 h-12 text-blue-500/40" />
             )}
           </div>
         )}
 
         {/* Hover overlay with Play button */}
         <div className="absolute inset-0 bg-background/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-          <div className="p-4 bg-purple-600 text-white rounded-full shadow-lg shadow-purple-600/30 transform scale-90 group-hover:scale-100 transition-transform duration-300">
+          <div className="p-4 bg-primary text-primary-foreground rounded-full shadow-lg shadow-primary/30 transform scale-90 group-hover:scale-100 transition-transform duration-300">
             <Play className="w-6 h-6 fill-current" />
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
 
         {/* Community contribution label */}
         {material.isCommunity && (
-          <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-violet-650 text-white rounded shadow-sm shadow-violet-600/20">
+          <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-primary text-primary-foreground rounded shadow-sm shadow-primary/20">
             Cộng đồng
           </span>
         )}
@@ -107,7 +107,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
         <span className="text-xs font-medium text-muted-foreground mb-2 truncate">
           {material.author || 'Danh mục Luyện nghe'}
         </span>
-        <h3 className="text-base font-bold text-foreground group-hover:text-purple-500 transition-colors line-clamp-2 mb-3">
+        <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-3">
           {material.title}
         </h3>
 
@@ -146,7 +146,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
                   e.stopPropagation();
                   onDictationClick?.(material.id);
                 }}
-                className="flex items-center gap-1 text-[11px] font-bold text-purple-500 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-600 hover:text-white hover:border-purple-500 px-3 py-1 rounded-full transition-all duration-200"
+                className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary px-3 py-1 rounded-full transition-all duration-200"
               >
                 <Keyboard className="w-3.5 h-3.5" />
                 Chép chính tả
@@ -161,7 +161,7 @@ export default function ListeningCard({ material, onClick, onDictationClick }: L
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-border">
           <div
             className={`h-full transition-all duration-300 ${
-              progressPercent >= 100 ? 'bg-emerald-500' : 'bg-purple-500'
+              progressPercent >= 100 ? 'bg-emerald-500' : 'bg-primary'
             }`}
             style={{ width: `${progressPercent}%` }}
           />

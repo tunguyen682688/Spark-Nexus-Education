@@ -39,15 +39,15 @@ export const HubCommunitySection: React.FC<HubCommunitySectionProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-black text-slate-100 flex items-center gap-2">
-            <Globe className="w-5.5 h-5.5 text-indigo-400" />
+          <h2 className="text-lg font-black text-foreground flex items-center gap-2">
+            <Globe className="w-5.5 h-5.5 text-primary" />
             {text.TITLE}
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-slate-500 font-medium">{text.SUBTITLE}</p>
+            <p className="text-xs text-muted-foreground font-medium">{text.SUBTITLE}</p>
             <button
               onClick={() => navigate('/listening/explore?category=community')}
-              className="text-[10px] font-black text-purple-400 hover:text-purple-300 hover:underline shrink-0"
+              className="text-[10px] font-black text-primary hover:text-primary/80 hover:underline shrink-0"
             >
               {text.VIEW_ALL}
             </button>
@@ -57,13 +57,13 @@ export const HubCommunitySection: React.FC<HubCommunitySectionProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleScroll(communityScrollRef, 'left')}
-            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-455 hover:text-slate-200"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleScroll(communityScrollRef, 'right')}
-            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-455 hover:text-slate-200"
+            className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -76,19 +76,19 @@ export const HubCommunitySection: React.FC<HubCommunitySectionProps> = ({
       >
         <div
           onClick={handleNavigateContribute}
-          className="min-w-[200px] max-w-[200px] snap-start border-2 border-dashed border-slate-800 hover:border-purple-500 bg-slate-900/10 hover:bg-purple-950/[0.05] p-5 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center text-center gap-3 shrink-0"
+          className="min-w-[200px] max-w-[200px] snap-start border-2 border-dashed border-border hover:border-primary bg-card/40 hover:bg-primary/[0.03] p-5 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center text-center gap-3 shrink-0"
         >
-          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-2xl group-hover:scale-105 transition-transform">
+          <div className="p-3 bg-primary/10 text-primary rounded-2xl group-hover:scale-105 transition-transform">
             <Plus className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xs font-extrabold text-slate-200">{text.ADD_CTA}</h3>
-            <p className="text-[10px] text-slate-500 mt-1 font-semibold">{text.ADD_DESC}</p>
+            <h3 className="text-xs font-extrabold text-foreground">{text.ADD_CTA}</h3>
+            <p className="text-[10px] text-muted-foreground mt-1 font-semibold">{text.ADD_DESC}</p>
           </div>
         </div>
 
         {communityItems.length === 0 ? (
-          <div className="flex items-center text-xs text-slate-500 border border-slate-850 rounded-2xl px-6 bg-slate-900/10">
+          <div className="flex items-center text-xs text-muted-foreground border border-border rounded-2xl px-6 bg-card">
             {text.EMPTY}
           </div>
         ) : (
@@ -96,19 +96,19 @@ export const HubCommunitySection: React.FC<HubCommunitySectionProps> = ({
             <div
               key={item.id}
               onClick={() => navigate(LISTENING_ROUTES.STUDY(item.id))}
-              className="min-w-[200px] max-w-[200px] snap-start group bg-slate-900/30 hover:bg-slate-900/70 border border-slate-850 hover:border-purple-500/30 p-4 rounded-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between"
+              className="min-w-[200px] max-w-[200px] snap-start group bg-card border border-border hover:border-primary/30 p-4 rounded-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between"
             >
               <div className="space-y-3">
-                <span className="text-[9px] font-black uppercase bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 px-2 py-0.5 rounded">
+                <span className="text-[9px] font-black uppercase bg-primary/10 border border-primary/20 text-primary px-2 py-0.5 rounded">
                   CỘNG ĐỒNG
                 </span>
-                <h3 className="text-xs font-black text-slate-200 line-clamp-2 group-hover:text-purple-400 transition-colors leading-snug">
+                <h3 className="text-xs font-black text-foreground group-hover:text-primary transition-colors leading-snug">
                   {item.title}
                 </h3>
-                <p className="text-[10px] text-slate-500 truncate">{text.DEFAULT_AUTHOR}: {item.author || 'Học viên'}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{text.DEFAULT_AUTHOR}: {item.author || 'Học viên'}</p>
               </div>
               
-              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-3 border-t border-slate-850 mt-3">
+              <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-3 border-t border-border/60 mt-3">
                 <span className="capitalize">{item.category}</span>
                 <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${getDifficultyColor(item.difficulty)}`}>
                   {item.difficulty}

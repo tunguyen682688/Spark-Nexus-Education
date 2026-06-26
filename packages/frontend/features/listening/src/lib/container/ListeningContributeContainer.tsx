@@ -64,7 +64,7 @@ export default function ListeningContributeContainer() {
   const text = LISTENING_CONTRIBUTE_TEXT;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 sm:p-8">
+    <div className="min-h-screen bg-background text-foreground p-6 sm:p-8">
       
       {/* Hidden background audio player for syncing */}
       {mediaUrl && (
@@ -83,27 +83,27 @@ export default function ListeningContributeContainer() {
           <div className="space-y-1">
             <button
               onClick={() => navigate('/listening')}
-              className="flex items-center gap-2 text-xs font-extrabold text-slate-400 hover:text-slate-205 transition-colors bg-slate-900/60 border border-slate-850 px-4 py-2 rounded-xl"
+              className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground hover:text-foreground transition-colors bg-card border border-border px-4 py-2 rounded-xl"
             >
               <ArrowLeft className="w-4 h-4" />
               {text.BACK_TO_LIST}
             </button>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-150 pt-2 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-purple-400" />
+            <h1 className="text-xl sm:text-2xl font-black text-foreground pt-2 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-primary" />
               {text.HEADER_TITLE}
             </h1>
           </div>
 
           {/* Stepper Wizard Indicator */}
-          <div className="flex items-center bg-slate-900/50 border border-slate-850 rounded-xl px-3 py-1.5 gap-2.5">
+          <div className="flex items-center bg-card border border-border rounded-xl px-3 py-1.5 gap-2.5">
             {[1, 2, 3, 4].map((step) => (
               <button
                 key={step}
                 onClick={() => setCurrentStep(step)}
                 className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
                   currentStep === step
-                    ? 'bg-purple-650 text-white shadow-md'
-                    : 'bg-slate-955 text-slate-500 hover:text-slate-300'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {step}
