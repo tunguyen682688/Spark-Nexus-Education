@@ -57,19 +57,19 @@ export default function ListeningStudyDashboardContainer() {
   const progressPercent = material.userProgress?.progress || 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col p-6 sm:p-8">
-      <div className="max-w-full mx-auto w-full space-y-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Header Back Link */}
         <Button
           onClick={() => navigate(LISTENING_ROUTES.HUB)}
-          className="flex items-center gap-2 text-xs font-extrabold text-muted-foreground hover:text-foreground transition-colors w-fit bg-secondary hover:bg-secondary/80 border border-border px-4 py-2 rounded-xl"
+          className="flex w-fit items-center gap-2 rounded-2xl border border-border bg-secondary/80 px-4 py-2 text-xs font-extrabold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           {LISTENING_DASHBOARD_TEXT.BACK_TO_LIST}
         </Button>
 
         {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
           {/* Left Column: Material details */}
           <StudyDashboardMaterialInfo
             material={material}

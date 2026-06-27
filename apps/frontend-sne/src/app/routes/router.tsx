@@ -684,10 +684,10 @@ export const createRouter = () =>
         {
           path: 'listening/podcasts',
           lazy: async () => {
-            const { ListeningExplorePage } = await import(
+            const { ListeningPodcastsPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningExplorePage };
+            return { Component: ListeningPodcastsPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -695,10 +695,10 @@ export const createRouter = () =>
         {
           path: 'listening/videos',
           lazy: async () => {
-            const { ListeningExplorePage } = await import(
+            const { ListeningVideosPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningExplorePage };
+            return { Component: ListeningVideosPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -706,10 +706,10 @@ export const createRouter = () =>
         {
           path: 'listening/audiobooks',
           lazy: async () => {
-            const { ListeningExplorePage } = await import(
+            const { ListeningAudiobooksPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningExplorePage };
+            return { Component: ListeningAudiobooksPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -717,10 +717,10 @@ export const createRouter = () =>
         {
           path: 'listening/practice',
           lazy: async () => {
-            const { ListeningExplorePage } = await import(
+            const { ListeningExamsPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningExplorePage };
+            return { Component: ListeningExamsPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -728,10 +728,10 @@ export const createRouter = () =>
         {
           path: 'listening/news',
           lazy: async () => {
-            const { ListeningExplorePage } = await import(
+            const { ListeningNewsPage } = await import(
               '@spark-nest-ed/feature-listening'
             );
-            return { Component: ListeningExplorePage };
+            return { Component: ListeningNewsPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

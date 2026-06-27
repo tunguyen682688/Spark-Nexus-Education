@@ -33,7 +33,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {/* Mode 1: Transcript & Shadowing */}
       <div
         onClick={() => onNavigate(LISTENING_ROUTES.WORKSPACE.TRANSCRIPT(materialId))}
-        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 hover:bg-primary/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+        className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.03] hover:shadow-md"
       >
         <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
           <BookOpen className="w-5 h-5" />
@@ -51,7 +51,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {/* Mode 2: Dictation Practice */}
       <div
         onClick={() => onNavigate(LISTENING_ROUTES.WORKSPACE.DICTATION(materialId))}
-        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 hover:bg-primary/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+        className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.03] hover:shadow-md"
       >
         <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
           <Keyboard className="w-5 h-5" />
@@ -69,7 +69,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {/* Mode 3: Gap Fill Practice */}
       <div
         onClick={() => onNavigate(LISTENING_ROUTES.WORKSPACE.GAPFILL(materialId))}
-        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 hover:bg-primary/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+        className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.03] hover:shadow-md"
       >
         <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
           <Sparkles className="w-5 h-5" />
@@ -87,7 +87,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {/* Mode 4: Shadowing Voice Practice */}
       <div
         onClick={() => onNavigate(LISTENING_ROUTES.WORKSPACE.SHADOWING(materialId))}
-        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 hover:bg-primary/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+        className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.03] hover:shadow-md"
       >
         <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
           <Mic className="w-5 h-5" />
@@ -106,7 +106,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {hasQuestions ? (
         <div
           onClick={() => onNavigate(LISTENING_ROUTES.WORKSPACE.QUIZ(materialId))}
-          className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 hover:bg-primary/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+          className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.03] hover:shadow-md"
         >
           <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
             <Award className="w-5 h-5" />
@@ -121,7 +121,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
           </div>
         </div>
       ) : (
-        <div className="relative overflow-hidden bg-muted/40 border border-border p-5 rounded-2xl opacity-50 flex items-start gap-4 cursor-not-allowed">
+        <div className="relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-muted/40 p-5 opacity-50">
           <div className="p-3 bg-muted text-muted-foreground rounded-xl">
             <Award className="w-5 h-5" />
           </div>
@@ -140,7 +140,7 @@ export const StudyDashboardWorkspaces: React.FC<StudyDashboardWorkspacesProps> =
       {vocabularySetId && (
         <div
           onClick={() => onNavigate(`/vocabularies/set/${vocabularySetId}/detail`)}
-          className="group relative overflow-hidden bg-card border border-border hover:border-emerald-500/50 hover:bg-emerald-500/[0.02] p-5 rounded-2xl cursor-pointer shadow-md transition-all duration-300 flex items-start gap-4"
+          className="group relative flex items-start gap-4 overflow-hidden rounded-[22px] border border-border/70 bg-card/90 p-5 shadow-sm transition-all duration-300 hover:border-emerald-500/50 hover:bg-emerald-500/[0.03] hover:shadow-md"
         >
           <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
             <Layers className="w-5 h-5" />

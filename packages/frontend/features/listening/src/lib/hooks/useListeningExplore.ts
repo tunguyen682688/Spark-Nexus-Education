@@ -23,13 +23,20 @@ function getPathFromCategory(cat: string): string {
   }
 }
 
-export function useListeningExplore() {
+interface UseListeningExploreOptions {
+  fixedCategory?: string;
+}
+
+export function useListeningExplore(options?: UseListeningExploreOptions) {
+  const fixedCategory = options?.fixedCategory;
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // State values
-  const [category, setCategory] = useState<string>(getInitialCategory(location.pathname, searchParams));
+  const [category, setCategory] = useState<string>(
+    fixedCategory || getInitialCategory(location.pathname, searchParams)
+  );
   const [difficulty, setDifficulty] = useState<string>(searchParams.get('difficulty') || 'all');
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState<string>('newest'); // 'newest' | 'views' | 'subtitles'
@@ -37,7 +44,7 @@ export function useListeningExplore() {
 
   // Update states if category, difficulty or query changes in URL (e.g. back/forward button)
   useEffect(() => {
-    const cat = getInitialCategory(location.pathname, searchParams);
+    const cat = fixedCategory || getInitialCategory(location.pathname, searchParams);
     setCategory(cat);
 
     const diff = searchParams.get('difficulty') || 'all';
@@ -45,7 +52,7 @@ export function useListeningExplore() {
 
     const q = searchParams.get('q') || '';
     setSearchQuery(q);
-  }, [location.pathname, searchParams]);
+  }, [location.pathname, searchParams, fixedCategory]);
 
   // Sync state changes with URL Search Params
   useEffect(() => {
@@ -54,6 +61,7 @@ export function useListeningExplore() {
     // Only set category search param if we are on the base '/listening/explore' page
     // and the category is not 'all'.
     const isSpecificPath = 
+      fixedCategory ||
       location.pathname.includes('/podcasts') ||
       location.pathname.includes('/videos') ||
       location.pathname.includes('/audiobooks') ||
@@ -76,7 +84,7 @@ export function useListeningExplore() {
     if (hasChanged) {
       setSearchParams(params);
     }
-  }, [category, difficulty, searchQuery, location.pathname, searchParams, setSearchParams]);
+  }, [category, difficulty, searchQuery, location.pathname, searchParams, setSearchParams, fixedCategory]);
 
   // Fetch materials params
   const apiParams: {
@@ -134,7 +142,7 @@ export function useListeningExplore() {
 
   const handleResetFilters = () => {
     setSortBy('newest');
-    navigate('/listening/explore');
+    navigate(fixedCategory ? getPathFromCategory(fixedCategory) : '/listening/explore');
   };
 
   const handleDifficultyChange = (newDiff: string) => {

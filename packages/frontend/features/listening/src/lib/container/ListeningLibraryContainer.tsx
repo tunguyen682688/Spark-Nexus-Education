@@ -58,8 +58,8 @@ export default function ListeningLibraryContainer() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background text-foreground p-6 sm:p-8">
-        <div className="max-w-full mx-auto space-y-8">
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           
           {/* Back Navigation & Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

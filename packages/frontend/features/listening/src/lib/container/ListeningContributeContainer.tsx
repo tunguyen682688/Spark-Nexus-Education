@@ -65,7 +65,6 @@ export default function ListeningContributeContainer() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6 sm:p-8">
-      
       {/* Hidden background audio player for syncing */}
       {mediaUrl && (
         <audio
@@ -76,8 +75,7 @@ export default function ListeningContributeContainer() {
         />
       )}
 
-      <div className="max-w-6xl mx-auto space-y-6">
-        
+      <div className="max-w-full mx-auto space-y-6">
         {/* Header Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
@@ -116,7 +114,10 @@ export default function ListeningContributeContainer() {
         {errorMsg && (
           <div className="p-3.5 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl flex items-center justify-between">
             <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg('')} className="p-1 text-red-400/60 hover:text-red-400">
+            <button
+              onClick={() => setErrorMsg('')}
+              className="p-1 text-red-400/60 hover:text-red-400"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -210,7 +211,6 @@ export default function ListeningContributeContainer() {
             onSubmitPublish={handleSubmitPublish}
           />
         )}
-
       </div>
     </div>
   );

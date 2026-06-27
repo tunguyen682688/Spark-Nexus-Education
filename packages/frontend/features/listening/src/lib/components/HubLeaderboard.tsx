@@ -57,7 +57,7 @@ export const HubLeaderboard: React.FC<HubLeaderboardProps> = ({
 
             let rankIcon: React.ReactNode = rank;
             let bgGradient = "from-slate-750 to-slate-900";
-            let borderClass = "border-border";
+            const borderClass = "border-border";
 
             if (isTop1) {
               rankIcon = <span role="img" aria-label="gold medal">🥇</span>;

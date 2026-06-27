@@ -14,7 +14,7 @@ export const StudyDashboardProgress: React.FC<StudyDashboardProgressProps> = ({
   sentenceCount,
 }) => {
   return (
-    <div className="bg-card/40 border border-border rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between">
+    <div className="flex flex-col justify-between rounded-[24px] border border-border/70 bg-card/90 p-6 shadow-sm backdrop-blur-md">
       <div>
         <h3 className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
           {LISTENING_DASHBOARD_TEXT.PROGRESS_TITLE}

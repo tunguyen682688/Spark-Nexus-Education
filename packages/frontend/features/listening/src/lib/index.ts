@@ -20,7 +20,13 @@ export * from './constants';
 export { default as ListeningHubPage } from './pages/ListeningHubPage';
 export { default as ListeningLibraryPage } from './pages/ListeningLibraryPage';
 export { default as ListeningExplorePage } from './pages/ListeningExplorePage';
+export { default as ListeningPodcastsPage } from './pages/ListeningPodcastsPage';
+export { default as ListeningVideosPage } from './pages/ListeningVideosPage';
+export { default as ListeningAudiobooksPage } from './pages/ListeningAudiobooksPage';
+export { default as ListeningExamsPage } from './pages/ListeningExamsPage';
+export { default as ListeningNewsPage } from './pages/ListeningNewsPage';
 export { default as ListeningContributePage } from './pages/ListeningContributePage';
+
 export { default as DictationWorkspacePage } from './pages/DictationWorkspacePage';
 export { default as ListeningStudyDashboardPage } from './pages/ListeningStudyDashboardPage';
 
