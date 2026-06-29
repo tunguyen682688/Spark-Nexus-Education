@@ -6,18 +6,18 @@ import type { IGrammarProgressRepository } from '../../../domain/repositories/gr
 import { LessonCompletedEvent } from '../../../domain/events/lesson-completed.event';
 
 @CommandHandler(CompleteLessonCommand)
-export class CompleteLessonHandler implements ICommandHandler<CompleteLessonCommand, any> {
+export class CompleteLessonHandler implements ICommandHandler<CompleteLessonCommand, { id: string; success: boolean; data: unknown }> {
   constructor(
     @Inject(GRAMMAR_PROGRESS_REPOSITORY)
     private readonly progressRepository: IGrammarProgressRepository,
     private readonly eventBus: EventBus
   ) {}
 
-  async execute(command: CompleteLessonCommand): Promise<any> {
+  async execute(command: CompleteLessonCommand): Promise<{ id: string; success: boolean; data: unknown }> {
     const { lessonId, userId, score } = command;
 
     const existingProgress = await this.progressRepository.findByUserAndLesson(userId, lessonId);
-    const wasMastered = existingProgress ? (existingProgress as any).status === 'MASTERED' : false;
+    const wasMastered = existingProgress?.status === 'MASTERED';
 
     const progress = await this.progressRepository.upsert(userId, lessonId, {
       status: 'MASTERED',
@@ -30,6 +30,7 @@ export class CompleteLessonHandler implements ICommandHandler<CompleteLessonComm
     }
 
     return {
+      id: progress.id,
       success: true,
       data: progress,
     };

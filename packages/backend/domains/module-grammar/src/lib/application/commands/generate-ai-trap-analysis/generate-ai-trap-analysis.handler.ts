@@ -5,14 +5,14 @@ import * as grammarTrapRepositoryInterface from '../../../domain/repositories/gr
 
 @CommandHandler(GenerateAiTrapAnalysisCommand)
 export class GenerateAiTrapAnalysisHandler
-  implements ICommandHandler<GenerateAiTrapAnalysisCommand, any>
+  implements ICommandHandler<GenerateAiTrapAnalysisCommand, unknown>
 {
   constructor(
     @Inject(grammarTrapRepositoryInterface.GRAMMAR_TRAP_REPOSITORY)
     private readonly trapRepository: grammarTrapRepositoryInterface.IGrammarTrapRepository
   ) {}
 
-  async execute(command: GenerateAiTrapAnalysisCommand): Promise<any> {
+  async execute(command: GenerateAiTrapAnalysisCommand): Promise<unknown> {
     const { trapId } = command;
     const trap = await this.trapRepository.findById(trapId);
 
