@@ -4,7 +4,7 @@ export class CompleteLessonCommand extends Command<any> {
   constructor(
     public readonly lessonId: string,
     public readonly userId: string,
-    public readonly score: number = 100
+    public readonly score = 100
   ) {
     super();
   }

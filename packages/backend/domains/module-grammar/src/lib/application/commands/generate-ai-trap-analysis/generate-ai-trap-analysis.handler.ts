@@ -24,6 +24,7 @@ export class GenerateAiTrapAnalysisHandler
 
     if (trap.aiAnalysis) {
       return {
+        id: trapId,
         success: true,
         aiAnalysis: trap.aiAnalysis,
       };
@@ -156,6 +157,7 @@ Bạn đã chọn nhầm **"${uAns}"** thay vì đáp án đúng là **"${cAns}"
     });
 
     return {
+      id: trapId,
       success: true,
       aiAnalysis: analysisContent,
       data: updatedTrap,

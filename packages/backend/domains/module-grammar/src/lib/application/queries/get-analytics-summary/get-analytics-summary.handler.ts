@@ -131,6 +131,7 @@ export class GetAnalyticsSummaryHandler implements IQueryHandler<GetAnalyticsSum
     }
 
     return {
+      id: userId,
       totalTraps,
       trappedCount,
       brokenCount,

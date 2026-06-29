@@ -151,6 +151,7 @@ export class GetRoadmapHandler implements IQueryHandler<GetRoadmapQuery, any> {
     }
 
     return {
+      id: userId,
       percentComplete,
       completedLessons: completedCount,
       totalLessons: allLessonsCount,
