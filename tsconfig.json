@@ -98,6 +98,12 @@
     },
     {
       "path": "./packages/backend/domains/module-listening"
+    },
+    {
+      "path": "./packages/frontend/features/certification"
+    },
+    {
+      "path": "./packages/backend/domains/module-certification"
     }
   ]
 }
