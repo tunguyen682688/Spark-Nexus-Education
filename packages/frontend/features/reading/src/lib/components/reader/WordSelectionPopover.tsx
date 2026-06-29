@@ -20,6 +20,7 @@ import {
   useCreateVocabularyPackage,
 } from '../../hooks/use-reading';
 import { SyntaxTreeVisualizer } from './SyntaxTreeVisualizer';
+import { READING_UI_TEXT } from '../../constants/reading-ui-text';
 
 const isCefrLevel = (level: string) => {
   return /^[a-c][1-2]$/i.test(level.trim());
@@ -43,6 +44,17 @@ const getCefrBadgeColor = (level: string) => {
     default:
       return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800';
   }
+};
+
+const PART_OF_SPEECH_MAP: Record<string, string> = {
+  noun: 'Danh từ (Noun)',
+  verb: 'Động từ (Verb)',
+  adjective: 'Tính từ (Adjective)',
+  adverb: 'Trạng từ (Adverb)',
+  pronoun: 'Đại từ (Pronoun)',
+  preposition: 'Giới từ (Preposition)',
+  conjunction: 'Liên từ (Conjunction)',
+  interjection: 'Thán từ (Interjection)',
 };
 
 interface WordSelectionPopoverProps {
@@ -220,7 +232,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
       <div className="flex items-center justify-between border-b border-slate-100 pb-1 dark:border-slate-800">
         <h4 className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
           <BookOpen className="h-3.5 w-3.5 text-blue-500" />
-          Word lookup
+          {READING_UI_TEXT.components.reader.POPOVER_WORD_LOOKUP}
         </h4>
         <Button
           variant="ghost"
@@ -234,8 +246,8 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
 
       <div className="flex border-b border-slate-100 select-none dark:border-slate-800">
         {[
-          { id: 'definition', label: 'Definition', icon: null },
-          { id: 'syntax', label: 'Syntax', icon: Network },
+          { id: 'definition', label: READING_UI_TEXT.components.reader.POPOVER_TAB_DEFINITION, icon: null },
+          { id: 'syntax', label: READING_UI_TEXT.components.reader.POPOVER_TAB_SYNTAX, icon: Network },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -273,7 +285,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
               <Input
                 value={pronunciation}
                 onChange={(e) => setPronunciation((e.target as HTMLInputElement).value)}
-                placeholder="pronunciation"
+                placeholder={READING_UI_TEXT.components.reader.POPOVER_PRONUNCIATION_PLACEHOLDER}
                 className="h-6 w-24 text-[10px] border-none bg-slate-50 dark:bg-slate-900 focus-visible:ring-blue-500 font-mono py-0 px-1 text-slate-600 dark:text-slate-300"
               />
               <span className="text-[10px] text-slate-400 font-mono">/</span>
@@ -289,7 +301,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
           ) : contextTranslation ? (
             <div className="space-y-0.5 rounded-lg border border-amber-100/70 bg-amber-50/80 p-2 text-xs select-text dark:border-amber-900/40 dark:bg-amber-950/30">
               <span className="block text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Context meaning
+                {READING_UI_TEXT.components.reader.POPOVER_CONTEXT_MEANING}
               </span>
               <p className="font-bold text-slate-800 dark:text-slate-100">
                 {contextTranslation}
@@ -306,7 +318,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
           {initialExample && (
             <div className="space-y-1 rounded-lg border border-blue-100/70 bg-blue-50/50 p-2.5 text-xs select-text dark:border-blue-900/40 dark:bg-blue-950/20">
               <span className="block text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 select-none">
-                Teacher's Example
+                {READING_UI_TEXT.components.reader.POPOVER_TEACHER_EXAMPLE}
               </span>
               <p className="font-serif italic text-slate-800 dark:text-slate-100">
                 "{initialExample}"
@@ -323,7 +335,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                Save definition
+                {READING_UI_TEXT.components.reader.POPOVER_SAVE_DEFINITION}
               </label>
               {isFetchingDict ? (
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 py-1">
@@ -336,7 +348,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
                   onChange={(event) =>
                     setDefinition((event.target as HTMLInputElement).value)
                   }
-                  placeholder="No definition found. Enter custom definition..."
+                  placeholder={READING_UI_TEXT.components.reader.POPOVER_NO_DEFINITION_PLACEHOLDER}
                   className="h-8 w-full border-slate-200 bg-slate-50/50 text-xs focus-visible:ring-blue-500 dark:border-slate-800 dark:bg-slate-900"
                 />
               )}
@@ -345,16 +357,16 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
             {/* Part of Speech select field */}
             <div>
               <label className="mb-1 block text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                Part of speech
+                {READING_UI_TEXT.components.reader.POPOVER_PART_OF_SPEECH}
               </label>
               <Select value={partOfSpeech} onValueChange={setPartOfSpeech}>
                 <SelectTrigger className="h-8 w-full border-slate-200 text-xs dark:border-slate-800 dark:bg-slate-900">
-                  <SelectValue placeholder="Select Part of speech" />
+                  <SelectValue placeholder={READING_UI_TEXT.components.reader.POPOVER_SELECT_POS_PLACEHOLDER} />
                 </SelectTrigger>
                 <SelectContent className="border-slate-200 dark:border-slate-800">
                   {['noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition', 'conjunction', 'interjection'].map((pos) => (
-                    <SelectItem key={pos} value={pos} className="capitalize text-xs">
-                      {pos}
+                    <SelectItem key={pos} value={pos} className="text-xs">
+                      {PART_OF_SPEECH_MAP[pos] || pos}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -365,7 +377,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
             <div className="space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-2.5">
               <div className="flex justify-between items-center select-none">
                 <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  Vocabulary Package
+                  {READING_UI_TEXT.components.reader.POPOVER_VOCAB_PACKAGE}
                 </label>
                 <button
                   type="button"
@@ -411,7 +423,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
                 <div className="flex gap-1.5">
                   <Select value={selectedSetId} onValueChange={setSelectedSetId}>
                     <SelectTrigger className="h-8 flex-1 border-slate-200 text-xs dark:border-slate-800 dark:bg-slate-900">
-                      <SelectValue placeholder="Select set" />
+                      <SelectValue placeholder={READING_UI_TEXT.components.reader.POPOVER_SELECT_SET_PLACEHOLDER} />
                     </SelectTrigger>
                     <SelectContent className="border-slate-200 dark:border-slate-800">
                       {userSets.map((set) => (
@@ -449,7 +461,7 @@ export const WordSelectionPopover: React.FC<WordSelectionPopoverProps> = ({
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
           <span className="text-xs font-semibold">
-            Analyzing sentence structure...
+            {READING_UI_TEXT.components.reader.POPOVER_ANALYZING_SYNTAX}
           </span>
         </div>
       ) : (

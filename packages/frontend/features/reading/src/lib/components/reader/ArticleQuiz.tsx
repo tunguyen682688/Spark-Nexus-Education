@@ -102,10 +102,10 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
           <Award className="h-12 w-12 text-amber-300 animate-bounce" />
           <h3 className="font-extrabold text-xl font-serif">{READING_UI_TEXT.components.reader.QUIZ_RESULTS}</h3>
           <p className="text-sm font-medium opacity-90">
-            {isPassing ? 'Fantastic! You fully understood the text.' : 'Good effort! Read again to master this content.'}
+            {isPassing ? READING_UI_TEXT.components.reader.QUIZ_PASS_DESC : READING_UI_TEXT.components.reader.QUIZ_FAIL_DESC}
           </p>
           <div className="inline-flex bg-white/20 px-4 py-1.5 rounded-full text-base font-extrabold backdrop-blur-sm mt-1">
-            Score: {results.score}% ({results.correctCount}/{results.totalQuestions})
+            {READING_UI_TEXT.components.reader.QUIZ_SCORE_LABEL}: {results.score}% ({results.correctCount}/{results.totalQuestions})
           </div>
         </div>
 
@@ -125,7 +125,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
                       <span className="text-[10px] uppercase font-bold text-slate-400">{READING_UI_TEXT.components.reader.QUIZ_YOUR_ANSWER}</span>
                       <span className={cn("text-xs font-bold flex items-center gap-1", res.isCorrect ? 'text-emerald-600' : 'text-red-500')}>
                         {res.isCorrect ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                        {res.userAnswer || 'No answer'}
+                        {res.userAnswer || READING_UI_TEXT.components.reader.QUIZ_NO_ANSWER}
                       </span>
                     </div>
                     {!res.isCorrect && (
@@ -170,7 +170,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
           <BookOpen className="h-4.5 w-4.5 text-blue-500" /> {READING_UI_TEXT.components.reader.QUIZ_CHECK}
         </h3>
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full">
-          Question {currentIdx + 1} of {questions.length}
+          {READING_UI_TEXT.components.reader.QUIZ_QUESTION_LABEL.replace('{current}', (currentIdx + 1).toString()).replace('{total}', questions.length.toString())}
         </span>
       </CardHeader>
 
@@ -215,7 +215,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
             disabled={currentIdx === 0}
             className="h-9 font-bold text-xs text-slate-600 border-slate-200 rounded disabled:opacity-50"
           >
-            Previous
+            {READING_UI_TEXT.components.reader.QUIZ_BTN_PREVIOUS}
           </Button>
 
           {currentIdx === questions.length - 1 ? (
@@ -229,7 +229,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> {READING_UI_TEXT.components.reader.QUIZ_SUBMITTING}
                 </>
               ) : (
-                'Submit Quiz'
+                READING_UI_TEXT.components.reader.QUIZ_BTN_SUBMIT
               )}
             </Button>
           ) : (
@@ -238,7 +238,7 @@ export const ArticleQuiz: React.FC<ArticleQuizProps> = ({
               disabled={!hasAnswered}
               className="h-9 font-bold text-xs bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 gap-1"
             >
-              Next <ArrowRight className="h-3.5 w-3.5" />
+              {READING_UI_TEXT.components.reader.QUIZ_BTN_NEXT} <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

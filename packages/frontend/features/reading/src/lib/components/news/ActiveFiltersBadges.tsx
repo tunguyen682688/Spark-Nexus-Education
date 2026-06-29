@@ -40,7 +40,7 @@ export const ActiveFiltersBadges: React.FC<ActiveFiltersBadgesProps> = ({
       {/* Active Domain Badge */}
       {activeDomain !== 'ALL' && (
         <Badge className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200/50 dark:border-indigo-800/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-none">
-          Domain: {activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1)}
+          Lĩnh vực: {activeDomain === 'technology' ? READING_UI_TEXT.news.DOMAIN_TECH : activeDomain === 'environment' ? READING_UI_TEXT.news.DOMAIN_ENV : activeDomain === 'science' ? READING_UI_TEXT.news.DOMAIN_SCI : activeDomain === 'business' ? READING_UI_TEXT.news.DOMAIN_BIZ : activeDomain === 'arts' ? READING_UI_TEXT.news.DOMAIN_ARTS : activeDomain === 'education' ? READING_UI_TEXT.news.DOMAIN_EDU : activeDomain === 'phonetics' ? READING_UI_TEXT.news.DOMAIN_PHONETICS : activeDomain === 'ai in education' ? READING_UI_TEXT.news.DOMAIN_AI : activeDomain === 'quantum computing' ? READING_UI_TEXT.news.DOMAIN_QUANTUM : activeDomain}
           <button 
             onClick={() => handleDomainChange('ALL')}
             className="hover:bg-indigo-100 dark:hover:bg-indigo-900 rounded-full p-0.5 text-indigo-500 hover:text-indigo-700 transition-colors"
@@ -53,7 +53,7 @@ export const ActiveFiltersBadges: React.FC<ActiveFiltersBadgesProps> = ({
       {/* Active Time Badge */}
       {activeTime !== 'ALL' && (
         <Badge className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200/50 dark:border-emerald-800/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-none">
-          Time: {activeTime === 'today' ? READING_UI_TEXT.news.TIME_TODAY : activeTime === 'week' ? READING_UI_TEXT.news.TIME_WEEK : READING_UI_TEXT.news.TIME_MONTH}
+          Thời gian: {activeTime === 'today' ? READING_UI_TEXT.news.TIME_TODAY : activeTime === 'week' ? READING_UI_TEXT.news.TIME_WEEK : READING_UI_TEXT.news.TIME_MONTH}
           <button 
             onClick={() => handleTimeChange('ALL')}
             className="hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-full p-0.5 text-emerald-500 hover:text-emerald-700 transition-colors"

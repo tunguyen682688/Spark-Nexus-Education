@@ -77,14 +77,14 @@ export const NewsHeroCard: React.FC<NewsHeroCardProps> = ({ article, onTagClick 
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold border-t border-slate-100 dark:border-slate-800 pt-4">
             <div className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              {article.readTime || `${Math.ceil(article.wordCount / 200)} min read`}
+              {article.readTime || READING_UI_TEXT.components.shared.MINUTES_READ_SUFFIX.replace('{minutes}', Math.ceil(article.wordCount / 200).toString())}
             </div>
             <span>{article.author || 'Global News'}</span>
           </div>
 
           <div className="flex gap-3 pt-2">
             <Button className="flex-1 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-lg py-5 group-hover:bg-blue-600 border-none transition-colors">
-              {isInProgress ? 'Continue Reading' : isCompleted ? 'Read Again' : 'Read Now'}
+              {isInProgress ? READING_UI_TEXT.components.shared.CARD_BTN_CONTINUE : isCompleted ? READING_UI_TEXT.components.shared.CARD_BTN_REPLAY : READING_UI_TEXT.components.shared.CARD_BTN_START}
             </Button>
             <Button variant="outline" className="w-12 h-10 p-0 rounded-lg shrink-0">
               <ArrowRight className="w-4 h-4" />

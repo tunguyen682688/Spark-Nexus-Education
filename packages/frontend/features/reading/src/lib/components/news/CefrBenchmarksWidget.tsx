@@ -18,7 +18,7 @@ export const CefrBenchmarksWidget: React.FC<CefrBenchmarksWidgetProps> = ({
         <BookOpen className="w-4 h-4 text-blue-500" /> {READING_UI_TEXT.components.news.BENCHMARKS_TITLE}
       </h4>
       <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-normal">
-        Click on a CEFR level to filter the articles. Maps levels to standard WPM speeds and article sizes.
+        {READING_UI_TEXT.components.news.BENCHMARKS_DESC}
       </p>
       <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800 shadow-inner bg-slate-50/20 dark:bg-slate-950/20">
         <table className="w-full text-left border-collapse">

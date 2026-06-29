@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { READING_UI_TEXT } from '../../constants/reading-ui-text';
 
 interface ReaderToolbarProps {
   scrollProgress: number;
@@ -77,7 +78,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
         style={{ width: `${scrollProgress}%` }}
       />
 
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2 md:px-6">
+      <div className="mx-auto flex min-h-16 max-w-full w-full items-center justify-between gap-3 px-4 py-2 md:px-6">
         <Button
           variant="ghost"
           size="sm"
@@ -86,7 +87,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
         >
           <Link to="/reading">
             <ArrowLeft className="h-4 w-4" />
-            Back to Hub
+            {READING_UI_TEXT.components.reader.TOOLBAR_BACK}
           </Link>
         </Button>
 
@@ -134,13 +135,13 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
               </PopoverTrigger>
               <PopoverContent className="w-36 space-y-0.5 border-slate-200 p-2 shadow-md dark:border-slate-800 dark:bg-slate-950">
                 <label className="block px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  Speed
+                  {READING_UI_TEXT.components.reader.TOOLBAR_SPEED_RATE}
                 </label>
                 {[
-                  { label: '0.8x Slow', value: 0.8 },
-                  { label: '1.0x Normal', value: 1.0 },
-                  { label: '1.2x Fast', value: 1.2 },
-                  { label: '1.5x Rapid', value: 1.5 },
+                  { label: '0.8x Chậm', value: 0.8 },
+                  { label: '1.0x Thường', value: 1.0 },
+                  { label: '1.2x Nhanh', value: 1.2 },
+                  { label: '1.5x Rất nhanh', value: 1.5 },
                 ].map((rate) => (
                   <Button
                     key={rate.value}
@@ -178,7 +179,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             <PopoverContent className="w-60 space-y-3 border-slate-200 p-3 shadow-md dark:border-slate-800 dark:bg-slate-950">
               <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                  Bionic settings
+                  {READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_SETTINGS}
                 </span>
                 <Button
                   size="sm"
@@ -186,12 +187,12 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                   className="h-6 px-2 text-[10px] font-extrabold uppercase"
                   onClick={onToggleBionicMode}
                 >
-                  {isBionicMode ? 'Disable' : 'Enable'}
+                  {isBionicMode ? READING_UI_TEXT.components.reader.TOOLBAR_DISABLE : READING_UI_TEXT.components.reader.TOOLBAR_ENABLE}
                 </Button>
               </div>
 
               <ReaderSlider
-                label="Fixation"
+                label={READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_FIXATION}
                 value={fixation}
                 min="0.3"
                 max="0.7"
@@ -200,7 +201,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                 onChange={onChangeFixation}
               />
               <ReaderSlider
-                label="Saccade"
+                label={READING_UI_TEXT.components.reader.TOOLBAR_BIONIC_SACCADE}
                 value={saccade}
                 min="0.2"
                 max="1"
@@ -230,7 +231,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             <PopoverContent className="w-52 space-y-3 border-slate-200 p-3 shadow-md dark:border-slate-800 dark:bg-slate-950">
               <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                  Focus guide
+                  {READING_UI_TEXT.components.reader.TOOLBAR_FOCUS_GUIDE}
                 </span>
                 <Button
                   size="sm"
@@ -238,13 +239,13 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                   className="h-6 px-2 text-[10px] font-extrabold uppercase"
                   onClick={onToggleFocusMode}
                 >
-                  {isFocusMode ? 'Disable' : 'Enable'}
+                  {isFocusMode ? READING_UI_TEXT.components.reader.TOOLBAR_DISABLE : READING_UI_TEXT.components.reader.TOOLBAR_ENABLE}
                 </Button>
               </div>
 
               <div className="space-y-1.5">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Focus height
+                  {READING_UI_TEXT.components.reader.TOOLBAR_FOCUS_HEIGHT}
                 </span>
                 <div className="flex gap-1.5">
                   {[1, 3].map((lineCount) => (
@@ -260,7 +261,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                       }
                       disabled={!isFocusMode}
                     >
-                      {lineCount} {lineCount === 1 ? 'line' : 'lines'}
+                      {lineCount} {READING_UI_TEXT.components.reader.TOOLBAR_FOCUS_LINE}
                     </Button>
                   ))}
                 </div>
@@ -312,12 +313,12 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             </PopoverTrigger>
             <PopoverContent className="w-40 space-y-0.5 border-slate-200 p-2 shadow-md dark:border-slate-800 dark:bg-slate-950">
               <label className="block px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                Font size
+                {READING_UI_TEXT.components.reader.TOOLBAR_FONT_SIZE}
               </label>
               {[
-                { label: 'Small', value: 'sm' },
-                { label: 'Medium', value: 'md' },
-                { label: 'Large', value: 'lg' },
+                { label: READING_UI_TEXT.components.reader.FONT_SIZE_SM, value: 'sm' },
+                { label: READING_UI_TEXT.components.reader.FONT_SIZE_MD, value: 'md' },
+                { label: READING_UI_TEXT.components.reader.FONT_SIZE_LG, value: 'lg' },
               ].map((size) => (
                 <Button
                   key={size.value}
