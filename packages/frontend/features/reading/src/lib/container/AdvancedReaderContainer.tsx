@@ -33,6 +33,7 @@ import { useAdvancedReader } from '../hooks/use-advanced-reader';
 import type { Article } from '../types';
 import type { ParsedContent, ReaderSection } from '../utils/reader-parser';
 import { extractSectionsFromBlocks } from '../utils/reader-parser';
+import { READING_UI_TEXT } from '../constants/reading-ui-text';
 import {
   estimateReadingMinutes,
   formatReaderDate,
@@ -270,7 +271,7 @@ export const AdvancedReaderContainer: React.FC<
       )}
 
       <main className="w-full px-4 py-8 md:px-6 md:py-10">
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 xl:grid-cols-[240px_minmax(0,820px)_240px]">
+        <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-6 xl:grid-cols-[240px_minmax(0,1fr)_240px]">
           <aside className="hidden xl:block">
             <div className="sticky top-24 space-y-4">
               {profile?.overviewFirst && (
@@ -449,7 +450,7 @@ export const AdvancedReaderContainer: React.FC<
               />
             ) : (
               <p className="text-slate-400 italic">
-                Quyển sách này chưa có chương nào.
+                {READING_UI_TEXT.components.reader.NO_CHAPTERS}
               </p>
             )
           ) : (
@@ -598,7 +599,7 @@ export const AdvancedReaderContainer: React.FC<
                           <button
                             onClick={() => scrollToWord(item.word)}
                             className="font-bold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 text-left"
-                            title="Cuộn tới ngữ cảnh trong bài"
+                            title={READING_UI_TEXT.components.reader.TOOLTIP_SCROLL_CONTEXT}
                           >
                             <Search className="h-3 w-3 text-slate-400 shrink-0" />
                             {item.word}
@@ -606,7 +607,7 @@ export const AdvancedReaderContainer: React.FC<
                           <button
                             onClick={() => playAudio('', item.word)}
                             className="p-1 rounded bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700/80 transition-colors shrink-0"
-                            title="Nghe phát âm"
+                            title={READING_UI_TEXT.components.reader.TOOLTIP_PRONUNCIATION}
                           >
                             <Volume2 className="h-3 w-3" />
                           </button>
@@ -719,7 +720,7 @@ const ReaderOverview: React.FC<ReaderOverviewProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950/40 px-4 py-8 md:py-12">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-full w-full space-y-6">
         <div className="flex items-center justify-between gap-4">
           <Button
             variant="ghost"

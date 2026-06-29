@@ -16,7 +16,8 @@ import {
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import type { GrammarLessonDetailResponse, GrammarBlock } from '../types';
 import { toast } from 'sonner';
-import { GRAMMAR_UI_TEXT, MOCK_LEADERBOARD } from '../constants';
+import { GRAMMAR_UI_TEXT } from '../constants';
+import { useGrammarLeaderboard } from '../hooks';
 
 // Import các modular UI components
 import FormulaBuilder from '../components/FormulaBuilder';
@@ -44,6 +45,7 @@ export const GrammarLessonDetailContainer: FC<
   onEditLesson,
   onNavigateToLesson,
 }) => {
+  const { data: dbLeaderboard = [] } = useGrammarLeaderboard('all-time');
   const nextLesson = lesson.nextLesson;
 
   const [activeBlockId, setActiveBlockId] = useState<string>('');
@@ -182,39 +184,21 @@ export const GrammarLessonDetailContainer: FC<
   };
 
   const getDynamicLeaderboard = () => {
-    const list = [...MOCK_LEADERBOARD];
-    if (lesson.proficiency && lesson.proficiency > 0) {
-      const userProf = lesson.proficiency;
+    const list = dbLeaderboard.map((item) => {
       let medal = '🥉';
-      if (userProf >= 90) {
-        medal = '💎';
-      } else if (userProf >= 80) {
-        medal = '🥇';
-      } else if (userProf >= 70) {
-        medal = '🥈';
-      }
-
-      // Kiểm tra xem đã tồn tại Bạn chưa
-      const exists = list.some((x) => x.name === GRAMMAR_UI_TEXT.lessonDetail.userStudentName);
-      if (!exists) {
-        list.push({
-          rank: 4,
-          name: GRAMMAR_UI_TEXT.lessonDetail.userStudentName,
-          score: `${userProf}%`,
-          time: '2m 05s',
-          avatar:
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=mock-user-123',
-          medal,
-        });
-      }
-
-      list.sort((a, b) => {
-        const valA = parseInt(a.score.replace('%', ''));
-        const valB = parseInt(b.score.replace('%', ''));
-        return valB - valA;
-      });
-    }
-
+      if (item.rank === 1) medal = '💎';
+      else if (item.rank === 2) medal = '🥇';
+      else if (item.rank === 3) medal = '🥈';
+      
+      return {
+        rank: item.rank,
+        name: item.isCurrentUser ? GRAMMAR_UI_TEXT.lessonDetail.userStudentName : item.name,
+        score: `${item.xp} XP`,
+        time: '',
+        avatar: item.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${item.id}`,
+        medal,
+      };
+    });
     return list;
   };
 
@@ -463,7 +447,7 @@ export const GrammarLessonDetailContainer: FC<
                     ) : (
                       <UserCheck className="h-4 w-4" />
                     )}
-                    Hoàn thành lý thuyết & Nhận +50 XP
+                    {GRAMMAR_UI_TEXT.lessonDetail.btnComplete}
                   </Button>
                 </div>
               </div>
@@ -618,7 +602,7 @@ export const GrammarLessonDetailContainer: FC<
                     <div className="absolute inset-x-6 bottom-6 bg-card/95 border border-border rounded-2xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">
-                          {selectedMindmapNode === 'CENTRAL' && 'CHỦ ĐỀ CHÍNH'}
+                          {selectedMindmapNode === 'CENTRAL' && GRAMMAR_UI_TEXT.lessonDetail.mindmapNodeCentral}
                           {selectedMindmapNode === 'FORMULA' &&
                             GRAMMAR_UI_TEXT.lessonDetail.mindmapNodeFormula}
                           {selectedMindmapNode === 'USAGE' && GRAMMAR_UI_TEXT.lessonDetail.mindmapNodeUsage}
@@ -790,7 +774,7 @@ export const GrammarLessonDetailContainer: FC<
                   <div
                     key={`${item.name}-${item.rank}`}
                     className={`flex items-center justify-between p-2.5 border rounded-xl bg-secondary/20 hover:border-border transition-all ${
-                      item.name.includes('Bạn')
+                      item.name.includes(GRAMMAR_UI_TEXT.leaderboard.userBadge)
                         ? 'border-blue-500/40 ring-1 ring-blue-500/25 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
                         : 'border-border/60'
                     }`}

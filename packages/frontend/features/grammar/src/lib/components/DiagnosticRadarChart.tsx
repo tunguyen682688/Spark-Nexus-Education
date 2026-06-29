@@ -1,4 +1,5 @@
 import React from 'react';
+import { GRAMMAR_UI_TEXT } from '../constants';
 
 export interface DiagnosticRadarChartProps {
   skillFactors: {
@@ -8,6 +9,8 @@ export interface DiagnosticRadarChartProps {
     modality: number;
   };
 }
+
+const T = GRAMMAR_UI_TEXT.lessonComponents.diagnosticChart;
 
 export const DiagnosticRadarChart: React.FC<DiagnosticRadarChartProps> = ({
   skillFactors,
@@ -108,7 +111,7 @@ export const DiagnosticRadarChart: React.FC<DiagnosticRadarChartProps> = ({
         className="fill-slate-400 font-extrabold text-[10px]"
         textAnchor="middle"
       >
-        Cú Pháp
+        {T.syntax}
       </text>
       <text
         x="172"
@@ -116,7 +119,7 @@ export const DiagnosticRadarChart: React.FC<DiagnosticRadarChartProps> = ({
         className="fill-slate-400 font-extrabold text-[10px]"
         textAnchor="start"
       >
-        Thì
+        {T.tenses}
       </text>
       <text
         x="100"
@@ -124,7 +127,7 @@ export const DiagnosticRadarChart: React.FC<DiagnosticRadarChartProps> = ({
         className="fill-slate-400 font-extrabold text-[10px]"
         textAnchor="middle"
       >
-        Hình Thái
+        {T.morphology}
       </text>
       <text
         x="28"
@@ -132,7 +135,7 @@ export const DiagnosticRadarChart: React.FC<DiagnosticRadarChartProps> = ({
         className="fill-slate-400 font-extrabold text-[10px]"
         textAnchor="end"
       >
-        Sắc Thái
+        {T.modality}
       </text>
     </svg>
   );

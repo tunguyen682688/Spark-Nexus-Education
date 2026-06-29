@@ -48,24 +48,24 @@ export function GrammarCreatePostContainer({ onBackToCommunity }: GrammarCreateP
   } = useGrammarCreatePost({ onBackToCommunity });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground font-sans pb-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-indigo-900/15 via-purple-900/5 to-transparent pointer-events-none" />
       
-      <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-md border-b border-slate-900/80 px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button onClick={handleBack} className="p-2 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-200 rounded-lg transition">
+          <Button onClick={handleBack} className="p-2 bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground rounded-lg transition">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-200">{GRAMMAR_UI_TEXT.createPost.title}</h1>
-            <p className="text-[10px] text-slate-500 flex items-center gap-1.5"><RefreshCw className="h-3 w-3" /> {GRAMMAR_UI_TEXT.createPost.autosaveLabel}</p>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">{GRAMMAR_UI_TEXT.createPost.title}</h1>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1.5"><RefreshCw className="h-3 w-3" /> {GRAMMAR_UI_TEXT.createPost.autosaveLabel}</p>
           </div>
         </div>
 
-        <div className="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-          <button onClick={() => setViewMode('EDITOR')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'EDITOR' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Edit</button>
-          <button onClick={() => setViewMode('SPLIT')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition hidden lg:block ${viewMode === 'SPLIT' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Split</button>
-          <button onClick={() => setViewMode('PREVIEW')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'PREVIEW' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Preview</button>
+        <div className="flex bg-muted/80 p-1 rounded-xl border border-border">
+          <button onClick={() => setViewMode('EDITOR')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'EDITOR' ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'}`}>Edit</button>
+          <button onClick={() => setViewMode('SPLIT')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition hidden lg:block ${viewMode === 'SPLIT' ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'}`}>Split</button>
+          <button onClick={() => setViewMode('PREVIEW')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'PREVIEW' ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'}`}>Preview</button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -100,7 +100,7 @@ export function GrammarCreatePostContainer({ onBackToCommunity }: GrammarCreateP
           )}
 
           {(viewMode === 'PREVIEW' || viewMode === 'SPLIT') && (
-            <div className={`bg-slate-950/60 border-slate-900 rounded-3xl ${viewMode === 'SPLIT' ? 'border p-6 lg:sticky lg:top-24 max-h-[85vh] overflow-y-auto' : ''}`}>
+            <div className={`bg-card/65 border-border rounded-3xl ${viewMode === 'SPLIT' ? 'border p-6 lg:sticky lg:top-24 max-h-[85vh] overflow-y-auto' : ''}`}>
               <PostPreview title={title} tags={tags} blocks={blocks} isSplit={viewMode === 'SPLIT'} />
             </div>
           )}
@@ -108,16 +108,16 @@ export function GrammarCreatePostContainer({ onBackToCommunity }: GrammarCreateP
       </main>
 
       <Dialog open={!!blockToDelete} onOpenChange={(open) => !open && setBlockToDelete(null)}>
-        <DialogContent className="bg-slate-900 border-slate-800">
-          <DialogHeader><DialogTitle className="text-slate-100">{GRAMMAR_UI_TEXT.createPost.dialogDeleteTitle}</DialogTitle><DialogDescription className="text-slate-400">{GRAMMAR_UI_TEXT.createPost.dialogDeleteDesc}</DialogDescription></DialogHeader>
-          <DialogFooter><Button onClick={() => setBlockToDelete(null)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border-none transition">{GRAMMAR_UI_TEXT.createPost.btnCancel}</Button><Button onClick={submitDeleteBlock} className="bg-red-600 hover:bg-red-550 text-white transition">{GRAMMAR_UI_TEXT.createPost.btnDeletePermanent}</Button></DialogFooter>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-foreground">{GRAMMAR_UI_TEXT.createPost.dialogDeleteTitle}</DialogTitle><DialogDescription className="text-muted-foreground">{GRAMMAR_UI_TEXT.createPost.dialogDeleteDesc}</DialogDescription></DialogHeader>
+          <DialogFooter><Button onClick={() => setBlockToDelete(null)} className="bg-secondary hover:bg-secondary/80 text-foreground border-none transition">{GRAMMAR_UI_TEXT.createPost.btnCancel}</Button><Button onClick={submitDeleteBlock} className="bg-red-600 hover:bg-red-555 text-white transition">{GRAMMAR_UI_TEXT.createPost.btnDeletePermanent}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isExitConfirmOpen} onOpenChange={setIsExitConfirmOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800">
-          <DialogHeader><DialogTitle className="text-slate-100">{GRAMMAR_UI_TEXT.createPost.dialogExitTitle}</DialogTitle><DialogDescription className="text-slate-400">{GRAMMAR_UI_TEXT.createPost.dialogExitDesc}</DialogDescription></DialogHeader>
-          <DialogFooter><Button onClick={() => setIsExitConfirmOpen(false)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border-none transition">{GRAMMAR_UI_TEXT.createPost.btnContinueEditing}</Button><Button onClick={handleConfirmExit} className="bg-red-600 hover:bg-red-550 text-white transition">{GRAMMAR_UI_TEXT.createPost.btnConfirmExit}</Button></DialogFooter>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-foreground">{GRAMMAR_UI_TEXT.createPost.dialogExitTitle}</DialogTitle><DialogDescription className="text-muted-foreground">{GRAMMAR_UI_TEXT.createPost.dialogExitDesc}</DialogDescription></DialogHeader>
+          <DialogFooter><Button onClick={() => setIsExitConfirmOpen(false)} className="bg-secondary hover:bg-secondary/80 text-foreground border-none transition">{GRAMMAR_UI_TEXT.createPost.btnContinueEditing}</Button><Button onClick={handleConfirmExit} className="bg-red-600 hover:bg-red-555 text-white transition">{GRAMMAR_UI_TEXT.createPost.btnConfirmExit}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

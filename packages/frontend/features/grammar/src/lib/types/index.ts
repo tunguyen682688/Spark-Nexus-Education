@@ -252,3 +252,74 @@ export interface CrowdsourcedQuiz {
   upvotes: number;
   createdAt: string;
 }
+
+export interface CommunityComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author?: {
+    name: string;
+    avatar?: string;
+  };
+}
+
+export interface UserGrammarProgress {
+  id: string;
+  userId: string;
+  lessonId: string;
+  status: 'IN_PROGRESS' | 'MASTERED';
+  proficiency: number;
+  quickNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserDailyStreak {
+  id: string;
+  userId: string;
+  streakCount: number;
+  lastActiveAt: string | null;
+  totalXP: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserLevelGraduation {
+  id: string;
+  userId: string;
+  level: string;
+  isPassed: boolean;
+  bestScore: number;
+  certificateUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSrsProgress {
+  id: string;
+  userId: string;
+  quizId: string;
+  interval: number;
+  easeFactor: number;
+  repetitions: number;
+  dueDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JsonApiSingleResponse<T> {
+  data?: {
+    id: string;
+    type?: string;
+    attributes: T;
+  };
+}
+
+export interface JsonApiCollectionResponse<T> {
+  data?: Array<{
+    id: string;
+    type?: string;
+    attributes: T;
+  }>;
+}
+

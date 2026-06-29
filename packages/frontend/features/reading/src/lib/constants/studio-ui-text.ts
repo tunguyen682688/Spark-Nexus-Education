@@ -115,4 +115,9 @@ export const STUDIO_UI_TEXT = {
     { value: 'C1', label: 'C1 — Advanced' },
     { value: 'C2', label: 'C2 — Proficiency' },
   ] as const,
+  DEFAULT_CHAPTER_1_TITLE: 'Chương 1: Khởi đầu',
+  UNTITLED_BOOK: 'Sách chưa đặt tên',
+  UNTITLED_ARTICLE: 'Bài viết chưa đặt tên',
+  UNCLASSIFIED_CATEGORY: 'Chưa phân loại',
 } as const;
+

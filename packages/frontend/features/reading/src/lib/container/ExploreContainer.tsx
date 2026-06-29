@@ -42,7 +42,7 @@ export const ExploreContainer: React.FC = () => {
   const topContributors = EXPLORE_DATA.TOP_CONTRIBUTORS;
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-background min-h-screen font-sans">
+    <div className="w-full p-4 md:p-6 bg-background min-h-screen font-sans">
       
       {/* Header Section */}
       <div className="flex flex-col items-center mb-10 space-y-6">

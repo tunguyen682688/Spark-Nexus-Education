@@ -20,11 +20,12 @@ export const Blogosphere: React.FC<BlogosphereProps> = ({ articles }) => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
     if (diffHours < 24) {
-      return `${diffHours > 0 ? diffHours : 1} hour${diffHours > 1 ? 's' : ''} ago`;
+      const hours = diffHours > 0 ? diffHours : 1;
+      return READING_UI_TEXT.components.dashboard.TIME_HOURS_AGO.replace('{hours}', hours.toString());
     }
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return 'Yesterday';
-    return `${diffDays} days ago`;
+    if (diffDays === 1) return READING_UI_TEXT.components.dashboard.TIME_YESTERDAY;
+    return READING_UI_TEXT.components.dashboard.TIME_DAYS_AGO.replace('{days}', diffDays.toString());
   };
 
   return (

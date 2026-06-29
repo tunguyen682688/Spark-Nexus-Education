@@ -1,4 +1,7 @@
 import React from 'react';
+import { GRAMMAR_UI_TEXT } from '../../constants';
+
+const T = GRAMMAR_UI_TEXT.practicePresenter;
 
 interface DragDropPresenterProps {
   ddWordsPool: string[];
@@ -19,15 +22,15 @@ export const DragDropPresenter: React.FC<DragDropPresenterProps> = ({
     <div className="space-y-4">
       <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest">
         {isEvaluated
-          ? 'KẾT QUẢ ĐÃ XÁC MINH'
-          : 'CLICK CHỌN VIÊN THUỐC TỪ ĐỂ ĐIỀN'}
+          ? T.evaluatedLabel
+          : T.dragDropInstruction}
       </p>
       <div className="flex flex-wrap gap-2.5">
         {ddWordsPool.length === 0 &&
         !isEvaluated &&
         Object.keys(dragDropAnswers).length === slotsCount ? (
           <span className="text-xs text-muted-foreground italic font-medium">
-            Tất cả các từ đã được đặt vào các ô trống. Hãy bấm "Kiểm tra"!
+            {T.allPlacedMessage}
           </span>
         ) : (
           ddWordsPool.map((word, idx) => (

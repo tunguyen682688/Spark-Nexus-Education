@@ -22,6 +22,10 @@ export function GrammarLeaderboardContainer({ onBack }: GrammarLeaderboardContai
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all-time'>('week');
   const { data: leaderboardData = [], isLoading } = useGrammarLeaderboard(timeframe);
 
+  const isCurrentUser = (name: string) =>
+    name.toLowerCase().includes('mock') ||
+    name.includes(GRAMMAR_UI_TEXT.leaderboard.userBadge);
+
   const top3 = leaderboardData.slice(0, 3) as LeaderboardUser[];
   const others = leaderboardData.slice(3) as LeaderboardUser[];
 
@@ -109,7 +113,7 @@ export function GrammarLeaderboardContainer({ onBack }: GrammarLeaderboardContai
                 {top3[0].avatar}
               </div>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap">
-                CHAMPION
+                {GRAMMAR_UI_TEXT.leaderboard.championBadge}
               </div>
             </div>
             <div className="bg-gradient-to-t from-amber-900/40 to-amber-700/20 border border-amber-500/50 w-28 sm:w-36 h-36 rounded-t-2xl flex flex-col items-center justify-start pt-6 shadow-[0_0_40px_rgba(251,191,36,0.15)]">
@@ -155,7 +159,7 @@ export function GrammarLeaderboardContainer({ onBack }: GrammarLeaderboardContai
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 + index * 0.1 }}
-            className={`flex items-center justify-between p-4 rounded-2xl border ${user.name.includes('mock') ? 'bg-primary/10 border-primary/45 shadow-[0_0_15px_rgba(99,102,241,0.15)]' : 'bg-card border-border hover:bg-muted/40'} transition-colors`}
+            className={`flex items-center justify-between p-4 rounded-2xl border ${isCurrentUser(user.name) ? 'bg-primary/10 border-primary/45 shadow-[0_0_15px_rgba(99,102,241,0.15)]' : 'bg-card border-border hover:bg-muted/40'} transition-colors`}
           >
             <div className="flex items-center gap-4">
               <div className="w-8 text-center font-bold text-muted-foreground">{user.rank}</div>
@@ -163,7 +167,7 @@ export function GrammarLeaderboardContainer({ onBack }: GrammarLeaderboardContai
                 {user.avatar}
               </div>
               <div>
-                <div className={`font-bold ${user.name.includes('mock') ? 'text-primary' : 'text-foreground'}`}>
+                <div className={`font-bold ${isCurrentUser(user.name) ? 'text-primary' : 'text-foreground'}`}>
                   {user.name}
                 </div>
                 <div className="flex items-center gap-3 mt-1 text-xs font-medium">
@@ -177,7 +181,7 @@ export function GrammarLeaderboardContainer({ onBack }: GrammarLeaderboardContai
               </div>
             </div>
             
-            {user.name.includes('mock') && (
+            {isCurrentUser(user.name) && (
               <div className="hidden sm:block">
                 <span className="bg-indigo-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">
                   {GRAMMAR_UI_TEXT.leaderboard.userBadge}

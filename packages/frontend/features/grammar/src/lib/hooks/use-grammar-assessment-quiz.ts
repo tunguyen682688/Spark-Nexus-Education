@@ -3,63 +3,9 @@ import { useGrammarLesson } from './use-grammar-lessons';
 import { useSaveGrammarTrap } from './use-grammar-traps';
 import { useCrowdsourcedQuizzes } from './use-grammar-community';
 import { toast } from 'sonner';
-import type { ExamQuestion } from '../types';
+import type { ExamQuestion, GrammarBlock } from '../types';
 
-export const MOCK_ASSESSMENT_QUESTIONS: ExamQuestion[] = [
-  {
-    id: 'as-1',
-    type: 'MULTIPLE_CHOICE',
-    text: 'By the time the teacher arrived, the students _____ the grammar notes.',
-    options: ['copied', 'have copied', 'had copied', 'were copying'],
-    answer: 'had copied',
-    explanation:
-      'Hành động học sinh chép xong bài xảy ra trước hành động giáo viên đến (Quá khứ đơn), nên vế trước dùng Quá khứ hoàn thành.',
-    category: 'tenses',
-  },
-  {
-    id: 'as-2',
-    type: 'SENTENCE_BUILDER',
-    text: 'Hãy click chọn các từ để sắp xếp thành câu điều kiện loại 2 hoàn chỉnh:',
-    words: [
-      'were',
-      'If',
-      'rich,',
-      'I',
-      'would',
-      'buy',
-      'a',
-      'new',
-      'car.',
-      'I',
-    ],
-    answer: 'If I were rich, I would buy a new car.',
-    explanation:
-      'Câu điều kiện loại 2 diễn tả một giả định không có thật ở hiện tại. Cấu trúc: If + S + V2/ed (were), S + would + V-inf.',
-    category: 'syntax',
-  },
-  {
-    id: 'as-3',
-    type: 'ERROR_SPOTLIGHT',
-    text: 'Tìm từ viết sai ngữ pháp trong câu dưới đây (click chọn từ sai) và nhập từ sửa lại đúng:',
-    sentence: 'He has been studying English since five years now.',
-    incorrectWord: 'since',
-    correctWord: 'for',
-    answer: 'for',
-    explanation:
-      'Khoảng thời gian (five years) đi kèm với giới từ "for", còn mốc thời gian mới đi kèm với "since".',
-    category: 'morphology',
-  },
-  {
-    id: 'as-4',
-    type: 'MULTIPLE_CHOICE',
-    text: 'It is vital that he _____ the structure formula by heart.',
-    options: ['learn', 'learns', 'learned', 'should learns'],
-    answer: 'learn',
-    explanation:
-      'Cấu trúc giả định với tính từ chỉ tầm quan trọng: It is + vital/important + that + S + V (bare infinitive).',
-    category: 'modality',
-  },
-];
+// Removed mock assessment questions
 
 interface UseGrammarAssessmentQuizProps {
   lessonId: string;
@@ -90,7 +36,7 @@ export function useGrammarAssessmentQuiz({ lessonId }: UseGrammarAssessmentQuizP
 
     // 1. Map lesson blocks of type 'quiz'
     if (lesson?.blocks && Array.isArray(lesson.blocks)) {
-      lesson.blocks.forEach((block: any) => {
+      lesson.blocks.forEach((block: GrammarBlock) => {
         if (block.type === 'quiz') {
           list.push({
             id: block.id,
@@ -130,10 +76,6 @@ export function useGrammarAssessmentQuiz({ lessonId }: UseGrammarAssessmentQuizP
             correctWord: data.correctWord || '',
           });
         });
-    }
-
-    if (list.length === 0) {
-      return MOCK_ASSESSMENT_QUESTIONS;
     }
 
     return list;

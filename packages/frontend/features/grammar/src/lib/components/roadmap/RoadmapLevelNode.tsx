@@ -2,6 +2,9 @@ import { Lock } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import { useNavigate } from 'react-router-dom';
 import type { GrammarLevel } from '../../types';
+import { GRAMMAR_UI_TEXT } from '../../constants';
+
+const T = GRAMMAR_UI_TEXT.roadmapNode;
 
 interface RoadmapLevelNodeProps {
   levelBlock: GrammarLevel;
@@ -107,7 +110,7 @@ export function RoadmapLevelNode({
                         <span role="img" aria-label="warning">
                           ⚠️
                         </span>{' '}
-                        RÒ RỈ KIẾN THỨC ({lesson.trapCount} bẫy)
+                        {T.leakBadge.replace('{count}', String(lesson.trapCount))}
                       </span>
                     )}
 
@@ -116,7 +119,7 @@ export function RoadmapLevelNode({
                         <span role="img" aria-label="warning">
                           ⚠️
                         </span>{' '}
-                        Needs Review
+                        {T.needsReviewBadge}
                       </span>
                     )}
 
@@ -138,22 +141,22 @@ export function RoadmapLevelNode({
                       {hasLeak ? (
                         <>
                           <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                          Trapped
+                          {T.statusTrapped}
                         </>
                       ) : isMastered ? (
                         <>
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Mastered
+                          {T.statusMastered}
                         </>
                       ) : isInProgress ? (
                         <>
                           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          In Progress
+                          {T.statusInProgress}
                         </>
                       ) : isDraft ? (
                         <>
                           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                          Bản nháp
+                          {T.statusDraft}
                         </>
                       ) : (
                         <Lock className="h-2.5 w-2.5" />
@@ -184,12 +187,12 @@ export function RoadmapLevelNode({
                         className="text-sm"
                         title={
                           lesson.proficiency && lesson.proficiency >= 90
-                            ? 'Huy chương Kim Cương 💎'
+                            ? T.medalDiamond
                             : lesson.proficiency && lesson.proficiency >= 80
-                            ? 'Huy chương Vàng 🥇'
+                            ? T.medalGold
                             : lesson.proficiency && lesson.proficiency >= 70
-                            ? 'Huy chương Bạc 🥈'
-                            : 'Huy chương Đồng 🥉'
+                            ? T.medalSilver
+                            : T.medalBronze
                         }
                       >
                         {lesson.proficiency && lesson.proficiency >= 90
@@ -207,7 +210,7 @@ export function RoadmapLevelNode({
                             : 'text-emerald-500'
                         }`}
                       >
-                        {lesson.proficiency || 100}% MASTERED
+                        {lesson.proficiency || 100}% {T.masteredLabel}
                       </span>
                     </div>
                   )}
@@ -215,7 +218,7 @@ export function RoadmapLevelNode({
                   {isInProgress && (
                     <div className="w-full space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span>CURRENT PROFICIENCY</span>
+                        <span>{T.currentProficiency}</span>
                         <span
                           className={`font-extrabold ${
                             hasLeak ? 'text-destructive' : 'text-primary'
@@ -253,7 +256,7 @@ export function RoadmapLevelNode({
                           <span role="img" aria-label="crossed-swords">
                             ⚔️
                           </span>{' '}
-                          Phá bẫy nhanh
+                          {T.btnBreakTrap}
                         </button>
                       )}
                       <button
@@ -267,7 +270,7 @@ export function RoadmapLevelNode({
                         <span role="img" aria-label="target">
                           🎯
                         </span>{' '}
-                        Luyện Quiz
+                        {T.btnPracticeQuiz}
                       </button>
                     </div>
                   )}
@@ -278,7 +281,7 @@ export function RoadmapLevelNode({
                         <span role="img" aria-label="writing-hand">
                           ✍
                         </span>{' '}
-                        ĐANG BIÊN SOẠN
+                        {T.draftLabel}
                       </span>
                     </div>
                   )}
@@ -286,7 +289,7 @@ export function RoadmapLevelNode({
                   {isLocked && (
                     <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                       <Lock className="h-3 w-3" />
-                      Locked
+                      {T.statusLocked}
                     </div>
                   )}
                 </div>
@@ -337,16 +340,16 @@ export function RoadmapLevelNode({
                     }`}
                   >
                     {allRequiredLessonsMastered
-                      ? 'CEFR GRADUATION EXAM'
-                      : 'CEFR GRADUATION EXAM (LOCKED)'}
+                      ? T.graduationExam
+                      : T.graduationExamLocked}
                   </span>
                   <h4 className="text-sm font-black text-foreground">
-                    Kỳ thi tốt nghiệp Cấp độ {levelBlock.level}
+                    {T.graduationTitle.replace('{level}', levelBlock.level)}
                   </h4>
                   <p className="text-[11px] text-muted-foreground leading-relaxed max-w-xl">
                     {allRequiredLessonsMastered
-                      ? 'Vượt qua kỳ thi tốt nghiệp với tối thiểu 80% đúng để mở khóa cấp độ CEFR tiếp theo và nhận Chứng chỉ tốt nghiệp 3D!'
-                      : `Hãy hoàn thành xuất sắc tất cả các bài học ở trình độ ${levelBlock.level} để mở khóa phòng thi tốt nghiệp!`}
+                      ? T.graduationDescUnlocked
+                      : T.graduationDescLocked.replace('{level}', levelBlock.level)}
                   </p>
                 </div>
               </div>
@@ -358,14 +361,14 @@ export function RoadmapLevelNode({
                   }
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-extrabold px-6 py-2.5 rounded-xl border-none shadow-md shadow-amber-500/15 text-xs uppercase tracking-wider cursor-pointer active:scale-95 transition-all w-full sm:w-auto flex-shrink-0"
                 >
-                  Thi Tốt Nghiệp
+                  {T.btnGraduate}
                 </Button>
               ) : (
                 <Button
                   disabled
                   className="bg-secondary text-muted-foreground border border-border cursor-not-allowed opacity-50 px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider w-full sm:w-auto flex-shrink-0 border-none"
                 >
-                  Chưa Đủ Điều Kiện
+                  {T.btnNotEligible}
                 </Button>
               )}
             </div>

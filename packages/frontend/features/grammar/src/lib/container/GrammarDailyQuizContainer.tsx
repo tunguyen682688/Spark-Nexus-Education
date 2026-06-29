@@ -46,6 +46,18 @@ export const GrammarDailyQuizContainer: FC<
     handleNext,
   } = useGrammarDailyQuiz({ questions });
 
+  if (!activeQuestions || activeQuestions.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto bg-card border border-border rounded-3xl p-8 shadow-2xl text-center space-y-6">
+        <h2 className="text-xl font-bold">{GRAMMAR_UI_TEXT.dailyQuiz.noQuestionsTitle}</h2>
+        <p className="text-sm text-muted-foreground">{GRAMMAR_UI_TEXT.dailyQuiz.noQuestionsDesc}</p>
+        <Button onClick={onBack} className="bg-primary border-none text-white">
+          {GRAMMAR_UI_TEXT.dailyQuiz.btnBack}
+        </Button>
+      </div>
+    );
+  }
+
   if (isCompleted) {
     return (
       <div className="max-w-xl mx-auto bg-card border border-border rounded-3xl p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
@@ -109,13 +121,16 @@ export const GrammarDailyQuizContainer: FC<
   // Simple highlight logic: if the explanation contains the answer or common grammar terms, bold them.
   const renderHighlightedExplanation = (explanation: string, answer: string) => {
     if (!explanation) return null;
-    const parts = explanation.split(new RegExp(`(${answer}|Quá khứ hoàn thành|Quá khứ đơn|câu điều kiện|Subjunctive Mood)`, 'gi'));
+    const keywords = GRAMMAR_UI_TEXT.dailyQuiz.highlightKeywords || ['Quá khứ hoàn thành', 'Quá khứ đơn', 'câu điều kiện', 'Subjunctive Mood'];
+    const keywordsPattern = [answer, ...keywords].map(k => k.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+    const parts = explanation.split(new RegExp(`(${keywordsPattern})`, 'gi'));
     
     return (
       <p className="text-xs text-foreground/80 leading-relaxed font-medium">
         {parts.map((part, i) => {
-          if (part.toLowerCase() === answer.toLowerCase() || 
-              ['quá khứ hoàn thành', 'quá khứ đơn', 'câu điều kiện', 'subjunctive mood'].includes(part.toLowerCase())) {
+          const lowerPart = part.toLowerCase();
+          if (lowerPart === answer.toLowerCase() || 
+              keywords.some(k => k.toLowerCase() === lowerPart)) {
             return <span key={i} className="text-primary font-bold bg-primary/20 px-1 rounded mx-0.5">{part}</span>;
           }
           return part;
@@ -129,7 +144,7 @@ export const GrammarDailyQuizContainer: FC<
       {/* Floating XP Animation Popup */}
       {showXpPopup && (
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black px-5 py-2.5 rounded-full animate-[ping_1s_ease-out_forwards] z-50 text-sm tracking-wider shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center gap-1">
-          <span role="img" aria-label="fire">🔥</span> +15 XP
+          <span role="img" aria-label="fire">🔥</span> {GRAMMAR_UI_TEXT.dailyQuiz.xpPopupText}
         </div>
       )}
 
@@ -144,7 +159,7 @@ export const GrammarDailyQuizContainer: FC<
 
         <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-amber-500 rounded-full font-bold text-xs shadow-[0_0_15px_rgba(245,158,11,0.15)]">
           <Flame className="h-4 w-4 fill-amber-500 text-amber-500 animate-pulse drop-shadow-[0_0_5px_rgba(245,158,11,1)]" />
-          <span className="tracking-widest">STREAK: {streak}</span>
+          <span className="tracking-widest">{GRAMMAR_UI_TEXT.dailyQuiz.streakLabel}: {streak}</span>
         </div>
 
         {/* Circular Timer */}

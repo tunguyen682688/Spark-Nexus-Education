@@ -248,9 +248,9 @@ export const vocabularyApi = {
     const axios = await getAxiosInstance();
     const endpoint = ENDPOINTS.communityFavorite(setId);
     if (shouldFavorite) {
-      await axios.post(endpoint);
+      await axios.post<unknown>(endpoint);
     } else {
-      await axios.delete(endpoint);
+      await axios.delete<unknown>(endpoint);
     }
   },
 
@@ -319,7 +319,7 @@ export const vocabularyApi = {
     config?: Record<string, unknown>
   ): Promise<void> {
     const axios = await getAxiosInstance();
-    await axios.put(ENDPOINTS.setItems(setId), payload, config);
+    await axios.put<unknown>(ENDPOINTS.setItems(setId), payload, config);
   },
 
   /**
@@ -358,7 +358,7 @@ export const vocabularyApi = {
    */
   async deleteWordFromSet(setId: string, wordId: string): Promise<void> {
     const axios = await getAxiosInstance();
-    await axios.delete(ENDPOINTS.setWord(setId, wordId));
+    await axios.delete<unknown>(ENDPOINTS.setWord(setId, wordId));
   },
 
   /**
@@ -366,7 +366,7 @@ export const vocabularyApi = {
    */
   async deleteVocabularySet(setId: string): Promise<void> {
     const axios = await getAxiosInstance();
-    await axios.delete(ENDPOINTS.set(setId));
+    await axios.delete<unknown>(ENDPOINTS.set(setId));
   },
 
   /**

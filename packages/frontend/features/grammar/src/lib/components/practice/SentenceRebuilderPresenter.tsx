@@ -1,5 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { GRAMMAR_UI_TEXT } from '../../constants';
+
+const T = GRAMMAR_UI_TEXT.practicePresenter;
 
 interface SentenceRebuilderPresenterProps {
   rebuiltWords: string[];
@@ -23,7 +26,7 @@ export const SentenceRebuilderPresenter: React.FC<SentenceRebuilderPresenterProp
       {/* Answer Tray */}
       <div className="space-y-2">
         <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest">
-          KHAY CÂU TRẢ LỜI
+          {T.answerTrayLabel}
         </p>
         <div
           className={`min-h-[60px] w-full bg-muted/20 border border-dashed rounded-2xl p-4 flex flex-wrap gap-2 transition-all ${
@@ -36,7 +39,7 @@ export const SentenceRebuilderPresenter: React.FC<SentenceRebuilderPresenterProp
         >
           {rebuiltWords.length === 0 ? (
             <span className="text-xs text-muted-foreground italic font-medium flex items-center">
-              Click chọn các viên thuốc từ bên dưới để ghép câu...
+              {T.answerTrayPlaceholder}
             </span>
           ) : (
             rebuiltWords.map((word, idx) => (
@@ -65,12 +68,12 @@ export const SentenceRebuilderPresenter: React.FC<SentenceRebuilderPresenterProp
       {/* Word Pool */}
       <div className="space-y-2">
         <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest">
-          DANH SÁCH TỪ VỰNG
+          {T.wordPoolLabel}
         </p>
         <div className="flex flex-wrap gap-2">
           {rebuilderPool.length === 0 && !isEvaluated ? (
             <span className="text-xs text-muted-foreground italic font-medium">
-              Bấm "Kiểm tra" để so khớp câu hoàn chỉnh!
+              {T.wordPoolEmpty}
             </span>
           ) : (
             rebuilderPool.map((word, idx) => (

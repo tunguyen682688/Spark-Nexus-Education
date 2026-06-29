@@ -1,5 +1,7 @@
 import type { FC } from 'react';
 import type { ExamQuestion } from '../types';
+import { Input } from '@spark-nest-ed/frontend-shared-components';
+import { GRAMMAR_UI_TEXT } from '../constants';
 
 interface QuestionEditorProps {
   idx: number;
@@ -11,6 +13,8 @@ interface MultipleChoiceProps extends QuestionEditorProps {
   handleUpdateOption: (qIdx: number, optIdx: number, val: string) => void;
 }
 
+const T = GRAMMAR_UI_TEXT.lessonComponents.examQuestionEditor;
+
 export const MultipleChoiceQuestionEditor: FC<MultipleChoiceProps> = ({
   idx,
   question,
@@ -20,47 +24,46 @@ export const MultipleChoiceQuestionEditor: FC<MultipleChoiceProps> = ({
   return (
     <>
       <div className="space-y-1 md:col-span-3">
-        <label className="text-[9px] font-black text-slate-500 uppercase block">
-          Nội dung câu hỏi trắc nghiệm
+        <label className="text-[9px] font-black text-muted-foreground uppercase block">
+          {T.mcTitle}
         </label>
-        <input
+        <Input
           type="text"
           value={question.text || ''}
-          onChange={(e) =>
-            handleUpdateQuestion(idx, { text: e.target.value })
-          }
-          placeholder="Ví dụ: By the time they arrive, we _____ our dinner."
-          className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
+          onChange={(e) => handleUpdateQuestion(idx, { text: e.target.value })}
+          placeholder={T.mcPlaceholder}
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
           required
         />
       </div>
 
       {question.options && (
-        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/20 border border-slate-900 p-4 rounded-xl">
-          <span className="text-[9px] font-black text-slate-500 block uppercase md:col-span-2">
-            CÁC PHƯƠNG ÁN LỰA CHỌN
+        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/10 border border-border p-4 rounded-xl">
+          <span className="text-[9px] font-black text-muted-foreground block uppercase md:col-span-2">
+            {T.optionsTitle}
           </span>
           {question.options.map((opt, oIdx) => (
             <div key={oIdx} className="space-y-1">
-              <label className="text-[8px] font-bold text-slate-500 uppercase block">
-                Phương án {String.fromCharCode(65 + oIdx)}
+              <label className="text-[8px] font-bold text-muted-foreground uppercase block">
+                {T.optionLabel.replace(
+                  '{label}',
+                  String.fromCharCode(65 + oIdx)
+                )}
               </label>
-              <input
+              <Input
                 type="text"
                 value={opt}
-                onChange={(e) =>
-                  handleUpdateOption(idx, oIdx, e.target.value)
-                }
-                className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50"
+                onChange={(e) => handleUpdateOption(idx, oIdx, e.target.value)}
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
                 required
               />
             </div>
           ))}
           <div className="space-y-1 md:col-span-2 pt-2">
-            <label className="text-[8px] font-bold uppercase block text-emerald-400">
-              Đáp án chính xác (Copy chính xác text của option đúng)
+            <label className="text-[8px] font-bold uppercase block text-emerald-500">
+              {T.mcAnswerLabel}
             </label>
-            <input
+            <Input
               type="text"
               value={question.answer || ''}
               onChange={(e) =>
@@ -68,8 +71,8 @@ export const MultipleChoiceQuestionEditor: FC<MultipleChoiceProps> = ({
                   answer: e.target.value,
                 })
               }
-              placeholder="Ví dụ: will have finished"
-              className="w-full bg-[#0c1020]/50 border border-emerald-500/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50"
+              placeholder={T.mcAnswerPlaceholder}
+              className="w-full bg-background border border-emerald-500/25 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-emerald-500/50 placeholder:text-muted-foreground/50"
               required
             />
           </div>
@@ -87,44 +90,40 @@ export const SentenceBuilderQuestionEditor: FC<QuestionEditorProps> = ({
   return (
     <>
       <div className="space-y-1 md:col-span-3">
-        <label className="text-[9px] font-black text-slate-500 uppercase block">
-          Hướng dẫn sắp xếp câu
+        <label className="text-[9px] font-black text-muted-foreground uppercase block">
+          {T.sbTitle}
         </label>
-        <input
+        <Input
           type="text"
           value={question.text || ''}
-          onChange={(e) =>
-            handleUpdateQuestion(idx, { text: e.target.value })
-          }
-          placeholder="Ví dụ: Hãy click chọn các từ để sắp xếp thành câu hoàn chỉnh..."
-          className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
+          onChange={(e) => handleUpdateQuestion(idx, { text: e.target.value })}
+          placeholder={T.sbPlaceholder}
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
           required
         />
       </div>
 
-      <div className="space-y-1 md:col-span-3 bg-slate-950/20 border border-slate-900 p-4 rounded-xl">
-        <label className="text-[8px] font-black text-slate-500 uppercase block">
-          Danh sách từ xáo trộn (Ngăn cách các từ bằng dấu phẩy)
+      <div className="space-y-1 md:col-span-3 bg-muted/10 border border-border p-4 rounded-xl">
+        <label className="text-[8px] font-black text-muted-foreground uppercase block">
+          {T.sbWordsLabel}
         </label>
-        <input
+        <Input
           type="text"
           value={question.words?.join(', ') || ''}
           onChange={(e) => {
             const val = e.target.value;
-            const splitWords = val
-              .split(',')
-              .map((w) => w.trim());
+            const splitWords = val.split(',').map((w) => w.trim());
             handleUpdateQuestion(idx, { words: splitWords });
           }}
-          placeholder="Ví dụ: If, I, were, rich, I, would, buy, a, car."
-          className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50"
+          placeholder={T.sbWordsPlaceholder}
+          className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
           required
         />
         <div className="space-y-1 pt-3">
-          <label className="text-[8px] font-bold uppercase block text-emerald-400">
-            Đáp án câu hoàn chỉnh chính xác
+          <label className="text-[8px] font-bold uppercase block text-emerald-500">
+            {T.sbAnswerLabel}
           </label>
-          <input
+          <Input
             type="text"
             value={question.answer || ''}
             onChange={(e) =>
@@ -132,8 +131,8 @@ export const SentenceBuilderQuestionEditor: FC<QuestionEditorProps> = ({
                 answer: e.target.value,
               })
             }
-            placeholder="Ví dụ: If I were rich, I would buy a car."
-            className="w-full bg-[#0c1020]/50 border border-emerald-500/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50"
+            placeholder={T.sbAnswerPlaceholder}
+            className="w-full bg-background border border-emerald-500/25 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-emerald-500/50 placeholder:text-muted-foreground/50"
             required
           />
         </div>
@@ -150,27 +149,25 @@ export const ErrorSpotlightQuestionEditor: FC<QuestionEditorProps> = ({
   return (
     <>
       <div className="space-y-1 md:col-span-3">
-        <label className="text-[9px] font-black text-slate-500 uppercase block">
-          Hướng dẫn sửa lỗi sai
+        <label className="text-[9px] font-black text-muted-foreground uppercase block">
+          {T.esTitle}
         </label>
-        <input
+        <Input
           type="text"
           value={question.text || ''}
-          onChange={(e) =>
-            handleUpdateQuestion(idx, { text: e.target.value })
-          }
-          placeholder="Ví dụ: Click chọn từ viết sai ngữ pháp trong câu và nhập từ sửa lại đúng..."
-          className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
+          onChange={(e) => handleUpdateQuestion(idx, { text: e.target.value })}
+          placeholder={T.esPlaceholder}
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
           required
         />
       </div>
 
-      <div className="md:col-span-3 bg-slate-950/20 border border-slate-900 p-4 rounded-xl space-y-3">
+      <div className="md:col-span-3 bg-muted/10 border border-border p-4 rounded-xl space-y-3">
         <div className="space-y-1">
-          <label className="text-[8px] font-black text-slate-500 uppercase block">
-            Câu văn đầy đủ chứa lỗi viết sai
+          <label className="text-[8px] font-black text-muted-foreground uppercase block">
+            {T.esSentenceLabel}
           </label>
-          <input
+          <Input
             type="text"
             value={question.sentence || ''}
             onChange={(e) =>
@@ -178,18 +175,18 @@ export const ErrorSpotlightQuestionEditor: FC<QuestionEditorProps> = ({
                 sentence: e.target.value,
               })
             }
-            placeholder="Ví dụ: He has been studying English since five years."
-            className="w-full bg-[#0c1020]/50 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50"
+            placeholder={T.esSentencePlaceholder}
+            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50"
             required
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
           <div className="space-y-1">
-            <label className="text-[8px] font-bold text-slate-500 uppercase block text-rose-455">
-              Từ bị viết sai trong câu
+            <label className="text-[8px] font-bold text-rose-500 uppercase block">
+              {T.esIncorrectLabel}
             </label>
-            <input
+            <Input
               type="text"
               value={question.incorrectWord || ''}
               onChange={(e) =>
@@ -197,17 +194,17 @@ export const ErrorSpotlightQuestionEditor: FC<QuestionEditorProps> = ({
                   incorrectWord: e.target.value,
                 })
               }
-              placeholder="Ví dụ: since"
-              className="w-full bg-[#0c1020]/50 border border-rose-500/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500/50"
+              placeholder={T.esIncorrectPlaceholder}
+              className="w-full bg-background border border-rose-500/25 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-rose-500/50 placeholder:text-muted-foreground/50"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-[8px] font-bold text-slate-500 uppercase block text-emerald-455">
-              Từ viết lại sửa đúng
+            <label className="text-[8px] font-bold text-emerald-500 uppercase block">
+              {T.esCorrectLabel}
             </label>
-            <input
+            <Input
               type="text"
               value={question.correctWord || ''}
               onChange={(e) => {
@@ -217,8 +214,8 @@ export const ErrorSpotlightQuestionEditor: FC<QuestionEditorProps> = ({
                   answer: val,
                 });
               }}
-              placeholder="Ví dụ: for"
-              className="w-full bg-[#0c1020]/50 border border-emerald-500/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50"
+              placeholder={T.esCorrectPlaceholder}
+              className="w-full bg-background border border-emerald-500/25 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-emerald-500/50 placeholder:text-muted-foreground/50"
               required
             />
           </div>

@@ -33,58 +33,38 @@ export function useListeningExplore(options?: UseListeningExploreOptions) {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // State values
-  const [category, setCategory] = useState<string>(
-    fixedCategory || getInitialCategory(location.pathname, searchParams)
-  );
-  const [difficulty, setDifficulty] = useState<string>(searchParams.get('difficulty') || 'all');
+  // Read search parameters directly from the URL to avoid double-sync state issues
+  const category = fixedCategory || getInitialCategory(location.pathname, searchParams);
+  const difficulty = searchParams.get('difficulty') || 'all';
+
+  // Keep local state for searchQuery to make typing in input field snappy (not lagging)
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState<string>('newest'); // 'newest' | 'views' | 'subtitles'
   const limit = 6; // Reduced limit for optimization
 
-  // Update states if category, difficulty or query changes in URL (e.g. back/forward button)
+  // 1. Sync local search query state FROM URL (e.g. back/forward button or reset filter)
+  const urlQuery = searchParams.get('q') || '';
   useEffect(() => {
-    const cat = fixedCategory || getInitialCategory(location.pathname, searchParams);
-    setCategory(cat);
+    setSearchQuery(urlQuery);
+  }, [urlQuery]);
 
-    const diff = searchParams.get('difficulty') || 'all';
-    setDifficulty(diff);
-
-    const q = searchParams.get('q') || '';
-    setSearchQuery(q);
-  }, [location.pathname, searchParams, fixedCategory]);
-
-  // Sync state changes with URL Search Params
+  // 2. Debounce local search query state updates BACK to URL search params
   useEffect(() => {
-    const params: Record<string, string> = {};
+    const delayDebounce = setTimeout(() => {
+      const currentVal = searchParams.get('q') || '';
+      if (searchQuery !== currentVal) {
+        const params = new URLSearchParams(searchParams);
+        if (searchQuery) {
+          params.set('q', searchQuery);
+        } else {
+          params.delete('q');
+        }
+        setSearchParams(params, { replace: true }); // Use replace to avoid polluting browser history on typing
+      }
+    }, 300);
 
-    // Only set category search param if we are on the base '/listening/explore' page
-    // and the category is not 'all'.
-    const isSpecificPath = 
-      fixedCategory ||
-      location.pathname.includes('/podcasts') ||
-      location.pathname.includes('/videos') ||
-      location.pathname.includes('/audiobooks') ||
-      location.pathname.includes('/practice') ||
-      location.pathname.includes('/news');
-
-    if (!isSpecificPath && category !== 'all') {
-      params.category = category;
-    }
-
-    if (difficulty !== 'all') params.difficulty = difficulty;
-    if (searchQuery) params.q = searchQuery;
-
-    const currentParams = Object.fromEntries(searchParams.entries());
-    const hasChanged = 
-      params.category !== currentParams.category ||
-      params.difficulty !== currentParams.difficulty ||
-      params.q !== currentParams.q;
-
-    if (hasChanged) {
-      setSearchParams(params);
-    }
-  }, [category, difficulty, searchQuery, location.pathname, searchParams, setSearchParams, fixedCategory]);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, searchParams, setSearchParams]);
 
   // Fetch materials params
   const apiParams: {

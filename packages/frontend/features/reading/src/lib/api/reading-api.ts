@@ -17,6 +17,7 @@ import type {
   AddWordToPackagePayload,
   ArticleQuizData,
   QuizResponse,
+  SyntaxNode,
 } from '../types';
 
 const ENDPOINTS = {
@@ -254,7 +255,7 @@ export const readingApi = {
 
   async deleteArticle(id: string): Promise<void> {
     const axios = await getAxiosInstance();
-    await axios.post(ENDPOINTS.studioDelete(id));
+    await axios.post<unknown>(ENDPOINTS.studioDelete(id));
   },
 
   async getMyArticles(params?: ApiQueryParams): Promise<SimplifiedPaginatedResponse<Article>> {
@@ -336,17 +337,9 @@ export const readingApi = {
     return extractPaginatedResponse(response.data).data;
   },
 
-  async parseSyntax(sentence: string): Promise<{
-    label: string;
-    text?: string;
-    children?: any[];
-  }> {
+  async parseSyntax(sentence: string): Promise<SyntaxNode> {
     const axios = await getAxiosInstance();
-    const response = await axios.post<ResourceResponse<{
-      label: string;
-      text?: string;
-      children?: any[];
-    }>>('/reading/parse-syntax', { sentence });
+    const response = await axios.post<ResourceResponse<SyntaxNode>>('/reading/parse-syntax', { sentence });
     return extractResource(response.data);
   },
 

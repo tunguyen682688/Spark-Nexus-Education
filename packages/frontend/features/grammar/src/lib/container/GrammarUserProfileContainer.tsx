@@ -194,7 +194,7 @@ export function GrammarUserProfileContainer({
                         borderRadius: '12px',
                       }}
                       itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
-                      formatter={(value: number) => [`${value}%`, 'Mức độ']}
+                      formatter={(value: number) => [`${value}%`, GRAMMAR_UI_TEXT.userProfile.chartTooltipLabel]}
                     />
                     <Radar
                       name="Skills"

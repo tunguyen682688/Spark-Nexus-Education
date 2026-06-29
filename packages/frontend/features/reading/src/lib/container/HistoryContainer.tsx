@@ -4,6 +4,7 @@ import { Clock, BookOpen, CheckCircle2, TrendingUp, History, PlayCircle, AlertCi
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ARTICLE_THUMBNAIL } from '@spark-nest-ed/frontend-core-constants';
 import { useHistoryContainer } from '../hooks/use-history-container';
+import { READING_UI_TEXT } from '../constants/reading-ui-text';
 
 export const HistoryContainer: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const HistoryContainer: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1400px] mx-auto p-4 md:p-8 min-h-screen bg-background font-sans space-y-8 animate-pulse">
+      <div className="w-full p-4 md:p-8 min-h-screen bg-background font-sans space-y-8 animate-pulse">
         <div className="space-y-2">
           <Skeleton className="h-9 w-48 dark:bg-slate-800" />
           <Skeleton className="h-4 w-96 dark:bg-slate-800" />
@@ -37,11 +38,11 @@ export const HistoryContainer: React.FC = () => {
 
   if (isError || !dashboardData) {
     return (
-      <div className="max-w-[1400px] mx-auto p-8 min-h-screen bg-background font-sans flex flex-col items-center justify-center space-y-4">
+      <div className="w-full p-8 min-h-screen bg-background font-sans flex flex-col items-center justify-center space-y-4">
         <AlertCircle className="h-12 w-12 text-red-500" />
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Lỗi tải lịch sử đọc</h3>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{READING_UI_TEXT.history.ERROR_TITLE}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Không thể tải dữ liệu lịch sử đọc của bạn vào lúc này. Vui lòng thử lại sau.
+          {READING_UI_TEXT.history.ERROR_DESC}
         </p>
       </div>
     );
@@ -50,15 +51,15 @@ export const HistoryContainer: React.FC = () => {
   const { stats, inProgress, history } = dashboardData;
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 min-h-screen bg-background font-sans space-y-8">
+    <div className="w-full p-4 md:p-8 min-h-screen bg-background font-sans space-y-8">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
           <History className="h-8 w-8 text-blue-600 dark:text-blue-500" />
-          Nhật ký & Lịch sử Đọc
+          {READING_UI_TEXT.history.TITLE}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Theo dõi tiến độ học tập, thời gian ôn tập và lịch sử các tài liệu bạn đã tương tác.
+          {READING_UI_TEXT.history.SUBTITLE}
         </p>
       </div>
 
@@ -70,7 +71,7 @@ export const HistoryContainer: React.FC = () => {
             <Clock className="h-6 w-6" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Từ đã tra cứu</span>
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{READING_UI_TEXT.history.STAT_LOOKED_UP}</span>
             <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">{stats.wordsLookedUp}</h3>
           </div>
         </div>
@@ -81,8 +82,8 @@ export const HistoryContainer: React.FC = () => {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Bài đọc đã học</span>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">{stats.totalArticles} bài</h3>
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{READING_UI_TEXT.history.STAT_COMPLETED}</span>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">{READING_UI_TEXT.history.STAT_COMPLETED_VAL.replace('{count}', stats.totalArticles.toString())}</h3>
           </div>
         </div>
 
@@ -92,7 +93,7 @@ export const HistoryContainer: React.FC = () => {
             <TrendingUp className="h-6 w-6" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tốc độ đọc TB</span>
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{READING_UI_TEXT.history.STAT_AVG_SPEED}</span>
             <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">
               {stats.avgWpm > 0 ? stats.avgWpm : '--'} <span className="text-sm text-slate-400 font-medium">WPM</span>
             </h3>
@@ -106,15 +107,15 @@ export const HistoryContainer: React.FC = () => {
         <div className="lg:col-span-8 space-y-4">
           <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-slate-400" />
-            Nhật ký đọc chi tiết
+            {READING_UI_TEXT.history.DETAIL_TITLE}
           </h2>
 
           <div className="bg-white dark:bg-[#121826] rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
             {!history || history.length === 0 ? (
               <div className="p-12 text-center text-slate-400 space-y-2">
                 <History className="h-8 w-8 text-slate-300 mx-auto" />
-                <p className="text-sm font-medium">Bạn chưa đọc bài viết nào hoàn chỉnh</p>
-                <p className="text-xs text-slate-500">Hãy bắt đầu hành trình của bạn ngay hôm nay!</p>
+                <p className="text-sm font-medium">{READING_UI_TEXT.history.EMPTY_TITLE}</p>
+                <p className="text-xs text-slate-500">{READING_UI_TEXT.history.EMPTY_DESC}</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-white/5">
@@ -149,7 +150,7 @@ export const HistoryContainer: React.FC = () => {
                           ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
                           : 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
                       }`}>
-                        {item.status === 'MASTERED' ? 'Đã nắm vững' : 'Đang học'}
+                        {item.status === 'MASTERED' ? READING_UI_TEXT.history.STATUS_MASTERED : READING_UI_TEXT.history.STATUS_LEARNING}
                       </Badge>
                       <Button
                         size="sm"
@@ -157,7 +158,7 @@ export const HistoryContainer: React.FC = () => {
                         onClick={() => navigate(`/reading/article/${item.id}`)}
                         className="h-8 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 rounded-lg border-none"
                       >
-                        Đọc lại
+                        {READING_UI_TEXT.history.BTN_REPLAY}
                       </Button>
                     </div>
                   </div>
@@ -171,13 +172,13 @@ export const HistoryContainer: React.FC = () => {
         <div className="lg:col-span-4 space-y-4">
           <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <PlayCircle className="h-5 w-5 text-slate-400" />
-            Đang đọc dở dang
+            {READING_UI_TEXT.history.IN_PROGRESS_TITLE}
           </h2>
 
           <div className="space-y-4">
             {!inProgress || inProgress.length === 0 ? (
               <div className="bg-white dark:bg-[#121826] rounded-2xl p-6 border border-slate-100 dark:border-white/5 text-center text-slate-400 text-xs">
-                Không có bài viết nào đang đọc dở dang.
+                {READING_UI_TEXT.history.IN_PROGRESS_EMPTY}
               </div>
             ) : (
               inProgress.map((item) => (
@@ -201,7 +202,7 @@ export const HistoryContainer: React.FC = () => {
                   {/* Progress Info */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 dark:text-slate-500">
-                      <span>Tiến độ</span>
+                      <span>{READING_UI_TEXT.history.PROGRESS_LABEL}</span>
                       <span className="text-blue-600 dark:text-blue-400">{item.progress}%</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 overflow-hidden">
@@ -214,7 +215,7 @@ export const HistoryContainer: React.FC = () => {
                     onClick={() => navigate(`/reading/article/${item.id}`)}
                     className="w-full h-8 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg border-none flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    Đọc tiếp
+                    {READING_UI_TEXT.history.BTN_CONTINUE}
                   </Button>
                 </div>
               ))

@@ -65,7 +65,7 @@ export const ArticleFilterBar: React.FC<ArticleFilterBarProps> = ({
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 transition-colors">{READING_UI_TEXT.components.shared.FILTER_CEFR_LEVEL}</label>
                 <Select value={difficulty} onValueChange={applyDifficulty}>
                   <SelectTrigger className="w-full h-8 border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-xs transition-colors">
-                    <SelectValue placeholder="All Levels" />
+                    <SelectValue placeholder={READING_UI_TEXT.components.shared.PLACEHOLDER_ALL_LEVELS} />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
                     <SelectItem value="ALL">{READING_UI_TEXT.components.shared.FILTER_ALL_LEVELS}</SelectItem>
@@ -102,9 +102,9 @@ export const ArticleFilterBar: React.FC<ArticleFilterBarProps> = ({
             <PopoverContent className="w-48 p-2 border-slate-100 dark:border-slate-800 dark:bg-slate-900 shadow-md space-y-1 transition-colors">
               <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 py-1.5 block transition-colors">{READING_UI_TEXT.components.shared.FILTER_SORT_BY}</label>
               {[
-                { label: 'Newest Articles', value: 'createdAt' },
-                { label: 'Word Count (Shortest)', value: 'wordCount' },
-                { label: 'Reading Speed Target', value: 'difficulty' },
+                { label: READING_UI_TEXT.components.shared.SORT_NEWEST, value: 'createdAt' },
+                { label: READING_UI_TEXT.components.shared.SORT_WORDS, value: 'wordCount' },
+                { label: READING_UI_TEXT.components.shared.SORT_LEVEL, value: 'difficulty' },
               ].map((opt) => (
                 <Button
                   key={opt.value}

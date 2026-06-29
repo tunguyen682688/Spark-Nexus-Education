@@ -44,8 +44,8 @@ export const GrammarExamArenaContainer: FC<GrammarExamArenaContainerProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#03050d] text-slate-100 flex items-center justify-center">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
           {GRAMMAR_UI_TEXT.examArena.loading}
         </div>
       </div>
@@ -54,13 +54,13 @@ export const GrammarExamArenaContainer: FC<GrammarExamArenaContainerProps> = ({
 
   if (!examSet) {
     return (
-      <div className="min-h-screen bg-[#03050d] text-slate-100 flex flex-col items-center justify-center gap-4">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
           {GRAMMAR_UI_TEXT.examArena.notFound}
         </p>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-100 cursor-pointer"
+          className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
         >
           {GRAMMAR_UI_TEXT.examArena.btnBack}
         </button>
@@ -69,7 +69,7 @@ export const GrammarExamArenaContainer: FC<GrammarExamArenaContainerProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#03050d] text-slate-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground font-sans py-10 px-4 sm:px-6 lg:px-8">
       <SharedAssessmentEngineContainer
         questions={examSet.questions}
         timeLimit={examSet.timeLimit}

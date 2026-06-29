@@ -111,7 +111,7 @@ export const BooksContainer: React.FC = () => {
                 {book.title}
               </h3>
               <p className="text-slate-400 dark:text-slate-500 text-xs font-semibold mt-0.5">
-                {book.author || 'Tác giả ẩn danh'}
+                {book.author || READING_UI_TEXT.books.AUTHOR_ANONYMOUS}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge
@@ -121,8 +121,8 @@ export const BooksContainer: React.FC = () => {
                 </Badge>
                 <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-transparent text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
                   {book.category === 'academic'
-                    ? 'Sách học thuật'
-                    : 'Truyện đọc'}
+                    ? READING_UI_TEXT.books.TYPE_ACADEMIC
+                    : READING_UI_TEXT.books.TYPE_STORY}
                 </Badge>
                 {book.tags?.[0] && (
                   <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 text-[9px] font-bold py-0.5 px-2 rounded-md uppercase tracking-wider">
@@ -137,11 +137,11 @@ export const BooksContainer: React.FC = () => {
             <div className="text-right text-xs font-semibold text-slate-450 dark:text-slate-500 space-y-1">
               <p className="flex items-center justify-end gap-1.5 text-blue-600 dark:text-blue-400">
                 <BookOpen className="w-3.5 h-3.5" />{' '}
-                {Math.ceil(book.wordCount / 200)} trang
+                {Math.ceil(book.wordCount / 200)} {READING_UI_TEXT.academic.PAGES}
               </p>
               <p className="flex items-center justify-end gap-1.5">
                 <span className="font-medium text-slate-400 dark:text-slate-500">
-                  {book.wordCount} từ
+                  {READING_UI_TEXT.books.WORD_COUNT_SUFFIX.replace('{count}', book.wordCount.toString())}
                 </span>
               </p>
             </div>
@@ -192,7 +192,7 @@ export const BooksContainer: React.FC = () => {
             {book.progress > 0 && (
               <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent z-20 text-white">
                 <div className="flex justify-between items-center text-[9px] font-bold mb-1">
-                  <span>TIẾN ĐỘ</span>
+                  <span>{READING_UI_TEXT.books.PROGRESS_LABEL}</span>
                   <span
                     className={
                       isCompleted ? 'text-emerald-400' : 'text-amber-400'
@@ -217,14 +217,14 @@ export const BooksContainer: React.FC = () => {
           <div className="space-y-1 px-1">
             <div className="flex justify-between items-center">
               <span className="text-[9px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">
-                {book.category === 'academic' ? 'Sách học thuật' : 'Truyện đọc'}
+                {book.category === 'academic' ? READING_UI_TEXT.books.TYPE_ACADEMIC : READING_UI_TEXT.books.TYPE_STORY}
               </span>
             </div>
             <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm line-clamp-2 leading-tight min-h-[36px] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
               {book.title}
             </h4>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate">
-              {book.author || 'Tác giả ẩn danh'}
+              {book.author || READING_UI_TEXT.books.AUTHOR_ANONYMOUS}
             </p>
           </div>
         </div>
@@ -234,10 +234,10 @@ export const BooksContainer: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
               <BookOpen className="w-3.5 h-3.5" />{' '}
-              {Math.ceil(book.wordCount / 200)} trang
+              {Math.ceil(book.wordCount / 200)} {READING_UI_TEXT.academic.PAGES}
             </span>
             <span className="flex items-center gap-1 font-medium text-slate-400 dark:text-slate-500">
-              {book.wordCount} từ
+              {READING_UI_TEXT.books.WORD_COUNT_SUFFIX.replace('{count}', book.wordCount.toString())}
             </span>
           </div>
 
@@ -315,13 +315,13 @@ export const BooksContainer: React.FC = () => {
           {/* Content Details */}
           <div className="md:w-1/2 p-8 md:p-10 flex flex-col justify-center text-white space-y-4">
             <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2.5 py-1 rounded-full uppercase tracking-widest w-fit shadow-sm">
-              {spotlightBook.category === 'academic' ? READING_UI_TEXT.academic.FEATURED_CURRICULUM : 'Sách nổi bật'}
+              {spotlightBook.category === 'academic' ? READING_UI_TEXT.academic.FEATURED_CURRICULUM : READING_UI_TEXT.books.TYPE_SPOTLIGHT}
             </span>
             <h2 className="text-2xl md:text-3.5xl font-extrabold tracking-tight leading-tight line-clamp-2">
               {spotlightBook.title}
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xl line-clamp-3">
-              {spotlightBook.summary || 'Khám phá kiến thức mới từ cuốn sách được tuyển chọn đặc biệt tuần này.'}
+              {spotlightBook.summary || READING_UI_TEXT.books.SUMMARY_FALLBACK}
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -342,7 +342,7 @@ export const BooksContainer: React.FC = () => {
               >
                 {bookmarkedIds.has(spotlightBook.id) ? (
                   <>
-                    <BookmarkCheck className="w-4 h-4 text-emerald-400" /> Đã lưu
+                    <BookmarkCheck className="w-4 h-4 text-emerald-400" /> {READING_UI_TEXT.books.SAVED_LABEL}
                   </>
                 ) : (
                   <>
@@ -359,11 +359,10 @@ export const BooksContainer: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 pb-4 border-b border-slate-200/60 dark:border-slate-850/60 gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Thư viện Sách & Truyện đọc
+            {READING_UI_TEXT.books.TITLE}
           </h1>
           <p className="text-slate-400 dark:text-slate-400 text-xs font-semibold mt-1">
-            Tuyển tập sách học thuật giáo khoa, nghiên cứu khoa học và truyện
-            đọc phân chia theo CEFR.
+            {READING_UI_TEXT.books.SUBTITLE}
           </p>
         </div>
 
@@ -424,10 +423,10 @@ export const BooksContainer: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#121826] border border-slate-200/50 dark:border-white/5 p-8 rounded-2xl shadow-sm">
               <BookOpen className="h-16 w-16 text-slate-300 dark:text-slate-700 mb-4" />
               <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-200">
-                Không tìm thấy cuốn sách nào
+                {READING_UI_TEXT.books.NO_BOOKS_TITLE}
               </h3>
               <p className="text-slate-400 dark:text-slate-400 max-w-sm mt-1 text-xs leading-relaxed font-semibold">
-                Không có cuốn sách nào khớp với bộ lọc CEFR hoặc chủ đề của bạn.
+                {READING_UI_TEXT.books.NO_BOOKS_DESC}
               </p>
               <Button
                 onClick={() => {
@@ -489,14 +488,14 @@ export const BooksContainer: React.FC = () => {
             {/* Book category filter selector (Consolidated Book Types selector) */}
             <div className="space-y-2.5">
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                Phân loại tài liệu
+                {READING_UI_TEXT.books.FILTER_TYPE}
               </span>
               <div className="flex gap-2">
                 {(
                   [
-                    { value: 'all', label: 'Tất cả' },
-                    { value: 'academic', label: 'Học thuật' },
-                    { value: 'book', label: 'Truyện đọc' },
+                    { value: 'all', label: READING_UI_TEXT.books.FILTER_TYPE_ALL },
+                    { value: 'academic', label: READING_UI_TEXT.books.FILTER_TYPE_ACADEMIC },
+                    { value: 'book', label: READING_UI_TEXT.books.FILTER_TYPE_STORY },
                   ] as { value: 'all' | 'academic' | 'book'; label: string }[]
                 ).map((item) => {
                   const isSelected = categoryFilter === item.value;
@@ -671,19 +670,19 @@ export const BooksContainer: React.FC = () => {
             {dashboardData?.stats && (
               <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  <span>Từ vựng đã học</span>
-                  <span className="text-slate-850 dark:text-slate-200 font-extrabold font-mono">
-                    {dashboardData.stats.wordsLookedUp} từ
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  <span>Tài liệu hoàn thành</span>
+                  <span>{READING_UI_TEXT.books.STAT_WORDS_LEARNED}</span>
                   <span className="text-slate-855 dark:text-slate-200 font-extrabold font-mono">
-                    {dashboardData.stats.totalArticles} bài
+                    {READING_UI_TEXT.books.STAT_WORDS_VAL.replace('{count}', dashboardData.stats.wordsLookedUp.toString())}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  <span>Tốc độ đọc trung bình</span>
+                  <span>{READING_UI_TEXT.books.STAT_DOCS_COMPLETED}</span>
+                  <span className="text-slate-855 dark:text-slate-200 font-extrabold font-mono">
+                    {READING_UI_TEXT.books.STAT_DOCS_VAL.replace('{count}', dashboardData.stats.totalArticles.toString())}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span>{READING_UI_TEXT.books.STAT_AVG_SPEED}</span>
                   <span className="text-slate-855 dark:text-slate-200 font-extrabold font-mono text-blue-500 dark:text-blue-400">
                     {dashboardData.stats.avgWpm} WPM
                   </span>

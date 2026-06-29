@@ -81,7 +81,7 @@ export const TrendingPublications: React.FC<TrendingPublicationsProps> = ({
               )}
               {pub.category === 'news' && (
                 <div className="absolute top-3 left-3 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded shadow-sm border border-white/10">
-                  News
+                  {READING_UI_TEXT.components.dashboard.LABEL_NEWS}
                 </div>
               )}
               <BookOpen className="text-white/30 h-10 w-10 relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:text-white/50" />
@@ -103,7 +103,7 @@ export const TrendingPublications: React.FC<TrendingPublicationsProps> = ({
                   {pub.readTime}
                 </p>
                 <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-sm">
-                  {pub.difficulty} Level
+                  {READING_UI_TEXT.components.dashboard.LABEL_LEVEL.replace('{level}', pub.difficulty)}
                 </div>
               </div>
             </CardContent>

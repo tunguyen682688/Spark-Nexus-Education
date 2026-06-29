@@ -72,7 +72,6 @@ export const SharedAssessmentEngineContainer: FC<
   SharedAssessmentEngineContainerProps
 > = ({ questions, timeLimit, examType, examTitle, onFinish, onBack }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
-
   const saveTrapMutation = useSaveGrammarTrap();
   const [savedTrapIds, setSavedTrapIds] = useState<string[]>([]);
 
@@ -91,7 +90,7 @@ export const SharedAssessmentEngineContainer: FC<
           correctWord: q.correctWord || '',
         },
         category: q.category || 'syntax',
-        userAnswer: userAnswer || 'Đã trả lời chưa chính xác',
+        userAnswer: userAnswer || GRAMMAR_UI_TEXT.assessmentEngine.defaultWrongAnswerText,
         correctAnswer:
           q.type === 'ERROR_SPOTLIGHT'
             ? `${q.incorrectWord} -> ${q.correctWord}`
@@ -382,6 +381,18 @@ export const SharedAssessmentEngineContainer: FC<
   const secs = timeLeft % 60;
   const formattedTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto bg-card border border-border rounded-3xl p-8 shadow-2xl text-center space-y-6">
+        <h2 className="text-xl font-bold">{GRAMMAR_UI_TEXT.assessmentEngine.noQuestionsTitle}</h2>
+        <p className="text-sm text-muted-foreground">{GRAMMAR_UI_TEXT.assessmentEngine.noQuestionsDesc}</p>
+        <Button onClick={onBack} className="bg-primary border-none text-white font-bold">
+          {GRAMMAR_UI_TEXT.assessmentEngine.btnBack}
+        </Button>
+      </div>
+    );
+  }
+
   if (isCompleted && examResult) {
     const proficiency = examResult.proficiency ?? 0;
     const xpEarned = examResult.xpEarned ?? 0;
@@ -391,24 +402,22 @@ export const SharedAssessmentEngineContainer: FC<
     // Quy đổi thang điểm chuẩn
     let scaleTitle = GRAMMAR_UI_TEXT.assessmentEngine.resultsTitle;
     let scaleVal = `${proficiency}%`;
-    let scaleDesc = `Trả lời đúng ${Math.round(
-      (proficiency / 100) * questions.length
-    )}/${questions.length} câu hỏi.`;
+    let scaleDesc = GRAMMAR_UI_TEXT.assessmentEngine.scaleGeneralDesc
+      .replace('{correct}', Math.round((proficiency / 100) * questions.length).toString())
+      .replace('{total}', questions.length.toString());
 
     if (examType === 'TOEIC') {
-      scaleTitle = 'ƯỚC LƯỢNG TOEIC PART 5';
+      scaleTitle = GRAMMAR_UI_TEXT.assessmentEngine.scaleToeicTitle;
       const points = Math.round((proficiency / 100) * 250) + 150;
       scaleVal = GRAMMAR_UI_TEXT.assessmentEngine.pointsLabel.replace('{points}', points.toString());
-      scaleDesc =
-        'Quy chuẩn tương đương theo phân bổ điểm ngữ pháp TOEIC Reading.';
+      scaleDesc = GRAMMAR_UI_TEXT.assessmentEngine.scaleToeicDesc;
     } else if (examType === 'IELTS') {
-      scaleTitle = 'ƯỚC LƯỢNG GRAMMAR BAND';
+      scaleTitle = GRAMMAR_UI_TEXT.assessmentEngine.scaleIeltsTitle;
       const band = (5.0 + (proficiency / 100) * 4.0).toFixed(1);
       scaleVal = GRAMMAR_UI_TEXT.assessmentEngine.bandLabel.replace('{band}', band);
-      scaleDesc =
-        'Ước lượng năng lực cú pháp và độ chính xác cấu trúc theo IELTS.';
+      scaleDesc = GRAMMAR_UI_TEXT.assessmentEngine.scaleIeltsDesc;
     } else if (examType === 'VSTEP') {
-      scaleTitle = 'TRÌNH ĐỘ QUY CHUẨN VSTEP';
+      scaleTitle = GRAMMAR_UI_TEXT.assessmentEngine.scaleVstepTitle;
       scaleVal =
         proficiency >= 85
           ? GRAMMAR_UI_TEXT.assessmentEngine.vstepLevel1
@@ -466,8 +475,7 @@ export const SharedAssessmentEngineContainer: FC<
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-medium">
-                  Yêu cầu đạt tối thiểu **80%** điểm để vượt qua bài thi chuẩn
-                  chỉ và đủ điều kiện cấp chứng nhận.
+                  {GRAMMAR_UI_TEXT.assessmentEngine.passRequirementDesc}
                 </p>
                 <div className="bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg p-2 text-center text-xs font-black">
                   {GRAMMAR_UI_TEXT.assessmentEngine.xpAccumulated.replace('{xp}', xpEarned.toString())}
@@ -509,10 +517,10 @@ export const SharedAssessmentEngineContainer: FC<
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="text-[9px] font-black text-amber-500 tracking-wider">
-                          SPARK-NEXUS-ED CERTIFICATE
+                          {GRAMMAR_UI_TEXT.examHub.dialogCertBadge}
                         </div>
-                        <div className="text-[10px] font-bold text-slate-400">
-                          Community Grammar Mastery
+                        <div className="text-[10px] font-bold text-muted-foreground">
+                          {GRAMMAR_UI_TEXT.examHub.dialogCertDesc}
                         </div>
                       </div>
                       <span className="text-[9px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
@@ -524,24 +532,24 @@ export const SharedAssessmentEngineContainer: FC<
                       className="space-y-1 py-3"
                       style={{ transform: 'translateZ(20px)' }}
                     >
-                      <span className="text-[8px] text-slate-500 block uppercase tracking-wider">
-                        HỌC VIÊN DANH DỰ
+                      <span className="text-[8px] text-muted-foreground block uppercase tracking-wider">
+                        {GRAMMAR_UI_TEXT.examHub.dialogCertUserLabel}
                       </span>
-                      <div className="text-base font-black text-white bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
-                        Học Viên Danh Dự
+                      <div className="text-base font-black text-foreground bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent">
+                        {GRAMMAR_UI_TEXT.examHub.dialogCertUserVal}
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-end border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-end border-t border-border pt-2">
                       <div>
-                        <span className="text-[7px] text-slate-500 block uppercase">
+                        <span className="text-[7px] text-muted-foreground block uppercase">
                           {GRAMMAR_UI_TEXT.assessmentEngine.certSerialNumber}
                         </span>
-                        <span className="text-[9px] font-mono text-slate-350">
+                        <span className="text-[9px] font-mono text-foreground/80">
                           {certificate.serialNumber}
                         </span>
                       </div>
-                      <span className="text-[8px] text-slate-500 font-mono">
+                      <span className="text-[8px] text-muted-foreground font-mono">
                         {GRAMMAR_UI_TEXT.assessmentEngine.certDateIssued.replace('{date}', new Date(certificate.issuedAt || '').toLocaleDateString())}
                       </span>
                     </div>
@@ -551,7 +559,7 @@ export const SharedAssessmentEngineContainer: FC<
                 <div className="flex justify-center gap-2">
                   <Button
                     onClick={() => window.print()}
-                    className="bg-slate-900 hover:bg-slate-800 text-slate-300 text-[11px] font-bold border border-slate-850 py-2 px-4 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                    className="bg-secondary hover:bg-secondary/80 text-foreground text-[11px] font-bold border border-border py-2 px-4 rounded-lg flex items-center gap-1.5 cursor-pointer"
                   >
                     <Printer className="h-3.5 w-3.5" /> {GRAMMAR_UI_TEXT.assessmentEngine.btnPrintCert}
                   </Button>
@@ -585,7 +593,7 @@ export const SharedAssessmentEngineContainer: FC<
 
             {/* Detailed Wrong Answers */}
             <div className="mt-8 space-y-4 text-left w-full">
-              <h3 className="text-base font-extrabold text-slate-200 border-b border-slate-900 pb-2 flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-foreground border-b border-border pb-2 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-blue-400" />
                 {GRAMMAR_UI_TEXT.assessmentEngine.detailedExplanations.replace('{count}', questions.length.toString())}
               </h3>
@@ -622,7 +630,9 @@ export const SharedAssessmentEngineContainer: FC<
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-slate-500">
-                          CÂU SỐ {idx + 1} • {q.category.toUpperCase()}
+                          {GRAMMAR_UI_TEXT.assessmentEngine.questionNumberLabel
+                            .replace('{number}', (idx + 1).toString())
+                            .replace('{category}', q.category.toUpperCase())}
                         </span>
                         <div className="flex items-center gap-2">
                           {!isAnsCorrect && (
@@ -631,7 +641,7 @@ export const SharedAssessmentEngineContainer: FC<
                                 handleSaveTrap(q, saved?.userAnswer || '')
                               }
                               disabled={savedTrapIds.includes(q.id)}
-                              className="bg-card border border-border hover:border-slate-700 text-[9px] font-black text-rose-400 hover:text-rose-350 px-2 py-1 rounded-lg cursor-pointer transition active:scale-95 flex items-center gap-1 uppercase tracking-wider disabled:opacity-50 disabled:text-slate-500 disabled:border-border disabled:cursor-default"
+                              className="bg-card border border-border hover:border-border/80 text-[9px] font-black text-rose-400 hover:text-rose-350 px-2 py-1 rounded-lg cursor-pointer transition active:scale-95 flex items-center gap-1 uppercase tracking-wider disabled:opacity-50 disabled:text-slate-500 disabled:border-border disabled:cursor-default"
                             >
                               <Bookmark className="h-3 w-3" />
                               {savedTrapIds.includes(q.id)
@@ -650,12 +660,12 @@ export const SharedAssessmentEngineContainer: FC<
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-white leading-relaxed">
+                      <p className="text-sm font-bold text-foreground leading-relaxed">
                         {q.type === 'ERROR_SPOTLIGHT' ? q.sentence : q.text}
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                        <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850">
-                          <span className="text-[8px] font-black text-slate-500 uppercase block mb-0.5">
+                        <div className="bg-muted/40 p-2 rounded-lg border border-border">
+                          <span className="text-[8px] font-black text-muted-foreground uppercase block mb-0.5">
                             {GRAMMAR_UI_TEXT.assessmentEngine.answerUser}
                           </span>
                           <span
@@ -668,8 +678,8 @@ export const SharedAssessmentEngineContainer: FC<
                             {saved?.userAnswer || GRAMMAR_UI_TEXT.assessmentEngine.unanswered}
                           </span>
                         </div>
-                        <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850">
-                          <span className="text-[8px] font-black text-slate-500 uppercase block mb-0.5">
+                        <div className="bg-muted/40 p-2 rounded-lg border border-border">
+                          <span className="text-[8px] font-black text-muted-foreground uppercase block mb-0.5">
                             {GRAMMAR_UI_TEXT.assessmentEngine.answerCorrect}
                           </span>
                           <span className="text-emerald-400 font-bold">
@@ -683,7 +693,7 @@ export const SharedAssessmentEngineContainer: FC<
                         <span className="text-[9px] font-black text-blue-400 uppercase block mb-1">
                           {GRAMMAR_UI_TEXT.assessmentEngine.pedagogicalExplanation}
                         </span>
-                        <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xs text-foreground/80 leading-relaxed font-medium">
                           {q.explanation}
                         </p>
                       </div>
@@ -708,12 +718,12 @@ export const SharedAssessmentEngineContainer: FC<
         <button
           type="button"
           onClick={onBack}
-          className="h-8 w-8 flex items-center justify-center rounded-lg bg-muted border border-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+          className="h-8 w-8 flex items-center justify-center rounded-lg bg-secondary border border-border text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
 
-        <span className="text-xs font-black text-slate-350 uppercase tracking-widest hidden sm:block">
+        <span className="text-xs font-black text-muted-foreground uppercase tracking-widest hidden sm:block">
           {GRAMMAR_UI_TEXT.assessmentEngine.timerLabel.replace('{examType}', examType)}
         </span>
 
@@ -734,7 +744,7 @@ export const SharedAssessmentEngineContainer: FC<
         <div className="flex items-center justify-between text-[10px] font-black text-slate-500 tracking-wider">
           <span className="flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-indigo-400" />
-            STANDARD ASSESSMENT ENGINE
+            {GRAMMAR_UI_TEXT.assessmentEngine.assessmentEngineLabel}
           </span>
           <span className="text-blue-400">
             {GRAMMAR_UI_TEXT.levelGraduation.questionIndex
@@ -742,7 +752,7 @@ export const SharedAssessmentEngineContainer: FC<
               .replace('{total}', questions.length.toString())}
           </span>
         </div>
-        <div className="w-full bg-slate-900/50 rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
           <div
             className="bg-gradient-to-r from-blue-500 to-indigo-500 h-1.5 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progressPercent}%` }}
@@ -752,15 +762,15 @@ export const SharedAssessmentEngineContainer: FC<
 
       {/* Flag board */}
       <div className="flex justify-between items-center bg-muted/30 border border-border rounded-xl p-3">
-        <span className="text-xs text-slate-400 font-medium">
-          Bạn có muốn xem lại câu hỏi này sau?
+        <span className="text-xs text-muted-foreground font-medium">
+          {GRAMMAR_UI_TEXT.assessmentEngine.reviewQuestionPrompt}
         </span>
         <button
           onClick={() => toggleFlag(currentQuestion.id)}
           className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
             flaggedIds.includes(currentQuestion.id)
               ? 'bg-amber-500/10 border-amber-500/30 text-amber-450'
-              : 'bg-slate-900 border-slate-850 text-slate-500 hover:text-slate-350'
+              : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           <Flag className="h-3.5 w-3.5" />
@@ -780,7 +790,7 @@ export const SharedAssessmentEngineContainer: FC<
               ? GRAMMAR_UI_TEXT.assessmentEngine.errorSpotlight
               : GRAMMAR_UI_TEXT.assessmentEngine.multipleChoice}
           </span>
-          <h3 className="text-base font-bold text-white leading-relaxed pt-2">
+          <h3 className="text-base font-bold text-foreground leading-relaxed pt-2">
             {currentQuestion?.text}
           </h3>
         </div>
@@ -798,7 +808,7 @@ export const SharedAssessmentEngineContainer: FC<
                     "w-full text-left p-4 rounded-xl border text-xs font-semibold cursor-pointer active:scale-99 transition-all flex items-center justify-between",
                     isSelected
                       ? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
-                      : 'bg-muted/45 border-border hover:border-slate-700 text-slate-200'
+                      : 'bg-muted/45 border-border hover:border-border/80 text-foreground'
                   )}
                 >
                   <span>{opt}</span>
@@ -815,10 +825,10 @@ export const SharedAssessmentEngineContainer: FC<
         {qType === 'SENTENCE_BUILDER' && currentQuestion?.words && (
           <div className="space-y-4">
             {/* Khay hiển thị từ đã chọn */}
-            <div className="min-h-16 p-4 rounded-2xl bg-slate-950/50 border border-slate-900 flex flex-wrap gap-2 items-center">
+            <div className="min-h-16 p-4 rounded-2xl bg-muted/30 border border-border flex flex-wrap gap-2 items-center">
               {selectedWords.length === 0 ? (
-                <span className="text-xs text-slate-600 font-medium italic">
-                  Click chọn các từ phía dưới để lắp ghép câu...
+                <span className="text-xs text-muted-foreground/60 font-medium italic">
+                  {GRAMMAR_UI_TEXT.assessmentEngine.sentenceBuilderInstruction}
                 </span>
               ) : (
                 selectedWords.map((word, wIdx) => (
@@ -849,7 +859,7 @@ export const SharedAssessmentEngineContainer: FC<
                   <button
                     key={`${word}-${wIdx}`}
                     onClick={() => handleWordClick(word)}
-                    className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-850 hover:border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                    className="px-3 py-2 rounded-xl bg-secondary border border-border hover:border-border/80 text-foreground text-xs font-bold transition-all cursor-pointer"
                   >
                     {word}
                   </button>
@@ -861,7 +871,7 @@ export const SharedAssessmentEngineContainer: FC<
                 onClick={handleClearWords}
                 className="text-[10px] font-black text-rose-400 hover:text-rose-350 uppercase cursor-pointer"
               >
-                Xóa tất cả từ đã ghép
+                {GRAMMAR_UI_TEXT.assessmentEngine.btnClearAllWords}
               </button>
             )}
           </div>
@@ -871,9 +881,9 @@ export const SharedAssessmentEngineContainer: FC<
         {qType === 'ERROR_SPOTLIGHT' && currentQuestion?.sentence && (
           <div className="space-y-4">
             <span className="text-[10px] font-black text-slate-500 block uppercase">
-              BƯỚC 1: CLICK TRỰC TIẾP VÀO TỪ VIẾT SAI NGỮ PHÁP DƯỚI ĐÂY:
+              {GRAMMAR_UI_TEXT.assessmentEngine.errorSpotlightStep1}
             </span>
-            <div className="flex flex-wrap gap-x-1 gap-y-2 bg-slate-950/30 border border-slate-900 p-4 rounded-2xl justify-center">
+            <div className="flex flex-wrap gap-x-1 gap-y-2 bg-muted/20 border border-border p-4 rounded-2xl justify-center">
               {currentQuestion.sentence.split(/\s+/).map((word, wIdx) => {
                 const cleanWord = word.replace(/[.,!?;]/g, '');
                 const isSelected = selectedErrorWord === cleanWord;
@@ -884,7 +894,7 @@ export const SharedAssessmentEngineContainer: FC<
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-rose-500/15 border border-rose-500/30 text-rose-450 scale-102 shadow-[0_0_10px_rgba(239,68,68,0.1)]'
-                        : 'bg-transparent border border-transparent text-slate-250 hover:bg-slate-900/60'
+                        : 'bg-transparent border border-transparent text-muted-foreground hover:bg-secondary/60'
                     }`}
                   >
                     {word}
@@ -896,15 +906,14 @@ export const SharedAssessmentEngineContainer: FC<
             {selectedErrorWord && (
               <div className="space-y-2 pt-2 animate-fadeIn">
                 <span className="text-[10px] font-black text-slate-500 block uppercase">
-                  BƯỚC 2: VIẾT LẠI TỪ SỬA ĐÚNG DÀNH CHO TỪ &quot;
-                  {selectedErrorWord}&quot;:
+                  {GRAMMAR_UI_TEXT.assessmentEngine.errorSpotlightStep2.replace('{word}', selectedErrorWord)}
                 </span>
                 <input
                   type="text"
                   value={correctedText}
                   onChange={(e) => handleCorrectionChange(e.target.value)}
-                  placeholder="Gõ từ ngữ pháp sửa lại đúng vào đây..."
-                  className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50"
+                  placeholder={GRAMMAR_UI_TEXT.assessmentEngine.errorSpotlightPlaceholder}
+                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-xs text-foreground placeholder-muted-foreground/60 focus:outline-none focus:border-blue-500/50"
                 />
               </div>
             )}
@@ -913,17 +922,17 @@ export const SharedAssessmentEngineContainer: FC<
       </div>
 
       {/* Question Navigation Grid & Next Actions */}
-      <div className="border-t border-slate-900 pt-5 space-y-5">
+      <div className="border-t border-border pt-5 space-y-5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black text-slate-500 tracking-wider uppercase">
-            BẢNG CHỈ MỤC CÂU HỎI ({questions.length} CÂU)
+            {GRAMMAR_UI_TEXT.assessmentEngine.navigationTitle.replace('{count}', questions.length.toString())}
           </span>
           <div className="flex items-center gap-3 text-[9px] font-black text-slate-500">
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-blue-500" /> Đã làm
+              <span className="h-2 w-2 rounded-full bg-blue-500" /> {GRAMMAR_UI_TEXT.assessmentEngine.statusAnswered}
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded bg-amber-500" /> Cắm cờ
+              <span className="h-2 w-2 rounded bg-amber-500" /> {GRAMMAR_UI_TEXT.assessmentEngine.statusFlagged}
             </span>
           </div>
         </div>
@@ -936,7 +945,7 @@ export const SharedAssessmentEngineContainer: FC<
             const isAnswered = answers[q.id]?.isAnswered;
 
             let indicatorStyle =
-              'bg-slate-950/40 border-slate-900 text-slate-500 hover:border-slate-800';
+              'bg-muted/30 border-border text-muted-foreground hover:border-border/80';
 
             if (isAnswered) {
               indicatorStyle =
@@ -944,11 +953,11 @@ export const SharedAssessmentEngineContainer: FC<
             }
             if (isFlagged) {
               indicatorStyle =
-                'bg-amber-500/10 border-amber-500/25 text-amber-400 hover:border-amber-500/40';
+                'bg-amber-500/10 border-amber-500/25 text-amber-500 hover:border-amber-500/40';
             }
             if (isActive) {
               indicatorStyle =
-                'bg-slate-900 border-slate-600 text-white shadow-sm ring-1 ring-slate-800 scale-102';
+                'bg-primary border-primary text-primary-foreground shadow-sm ring-1 ring-primary/30 scale-102';
             }
 
             return (
@@ -969,7 +978,7 @@ export const SharedAssessmentEngineContainer: FC<
             variant="outline"
             onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
             disabled={currentIdx === 0}
-            className="flex-1 border-slate-850 text-slate-400 hover:text-slate-200 text-xs py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-30 disabled:pointer-events-none"
+            className="flex-1 border-border text-muted-foreground hover:text-foreground text-xs py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-30 disabled:pointer-events-none"
           >
             {GRAMMAR_UI_TEXT.assessmentEngine.btnPrev}
           </Button>
@@ -977,7 +986,7 @@ export const SharedAssessmentEngineContainer: FC<
           {currentIdx < questions.length - 1 ? (
             <Button
               onClick={() => setCurrentIdx((prev) => prev + 1)}
-              className="flex-1 bg-slate-900 hover:bg-slate-800 text-white border border-slate-850 text-xs py-3 rounded-xl font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+              className="flex-1 bg-secondary hover:bg-secondary/80 text-foreground border border-border text-xs py-3 rounded-xl font-bold flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
             >
               {GRAMMAR_UI_TEXT.assessmentEngine.btnNext} <ArrowRight className="h-4 w-4" />
             </Button>
@@ -1011,15 +1020,15 @@ export const SharedAssessmentEngineContainer: FC<
 
             <div className="space-y-2">
               <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
-                State Recovery{' '}
+                {GRAMMAR_UI_TEXT.assessmentEngine.stateRecoveryLabel}{' '}
                 <span role="img" aria-label="hourglass-flowing-sand">
                   ⏳
                 </span>
               </span>
-              <h3 className="text-xl font-extrabold text-white pt-1">
+              <h3 className="text-xl font-extrabold text-foreground pt-1">
                 {GRAMMAR_UI_TEXT.assessmentEngine.recoveryTitle}
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {GRAMMAR_UI_TEXT.assessmentEngine.recoveryDesc}
               </p>
             </div>

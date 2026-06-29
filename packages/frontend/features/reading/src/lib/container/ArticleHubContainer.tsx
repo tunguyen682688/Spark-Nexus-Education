@@ -95,7 +95,7 @@ export const ArticleHubContainer: React.FC = () => {
           </form>
           <Button onClick={() => navigate(ROUTES.READING.MY_LIBRARY)} variant="outline" className="gap-2 shrink-0 h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
             <Library className="w-4 h-4" />
-            <span className="hidden sm:inline">Thư viện của tôi</span>
+            <span className="hidden sm:inline">{READING_UI_TEXT.hub.MY_LIBRARY}</span>
           </Button>
           <Button onClick={() => navigate(ROUTES.READING.STUDIO)} className="gap-2 shrink-0 h-9 px-4 text-xs font-semibold">
             <PenLine className="w-4 h-4" />
@@ -200,7 +200,7 @@ export const ArticleHubContainer: React.FC = () => {
                                 className="h-8 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-705 dark:text-slate-200 hover:bg-slate-50"
                               >
                                 <ChevronLeft className="h-4 w-4 mr-1" />
-                                Trước
+                                {READING_UI_TEXT.hub.BTN_PREVIOUS}
                               </Button>
                               <div className="flex items-center gap-1">
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {

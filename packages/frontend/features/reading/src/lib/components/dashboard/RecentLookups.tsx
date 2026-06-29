@@ -72,7 +72,7 @@ export const RecentLookups: React.FC<RecentLookupsProps> = ({
           asChild
         >
           <Link to="/vocabularies/review">
-            View Full History <ExternalLink className="h-3 w-3" />
+            {READING_UI_TEXT.components.dashboard.VIEW_FULL_HISTORY} <ExternalLink className="h-3 w-3" />
           </Link>
         </Button>
       </CardContent>

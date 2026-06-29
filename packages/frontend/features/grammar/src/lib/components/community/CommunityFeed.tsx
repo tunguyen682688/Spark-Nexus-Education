@@ -3,12 +3,15 @@ import type { MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, ThumbsUp, ChevronRight, Send } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
+import { GRAMMAR_UI_TEXT } from '../../constants';
 import { useAddCommunityComment, useLikeCommunityPost } from '../../hooks';
 import type { CommunityPost, GrammarBlock } from '../../types';
 import { CommunityFeedQuiz } from './CommunityFeedQuiz';
 import FormulaBuilder from '../../components/FormulaBuilder';
 import MediaBlock from '../../components/MediaBlock';
 import ExampleBlock from '../../components/ExampleBlock';
+
+const T = GRAMMAR_UI_TEXT.communityFeed;
 
 interface CommunityFeedProps {
   posts: CommunityPost[];
@@ -65,7 +68,7 @@ export function CommunityFeed({
             const firstTextBlock = blocks.find((b) => b.type === 'text' && !b.content?.startsWith('### '));
             const summary = firstTextBlock?.content
               ? firstTextBlock.content.slice(0, 150) + (firstTextBlock.content.length > 150 ? '...' : '')
-              : 'Bài viết chia sẻ kiến thức modular gồm nhiều khối lý thuyết, công thức và ví dụ tương tác.';
+              : T.fallbackSummary;
 
             return (
               <div className="space-y-2.5">
@@ -75,10 +78,10 @@ export function CommunityFeed({
                     <span role="img" aria-label="folder">
                       📂
                     </span>{' '}
-                    Bài viết Modular Blocks ({blocks.length} khối)
+                    {T.modularBadge.replace('{count}', String(blocks.length))}
                   </span>
                   <span className="text-[10px] text-slate-500 italic font-medium">
-                    Bấm để mở rộng xem chi tiết
+                    {T.expandHint}
                   </span>
                 </div>
               </div>
@@ -97,7 +100,7 @@ export function CommunityFeed({
                           <span role="img" aria-label="video camera">
                             🎥
                           </span>{' '}
-                          Video Bài Giảng
+                          {T.mediaLabel}
                         </span>
                         <MediaBlock url={block.url || ''} provider={block.provider || 'youtube'} isEditable={false} />
                       </div>
@@ -132,7 +135,7 @@ export function CommunityFeed({
                         className="bg-slate-950/30 border border-slate-900/80 border-l-3 border-l-indigo-500 p-4 rounded-2xl space-y-3"
                       >
                         <span className="text-[8px] font-extrabold text-slate-500 tracking-widest uppercase block">
-                          Structure Formula
+                          {T.formulaLabel}
                         </span>
                         <FormulaBuilder elements={block.elements || []} note={block.note || ''} isEditable={false} />
                       </div>
@@ -145,7 +148,7 @@ export function CommunityFeed({
                         className="bg-slate-950/30 border border-slate-900/80 p-4 rounded-2xl space-y-3"
                       >
                         <span className="text-[8px] font-extrabold text-slate-500 tracking-widest uppercase block">
-                          Examples in Context
+                          {T.exampleLabel}
                         </span>
                         <ExampleBlock items={block.items || []} isEditable={false} />
                       </div>
@@ -158,7 +161,7 @@ export function CommunityFeed({
                         className="bg-indigo-950/10 border border-indigo-950 rounded-2xl p-4 border-l-3 border-l-indigo-500/70 space-y-1"
                       >
                         <span className="text-[9px] font-black text-indigo-400 tracking-wider uppercase block">
-                          {block.title || 'Lưu ý'}
+                          {block.title || T.calloutDefault}
                         </span>
                         <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap">
                           {block.content || ''}
@@ -200,7 +203,7 @@ export function CommunityFeed({
                 : 'border-transparent text-slate-500 hover:text-slate-300'
             }`}
           >
-            Mới nhất
+            {T.tabRecent}
           </button>
           <button
             onClick={() => setActiveFilter('HOT')}
@@ -210,31 +213,31 @@ export function CommunityFeed({
                 : 'border-transparent text-slate-500 hover:text-slate-300'
             }`}
           >
-            Thịnh hành
+            {T.tabHot}
           </button>
         </div>
-        <span className="text-xs text-slate-500 font-medium">{posts.length} bài viết</span>
+        <span className="text-xs text-slate-500 font-medium">{T.postCount.replace('{count}', String(posts.length))}</span>
       </div>
 
       {isLoading ? (
         <div className="text-center py-16 space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500 mx-auto" />
-          <p className="text-sm text-slate-500">Đang tải các bài viết...</p>
+          <p className="text-sm text-slate-500">{T.loading}</p>
         </div>
       ) : posts.length === 0 ? (
         <div className="bg-slate-900/25 border border-slate-900 rounded-2xl p-12 text-center space-y-4">
           <MessageSquare className="h-10 w-10 text-slate-600 mx-auto" />
           <div>
-            <h3 className="text-base font-bold text-slate-300">Chưa có bài viết nào</h3>
+            <h3 className="text-base font-bold text-slate-300">{T.emptyTitle}</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Hãy là người đầu tiên chia sẻ mẹo học tập hoặc đặt câu hỏi thảo luận!
+              {T.emptyDesc}
             </p>
           </div>
           <Button
             onClick={onNavigateToCreatePost}
             className="bg-indigo-600 hover:bg-indigo-550 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
           >
-            Viết Bài Ngay
+            {T.btnCreatePost}
           </Button>
         </div>
       ) : (
@@ -301,7 +304,7 @@ export function CommunityFeed({
                       <ThumbsUp className="h-4 w-4" /> {post.likesCount}
                     </button>
                     <span className="flex items-center gap-1.5">
-                      <MessageSquare className="h-4 w-4" /> {post.comments?.length || 0} thảo luận
+                      <MessageSquare className="h-4 w-4" /> {post.comments?.length || 0} {T.discussionCount}
                     </span>
                   </div>
 
@@ -309,7 +312,7 @@ export function CommunityFeed({
                     onClick={(e) => toggleExpand(post.id, e)}
                     className="flex items-center gap-1 text-slate-400 font-semibold hover:text-slate-200 transition"
                   >
-                    {isExpanded ? 'Thu gọn' : 'Xem thảo luận'}{' '}
+                    {isExpanded ? T.btnCollapse : T.btnExpand}{' '}
                     <ChevronRight
                       className={`h-4 w-4 transform transition ${isExpanded ? 'rotate-90' : ''}`}
                     />
@@ -323,7 +326,7 @@ export function CommunityFeed({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h4 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-                      Thảo Luận ({post.comments?.length || 0})
+                      {T.discussionTitle.replace('{count}', String(post.comments?.length || 0))}
                     </h4>
 
                     {/* Comments List */}
@@ -357,7 +360,7 @@ export function CommunityFeed({
                     <div className="flex gap-2 items-center pt-2">
                       <input
                         type="text"
-                        placeholder="Nhập suy nghĩ hoặc phản hồi của bạn..."
+                        placeholder={T.placeholderComment}
                         value={commentContent[post.id] || ''}
                         onChange={(e) =>
                           setCommentContent((prev) => ({ ...prev, [post.id]: e.target.value }))

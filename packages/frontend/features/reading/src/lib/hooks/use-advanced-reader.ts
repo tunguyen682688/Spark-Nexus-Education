@@ -3,6 +3,7 @@ import { useArticle, useUpdateReadingProgress, useUserVocabularyPackages, useAdd
 import { TextToSpeechPlayer } from '../services/reading.service';
 import { extractTextFromBlocks, parseReaderContent } from '../utils/reader-parser';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
+import { READING_UI_TEXT } from '../constants/reading-ui-text';
 
 type ReaderSettings = {
   isBionicMode: boolean;
@@ -403,8 +404,8 @@ export function useAdvancedReader(articleId: string) {
   const handleQuickSave = useCallback(async (wordToSave: string, sentenceToSave: string) => {
     if (!packagesData?.data || packagesData.data.length === 0) {
       toast({
-        title: 'Không thể lưu nhanh',
-        description: 'Vui lòng tạo ít nhất một bộ từ vựng trước.',
+        title: READING_UI_TEXT.toast.SAVE_QUICK_ERR_TITLE,
+        description: READING_UI_TEXT.toast.SAVE_QUICK_ERR_DESC,
         variant: 'destructive',
       });
       return;
@@ -417,10 +418,10 @@ export function useAdvancedReader(articleId: string) {
     const payload = {
       word: {
         word: wordToSave.trim(),
-        definition: `Lưu nhanh từ "${wordToSave}"`,
+        definition: READING_UI_TEXT.toast.SAVE_QUICK_DEF.replace('{word}', wordToSave),
         example: sentenceToSave.trim() || null,
         partOfSpeech: 'noun',
-        notes: 'Lưu nhanh 1-Click',
+        notes: READING_UI_TEXT.toast.SAVE_QUICK_NOTES,
       },
     };
 
@@ -430,14 +431,14 @@ export function useAdvancedReader(articleId: string) {
         payload,
       });
       toast({
-        title: 'Đã lưu từ vựng ⚡',
-        description: `Đã thêm "${wordToSave}" vào bộ từ "${defaultPackageTitle}"`,
+        title: READING_UI_TEXT.toast.SAVE_QUICK_SUCCESS_TITLE,
+        description: READING_UI_TEXT.toast.SAVE_QUICK_SUCCESS_DESC.replace('{word}', wordToSave).replace('{package}', defaultPackageTitle),
       });
     } catch (err) {
       console.error('Failed to quick save word', err);
       toast({
-        title: 'Lỗi',
-        description: 'Lưu từ vựng thất bại. Vui lòng thử lại.',
+        title: READING_UI_TEXT.toast.ERROR_TITLE,
+        description: READING_UI_TEXT.toast.SAVE_ERROR_DESC,
         variant: 'destructive',
       });
     }

@@ -50,7 +50,7 @@ export const GrammarExamCreatorContainer: FC<
   } = useGrammarExamCreator({ onSuccess, onCancel });
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground font-sans py-10 px-4 sm:px-6 lg:px-8">
       {/* Background gradients */}
       <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-blue-600/5 blur-3xl pointer-events-none" />
 
@@ -60,7 +60,7 @@ export const GrammarExamCreatorContainer: FC<
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 w-9 flex items-center justify-center rounded-xl bg-card border border-border text-muted-foreground hover:text-foreground hover:border-slate-700 transition-all cursor-pointer"
+            className="h-9 w-9 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-muted-foreground hover:text-foreground transition-all cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -70,7 +70,7 @@ export const GrammarExamCreatorContainer: FC<
                 {GRAMMAR_UI_TEXT.examCreator.studioBadge}
               </span>
             </div>
-            <h1 className="text-2xl font-extrabold text-white flex items-center gap-2 mt-1">
+            <h1 className="text-2xl font-extrabold text-foreground flex items-center gap-2 mt-1">
               {GRAMMAR_UI_TEXT.examCreator.title}
             </h1>
           </div>
@@ -80,7 +80,7 @@ export const GrammarExamCreatorContainer: FC<
         <form onSubmit={handleSubmit} className="space-y-6 text-left">
           {/* Section 1: Metadata */}
           <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl">
-            <h3 className="text-sm font-extrabold text-white border-b border-border pb-2 flex items-center gap-2">
+            <h3 className="text-sm font-extrabold text-foreground border-b border-border pb-2 flex items-center gap-2">
               <ClipboardList className="h-4 w-4 text-blue-400" />
               {GRAMMAR_UI_TEXT.examCreator.metaSectionTitle}
             </h3>
@@ -95,7 +95,7 @@ export const GrammarExamCreatorContainer: FC<
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderTitle}
-                  className="w-full bg-muted/50 border-border rounded-xl px-4 py-3 h-11 text-xs text-white placeholder-slate-550 focus-visible:ring-blue-500/50"
+                  className="w-full bg-muted/50 border-border rounded-xl px-4 py-3 h-11 text-xs text-foreground placeholder-muted-foreground focus-visible:ring-blue-500/50"
                   required
                 />
               </div>
@@ -108,7 +108,7 @@ export const GrammarExamCreatorContainer: FC<
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderDesc}
-                  className="w-full h-24 bg-muted/50 border-border rounded-xl px-4 py-3 text-xs text-white placeholder-slate-550 focus-visible:ring-blue-500/50 resize-none"
+                  className="w-full h-24 bg-muted/50 border-border rounded-xl px-4 py-3 text-xs text-foreground placeholder-muted-foreground focus-visible:ring-blue-500/50 resize-none"
                   required
                 />
               </div>
@@ -117,11 +117,11 @@ export const GrammarExamCreatorContainer: FC<
                 <Label className="text-[10px] font-black text-slate-500 uppercase block">
                   {GRAMMAR_UI_TEXT.examCreator.labelExamType}
                 </Label>
-                <Select value={examType} onValueChange={(val: any) => setExamType(val)}>
-                  <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-white rounded-xl h-11">
+                <Select value={examType} onValueChange={(val: 'CEFR' | 'TOEIC' | 'IELTS' | 'VSTEP') => setExamType(val)}>
+                  <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-foreground rounded-xl h-11">
                     <SelectValue placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderExamType} />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-border text-xs text-white">
+                  <SelectContent className="bg-card border-border text-xs text-foreground">
                     <SelectItem value="TOEIC">TOEIC Practice</SelectItem>
                     <SelectItem value="IELTS">IELTS Academic</SelectItem>
                     <SelectItem value="VSTEP">VSTEP Standard</SelectItem>
@@ -135,10 +135,10 @@ export const GrammarExamCreatorContainer: FC<
                   {GRAMMAR_UI_TEXT.examCreator.labelLevel}
                 </Label>
                 <Select value={level} onValueChange={(val: string) => setLevel(val)}>
-                  <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-white rounded-xl h-11">
+                  <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-foreground rounded-xl h-11">
                     <SelectValue placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderLevel} />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-border text-xs text-white">
+                  <SelectContent className="bg-card border-border text-xs text-foreground">
                     <SelectItem value="ALL">{GRAMMAR_UI_TEXT.examCreator.levelAll}</SelectItem>
                     <SelectItem value="A1">CEFR A1</SelectItem>
                     <SelectItem value="A2">CEFR A2</SelectItem>
@@ -162,7 +162,7 @@ export const GrammarExamCreatorContainer: FC<
                   onChange={(e) =>
                     setTimeLimitMins(parseInt(e.target.value) || 10)
                   }
-                  className="w-full bg-muted/50 border-border rounded-xl px-4 py-3 h-11 text-xs text-white focus-visible:ring-blue-500/50"
+                  className="w-full bg-muted/50 border-border rounded-xl px-4 py-3 h-11 text-xs text-foreground focus-visible:ring-blue-500/50"
                   required
                 />
               </div>
@@ -172,7 +172,7 @@ export const GrammarExamCreatorContainer: FC<
           {/* Section 2: Questions Builder */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+              <h2 className="text-base font-extrabold text-foreground flex items-center gap-2">
                 {GRAMMAR_UI_TEXT.examCreator.questionListTitle.replace('{count}', String(questions.length))}
               </h2>
               <button
@@ -213,7 +213,7 @@ export const GrammarExamCreatorContainer: FC<
                     </Label>
                     <Select
                       value={q.type}
-                      onValueChange={(val: any) => {
+                      onValueChange={(val: ExamQuestion['type']) => {
                         const newType = val as ExamQuestion['type'];
                         const updates: Partial<ExamQuestion> = {
                           type: newType,
@@ -233,10 +233,10 @@ export const GrammarExamCreatorContainer: FC<
                         handleUpdateQuestion(idx, updates);
                       }}
                     >
-                      <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-white rounded-xl h-10">
+                      <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-foreground rounded-xl h-10">
                         <SelectValue placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderFormat} />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-border text-xs text-white">
+                      <SelectContent className="bg-card border-border text-xs text-foreground">
                         <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
                         <SelectItem value="SENTENCE_BUILDER">Sentence Rebuilder</SelectItem>
                         <SelectItem value="ERROR_SPOTLIGHT">Error Spotlight</SelectItem>
@@ -250,16 +250,16 @@ export const GrammarExamCreatorContainer: FC<
                     </Label>
                     <Select
                       value={q.category}
-                      onValueChange={(val: any) =>
+                      onValueChange={(val: ExamQuestion['category']) =>
                         handleUpdateQuestion(idx, {
                           category: val as ExamQuestion['category'],
                         })
                       }
                     >
-                      <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-white rounded-xl h-10">
+                      <SelectTrigger className="w-full bg-muted/50 border-border text-xs text-foreground rounded-xl h-10">
                         <SelectValue placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderCategory} />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-border text-xs text-white">
+                      <SelectContent className="bg-card border-border text-xs text-foreground">
                         <SelectItem value="syntax">{GRAMMAR_UI_TEXT.examCreator.categorySyntax}</SelectItem>
                         <SelectItem value="tenses">{GRAMMAR_UI_TEXT.examCreator.categoryTenses}</SelectItem>
                         <SelectItem value="morphology">{GRAMMAR_UI_TEXT.examCreator.categoryMorphology}</SelectItem>
@@ -309,7 +309,7 @@ export const GrammarExamCreatorContainer: FC<
                         })
                       }
                       placeholder={GRAMMAR_UI_TEXT.examCreator.placeholderExplanation}
-                      className="w-full h-20 bg-muted/50 border-border rounded-xl px-4 py-2.5 text-xs text-white focus-visible:ring-blue-500/50 resize-none"
+                      className="w-full h-20 bg-muted/50 border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus-visible:ring-blue-500/50 resize-none"
                       required
                     />
                   </div>
@@ -324,7 +324,7 @@ export const GrammarExamCreatorContainer: FC<
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="border-border text-slate-450 hover:text-slate-200 text-xs py-3.5 px-6 rounded-xl font-bold cursor-pointer"
+              className="border-border text-muted-foreground hover:text-foreground text-xs py-3.5 px-6 rounded-xl font-bold cursor-pointer"
             >
               {GRAMMAR_UI_TEXT.examCreator.btnCancel}
             </Button>

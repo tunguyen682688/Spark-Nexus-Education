@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { readingApi } from '../api/reading-api';
+import { READING_UI_TEXT } from '../constants/reading-ui-text';
 
 export interface LibraryDashboardData {
   stats: {
@@ -81,8 +82,8 @@ export function useMyLibraryDashboard() {
         inProgress.push({
           id: art.id,
           title: art.title,
-          category: art.category === 'news' ? 'Báo chí' : art.category === 'academic' ? 'Học thuật' : art.category === 'book' ? 'Sách/Truyện' : 'Tài liệu',
-          readTimeStr: art.readTime || `${Math.ceil(art.wordCount / 200)} phút đọc`,
+          category: art.category === 'news' ? READING_UI_TEXT.libraryStrings.CAT_NEWS : art.category === 'academic' ? READING_UI_TEXT.libraryStrings.CAT_ACADEMIC : art.category === 'book' ? READING_UI_TEXT.libraryStrings.CAT_BOOK : READING_UI_TEXT.libraryStrings.CAT_DOCUMENT,
+          readTimeStr: art.readTime || READING_UI_TEXT.libraryStrings.MINUTES_READ_SUFFIX.replace('{minutes}', Math.ceil(art.wordCount / 200).toString()),
           progress: art.progress || 0,
           thumbnailUrl: art.thumbnailUrl || 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&q=80',
           type: art.category === 'book' || art.category === 'academic' ? 'LEARNING' : 'PRACTICE',
@@ -95,8 +96,8 @@ export function useMyLibraryDashboard() {
           inProgress.push({
             id: book.id,
             title: book.title,
-            category: 'Sách & Truyện',
-            readTimeStr: book.chapterInfo || 'Chưa đọc',
+            category: READING_UI_TEXT.libraryStrings.CAT_BOOKS_STORIES,
+            readTimeStr: book.chapterInfo || READING_UI_TEXT.libraryStrings.NOT_READ_YET,
             progress: book.progress || 0,
             thumbnailUrl: book.thumbnailUrl || 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&q=80',
             type: 'LEARNING',
@@ -119,7 +120,7 @@ export function useMyLibraryDashboard() {
       const collections = vocabList.map((pkg, idx: number) => {
         return {
           id: pkg.id || `vocab-${idx}`,
-          name: pkg.title || 'Bộ từ vựng',
+          name: pkg.title || READING_UI_TEXT.libraryStrings.DEFAULT_PACKAGE_TITLE,
           articleCount: pkg.entryCount ?? 0,
           newWordCount: pkg.entryCount ?? 0,
           colorClass: colors[idx % colors.length],
@@ -132,7 +133,7 @@ export function useMyLibraryDashboard() {
       const history = completedList.map((art) => ({
         id: art.id,
         title: art.title,
-        timeAgo: 'Đã hoàn thành',
+        timeAgo: READING_UI_TEXT.libraryStrings.COMPLETED,
         level: art.difficulty || 'B1',
         status: 'MASTERED' as const,
         thumbnailUrl: art.thumbnailUrl,
@@ -144,7 +145,7 @@ export function useMyLibraryDashboard() {
       
       const dailyGoal = {
         percentage: streak > 0 ? 100 : 0,
-        currentText: streak > 0 ? '30/30 phút' : '0/30 phút',
+        currentText: streak > 0 ? READING_UI_TEXT.libraryStrings.MINUTES_GOAL_MET : READING_UI_TEXT.libraryStrings.MINUTES_GOAL_NOT_MET,
         minutesLeft: streak > 0 ? 0 : 30,
       };
 

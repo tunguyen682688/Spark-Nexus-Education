@@ -145,10 +145,10 @@ export const GrammarPracticeHubContainer: FC<
                   {(
                     [
                       { id: 'ALL', label: GRAMMAR_UI_TEXT.practiceHub.allTopics },
-                      { id: 'syntax', label: 'Syntax (Cú pháp)' },
-                      { id: 'tenses', label: 'Tenses (Thì & Thể)' },
-                      { id: 'morphology', label: 'Morphology (Hình thái)' },
-                      { id: 'modality', label: 'Modality (Sắc thái)' },
+                      { id: 'syntax', label: GRAMMAR_UI_TEXT.practiceHub.topicSyntax },
+                      { id: 'tenses', label: GRAMMAR_UI_TEXT.practiceHub.topicTenses },
+                      { id: 'morphology', label: GRAMMAR_UI_TEXT.practiceHub.topicMorphology },
+                      { id: 'modality', label: GRAMMAR_UI_TEXT.practiceHub.topicModality },
                     ] as const
                   ).map((cat) => {
                     const isActive = category === cat.id;
@@ -187,25 +187,25 @@ export const GrammarPracticeHubContainer: FC<
                       },
                       {
                         id: 'MULTIPLE_CHOICE',
-                        label: 'Trắc Nghiệm',
+                        label: GRAMMAR_UI_TEXT.practiceHub.typeMultipleChoice,
                         emoji: '📝',
                         aria: 'memo',
                       },
                       {
                         id: 'FILL_IN_BLANK',
-                        label: 'Điền Chỗ Trống',
+                        label: GRAMMAR_UI_TEXT.practiceHub.typeFillInBlank,
                         emoji: '✍️',
                         aria: 'write',
                       },
                       {
                         id: 'DRAG_DROP',
-                        label: 'Kéo Thả Từ',
+                        label: GRAMMAR_UI_TEXT.practiceHub.typeDragDrop,
                         emoji: '🔍',
                         aria: 'search',
                       },
                       {
                         id: 'SENTENCE_REBUILDER',
-                        label: 'Sắp Xếp Câu',
+                        label: GRAMMAR_UI_TEXT.practiceHub.typeSentenceRebuilder,
                         emoji: '🧩',
                         aria: 'puzzle',
                       },
@@ -306,7 +306,7 @@ export const GrammarPracticeHubContainer: FC<
                 <div className="text-lg font-bold text-foreground leading-relaxed">
                   {currentQuestion.type === 'SENTENCE_REBUILDER' ? (
                     <span className="text-muted-foreground text-sm italic font-medium">
-                      Sắp xếp các từ xáo trộn thành câu hoàn chỉnh:
+                      {GRAMMAR_UI_TEXT.practiceHub.sentenceRebuilderInstruction}
                     </span>
                   ) : currentQuestion.type === 'DRAG_DROP' ? (
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-3 leading-loose">

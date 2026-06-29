@@ -333,4 +333,10 @@ export interface WeakWordItem {
   status?: string;
 }
 
+export interface SyntaxNode {
+  label: string;
+  text?: string;
+  children?: SyntaxNode[];
+}
+
 

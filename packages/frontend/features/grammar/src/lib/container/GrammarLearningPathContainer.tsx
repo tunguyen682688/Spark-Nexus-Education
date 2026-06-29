@@ -129,7 +129,7 @@ export const GrammarLearningPathContainer: FC<
                 <BookOpen className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-extrabold text-foreground uppercase tracking-wider">{GRAMMAR_UI_TEXT.learningPath.teacherConsoleTitle}</h3>
               </div>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-extrabold bg-primary/10 text-primary border border-primary/20 tracking-wider">ADMIN</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-extrabold bg-primary/10 text-primary border border-primary/20 tracking-wider">{GRAMMAR_UI_TEXT.learningPath.adminLabel}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {GRAMMAR_UI_TEXT.learningPath.teacherConsoleDesc}
@@ -174,10 +174,10 @@ export const GrammarLearningPathContainer: FC<
               <div className="space-y-3">
                 {(
                   roadmap.skills || [
-                    { name: 'Syntax (Cú pháp)', value: 18 },
-                    { name: 'Morphology (Hình thái)', value: 24 },
-                    { name: 'Modality (Sắc thái)', value: 8 },
-                    { name: 'Tense & Aspect (Thì)', value: 15 },
+                    { name: `${GRAMMAR_UI_TEXT.lessonComponents.diagnosticChart.syntax} (Syntax)`, value: 18 },
+                    { name: `${GRAMMAR_UI_TEXT.lessonComponents.diagnosticChart.morphology} (Morphology)`, value: 24 },
+                    { name: `${GRAMMAR_UI_TEXT.lessonComponents.diagnosticChart.modality} (Modality)`, value: 8 },
+                    { name: `${GRAMMAR_UI_TEXT.lessonComponents.diagnosticChart.tenses} (Tense & Aspect)`, value: 15 },
                   ]
                 ).map((skill, idx) => (
                   <div key={idx} className="space-y-1">

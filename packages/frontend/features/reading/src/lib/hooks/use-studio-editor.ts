@@ -202,7 +202,23 @@ interface WordLocation {
   wordText: string;
 }
 
-function injectHighlightsToBlockHtml(htmlText: string, highlightsOfBlock: any[]): string {
+interface HighlightItem {
+  blockId: string;
+  wordIndex: number;
+  occurrenceText: string;
+  entryId?: string;
+  customDefinition?: string | null;
+  customExample?: string | null;
+  customExampleTrans?: string | null;
+  entry?: {
+    id: string;
+    pronunciation?: string | null;
+    partOfSpeech?: string | null;
+    notes?: string | null;
+  };
+}
+
+function injectHighlightsToBlockHtml(htmlText: string, highlightsOfBlock: HighlightItem[]): string {
   if (highlightsOfBlock.length === 0) return htmlText;
 
   const sortedHighlights = [...highlightsOfBlock].sort((a, b) => b.wordIndex - a.wordIndex);
@@ -299,7 +315,7 @@ function injectHighlightsToBlockHtml(htmlText: string, highlightsOfBlock: any[])
 
 function injectHighlightsToEditorData(
   editorData: EditorJsOutputData | null | undefined,
-  highlights: any[]
+  highlights: HighlightItem[]
 ): EditorJsOutputData | null {
   if (!editorData || !Array.isArray(editorData.blocks) || !highlights || highlights.length === 0) {
     return editorData || null;
@@ -584,7 +600,7 @@ export function useStudioEditor(articleId?: string) {
     (status: ArticleStatus = 'DRAFT'): CreateArticlePayload => {
       const values = form.getValues();
       let payloadContent = null;
-      let allHighlights: ArticleHighlightPayload[] = [];
+      const allHighlights: ArticleHighlightPayload[] = [];
 
       if (values.contentType === 'book') {
         const cleanedChapters = (values.chapters || []).map((ch) => {
@@ -695,7 +711,7 @@ export function useStudioEditor(articleId?: string) {
                 chapters: [
                   {
                     id: '1',
-                    title: 'Chương 1: Khởi đầu',
+                    title: STUDIO_UI_TEXT.DEFAULT_CHAPTER_1_TITLE,
                     content: null,
                     isDraft: true,
                   },
@@ -712,10 +728,10 @@ export function useStudioEditor(articleId?: string) {
         const payload: CreateArticlePayload = {
           title:
             contentType === 'book'
-              ? 'Sách chưa đặt tên'
-              : 'Bài viết chưa đặt tên',
+              ? STUDIO_UI_TEXT.UNTITLED_BOOK
+              : STUDIO_UI_TEXT.UNTITLED_ARTICLE,
           content: initialContent,
-          category: 'Chưa phân loại',
+          category: STUDIO_UI_TEXT.UNCLASSIFIED_CATEGORY,
           contentType,
           status: 'DRAFT',
         };

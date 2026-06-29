@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  Input,
 } from '@spark-nest-ed/frontend-shared-components';
 import { SUGGESTED_FORMULA_ELEMENTS } from '../constants';
 
@@ -75,10 +76,10 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
   const SUGGESTED_ELEMENTS = SUGGESTED_FORMULA_ELEMENTS;
 
   return (
-    <div className="bg-[#0b1022]/80 border border-blue-500/20 rounded-2xl p-6 flex flex-col gap-4">
+    <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-center gap-3 min-h-[80px]">
         {elements.length === 0 && (
-          <p className="text-xs text-slate-400 italic">
+          <p className="text-xs text-muted-foreground italic">
             Chưa có công thức nào được thiết lập.
           </p>
         )}
@@ -94,7 +95,7 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
           return (
             <div key={index} className="flex items-center gap-2">
               {isPlus ? (
-                <span className="text-blue-500 font-black text-lg px-1">
+                <span className="text-primary font-black text-lg px-1">
                   {el}
                 </span>
               ) : (
@@ -102,8 +103,8 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
                   onClick={() => isEditable && handleEditElement(index)}
                   className={`px-4 py-2.5 rounded-xl border font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm transition-all group ${
                     isPrimary
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-blue-600/15'
-                      : 'bg-[#0c1020] text-slate-200 border-slate-850 hover:border-slate-700'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-primary/15'
+                      : 'bg-muted text-foreground border-border hover:border-muted-foreground/30'
                   } ${
                     isEditable
                       ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
@@ -115,7 +116,7 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1.5">
                       <span
                         className={`text-[10px] ${
-                          isPrimary ? 'text-blue-200' : 'text-slate-500'
+                          isPrimary ? 'text-primary-foreground/80' : 'text-muted-foreground'
                         }`}
                       >
                         ✎
@@ -125,8 +126,8 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
                           e.stopPropagation();
                           handleDeleteElement(index);
                         }}
-                        className={`text-[10px] hover:text-red-500 ${
-                          isPrimary ? 'text-blue-200' : 'text-slate-500'
+                        className={`text-[10px] hover:text-destructive ${
+                          isPrimary ? 'text-primary-foreground/80' : 'text-muted-foreground'
                         }`}
                       >
                         ✕
@@ -142,7 +143,7 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
         {isEditable && (
           <button
             onClick={handleAddElement}
-            className="h-10 w-10 inline-flex items-center justify-center rounded-full border border-dashed border-slate-850 text-blue-500 bg-[#0c1020] hover:bg-slate-900/60 hover:border-slate-700 transition-all shadow-sm ml-2 cursor-pointer"
+            className="h-10 w-10 inline-flex items-center justify-center rounded-full border border-dashed border-border text-primary bg-muted hover:bg-muted/80 hover:border-muted-foreground/30 transition-all shadow-sm ml-2 cursor-pointer"
             title="Thêm thành phần"
           >
             <Plus className="h-5 w-5" />
@@ -152,8 +153,8 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
 
       {/* Suggested elements */}
       {isEditable && (
-        <div className="space-y-2 pt-3 border-t border-slate-900/40">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+        <div className="space-y-2 pt-3 border-t border-border/60">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
             Gợi ý nhanh thành phần:
           </span>
           <div className="flex flex-wrap gap-2">
@@ -173,16 +174,16 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
 
       {/* Note input/label */}
       {isEditable ? (
-        <input
+        <Input
           type="text"
           value={note}
           onChange={(e) => onChangeNote && onChangeNote(e.target.value)}
-          className="w-full bg-[#0c1020]/40 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-slate-400 italic outline-none focus:border-blue-500/50 focus:bg-[#0c1020]/60 transition-all placeholder-slate-650"
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-muted-foreground italic outline-none focus:border-primary/50 focus:bg-background transition-all placeholder:text-muted-foreground/50"
           placeholder="Thêm ghi chú/giải thích tùy chọn cho công thức..."
         />
       ) : (
         note && (
-          <p className="text-xs text-slate-450 italic text-center mt-1">
+          <p className="text-xs text-muted-foreground italic text-center mt-1">
             * {note}
           </p>
         )
@@ -190,22 +191,22 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
 
       {/* Dialog Thêm/Sửa thành phần công thức */}
       <Dialog open={isElementDialogOpen} onOpenChange={setIsElementDialogOpen}>
-        <DialogContent className="bg-[#070a14] border border-slate-900 rounded-3xl p-6 max-w-md w-full text-slate-100">
+        <DialogContent className="bg-card border border-border rounded-3xl p-6 max-w-md w-full text-foreground">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-base font-extrabold text-white uppercase tracking-wider">
+            <DialogTitle className="text-base font-extrabold text-foreground uppercase tracking-wider">
               {editingIndex !== null ? 'Sửa thành phần' : 'Thêm thành phần'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Nhập thành phần công thức mới (ví dụ: + [Object] hoặc have / has).
             </DialogDescription>
           </DialogHeader>
           <div className="py-3">
-            <input
+            <Input
               type="text"
               value={elementValue}
               onChange={(e) => setElementValue(e.target.value)}
               placeholder="+ [Object]"
-              className="w-full bg-[#0c1020]/45 border border-slate-800 rounded-2xl px-4 py-3.5 text-sm text-slate-200 outline-none focus:border-blue-500/70 focus:bg-[#0c1020]/75 transition-all placeholder-slate-655 shadow-inner"
+              className="w-full bg-background border border-border rounded-2xl px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/50 focus:bg-background transition-all placeholder:text-muted-foreground/50 shadow-inner"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -214,17 +215,17 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
               }}
             />
           </div>
-          <DialogFooter className="flex justify-end gap-3 pt-2 border-t border-slate-900/60">
+          <DialogFooter className="flex justify-end gap-3 pt-2 border-t border-border/60">
             <Button
               onClick={() => setIsElementDialogOpen(false)}
               variant="outline"
-              className="border-slate-850 text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 text-xs py-2 rounded-xl font-bold"
+              className="border-border text-muted-foreground hover:text-foreground hover:bg-muted text-xs py-2 rounded-xl font-bold cursor-pointer"
             >
               Hủy
             </Button>
             <Button
               onClick={submitElementDialog}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-6 py-2 rounded-xl border-none text-xs shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all"
+              className="bg-primary hover:bg-primary/95 text-primary-foreground font-extrabold px-6 py-2 rounded-xl border-none text-xs shadow-md shadow-primary/20 active:scale-[0.98] transition-all cursor-pointer"
             >
               Đồng ý
             </Button>
@@ -234,26 +235,26 @@ export const FormulaBuilder: FC<FormulaBuilderProps> = ({
 
       {/* Dialog Xác Nhận Xóa Phần Tử */}
       <Dialog open={deleteIndex !== null} onOpenChange={(open) => !open && setDeleteIndex(null)}>
-        <DialogContent className="bg-[#070a14] border border-slate-900 rounded-3xl p-6 max-w-md w-full text-slate-100">
+        <DialogContent className="bg-card border border-border rounded-3xl p-6 max-w-md w-full text-foreground">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+            <DialogTitle className="text-base font-extrabold text-foreground uppercase tracking-wider flex items-center gap-2">
               <span role="img" aria-label="warning">⚠️</span> Xác nhận xóa
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Bạn có chắc chắn muốn xóa phần tử này khỏi công thức?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex justify-end gap-3 pt-2 border-t border-slate-900/60 mt-4">
+          <DialogFooter className="flex justify-end gap-3 pt-2 border-t border-border/60 mt-4">
             <Button
               onClick={() => setDeleteIndex(null)}
               variant="outline"
-              className="border-slate-850 text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 text-xs py-2 rounded-xl font-bold"
+              className="border-border text-muted-foreground hover:text-foreground hover:bg-muted text-xs py-2 rounded-xl font-bold cursor-pointer"
             >
               Hủy
             </Button>
             <Button
               onClick={submitDeleteElement}
-              className="bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-2 rounded-xl border-none text-xs shadow-md shadow-red-500/20 active:scale-[0.98] transition-all"
+              className="bg-destructive hover:bg-destructive/90 text-white font-extrabold px-6 py-2 rounded-xl border-none text-xs shadow-md shadow-destructive/20 active:scale-[0.98] transition-all cursor-pointer"
             >
               Xóa
             </Button>

@@ -9,6 +9,7 @@ import { Search, BookOpen, GraduationCap, Grid, AlertCircle } from 'lucide-react
 import { STUDIO_UI_TEXT } from '../constants/studio-ui-text';
 import { CEFR_LEVELS } from '../constants/reading-data';
 import { useArticlesContainer } from '../hooks/use-articles-container';
+import { READING_UI_TEXT } from '../constants/reading-ui-text';
 
 export const ArticlesContainer: React.FC = () => {
   const {
@@ -30,16 +31,16 @@ export const ArticlesContainer: React.FC = () => {
   const categories = STUDIO_UI_TEXT.CATEGORIES;
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 min-h-screen bg-background font-sans">
+    <div className="w-full p-4 md:p-8 min-h-screen bg-background font-sans">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <BookOpen className="h-8 w-8 text-blue-600 dark:text-blue-500" />
-            Thư viện Bài đọc
+            {READING_UI_TEXT.articles.TITLE}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Khám phá các bài đọc phong phú được biên soạn theo tiêu chuẩn CEFR để phát triển từ vựng và ngữ pháp.
+            {READING_UI_TEXT.articles.SUBTITLE}
           </p>
         </div>
       </div>
@@ -54,7 +55,7 @@ export const ArticlesContainer: React.FC = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm bài viết theo tiêu đề, từ khóa..."
+              placeholder={READING_UI_TEXT.articles.SEARCH_PLACEHOLDER}
               className="w-full pl-12 pr-4 py-5 text-sm bg-slate-50/50 dark:bg-slate-900/50 border-slate-200/60 dark:border-slate-800 focus-visible:ring-blue-500"
             />
           </div>
@@ -65,7 +66,7 @@ export const ArticlesContainer: React.FC = () => {
               onClick={handleResetFilters}
               className="px-6 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl"
             >
-              Xóa bộ lọc
+              {READING_UI_TEXT.articles.CLEAR_FILTERS}
             </Button>
           )}
         </div>
@@ -85,7 +86,7 @@ export const ArticlesContainer: React.FC = () => {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
               }`}
             >
-              Tất cả
+              {READING_UI_TEXT.articles.ALL_LEVELS}
             </button>
             {levels.map((lvl) => (
               <button
@@ -118,7 +119,7 @@ export const ArticlesContainer: React.FC = () => {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
               }`}
             >
-              Tất cả chủ đề
+              {READING_UI_TEXT.articles.ALL_CATEGORIES}
             </button>
             {categories.map((cat) => (
               <button
@@ -154,9 +155,9 @@ export const ArticlesContainer: React.FC = () => {
       ) : isError ? (
         <div className="text-center py-16 bg-white dark:bg-[#121826] rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center space-y-4 ring-1 ring-slate-100 dark:ring-white/5">
           <AlertCircle className="h-12 w-12 text-red-500" />
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Lỗi tải dữ liệu</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{READING_UI_TEXT.articles.ERROR_TITLE}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-            Không thể tải danh sách bài đọc. Vui lòng kiểm tra lại kết nối mạng của bạn.
+            {READING_UI_TEXT.articles.ERROR_DESC}
           </p>
         </div>
       ) : !articles || articles.length === 0 ? (
@@ -164,9 +165,9 @@ export const ArticlesContainer: React.FC = () => {
           <div className="h-16 w-16 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-400 mb-2">
             <BookOpen className="h-8 w-8 text-slate-400" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Không tìm thấy bài viết nào</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{READING_UI_TEXT.articles.NO_RESULTS_TITLE}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-            Thử điều chỉnh từ khóa tìm kiếm hoặc chọn cấp độ CEFR và danh mục chủ đề khác.
+            {READING_UI_TEXT.articles.NO_RESULTS_DESC}
           </p>
           {(selectedLevel || selectedCategory || searchTerm) && (
             <Button
@@ -174,7 +175,7 @@ export const ArticlesContainer: React.FC = () => {
               onClick={handleResetFilters}
               className="mt-2 text-xs font-bold py-2 px-5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 rounded-lg"
             >
-              Reset bộ lọc
+              {READING_UI_TEXT.articles.RESET_FILTERS}
             </Button>
           )}
         </div>

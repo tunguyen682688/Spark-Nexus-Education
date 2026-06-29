@@ -125,11 +125,11 @@ const GrammarLessonEditorContainer = ({
                 {level} LEVEL
               </span>
               <span className="text-[10px] font-extrabold text-slate-500 tracking-wider uppercase">
-                • 10 MIN READ • GRAMMAR LECTURE
+                {GRAMMAR_UI_TEXT.lessonEditor.timeReadLecture}
               </span>
             </div>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-2 mt-1">
-              {title || 'Untitled Lesson'}
+              {title || GRAMMAR_UI_TEXT.lessonEditor.untitledLesson}
               {vietnameseTitle && (
                 <span className="text-sm text-slate-400 font-normal">
                   ({vietnameseTitle})
@@ -583,7 +583,7 @@ const GrammarLessonEditorContainer = ({
               <div className="flex-1 bg-[#070a14] border border-slate-900 rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto lg:sticky lg:top-28">
                 <div className="text-xs font-bold text-slate-500 tracking-wider uppercase border-b border-slate-900 pb-3 mb-4 flex items-center justify-between">
                   <span>{GRAMMAR_UI_TEXT.lessonEditor.splitLivePreview}</span>
-                  <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">REAL-TIME</span>
+                  <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">{GRAMMAR_UI_TEXT.lessonEditor.realtimeBadge}</span>
                 </div>
                 {renderPreviewContent(true)}
               </div>
@@ -604,7 +604,7 @@ const GrammarLessonEditorContainer = ({
                     ) : (
                       <Save className="h-4 w-4 text-slate-400" />
                     )}
-                    Save Draft
+                    {GRAMMAR_UI_TEXT.lessonEditor.btnSaveDraft}
                   </Button>
 
                   <Button
@@ -617,7 +617,7 @@ const GrammarLessonEditorContainer = ({
                     ) : (
                       <Globe className="h-4 w-4" />
                     )}
-                    Publish
+                    {GRAMMAR_UI_TEXT.lessonEditor.btnPublish}
                   </Button>
                 </div>
 
@@ -625,7 +625,7 @@ const GrammarLessonEditorContainer = ({
                 <div className="bg-[#070a14] border border-slate-900 rounded-3xl p-5 shadow-xl space-y-5">
                   <div className="flex items-center gap-2 text-xs font-extrabold text-slate-400 tracking-wider uppercase border-b border-slate-900/60 pb-3">
                     <BookOpen className="h-4 w-4 text-blue-500" />
-                    Lesson Outline
+                    {GRAMMAR_UI_TEXT.lessonEditor.outlineTitle}
                   </div>
 
                   <div className="space-y-1.5">
@@ -684,7 +684,7 @@ const GrammarLessonEditorContainer = ({
                       className="w-full inline-flex items-center justify-center gap-1.5 text-[11px] font-extrabold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-wider bg-transparent border-none outline-none cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      Preview Lesson
+                      {GRAMMAR_UI_TEXT.lessonEditor.btnPreviewLesson}
                     </button>
                   </div>
                 </div>
@@ -712,7 +712,7 @@ const GrammarLessonEditorContainer = ({
             <span role="img" className="text-slate-450">
               {block.icon}
             </span>
-            <span>{block.label}</span>
+            <span>{GRAMMAR_UI_TEXT.lessonEditor.blockTypeNames[block.type]}</span>
           </button>
         ))}
       </div>

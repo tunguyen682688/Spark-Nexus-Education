@@ -25,6 +25,25 @@ interface GrammarExamHubContainerProps {
   onNavigateToCreator: () => void;
 }
 
+const EXAM_TYPE_CONFIGS: Record<string, { cardBorder: string; typeBadge: string }> = {
+  TOEIC: {
+    cardBorder: 'hover:border-cyan-500/40 border-border/80',
+    typeBadge: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20',
+  },
+  IELTS: {
+    cardBorder: 'hover:border-rose-500/40 border-border/80',
+    typeBadge: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+  },
+  VSTEP: {
+    cardBorder: 'hover:border-amber-500/40 border-border/80',
+    typeBadge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  },
+  DEFAULT: {
+    cardBorder: 'hover:border-primary/40 border-border/80',
+    typeBadge: 'bg-primary/10 text-primary border border-primary/20',
+  },
+};
+
 export const GrammarExamHubContainer: FC<GrammarExamHubContainerProps> = ({
   onNavigateToExam,
   onNavigateToCreator,
@@ -182,23 +201,8 @@ export const GrammarExamHubContainer: FC<GrammarExamHubContainerProps> = ({
                   const passed = set.isPassed;
 
                   // Màu sắc theo loại đề thi
-                  let cardBorder = 'hover:border-primary/40 border-border/80';
-                  let typeBadge =
-                    'bg-primary/10 text-primary border border-primary/20';
-
-                  if (set.examType === 'TOEIC') {
-                    cardBorder = 'hover:border-cyan-500/40 border-border/80';
-                    typeBadge =
-                      'bg-cyan-500/10 text-cyan-555 dark:text-cyan-400 border border-cyan-500/20';
-                  } else if (set.examType === 'IELTS') {
-                    cardBorder = 'hover:border-rose-500/40 border-border/80';
-                    typeBadge =
-                      'bg-rose-500/10 text-rose-555 dark:text-rose-400 border border-rose-500/20';
-                  } else if (set.examType === 'VSTEP') {
-                    cardBorder = 'hover:border-amber-500/40 border-border/80';
-                    typeBadge =
-                      'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-                  }
+                  const config = EXAM_TYPE_CONFIGS[set.examType] || EXAM_TYPE_CONFIGS.DEFAULT;
+                  const { cardBorder, typeBadge } = config;
 
                   return (
                     <div

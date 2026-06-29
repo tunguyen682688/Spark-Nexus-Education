@@ -50,7 +50,7 @@ export const BookNook: React.FC<BookNookProps> = ({ books }) => {
                       A-Book
                     </Badge>
                     <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider transition-colors bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                      {book.difficulty} Level
+                      {READING_UI_TEXT.components.dashboard.LABEL_LEVEL.replace('{level}', book.difficulty)}
                     </span>
                   </div>
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base truncate leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{book.title}</h3>

@@ -81,6 +81,22 @@ export const GrammarLevelGraduationContainer: FC<
     );
   }
 
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="flex h-[85vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <p className="text-lg font-bold">{GRAMMAR_UI_TEXT.levelGraduation.noQuestionsTitle}</p>
+          <p className="text-sm text-muted-foreground">
+            {GRAMMAR_UI_TEXT.levelGraduation.noQuestionsDesc.replace('{level}', level)}
+          </p>
+          <Button onClick={onBack} className="bg-primary border-none text-white font-bold">
+            {GRAMMAR_UI_TEXT.levelGraduation.btnBackGeneral}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isExamCompleted) {
     return (
       <div className="max-w-4xl mx-auto space-y-8 py-6">
@@ -122,7 +138,7 @@ export const GrammarLevelGraduationContainer: FC<
                     {GRAMMAR_UI_TEXT.levelGraduation.certificate}
                   </span>
                   <span className="text-base font-black text-amber-400">
-                    CEFR APPROVED
+                    {GRAMMAR_UI_TEXT.levelGraduation.cefrApprovedLabel}
                   </span>
                 </Card>
               </div>
@@ -170,13 +186,13 @@ export const GrammarLevelGraduationContainer: FC<
                   style={{ transform: 'translateZ(30px)' }}
                 >
                   <span className="text-[10px] font-black text-amber-500 tracking-widest uppercase block">
-                    SPARK NEXUS ACADEMY
+                    {GRAMMAR_UI_TEXT.levelGraduation.certAcademyName}
                   </span>
                   <h3 className="text-xl font-black text-white tracking-wide leading-none">
-                    CERTIFICATE
+                    {GRAMMAR_UI_TEXT.levelGraduation.certTitle}
                   </h3>
                   <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                    CEFR GRADUATION PROUDLY PRESENTED TO
+                    {GRAMMAR_UI_TEXT.levelGraduation.certSub}
                   </p>
                 </div>
 
@@ -185,18 +201,17 @@ export const GrammarLevelGraduationContainer: FC<
                   style={{ transform: 'translateZ(20px)' }}
                 >
                   <h4 className="text-lg font-extrabold text-white uppercase tracking-wider">
-                    STUDENT MEMBER
+                    {GRAMMAR_UI_TEXT.levelGraduation.certUserVal}
                   </h4>
                   <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                    Has successfully mastered Level {level} Grammar curriculum
-                    with proficiency score of {percentage}%
+                    {GRAMMAR_UI_TEXT.levelGraduation.certDesc.replace('{level}', level).replace('{percentage}', percentage.toString())}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between text-[9px] font-bold text-slate-500 tracking-wider">
-                  <span>DATE: 2026-05-29</span>
+                  <span>{GRAMMAR_UI_TEXT.levelGraduation.certDateLabel.replace('{date}', '2026-05-29')}</span>
                   <span className="text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
-                    {level} COMPLIANT
+                    {GRAMMAR_UI_TEXT.levelGraduation.certCompliant.replace('{level}', level)}
                   </span>
                 </div>
               </div>

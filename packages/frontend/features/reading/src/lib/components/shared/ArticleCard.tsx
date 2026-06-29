@@ -41,7 +41,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         <div className="absolute top-3 left-3 flex gap-1">
           <Badge className="bg-blue-600/90 text-white font-bold border-none text-[8px] uppercase tracking-wider flex items-center gap-1 py-1 px-2 rounded-sm backdrop-blur-sm shadow-sm">
             <Sparkles className="h-2.5 w-2.5 fill-current animate-pulse text-amber-300" />
-            Contextual Vocab Ready
+            {READING_UI_TEXT.components.shared.CONTEXTUAL_VOCAB_READY}
           </Badge>
         </div>
 
@@ -70,10 +70,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           {/* Metadata Row */}
           <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider pt-2 border-t border-slate-50 dark:border-slate-800 transition-colors">
             <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" /> {article.readTime || `${Math.ceil(article.wordCount / 200)} min read`}
+              <Clock className="h-3 w-3" /> {article.readTime || READING_UI_TEXT.components.shared.MINUTES_READ_SUFFIX.replace('{minutes}', Math.ceil(article.wordCount / 200).toString())}
             </span>
             <span>
-              {article.wordCount} words
+              {article.wordCount} {READING_UI_TEXT.myArticleCard.WORDS}
             </span>
           </div>
 
@@ -103,7 +103,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           onClick={() => navigate(`/reading/article/${article.id}`)}
         >
           <Eye className="h-3.5 w-3.5 mr-1.5" />
-          {isInProgress ? 'Continue Reading' : isCompleted ? 'Read Again' : 'Begin Reading'}
+          {isInProgress ? READING_UI_TEXT.components.shared.CARD_BTN_CONTINUE : isCompleted ? READING_UI_TEXT.components.shared.CARD_BTN_REPLAY : READING_UI_TEXT.components.shared.CARD_BTN_START}
         </Button>
       </CardFooter>
     </Card>

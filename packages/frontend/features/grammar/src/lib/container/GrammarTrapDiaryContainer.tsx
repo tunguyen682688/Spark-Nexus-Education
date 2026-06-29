@@ -144,7 +144,7 @@ const GrammarTrapDiaryContainer: FC<GrammarTrapDiaryContainerProps> = ({
         questions={drillQuestions}
         timeLimit={drillQuestions.length * 90} // 90 giây mỗi câu hỏi
         examType="CEFR"
-        examTitle="Chiến Dịch Phá Bẫy Ngữ Pháp"
+        examTitle={GRAMMAR_UI_TEXT.trapDiary.campaignExamTitle}
         onFinish={handleFinishDrill}
         onBack={() => setIsPracticing(false)}
       />

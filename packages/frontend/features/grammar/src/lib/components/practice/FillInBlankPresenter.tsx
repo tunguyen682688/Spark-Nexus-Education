@@ -1,4 +1,7 @@
 import React from 'react';
+import { GRAMMAR_UI_TEXT } from '../../constants';
+
+const T = GRAMMAR_UI_TEXT.practicePresenter;
 
 interface FillInBlankPresenterProps {
   fillValue: string;
@@ -16,14 +19,14 @@ export const FillInBlankPresenter: React.FC<FillInBlankPresenterProps> = ({
   return (
     <div className="space-y-4">
       <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest">
-        NHẬP ĐÁP ÁN
+        {T.fillInLabel}
       </p>
       <input
         type="text"
         disabled={isEvaluated}
         value={fillValue}
         onChange={(e) => setFillValue(e.target.value)}
-        placeholder="Gõ từ hoặc cụm từ còn thiếu..."
+        placeholder={T.fillInPlaceholder}
         className={`w-full max-w-md bg-muted/30 border rounded-xl py-3 px-4 text-sm focus:outline-none transition-all ${
           isEvaluated
             ? isCorrectAnswer
