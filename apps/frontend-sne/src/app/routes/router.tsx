@@ -1400,6 +1400,260 @@ export const createRouter = () =>
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
+        // Certification routes
+        {
+          path: 'certification',
+          lazy: async () => {
+            const { CertificationDashboardPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationDashboardPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/exams',
+          lazy: async () => {
+            const { CertificationExamsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationExamsPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/mock-test',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Full Mock Test</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/practice',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Practice by Part</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/questions',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Question Bank</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/reports',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">My Reports</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/weak-areas',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Weak Areas</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/study-plan',
+          lazy: async () => {
+            const { CertificationStudyPlanPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationStudyPlanPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/leaderboard',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Leaderboards</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/achievements',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Achievements</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/saved-collections',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Saved Collections</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/progress',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">My Progress</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/wrong-notebook',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Wrong Notebook</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/community-collections',
+          lazy: async () => {
+            const { CertificationCommunityPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCommunityPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/history',
+          lazy: async () => {
+            const PlaceholderPage = () => (
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">History</h1>
+                <p className="text-muted-foreground">This page is under development...</p>
+              </div>
+            );
+            return { Component: PlaceholderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/editorial-picks',
+          lazy: async () => {
+            const { CertificationEditorialPicksPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationEditorialPicksPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/ai-recommendations',
+          lazy: async () => {
+            const { CertificationStudyPlanPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationStudyPlanPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/search',
+          lazy: async () => {
+            const { CertificationSearchPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationSearchPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/trending',
+          lazy: async () => {
+            const { CertificationTrendingPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationTrendingPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/official',
+          lazy: async () => {
+            const { CertificationOfficialPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationOfficialPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
       ],
     },
     // Admin routes

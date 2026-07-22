@@ -5,10 +5,18 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
-    "types": ["node"]
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*.ts"],
   "references": [
+    {
+      "path": "../../../shared/libs/tsconfig.lib.json"
+    },
+    {
+      "path": "../../infrastructure/auth/tsconfig.lib.json"
+    },
     {
       "path": "../../infrastructure/database/tsconfig.lib.json"
     }

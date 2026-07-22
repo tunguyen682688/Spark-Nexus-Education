@@ -28,6 +28,9 @@
   ],
   "references": [
     {
+      "path": "../../packages/backend/domains/module-certification/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/backend/domains/module-listening/tsconfig.lib.json"
     },
     {

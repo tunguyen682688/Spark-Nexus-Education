@@ -15,6 +15,15 @@ import {
   Brain,
   Users,
   PlayCircle,
+  Award,
+  Trophy,
+  Clock,
+  Bookmark,
+  BookMarked,
+  TrendingUp,
+  FileText,
+  ShieldCheck,
+  Bot,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
@@ -36,6 +45,7 @@ interface MenuItem {
   badge?: string;
   children?: SubMenuItem[];
 }
+
 
 const menuItems: MenuItem[] = [
   {
@@ -115,6 +125,22 @@ const menuItems: MenuItem[] = [
       { label: 'Cộng đồng ngữ pháp', path: '/grammar/community' },
       { label: 'Sổ tay bẫy lỗi sai', path: '/grammar/trap-diary' },
       { label: 'Phân tích học tập', path: '/grammar/analytics' },
+    ],
+  },
+  {
+    icon: Award,
+    label: 'Thi chứng chỉ',
+    path: ROUTES.CERTIFICATION.DASHBOARD,
+    children: [
+      { label: 'Bảng điều khiển', path: ROUTES.CERTIFICATION.DASHBOARD },
+      { label: 'Thư viện đề thi', path: ROUTES.CERTIFICATION.EXAMS },
+      { label: 'Trending Collections', path: ROUTES.CERTIFICATION.TRENDING },
+      { label: 'Official Collections', path: ROUTES.CERTIFICATION.OFFICIAL },
+      { label: 'Community Collections', path: ROUTES.CERTIFICATION.COMMUNITY_COLLECTIONS },
+      { label: 'Lựa chọn biên tập viên', path: ROUTES.CERTIFICATION.EDITORIAL_PICKS },
+      { label: 'Đề xuất từ AI', path: ROUTES.CERTIFICATION.AI_RECOMMENDATIONS },
+      { label: 'Kế hoạch học tập AI', path: ROUTES.CERTIFICATION.STUDY_PLAN },
+      { label: 'Tìm kiếm đề thi', path: ROUTES.CERTIFICATION.SEARCH },
     ],
   },
   // --- Tài nguyên & Học tập (Resources) ---

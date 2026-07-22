@@ -66,6 +66,9 @@
     },
     {
       "path": "../../packages/frontend/core/auth/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/frontend/features/certification/tsconfig.lib.json"
     }
   ]
 }

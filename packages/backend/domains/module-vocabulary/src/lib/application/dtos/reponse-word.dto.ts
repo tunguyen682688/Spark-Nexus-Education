@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserVocabularyProgressResponseDto } from './flashcard.dto';
 
 /**
  * Minimum Word DTO - Basic information only
@@ -237,8 +238,8 @@ export class VocabularySetItemDto {
   @ApiPropertyOptional({ description: 'Minimum word details (if requested)', type: WordMinimumDto })
   wordMinimum?: WordMinimumDto;
 
-  @ApiPropertyOptional({ description: 'User learning progress for this word in the set', type: () => Object, nullable: true })
-  userProgress?: any;
+  @ApiPropertyOptional({ description: 'User learning progress for this word in the set', type: () => UserVocabularyProgressResponseDto, nullable: true })
+  userProgress?: UserVocabularyProgressResponseDto | null;
 }
 
 /**

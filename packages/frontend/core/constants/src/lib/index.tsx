@@ -42,6 +42,28 @@ export const ROUTES = {
     STUDIO_EDIT: '/reading/studio/:articleId',
     MY_LIBRARY: '/reading/library',
   },
+
+  CERTIFICATION: {
+    DASHBOARD: '/certification',
+    EXAMS: '/certification/exams',
+    MOCK_TEST: '/certification/mock-test',
+    PRACTICE: '/certification/practice',
+    QUESTIONS: '/certification/questions',
+    REPORTS: '/certification/reports',
+    STUDY_PLAN: '/certification/study-plan',
+    PROGRESS: '/certification/progress',
+    WRONG_NOTEBOOK: '/certification/wrong-notebook',
+    COMMUNITY_COLLECTIONS: '/certification/community-collections',
+    EDITORIAL_PICKS: '/certification/editorial-picks',
+    AI_RECOMMENDATIONS: '/certification/ai-recommendations',
+    SAVED_COLLECTIONS: '/certification/saved-collections',
+    LEADERBOARD: '/certification/leaderboard',
+    ACHIEVEMENTS: '/certification/achievements',
+    HISTORY: '/certification/history',
+    SEARCH: '/certification/search',
+    TRENDING: '/certification/trending',
+    OFFICIAL: '/certification/official',
+  },
 }
 
 export const DEFAULT_ARTICLE_THUMBNAIL = 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop';

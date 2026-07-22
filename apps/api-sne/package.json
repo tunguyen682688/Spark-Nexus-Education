@@ -127,6 +127,7 @@
       "module-vocabulary",
       "module-grammar",
       "module-reading",
+      "module-certification",
       "infrastructure-auth",
       "infrastructure-database",
       "shared-libs"

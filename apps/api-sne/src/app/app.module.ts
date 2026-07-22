@@ -11,6 +11,7 @@ import { VocabularyModule } from '@spark-nest-ed/module-vocabulary';
 import { GrammarModule } from '@spark-nest-ed/module-grammar';
 import { ReadingModule } from '@spark-nest-ed/module-reading';
 import { ListeningModule } from '@spark-nest-ed/module-listening';
+import { CertificationModule } from '@spark-nest-ed/module-certification';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ListeningModule } from '@spark-nest-ed/module-listening';
     GrammarModule,
     ReadingModule,
     ListeningModule,
+    CertificationModule,
     InfrastructureAuthModule,
     InfrastructureDatabaseModule,
     BullModule.forRoot({
