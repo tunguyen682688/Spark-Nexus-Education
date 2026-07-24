@@ -1,5 +1,8 @@
 import {
   useCollectionDetail,
+  useCollectionItems,
+  useCollectionReviews,
+  useCollectionActivities,
   useStartExamSession,
   useSaveCollection,
   useCloneCollection,
@@ -115,10 +118,24 @@ export function useCollectionDetailContainerLogic(
     tags: rawCollectionData?.tags ?? [],
   };
 
-  const contentItems: ContentItem[] = rawCollectionData?.itemsList ?? [];
-  const userReviews: UserReview[] = rawCollectionData?.reviewsList ?? [];
+  const { data: itemsData } = useCollectionItems(collectionId);
+  const { data: reviewsData } = useCollectionReviews(collectionId);
+  const { data: activitiesData } = useCollectionActivities(collectionId);
+
+  const contentItems: ContentItem[] =
+    itemsData && itemsData.length > 0
+      ? itemsData
+      : (rawCollectionData?.itemsList ?? []);
+
+  const userReviews: UserReview[] =
+    reviewsData && reviewsData.length > 0
+      ? reviewsData
+      : (rawCollectionData?.reviewsList ?? []);
+
   const recentActivities: RecentActivity[] =
-    rawCollectionData?.activitiesList ?? [];
+    activitiesData && activitiesData.length > 0
+      ? activitiesData
+      : (rawCollectionData?.activitiesList ?? []);
 
   const handleToggleBookmark = () => {
     saveCollection(collectionViewModel.id, {

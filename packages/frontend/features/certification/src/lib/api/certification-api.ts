@@ -220,6 +220,24 @@ export class CertificationApi {
   }
 
   /**
+   * Fetch items and mock tests within a collection on-demand
+   */
+  static async getCollectionItems(collectionId: string): Promise<Array<{ id: string; title: string; type: string; duration?: string; items?: string }>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/collections/${collectionId}/items`);
+      const data = unwrapJsonApiResponse<Record<string, unknown>>(response.data);
+      if (data && Array.isArray(data.itemsList)) {
+        return data.itemsList as Array<{ id: string; title: string; type: string; duration?: string; items?: string }>;
+      }
+      return [];
+    } catch (error) {
+      console.warn(`CertificationApi.getCollectionItems(${collectionId}) fallback`, error);
+      return [];
+    }
+  }
+
+  /**
    * Fetch collection reviews
    */
   static async getCollectionReviews(collectionId: string): Promise<Array<{ author: string; avatar?: string; rating: number; date: string; text: string }>> {
@@ -425,6 +443,24 @@ export class CertificationApi {
     const response = await client.post(`/certification/collections/${collectionId}/save`);
     const data = unwrapJsonApiResponse<{ success?: boolean; saved?: boolean }>(response.data);
     return { saved: Boolean(data?.saved ?? data?.success ?? true) };
+  }
+
+  /**
+   * Fetch user's saved/bookmarked collections
+   */
+  static async getSavedCollections(): Promise<ExamCollection[]> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/collections/saved');
+      const items = unwrapJsonApiResponse<ExamCollection[]>(response.data);
+      if (Array.isArray(items) && items.length > 0) {
+        return items;
+      }
+      return [];
+    } catch (error) {
+      console.warn('CertificationApi.getSavedCollections fallback', error);
+      return [];
+    }
   }
 
   /**

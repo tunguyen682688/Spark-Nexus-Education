@@ -7,6 +7,7 @@ export * from './get-community-collections';
 export * from './get-study-plan';
 export * from './get-top-contributors';
 export * from './get-collection';
+export * from './get-collection-items';
 export * from './get-exam';
 export * from './get-exam-session';
 export * from './get-exam-result';

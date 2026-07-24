@@ -78,6 +78,16 @@ export const useCollectionDetail = (id: string) => {
   });
 };
 
+export const useCollectionItems = (collectionId: string) => {
+  return useQuery({
+    queryKey: ['certification', 'collection-items', collectionId],
+    queryFn: () => CertificationApi.getCollectionItems(collectionId),
+    enabled: Boolean(collectionId),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useCollectionReviews = (collectionId: string) => {
   return useQuery({
     queryKey: ['certification', 'collection-reviews', collectionId],
@@ -267,12 +277,23 @@ export const useExamResult = (resultId: string) => {
   });
 };
 
+export const useSavedCollections = () => {
+  return useQuery<ExamCollection[]>({
+    queryKey: ['certification', 'saved-collections'],
+    queryFn: () => CertificationApi.getSavedCollections(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useSaveCollection = () => {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation<{ saved: boolean }, Error, string>({
     mutationFn: (id: string) => CertificationApi.saveCollection(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'saved-collections'] });
       toast({
         title: 'Đã lưu bộ đề',
         description: 'Bộ sưu tập đã được lưu vào thư viện cá nhân của bạn.',

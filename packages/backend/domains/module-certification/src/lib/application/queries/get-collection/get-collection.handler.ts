@@ -16,10 +16,14 @@ export class GetCollectionQueryHandler implements IQueryHandler<GetCollectionQue
       throw new NotFoundException(`Collection with ID "${query.id}" was not found`);
     }
 
-    const exams = await this.repository.findExamsByCollectionId(query.id);
+    const [exams, creator] = await Promise.all([
+      this.repository.findExamsByCollectionId(query.id),
+      this.repository.findCreatorProfileByUserId(collection.getOwnerId()),
+    ]);
 
     const title = collection.getTitle();
     const description = collection.getDescription() || '';
+    const author = creator ? creator.getDisplayName() : `Author ${collection.getOwnerId().substring(0, 6)}`;
 
     // Infer exam category from title
     let exam = 'IELTS';
@@ -53,16 +57,8 @@ export class GetCollectionQueryHandler implements IQueryHandler<GetCollectionQue
       level = 'Beginner';
     }
 
-    const itemsList = exams.map((e, index) => ({
-      id: e.id,
-      title: `${e.getTitle()} (Mock ${index + 1})`,
-      type: 'Full Mock Test',
-      duration: `${e.getDuration() || 60} mins`,
-      items: `${e.getTotalQuestions() || 40} Questions`,
-    }));
-
     const examCount = exams.length || collection.getExamCount();
-    const itemsCount = collection.getItemCount() || itemsList.length;
+    const itemsCount = collection.getItemCount() || exams.length;
 
     return {
       id: collection.id,
@@ -70,6 +66,7 @@ export class GetCollectionQueryHandler implements IQueryHandler<GetCollectionQue
       subtitle: description,
       description,
       ownerId: collection.getOwnerId(),
+      author,
       publishStatus: collection.getPublishStatus(),
       createdAt: collection.createdAt,
       updatedAt: collection.updatedAt,
@@ -77,10 +74,6 @@ export class GetCollectionQueryHandler implements IQueryHandler<GetCollectionQue
       level,
       examCount,
       itemsCount,
-      exams: exams.map((e) => e.toPlainObject()),
-      itemsList,
-      reviewsList: [],
-      activitiesList: [],
       tags: [exam, level],
     };
   }

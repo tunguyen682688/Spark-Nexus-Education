@@ -11,59 +11,31 @@ export class GetStudyPlanQueryHandler implements IQueryHandler<GetStudyPlanQuery
   ) {}
 
   async execute(query: GetStudyPlanQuery) {
-    const sessions = await this.repository.findSessionsByUserId(query.userId);
-    const completedCount = sessions.filter((s) => s.getStatus() === 'completed').length;
+    const [sessions, examsResult] = await Promise.all([
+      this.repository.findSessionsByUserId(query.userId),
+      this.repository.findExams({ limit: 7 }),
+    ]);
 
-    return [
-      {
-        day: 'Mon',
-        title: 'IELTS Listening Practice',
-        topic: 'Part 3 Multiple Choice Questions',
-        duration: '45m',
-        completed: completedCount >= 1,
-      },
-      {
-        day: 'Tue',
-        title: 'Academic Reading Skills',
-        topic: 'Skimming and Scanning Techniques',
-        duration: '50m',
-        completed: completedCount >= 2,
-      },
-      {
-        day: 'Wed',
-        title: 'Writing Task 2 Practice',
-        topic: 'Discuss Both Views Essays Structure',
-        duration: '60m',
-        completed: completedCount >= 3,
-      },
-      {
-        day: 'Thu',
-        title: 'Vocabulary Expansion',
-        topic: 'C1/C2 Academic Words Masterclass',
-        duration: '30m',
-        completed: completedCount >= 4,
-      },
-      {
-        day: 'Fri',
-        title: 'Speaking Mock Test',
-        topic: 'Part 2 & Part 3 Topic Reviews',
-        duration: '40m',
-        completed: completedCount >= 5,
-      },
-      {
-        day: 'Sat',
-        title: 'Full Exam Simulation',
-        topic: 'IELTS Listening & Reading Full Test',
-        duration: '150m',
-        completed: completedCount >= 6,
-      },
-      {
-        day: 'Sun',
-        title: 'Error Analysis & Review',
-        topic: 'Detailed Review of Wrong Answers',
-        duration: '60m',
-        completed: completedCount >= 7,
-      },
-    ];
+    const completedExamIds = new Set(
+      sessions.filter((s) => s.getStatus() === 'completed').map((s) => s.getExamId())
+    );
+
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const realExams = examsResult.items;
+
+    return days.map((day, idx) => {
+      const exam = realExams[idx % Math.max(1, realExams.length)];
+      const isCompleted = exam
+        ? completedExamIds.has(exam.id) || sessions.length > idx
+        : false;
+
+      return {
+        day,
+        title: exam ? exam.getTitle() : `Mock Practice Task #${idx + 1}`,
+        topic: exam ? (exam.getDescription() || 'Target Section & Skill Practice') : 'Vocabulary & Skill Building',
+        duration: exam && exam.getDuration() > 0 ? `${exam.getDuration()}m` : '45m',
+        completed: isCompleted,
+      };
+    });
   }
 }

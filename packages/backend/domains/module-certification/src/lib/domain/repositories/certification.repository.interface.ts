@@ -32,6 +32,10 @@ export interface ICertificationRepository {
   findCollectionById(id: string): Promise<CollectionEntity | null>;
   saveCollection(collection: CollectionEntity): Promise<CollectionEntity>;
   deleteCollection(id: string): Promise<void>;
+  findActivitiesByCollectionId(
+    collectionId: string,
+    limit?: number
+  ): Promise<Array<{ user: string; action: string; time: string }>>;
 
   // Exam Operations
   findExams(queryParams?: QueryParams): Promise<{
@@ -111,6 +115,7 @@ export interface ICertificationRepository {
 
   // Creator Profile Operations
   findCreatorProfileById(id: string): Promise<CreatorProfileEntity | null>;
+  findCreatorProfileByUserId(userId: string): Promise<CreatorProfileEntity | null>;
   findCreatorProfiles(limit?: number): Promise<CreatorProfileEntity[]>;
   saveCreatorProfile(profile: CreatorProfileEntity): Promise<CreatorProfileEntity>;
 }

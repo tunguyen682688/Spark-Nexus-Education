@@ -1,4 +1,6 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Clock,
   HelpCircle,
@@ -33,6 +35,16 @@ interface CertificationExamDetailContainerProps {
 export const CertificationExamDetailContainer: React.FC<
   CertificationExamDetailContainerProps
 > = ({ examId = 'default-exam', onSessionStarted }) => {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/certification');
+    }
+  };
+
   const {
     data: exam,
     isLoading,
@@ -55,6 +67,13 @@ export const CertificationExamDetailContainer: React.FC<
   if (isLoading) {
     return (
       <div className="w-full space-y-6 pb-12 max-w-5xl mx-auto">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại</span>
+        </button>
         <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
         <CardSkeleton />
       </div>
@@ -63,7 +82,14 @@ export const CertificationExamDetailContainer: React.FC<
 
   if (isError || !exam) {
     return (
-      <div className="w-full py-12 flex justify-center max-w-xl mx-auto">
+      <div className="w-full py-12 flex flex-col items-center gap-4 max-w-xl mx-auto">
+        <button
+          onClick={handleBack}
+          className="self-start inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại</span>
+        </button>
         <ErrorState
           onRetry={refetch}
           message={
@@ -78,6 +104,15 @@ export const CertificationExamDetailContainer: React.FC<
 
   return (
     <div className="w-full space-y-6 pb-12 max-w-5xl mx-auto">
+      {/* BACK BUTTON */}
+      <button
+        onClick={handleBack}
+        className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50 shadow-sm"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Quay lại</span>
+      </button>
+
       {/* 1. EXAM BANNER */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white p-6 sm:p-8 md:p-10 shadow-xl">
         <div className="relative z-10 space-y-4">

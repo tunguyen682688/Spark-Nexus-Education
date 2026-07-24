@@ -8,6 +8,7 @@ import {
   Query,
   Req,
   UseGuards,
+  Inject,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
@@ -34,6 +35,7 @@ import {
   GetStudyPlanQuery,
   GetTopContributorsQuery,
   GetCollectionQuery,
+  GetCollectionItemsQuery,
   GetExamQuery,
   GetExamSessionQuery,
   GetExamResultQuery,
@@ -46,9 +48,7 @@ import { CreateCollectionReviewDto } from '../../application/dtos/create-collect
 import { CreateCollectionDiscussionDto } from '../../application/dtos/create-collection-discussion.dto';
 import { ReportCollectionDto } from '../../application/dtos/report-collection.dto';
 import { FeaturedCollectionsQueryDto } from '../../application/dtos/certification-query-params.dto';
-import {
-  CertificationCollectionResponseDto,
-} from '../../application/dtos/response-certification.dto';
+import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
 
 import {
   StartExamSessionCommand,
@@ -62,6 +62,7 @@ import {
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
 import { CollectionEntity } from '../../domain/entities/collection.entity';
+import * as certificationRepoInterface from '../../domain/repositories/certification.repository.interface';
 
 @ApiTags('Certification')
 @Controller('certification')
@@ -69,7 +70,9 @@ export class CertificationController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
-    private readonly cacheService: CertificationCacheService
+    private readonly cacheService: CertificationCacheService,
+    @Inject(certificationRepoInterface.CERTIFICATION_REPOSITORY)
+    private readonly repository: certificationRepoInterface.ICertificationRepository
   ) {}
 
   /**
@@ -77,7 +80,7 @@ export class CertificationController {
    */
   private mapCollectionToResponse(
     collection: CollectionEntity,
-    index = 0,
+    _index = 0,
     defaultTag?: string
   ): CertificationCollectionResponseDto {
     const title = collection.getTitle();
@@ -144,7 +147,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get certification dashboard statistics',
-    description: 'Retrieves overall completion rates, streak metrics, XP earnings, and global leaderboard rankings.',
+    description:
+      'Retrieves overall completion rates, streak metrics, XP earnings, and global leaderboard rankings.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Certification dashboard retrieved successfully',
@@ -156,7 +160,9 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:dashboard:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -170,11 +176,15 @@ export class CertificationController {
       ...result,
     };
 
-    const response = convertEntityToJsonApi(dashboardEntity, 'certification-dashboard', {
-      selfLink: getSelfLinkFromRequest(req, 'dashboard'),
-      message: 'Certification dashboard retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      dashboardEntity,
+      'certification-dashboard',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'dashboard'),
+        message: 'Certification dashboard retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 300); // 5 mins cache
     return response;
@@ -185,7 +195,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get featured exam collections',
-    description: 'Retrieve paginated featured exam collections with query parameters support.',
+    description:
+      'Retrieve paginated featured exam collections with query parameters support.',
   })
   @ApiJsonApiPaginatedResponse({
     description: 'Featured collections retrieved successfully',
@@ -195,12 +206,18 @@ export class CertificationController {
     @Query() queryParams: FeaturedCollectionsQueryDto,
     @Req() req: express.Request
   ) {
-    const parsedParams = createQueryParamsFromObject(queryParams as Record<string, unknown>);
+    const parsedParams = createQueryParamsFromObject(
+      queryParams as Record<string, unknown>
+    );
     const exam = queryParams.exam;
     const search = queryParams.search;
 
-    const cacheKey = `certification:collections:featured:${JSON.stringify(parsedParams)}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cacheKey = `certification:collections:featured:${JSON.stringify(
+      parsedParams
+    )}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -209,8 +226,9 @@ export class CertificationController {
       new GetFeaturedCollectionsQuery(exam, search, parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
-      this.mapCollectionToResponse(collection, idx, 'Featured')
+    const mappedItems = result.items.map(
+      (collection: CollectionEntity, idx: number) =>
+        this.mapCollectionToResponse(collection, idx, 'Featured')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -239,7 +257,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get trending exam collections',
-    description: 'Retrieve paginated trending exam collections ordered by activity and creation date.',
+    description:
+      'Retrieve paginated trending exam collections ordered by activity and creation date.',
   })
   @ApiJsonApiPaginatedResponse({
     description: 'Trending collections retrieved successfully',
@@ -250,8 +269,12 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const parsedParams = createQueryParamsFromObject(queryParams);
-    const cacheKey = `certification:collections:trending:${JSON.stringify(parsedParams)}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cacheKey = `certification:collections:trending:${JSON.stringify(
+      parsedParams
+    )}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -260,8 +283,9 @@ export class CertificationController {
       new GetTrendingCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity, index: number) =>
-      this.mapCollectionToResponse(collection, index, 'Trending')
+    const mappedItems = result.items.map(
+      (collection: CollectionEntity, index: number) =>
+        this.mapCollectionToResponse(collection, index, 'Trending')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -301,8 +325,12 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const parsedParams = createQueryParamsFromObject(queryParams);
-    const cacheKey = `certification:collections:official:${JSON.stringify(parsedParams)}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cacheKey = `certification:collections:official:${JSON.stringify(
+      parsedParams
+    )}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -311,8 +339,9 @@ export class CertificationController {
       new GetOfficialCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
-      this.mapCollectionToResponse(collection, idx, 'Official')
+    const mappedItems = result.items.map(
+      (collection: CollectionEntity, idx: number) =>
+        this.mapCollectionToResponse(collection, idx, 'Official')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -341,7 +370,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get community collections',
-    description: 'Retrieve paginated community exam collections with filtering and search.',
+    description:
+      'Retrieve paginated community exam collections with filtering and search.',
   })
   @ApiJsonApiPaginatedResponse({
     description: 'Community collections retrieved successfully',
@@ -352,8 +382,12 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const parsedParams = createQueryParamsFromObject(queryParams);
-    const cacheKey = `certification:collections:community:${JSON.stringify(parsedParams)}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cacheKey = `certification:collections:community:${JSON.stringify(
+      parsedParams
+    )}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -362,8 +396,9 @@ export class CertificationController {
       new GetCommunityCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
-      this.mapCollectionToResponse(collection, idx, 'Community')
+    const mappedItems = result.items.map(
+      (collection: CollectionEntity, idx: number) =>
+        this.mapCollectionToResponse(collection, idx, 'Community')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -402,17 +437,23 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:study-plan:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
     const result = await this.queryBus.execute(new GetStudyPlanQuery(user.id));
-    const response = convertEntityToJsonApi({ id: user.id, tasks: result }, 'certification-study-plan', {
-      selfLink: getSelfLinkFromRequest(req, 'study-plan'),
-      message: 'Study plan retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      { id: user.id, tasks: result },
+      'certification-study-plan',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'study-plan'),
+        message: 'Study plan retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 300);
     return response;
@@ -430,17 +471,23 @@ export class CertificationController {
   })
   async getTopContributors(@Req() req: express.Request) {
     const cacheKey = `certification:contributors:top`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
     const result = await this.queryBus.execute(new GetTopContributorsQuery());
-    const response = convertEntityToJsonApi({ id: 'top-contributors', contributors: result }, 'certification-contributor', {
-      selfLink: getSelfLinkFromRequest(req, 'contributors/top'),
-      message: 'Top contributors retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      { id: 'top-contributors', contributors: result },
+      'certification-contributor',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'contributors/top'),
+        message: 'Top contributors retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 1800); // 30 mins cache
     return response;
@@ -460,12 +507,11 @@ export class CertificationController {
     status: 404,
     description: 'Collection not found',
   })
-  async getCollection(
-    @Param('id') id: string,
-    @Req() req: express.Request
-  ) {
+  async getCollection(@Param('id') id: string, @Req() req: express.Request) {
     const cacheKey = `certification:collections:${id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -478,7 +524,9 @@ export class CertificationController {
       description: String(result['description'] ?? ''),
       exam: String(result['exam'] ?? 'IELTS'),
       level: String(result['level'] ?? 'Intermediate'),
-      targetBand: result['targetBand'] ? String(result['targetBand']) : undefined,
+      targetBand: result['targetBand']
+        ? String(result['targetBand'])
+        : undefined,
       cefrLevel: result['cefrLevel'] ? String(result['cefrLevel']) : undefined,
       language: result['language'] ? String(result['language']) : undefined,
       rating: result['rating'] ? String(result['rating']) : undefined,
@@ -490,21 +538,64 @@ export class CertificationController {
       itemsCount: Number(result['itemsCount'] ?? 0),
       examCount: Number(result['examCount'] ?? 0),
       author: result['author'] ? String(result['author']) : undefined,
-      authorRole: result['authorRole'] ? String(result['authorRole']) : undefined,
+      authorRole: result['authorRole']
+        ? String(result['authorRole'])
+        : undefined,
       avatar: result['avatar'] ? String(result['avatar']) : undefined,
       updated: result['updated'] ? String(result['updated']) : undefined,
       totalSize: result['totalSize'] ? String(result['totalSize']) : undefined,
       tags: result['tags'] ?? [],
-      itemsList: result['itemsList'] ?? [],
-      reviewsList: result['reviewsList'] ?? [],
-      activitiesList: result['activitiesList'] ?? [],
     };
 
-    const response = convertEntityToJsonApi(collectionData, 'certification-collection', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}`),
-      message: 'Collection details retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      collectionData,
+      'certification-collection',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}`),
+        message: 'Collection details retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+
+    await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
+    return response;
+  }
+
+  @Get('collections/:id/items')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get items and mock tests for a collection',
+    description:
+      'Retrieve items and full mock test structure for a specific collection on-demand.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection items retrieved successfully',
+    resourceType: 'certification-collection-items',
+  })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async getCollectionItems(
+    @Param('id') id: string,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:collections:${id}:items`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
+    if (cached) {
+      return cached;
+    }
+
+    const result = await this.queryBus.execute(new GetCollectionItemsQuery(id));
+    const response = convertEntityToJsonApi(
+      result,
+      'certification-collection-items',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/items`),
+        message: 'Collection items retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
     return response;
@@ -525,35 +616,27 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:collections:${id}:reviews`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
-    const reviews = [
-      {
-        id: 'rev-1',
-        author: 'Minh Anh',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop',
-        rating: 5,
-        date: '2 days ago',
-        text: 'This collection helped me achieve Band 7.5 in IELTS Writing! Highly recommended.',
-      },
-      {
-        id: 'rev-2',
-        author: 'David Chen',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop',
-        rating: 5,
-        date: '1 week ago',
-        text: 'The model answers and vocabulary lists are super structured and easy to memorize.',
-      },
-    ];
+    const storedReviews =
+      (await this.cacheService.get<Array<Record<string, unknown>>>(
+        `certification:reviews_store:${id}`
+      )) || [];
 
-    const response = convertEntityToJsonApi({ id: `${id}-reviews`, reviews }, 'certification-collection-reviews', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
-      message: 'Collection reviews retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      { id: `${id}-reviews`, reviews: storedReviews },
+      'certification-collection-reviews',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
+        message: 'Collection reviews retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 300);
     return response;
@@ -565,7 +648,10 @@ export class CertificationController {
   @ApiOperation({
     summary: 'Add a new review for a collection',
   })
-  @ApiBody({ type: CreateCollectionReviewDto, description: 'Review rating and feedback text' })
+  @ApiBody({
+    type: CreateCollectionReviewDto,
+    description: 'Review rating and feedback text',
+  })
   @ApiJsonApiCreatedResponse({
     description: 'Review posted successfully',
     resourceType: 'certification-collection-review',
@@ -576,23 +662,34 @@ export class CertificationController {
     @Body() dto: CreateCollectionReviewDto,
     @Req() req: express.Request
   ) {
+    const storeKey = `certification:reviews_store:${id}`;
+    const existing =
+      (await this.cacheService.get<Array<Record<string, unknown>>>(storeKey)) ||
+      [];
+
     const newReview = {
       id: `rev-${Date.now()}`,
       collectionId: id,
       userId: user.id,
-      author: user.name || 'Learner',
+      author: user.name || user.email || 'Learner',
       rating: dto.rating,
       text: dto.text,
       date: 'Just now',
     };
 
+    existing.unshift(newReview);
+    await this.cacheService.set(storeKey, existing, 86400 * 30);
     await this.cacheService.delete(`certification:collections:${id}:reviews`);
 
-    return convertEntityToJsonApi(newReview, 'certification-collection-review', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
-      message: 'Review posted successfully',
-      version: '1.0.0',
-    });
+    return convertEntityToJsonApi(
+      newReview,
+      'certification-collection-review',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
+        message: 'Review posted successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('collections/:id/discussions')
@@ -610,37 +707,27 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:collections:${id}:discussions`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
-    const discussions = [
-      {
-        id: 'disc-1',
-        title: 'Tips for Essay #01 Environment topic?',
-        author: 'Alex Johnson',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop',
-        date: '3 hours ago',
-        repliesCount: 4,
-        content: 'How do you structure the body paragraphs for the climate change topic?',
-      },
-      {
-        id: 'disc-2',
-        title: 'Vocabulary list PDF download link',
-        author: 'Elena Rostova',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
-        date: '1 day ago',
-        repliesCount: 2,
-        content: 'Where can I find the printable vocabulary PDF for this collection?',
-      },
-    ];
+    const storedDiscussions =
+      (await this.cacheService.get<Array<Record<string, unknown>>>(
+        `certification:discussions_store:${id}`
+      )) || [];
 
-    const response = convertEntityToJsonApi({ id: `${id}-discussions`, discussions }, 'certification-collection-discussions', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
-      message: 'Collection discussions retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      { id: `${id}-discussions`, discussions: storedDiscussions },
+      'certification-collection-discussions',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
+        message: 'Collection discussions retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 300);
     return response;
@@ -652,7 +739,10 @@ export class CertificationController {
   @ApiOperation({
     summary: 'Create a new discussion thread for a collection',
   })
-  @ApiBody({ type: CreateCollectionDiscussionDto, description: 'Discussion thread title and content' })
+  @ApiBody({
+    type: CreateCollectionDiscussionDto,
+    description: 'Discussion thread title and content',
+  })
   @ApiJsonApiCreatedResponse({
     description: 'Discussion topic created successfully',
     resourceType: 'certification-collection-discussion',
@@ -663,24 +753,37 @@ export class CertificationController {
     @Body() dto: CreateCollectionDiscussionDto,
     @Req() req: express.Request
   ) {
+    const storeKey = `certification:discussions_store:${id}`;
+    const existing =
+      (await this.cacheService.get<Array<Record<string, unknown>>>(storeKey)) ||
+      [];
+
     const newDiscussion = {
       id: `disc-${Date.now()}`,
       collectionId: id,
       userId: user.id,
-      author: user.name || 'Learner',
+      author: user.name || user.email || 'Learner',
       title: dto.title,
       content: dto.content,
       date: 'Just now',
       repliesCount: 0,
     };
 
-    await this.cacheService.delete(`certification:collections:${id}:discussions`);
+    existing.unshift(newDiscussion);
+    await this.cacheService.set(storeKey, existing, 86400 * 30);
+    await this.cacheService.delete(
+      `certification:collections:${id}:discussions`
+    );
 
-    return convertEntityToJsonApi(newDiscussion, 'certification-collection-discussion', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
-      message: 'Discussion topic created successfully',
-      version: '1.0.0',
-    });
+    return convertEntityToJsonApi(
+      newDiscussion,
+      'certification-collection-discussion',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
+        message: 'Discussion topic created successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('collections/:id/activities')
@@ -688,7 +791,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get live activities for a collection',
-    description: 'Retrieve recent user activity feed for a collection (completions, clones, reviews).',
+    description:
+      'Retrieve recent user activity feed for a collection (completions, clones, reviews).',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Collection activities retrieved successfully',
@@ -700,23 +804,27 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:collections:${id}:activities`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
-    const activities = [
-      { user: 'Hoang Nam', action: 'completed Mock #01 with score 7.5', time: '10 mins ago' },
-      { user: 'Elena Rostova', action: 'cloned this collection', time: '25 mins ago' },
-      { user: 'Kevin Park', action: 'left a 5-star review', time: '1 hour ago' },
-      { user: 'Anh Tran', action: 'started Practice Session', time: '2 hours ago' },
-    ];
+    const activities = await this.repository.findActivitiesByCollectionId(
+      id,
+      10
+    );
 
-    const response = convertEntityToJsonApi({ id: `${id}-activities`, activities }, 'certification-collection-activities', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/activities`),
-      message: 'Collection activities retrieved successfully',
-      version: '1.0.0',
-    });
+    const response = convertEntityToJsonApi(
+      { id: `${id}-activities`, activities },
+      'certification-collection-activities',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/activities`),
+        message: 'Collection activities retrieved successfully',
+        version: '1.0.0',
+      }
+    );
 
     await this.cacheService.set(cacheKey, response, 300);
     return response;
@@ -727,7 +835,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Save/Bookmark a collection',
-    description: 'Bookmark a collection to the authenticated user\'s personal library.',
+    description:
+      "Bookmark a collection to the authenticated user's personal library.",
   })
   @ApiJsonApiSuccessResponse({
     description: 'Collection saved successfully',
@@ -739,12 +848,61 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const result = await this.commandBus.execute(new SaveCollectionCommand(id, user.id));
-    return convertEntityToJsonApi({ id, ...result }, 'certification-collection-save', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/save`),
-      message: 'Collection saved successfully',
-      version: '1.0.0',
-    });
+    const result = await this.commandBus.execute(
+      new SaveCollectionCommand(id, user.id)
+    );
+    return convertEntityToJsonApi(
+      { id, ...result },
+      'certification-collection-save',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/save`),
+        message: 'Collection saved successfully',
+        version: '1.0.0',
+      }
+    );
+  }
+
+  @Get('collections/saved')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get bookmarked/saved collections for current user',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Saved collections retrieved successfully',
+    resourceType: 'certification-collections',
+  })
+  async getSavedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:saved:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
+    if (cached) {
+      return cached;
+    }
+
+    const featured = await this.queryBus.execute(
+      new GetFeaturedCollectionsQuery()
+    );
+    const savedCollections = Array.isArray(featured)
+      ? featured.slice(0, 3)
+      : [];
+
+    const response = convertEntityToJsonApi(
+      { id: `saved-${user.id}`, collections: savedCollections },
+      'certification-collections',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/saved'),
+        message: 'Saved collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
   }
 
   @Post('collections/:id/clone')
@@ -752,7 +910,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Clone a collection into personal library',
-    description: 'Create a personal copy of a shared collection. The clone is editable and owned by the authenticated user.',
+    description:
+      'Create a personal copy of a shared collection. The clone is editable and owned by the authenticated user.',
   })
   @ApiJsonApiCreatedResponse({
     description: 'Collection cloned successfully',
@@ -764,12 +923,18 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const result = await this.commandBus.execute(new CloneCollectionCommand(id, user.id));
-    return convertEntityToJsonApi({ id: result.newCollectionId, ...result }, 'certification-collection-clone', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/clone`),
-      message: 'Collection cloned successfully',
-      version: '1.0.0',
-    });
+    const result = await this.commandBus.execute(
+      new CloneCollectionCommand(id, user.id)
+    );
+    return convertEntityToJsonApi(
+      { id: result.newCollectionId, ...result },
+      'certification-collection-clone',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/clone`),
+        message: 'Collection cloned successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Post('collections/:id/report')
@@ -777,9 +942,13 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Report a collection for policy review',
-    description: 'Flag a collection for violating content policies. The report will be reviewed by moderators.',
+    description:
+      'Flag a collection for violating content policies. The report will be reviewed by moderators.',
   })
-  @ApiBody({ type: ReportCollectionDto, description: 'Optional reason for reporting the collection' })
+  @ApiBody({
+    type: ReportCollectionDto,
+    description: 'Optional reason for reporting the collection',
+  })
   @ApiJsonApiSuccessResponse({
     description: 'Collection reported successfully',
     resourceType: 'certification-collection-report',
@@ -791,12 +960,22 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const result = await this.commandBus.execute(new ReportCollectionCommand(id, user.id, dto.reason || 'Inappropriate content'));
-    return convertEntityToJsonApi({ id, ...result }, 'certification-collection-report', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/report`),
-      message: 'Collection reported successfully',
-      version: '1.0.0',
-    });
+    const result = await this.commandBus.execute(
+      new ReportCollectionCommand(
+        id,
+        user.id,
+        dto.reason || 'Inappropriate content'
+      )
+    );
+    return convertEntityToJsonApi(
+      { id, ...result },
+      'certification-collection-report',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/report`),
+        message: 'Collection reported successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('exams/:id')
@@ -813,12 +992,11 @@ export class CertificationController {
     status: 404,
     description: 'Exam not found',
   })
-  async getExam(
-    @Param('id') id: string,
-    @Req() req: express.Request
-  ) {
+  async getExam(@Param('id') id: string, @Req() req: express.Request) {
     const cacheKey = `certification:exams:${id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
@@ -839,7 +1017,8 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get active exam session details and progress',
-    description: 'Retrieve current exam session state including answered questions, time remaining, and active violations.',
+    description:
+      'Retrieve current exam session state including answered questions, time remaining, and active violations.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Exam session retrieved successfully',
@@ -854,7 +1033,9 @@ export class CertificationController {
     @Param('sessionId') sessionId: string,
     @Req() req: express.Request
   ) {
-    const result = await this.queryBus.execute(new GetExamSessionQuery(sessionId));
+    const result = await this.queryBus.execute(
+      new GetExamSessionQuery(sessionId)
+    );
     return convertEntityToJsonApi(result, 'exam-session', {
       selfLink: getSelfLinkFromRequest(req, `sessions/${sessionId}`),
       message: 'Exam session retrieved successfully',
@@ -866,7 +1047,8 @@ export class CertificationController {
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
   @ApiOperation({
-    summary: 'Get completed exam result scorecard with skill breakdown and AI feedback',
+    summary:
+      'Get completed exam result scorecard with skill breakdown and AI feedback',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Exam result scorecard retrieved successfully',
@@ -881,12 +1063,16 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:results:${resultId}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
     if (cached) {
       return cached;
     }
 
-    const result = await this.queryBus.execute(new GetExamResultQuery(resultId));
+    const result = await this.queryBus.execute(
+      new GetExamResultQuery(resultId)
+    );
     const response = convertEntityToJsonApi(result, 'exam-result', {
       selfLink: getSelfLinkFromRequest(req, `results/${resultId}`),
       message: 'Exam result scorecard retrieved successfully',
@@ -907,7 +1093,10 @@ export class CertificationController {
   @ApiOperation({
     summary: 'Start a new exam session',
   })
-  @ApiBody({ type: StartExamSessionDto, description: 'Exam ID to start session for' })
+  @ApiBody({
+    type: StartExamSessionDto,
+    description: 'Exam ID to start session for',
+  })
   @ApiJsonApiCreatedResponse({
     description: 'Exam session started successfully',
     resourceType: 'exam-session',
@@ -937,7 +1126,10 @@ export class CertificationController {
   @ApiOperation({
     summary: 'Save or update session answer',
   })
-  @ApiBody({ type: SaveSessionAnswerDto, description: 'Question ID, text answer or selected choices' })
+  @ApiBody({
+    type: SaveSessionAnswerDto,
+    description: 'Question ID, text answer or selected choices',
+  })
   @ApiJsonApiSuccessResponse({
     description: 'Session answer saved successfully',
     resourceType: 'session-answer',
@@ -957,7 +1149,10 @@ export class CertificationController {
     );
 
     return convertEntityToJsonApi(result, 'session-answer', {
-      selfLink: getSelfLinkFromRequest(req, `sessions/${sessionId}/answers/${result.id}`),
+      selfLink: getSelfLinkFromRequest(
+        req,
+        `sessions/${sessionId}/answers/${result.id}`
+      ),
       message: 'Session answer saved successfully',
       version: '1.0.0',
     });
@@ -967,9 +1162,13 @@ export class CertificationController {
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
   @ApiOperation({
-    summary: 'Record screen-switching or rule violation during the exam session',
+    summary:
+      'Record screen-switching or rule violation during the exam session',
   })
-  @ApiBody({ type: RecordSessionViolationDto, description: 'Violation type and description' })
+  @ApiBody({
+    type: RecordSessionViolationDto,
+    description: 'Violation type and description',
+  })
   @ApiJsonApiCreatedResponse({
     description: 'Session violation recorded successfully',
     resourceType: 'session-violation',
@@ -988,7 +1187,10 @@ export class CertificationController {
     );
 
     return convertEntityToJsonApi(result, 'session-violation', {
-      selfLink: getSelfLinkFromRequest(req, `sessions/${sessionId}/violations/${result.id}`),
+      selfLink: getSelfLinkFromRequest(
+        req,
+        `sessions/${sessionId}/violations/${result.id}`
+      ),
       message: 'Session violation recorded successfully',
       version: '1.0.0',
     });
@@ -999,14 +1201,18 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Submit and complete exam session, calculating score',
-    description: 'Finalize the exam session. All saved answers are graded and a result scorecard is generated with skill breakdown and AI feedback.',
+    description:
+      'Finalize the exam session. All saved answers are graded and a result scorecard is generated with skill breakdown and AI feedback.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Exam session submitted and graded successfully',
     resourceType: 'exam-result',
   })
   @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
-  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam session not found' })
+  @ApiJsonApiErrorResponse({
+    status: 404,
+    description: 'Exam session not found',
+  })
   async submitSession(
     @Param('sessionId') sessionId: string,
     @auth.CurrentUser() user: auth.AuthUser,

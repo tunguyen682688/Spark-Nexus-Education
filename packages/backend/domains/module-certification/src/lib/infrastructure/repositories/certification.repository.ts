@@ -198,6 +198,59 @@ export class CertificationRepository implements ICertificationRepository {
     });
   }
 
+  async findActivitiesByCollectionId(
+    collectionId: string,
+    limit = 10
+  ): Promise<Array<{ user: string; action: string; time: string }>> {
+    const exams = await this.prisma.exam.findMany({
+      where: { collectionId },
+      select: { id: true, title: true },
+    });
+
+    if (exams.length === 0) {
+      return [];
+    }
+
+    const examIds = exams.map((e) => e.id);
+    const examMap = new Map(exams.map((e) => [e.id, e.title]));
+
+    const results = await this.prisma.examResult.findMany({
+      where: { examId: { in: examIds } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    if (results.length === 0) {
+      const sessions = await this.prisma.examSession.findMany({
+        where: { examId: { in: examIds } },
+        orderBy: { startedAt: 'desc' },
+        take: limit,
+      });
+
+      return sessions.map((s) => {
+        const examTitle = examMap.get(s.examId) || 'Practice Exam';
+        const agoMins = Math.max(1, Math.floor((Date.now() - s.startedAt.getTime()) / 60000));
+        const timeStr = agoMins < 60 ? `${agoMins} mins ago` : `${Math.floor(agoMins / 60)} hours ago`;
+        return {
+          user: `Learner ${s.userId.substring(0, 5)}`,
+          action: `started ${examTitle}`,
+          time: timeStr,
+        };
+      });
+    }
+
+    return results.map((r) => {
+      const examTitle = examMap.get(r.examId) || 'Exam';
+      const agoMins = Math.max(1, Math.floor((Date.now() - r.createdAt.getTime()) / 60000));
+      const timeStr = agoMins < 60 ? `${agoMins} mins ago` : `${Math.floor(agoMins / 60)} hours ago`;
+      return {
+        user: `Learner ${r.userId.substring(0, 5)}`,
+        action: `completed ${examTitle} with score ${r.totalScore}`,
+        time: timeStr,
+      };
+    });
+  }
+
   // ============================================
   // EXAM OPERATIONS
   // ============================================

@@ -1,4 +1,6 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   useCollectionDetailContainerLogic,
   CollectionTabType,
@@ -18,11 +20,24 @@ import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
 interface CertificationCollectionDetailContainerProps {
   collectionId?: string;
   onStartLearning?: (examId: string) => void;
+  onBack?: () => void;
 }
 
 export const CertificationCollectionDetailContainer: React.FC<
   CertificationCollectionDetailContainerProps
-> = ({ collectionId = 'c1', onStartLearning }) => {
+> = ({ collectionId = 'c1', onStartLearning, onBack }) => {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/certification');
+    }
+  };
+
   const {
     activeTab,
     setActiveTab,
@@ -49,7 +64,14 @@ export const CertificationCollectionDetailContainer: React.FC<
 
   if (isError) {
     return (
-      <div className="w-full py-12 flex justify-center">
+      <div className="w-full py-12 flex flex-col items-center gap-4">
+        <button
+          onClick={handleBack}
+          className="self-start inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại</span>
+        </button>
         <div className="w-full max-w-xl">
           <ErrorState
             onRetry={refetch}
@@ -67,6 +89,13 @@ export const CertificationCollectionDetailContainer: React.FC<
   if (isLoading) {
     return (
       <div className="w-full space-y-6 pb-12">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại</span>
+        </button>
         <div className="w-full h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
@@ -90,6 +119,17 @@ export const CertificationCollectionDetailContainer: React.FC<
 
   return (
     <div className="w-full space-y-6 pb-12">
+      {/* BACK BUTTON */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại</span>
+        </button>
+      </div>
+
       {/* 1. HERO HEADER SECTION */}
       <CollectionDetailHero collection={collectionViewModel} />
 
