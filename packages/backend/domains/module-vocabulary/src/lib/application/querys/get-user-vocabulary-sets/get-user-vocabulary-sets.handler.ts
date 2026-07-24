@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler, QueryBus } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import {
   normalizeQueryParams,
   SortDirection,
@@ -19,6 +19,8 @@ export class GetUserVocabularySetsQueryHandler
   implements
     IQueryHandler<GetUserVocabularySetsQuery, UserVocabularySetsListResult>
 {
+  private readonly logger = new Logger(GetUserVocabularySetsQueryHandler.name);
+
   constructor(
     @Inject(vocabularySetRepositoryInterface.VOCABULARY_SET_REPOSITORY)
     private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository,
@@ -45,7 +47,7 @@ export class GetUserVocabularySetsQueryHandler
     // Fetch user profile using QueryBus
     let creatorProfile: { name: string | null; avatar: string | null } | null = null;
     try {
-      const creator = await this.queryBus.execute<GetUserProfileQuery, any>(
+      const creator = await this.queryBus.execute<GetUserProfileQuery, { name: string | null; picture: string | null } | null>(
         new GetUserProfileQuery(query.userId)
       );
       if (creator) {
@@ -53,7 +55,7 @@ export class GetUserVocabularySetsQueryHandler
       }
     } catch (error) {
       // Gracefully fail and fallback
-      console.error(`Failed to fetch user profile for ID ${query.userId}:`, error);
+      this.logger.error(`Failed to fetch user profile for ID ${query.userId}:`, error);
     }
 
     const meta: ResponseMeta = {

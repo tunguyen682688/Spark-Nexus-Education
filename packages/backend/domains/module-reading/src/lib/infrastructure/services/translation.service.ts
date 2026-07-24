@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ITranslationService } from '../../domain/services/translation.service.interface';
 import { PrismaService } from '@spark-nest-ed/infrastructure-database';
 import * as crypto from 'crypto';
@@ -6,6 +6,8 @@ import axios from 'axios';
 
 @Injectable()
 export class TranslationService implements ITranslationService {
+  private readonly logger = new Logger(TranslationService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private getHash(text: string): string {
@@ -38,7 +40,7 @@ export class TranslationService implements ITranslationService {
         }
       }
     } catch (err) {
-      console.error('Failed to query translation cache from database:', err);
+      this.logger.error('Failed to query translation cache from database:', err);
     }
 
     // 2. Contextual translation rules for common polysemous words (as semantic override)
@@ -84,7 +86,7 @@ export class TranslationService implements ITranslationService {
         const wordUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(word)}`;
         const wordRes = await axios.get(wordUrl);
         if (wordRes.data && wordRes.data[0]) {
-          translation = wordRes.data[0].map((item: any) => item[0]).join('');
+          translation = wordRes.data[0].map((item: string[]) => item[0]).join('');
         }
 
         // Second, translate the context sentence
@@ -92,12 +94,12 @@ export class TranslationService implements ITranslationService {
         const sentenceRes = await axios.get(sentenceUrl);
         let sentenceTranslation = '';
         if (sentenceRes.data && sentenceRes.data[0]) {
-          sentenceTranslation = sentenceRes.data[0].map((item: any) => item[0]).join('');
+          sentenceTranslation = sentenceRes.data[0].map((item: string[]) => item[0]).join('');
         }
 
         explanation = `Từ "${word}" mang nghĩa là "${translation}" trong câu: "${sentenceTranslation}".`;
       } catch (err) {
-        console.error('Context translation API failed:', err);
+        this.logger.error('Context translation API failed:', err);
         // Offline dictionary fallback
         const offlineDict: Record<string, { translation: string; explanation: string }> = {
           'getting': { translation: 'Bắt đầu / Tiếp cận', explanation: 'Đang bắt đầu một trạng thái hoặc quá trình mới.' },
@@ -138,7 +140,7 @@ export class TranslationService implements ITranslationService {
         },
       });
     } catch (err) {
-      console.error('Failed to save contextual translation to database cache:', err);
+      this.logger.error('Failed to save contextual translation to database cache:', err);
     }
 
     return result;
@@ -162,7 +164,7 @@ export class TranslationService implements ITranslationService {
         return cached.translatedText;
       }
     } catch (err) {
-      console.error('Failed to query translation cache from database:', err);
+      this.logger.error('Failed to query translation cache from database:', err);
     }
 
     // 2. Call Google Translate Web API for real dynamic translation
@@ -171,10 +173,10 @@ export class TranslationService implements ITranslationService {
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
       const res = await axios.get(url);
       if (res.data && res.data[0]) {
-        translation = res.data[0].map((item: any) => item[0]).join('');
+        translation = res.data[0].map((item: string[]) => item[0]).join('');
       }
     } catch (err) {
-      console.error('Google Translate paragraph translation failed:', err);
+      this.logger.error('Google Translate paragraph translation failed:', err);
     }
 
     // 3. Fallback to existing map lookup if Google Translate fails or returns empty
@@ -231,7 +233,7 @@ export class TranslationService implements ITranslationService {
         },
       });
     } catch (err) {
-      console.error('Failed to write translation cache to database:', err);
+      this.logger.error('Failed to write translation cache to database:', err);
     }
 
     return translation;

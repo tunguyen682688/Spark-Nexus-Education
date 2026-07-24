@@ -11,6 +11,7 @@ import {
   ApiJsonApiPaginatedResponse,
   convertEntityToJsonApi,
   createJsonApiPaginatedResponse,
+  formatSuccessResponse,
   getSelfLinkFromRequest,
   getBaseUrlFromRequest,
   createQueryParamsFromObject,
@@ -74,7 +75,7 @@ export class GrammarController {
     summary: 'Lấy bảng xếp hạng học viên ngữ pháp',
     description: 'Retrieve the top students ranked by grammar progression, weekly, monthly, or all-time.',
   })
-  @ApiJsonApiSuccessResponse({
+  @ApiJsonApiPaginatedResponse({
     description: 'Leaderboard retrieved successfully',
     resourceType: 'grammar-leaderboard',
   })
@@ -82,13 +83,21 @@ export class GrammarController {
     @Query('timeframe') timeframe: 'week' | 'month' | 'all-time' | undefined,
     @Req() req: express.Request
   ) {
-    const result = await this.queryBus.execute(new GetLeaderboardQuery(timeframe));
-    const selfLink = getBaseUrlFromRequest(req);
-    return convertEntityToJsonApi(result, 'grammar-leaderboard', {
-      selfLink,
-      message: 'Leaderboard retrieved successfully',
-      version: '1.0.0',
-    });
+    const result: Array<{ id: string; name: string; avatar: string; xp: number; streak: number; rank: number }> =
+      await this.queryBus.execute(new GetLeaderboardQuery(timeframe));
+    const baseUrl = getBaseUrlFromRequest(req);
+    const pagination = { page: 1, limit: result.length, total: result.length, totalPages: 1 };
+    return createJsonApiPaginatedResponse(
+      result,
+      result.length,
+      'grammar-leaderboard',
+      baseUrl,
+      pagination,
+      {
+        message: 'Leaderboard retrieved successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('roadmap')
@@ -728,11 +737,20 @@ export class GrammarController {
   ) {
     const result = await this.commandBus.execute(new SubmitExamAttemptCommand(userId, id, body.correctCount, body.totalCount));
     const selfLink = getSelfLinkFromRequest(req, `${id}/submit`);
-    return convertEntityToJsonApi(result, 'grammar-exam-attempt', {
-      selfLink,
-      message: 'Exam attempt submitted successfully',
-      version: '1.0.0',
-    });
+    // result is a plain object without an id — use formatSuccessResponse directly
+    // the resource id is a composite of userId + examSetId to uniquely identify this attempt
+    const attemptResourceId = `${userId}:${id}`;
+    const { ...attributes } = result;
+    return formatSuccessResponse(
+      attributes,
+      'grammar-exam-attempt',
+      attemptResourceId,
+      {
+        selfLink,
+        message: 'Exam attempt submitted successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('exams/certificates')

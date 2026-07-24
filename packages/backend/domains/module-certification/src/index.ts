@@ -35,7 +35,4 @@ export * from './lib/application/dtos/record-session-violation.dto';
 
 export * from './lib/application/queries';
 
-export * from './lib/application/commands/start-exam-session.command';
-export * from './lib/application/commands/save-session-answer.command';
-export * from './lib/application/commands/record-session-violation.command';
-export * from './lib/application/commands/submit-exam-session.command';
+export * from './lib/application/commands';

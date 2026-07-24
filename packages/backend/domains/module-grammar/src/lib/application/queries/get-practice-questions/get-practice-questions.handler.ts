@@ -1,12 +1,14 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetPracticeQuestionsQuery } from './get-practice-questions.query';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { GRAMMAR_COMMUNITY_REPOSITORY } from '../../../domain/repositories/grammar-community.repository.interface';
 import type { IGrammarCommunityRepository } from '../../../domain/repositories/grammar-community.repository.interface';
 import { PRACTICE_QUESTIONS_POOL } from '../../../common/constants/grammar-questions.constants';
 
 @QueryHandler(GetPracticeQuestionsQuery)
 export class GetPracticeQuestionsHandler implements IQueryHandler<GetPracticeQuestionsQuery, any> {
+  private readonly logger = new Logger(GetPracticeQuestionsHandler.name);
+
   constructor(
     @Inject(GRAMMAR_COMMUNITY_REPOSITORY)
     private readonly communityRepository: IGrammarCommunityRepository
@@ -52,7 +54,7 @@ export class GetPracticeQuestionsHandler implements IQueryHandler<GetPracticeQue
 
       filtered = [...filtered, ...filteredDb];
     } catch (e) {
-      console.error('Error fetching db crowdsourced quizzes in practice questions handler:', e);
+      this.logger.error('Error fetching db crowdsourced quizzes in practice questions handler:', e);
     }
 
     return filtered;

@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler, QueryBus } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import {
   normalizeQueryParams,
   SortDirection,
@@ -18,6 +18,8 @@ import { GetUsersProfilesQuery } from '@spark-nest-ed/module-user';
 export class GetUserFavoritesQueryHandler
   implements IQueryHandler<GetUserFavoritesQuery, UserFavoritesListResult>
 {
+  private readonly logger = new Logger(GetUserFavoritesQueryHandler.name);
+
   constructor(
     @Inject(vocabularySetRepositoryInterface.VOCABULARY_SET_REPOSITORY)
     private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository,
@@ -59,7 +61,7 @@ export class GetUserFavoritesQueryHandler
         }
       } catch (error) {
         // Gracefully fail and fallback
-        console.error('Failed to fetch creator profiles from module-user:', error);
+        this.logger.error('Failed to fetch creator profiles from module-user:', error);
       }
     }
 

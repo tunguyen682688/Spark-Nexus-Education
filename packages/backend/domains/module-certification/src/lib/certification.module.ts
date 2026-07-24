@@ -23,10 +23,15 @@ import {
 } from './application/queries';
 
 // Command Handlers
-import { StartExamSessionHandler } from './application/commands/start-exam-session.command';
-import { SaveSessionAnswerHandler } from './application/commands/save-session-answer.command';
-import { RecordSessionViolationHandler } from './application/commands/record-session-violation.command';
-import { SubmitExamSessionHandler } from './application/commands/submit-exam-session.command';
+import {
+  StartExamSessionHandler,
+  SaveSessionAnswerHandler,
+  RecordSessionViolationHandler,
+  SubmitExamSessionHandler,
+  SaveCollectionCommandHandler,
+  CloneCollectionCommandHandler,
+  ReportCollectionCommandHandler,
+} from './application/commands';
 
 // Repository Implementations
 import { CERTIFICATION_REPOSITORY } from './domain/repositories/certification.repository.interface';
@@ -61,6 +66,9 @@ const CommandHandlers = [
   SaveSessionAnswerHandler,
   RecordSessionViolationHandler,
   SubmitExamSessionHandler,
+  SaveCollectionCommandHandler,
+  CloneCollectionCommandHandler,
+  ReportCollectionCommandHandler,
 ];
 
 @Module({

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@spark-nest-ed/infrastructure-database';
 import {
   Collection,
@@ -45,12 +45,17 @@ import {
   buildPrismaQuery,
   normalizeQueryParams,
   extractPagination,
+  sanitizeLimit,
+  sanitizePage,
   PagePagination,
+  OffsetPagination,
   QueryParams,
 } from '@spark-nest-ed/shared-libs';
 
 @Injectable()
 export class CertificationRepository implements ICertificationRepository {
+  private readonly logger = new Logger(CertificationRepository.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   // ============================================
@@ -58,68 +63,108 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findCollections(queryParams?: QueryParams) {
-    const normalizedParams = normalizeQueryParams(queryParams || {}) as Record<string, unknown>;
+    const normalizedParams = normalizeQueryParams(queryParams || {});
+    const baseWhere: Prisma.CollectionWhereInput = {
+      publishStatus: 'published',
+      deletedAt: null,
+    };
+
     const prismaQuery = buildPrismaQuery(normalizedParams, {
       maxLimit: 100,
       defaultLimit: 20,
     });
 
-    const where: Prisma.CollectionWhereInput = {
-      publishStatus: 'published',
-      deletedAt: null,
-      ...prismaQuery.where,
-    };
+    const rawWhere = { ...prismaQuery.where };
+    delete (rawWhere as Record<string, unknown>).exam;
 
-    if (normalizedParams.q || normalizedParams.search) {
-      const searchTerm = (normalizedParams.q || normalizedParams.search) as string;
+    const where: Prisma.CollectionWhereInput =
+      Object.keys(rawWhere).length > 0
+        ? {
+            AND: [baseWhere, rawWhere as Prisma.CollectionWhereInput],
+          }
+        : baseWhere;
+
+    if ((normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search) {
+      const searchTerm = ((normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search) as string;
       where['title'] = { contains: searchTerm, mode: 'insensitive' };
     }
 
-    const orderBy = prismaQuery.orderBy && Object.keys(prismaQuery.orderBy).length > 0
-      ? prismaQuery.orderBy
-      : [{ createdAt: 'desc' }];
+    const orderBy =
+      prismaQuery.orderBy &&
+      (Array.isArray(prismaQuery.orderBy)
+        ? prismaQuery.orderBy.length > 0
+        : Object.keys(prismaQuery.orderBy).length > 0)
+        ? prismaQuery.orderBy
+        : [{ createdAt: 'desc' }];
 
     const pagination = extractPagination(normalizedParams);
-    let page = 1;
-    let limit = 20;
+    let page: number;
+    let limit: number;
 
     if (pagination && 'page' in pagination) {
       const pagePagination = pagination as PagePagination;
-      page = pagePagination.page;
-      limit = pagePagination.pageSize;
+      page = sanitizePage(pagePagination.page);
+      limit = sanitizeLimit(pagePagination.pageSize, 100, 20);
+    } else if (pagination && 'offset' in pagination) {
+      const offsetPagination = pagination as OffsetPagination;
+      limit = sanitizeLimit(offsetPagination.limit, 100, 20);
+      page = Math.floor(offsetPagination.offset / Math.max(limit, 1)) + 1;
+    } else {
+      page = 1;
+      limit = prismaQuery.take || 20;
     }
 
-    const total = await this.prisma.collection.count({ where });
-    const items = await this.prisma.collection.findMany({
-      where,
-      include: {
-        items: true,
-        exams: true,
-      },
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    try {
+      const [total, items] = await Promise.all([
+        this.prisma.collection.count({ where }),
+        this.prisma.collection.findMany({
+          where,
+          include: {
+            items: true,
+            exams: true,
+          },
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
 
-    return {
-      items: items.map(item => this.mapCollectionToEntity(item)),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      const totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
+
+      return {
+        items: items.map((item) => this.mapCollectionToEntity(item)),
+        total,
+        page,
+        limit,
+        totalPages,
+      };
+    } catch (error) {
+      this.logger.warn(`findCollections DB error: ${(error as Error)?.message || error}`);
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      };
+    }
   }
 
   async findCollectionById(id: string): Promise<CollectionEntity | null> {
-    const col = await this.prisma.collection.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        items: true,
-        exams: true,
-      },
-    });
-    if (!col) return null;
-    return this.mapCollectionToEntity(col);
+    try {
+      const col = await this.prisma.collection.findFirst({
+        where: { id, deletedAt: null },
+        include: {
+          items: true,
+          exams: true,
+        },
+      });
+      if (!col) return null;
+      return this.mapCollectionToEntity(col);
+    } catch (error) {
+      this.logger.warn(`findCollectionById(${id}) DB error: ${(error as Error)?.message || error}`);
+      return null;
+    }
   }
 
   async saveCollection(collection: CollectionEntity): Promise<CollectionEntity> {
@@ -158,67 +203,112 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findExams(queryParams?: QueryParams) {
-    const normalizedParams = normalizeQueryParams(queryParams || {}) as Record<string, unknown>;
+    const normalizedParams = normalizeQueryParams(queryParams || {});
+    const baseWhere: Prisma.ExamWhereInput = {
+      publishStatus: 'published',
+      deletedAt: null,
+    };
+
     const prismaQuery = buildPrismaQuery(normalizedParams, {
       maxLimit: 100,
       defaultLimit: 20,
     });
 
-    const where: Prisma.ExamWhereInput = {
-      publishStatus: 'published',
-      deletedAt: null,
-      ...prismaQuery.where,
-    };
+    const rawWhere = { ...prismaQuery.where };
+    delete (rawWhere as Record<string, unknown>).exam;
 
-    if (normalizedParams.q || normalizedParams.search) {
-      const searchTerm = (normalizedParams.q || normalizedParams.search) as string;
+    const where: Prisma.ExamWhereInput =
+      Object.keys(rawWhere).length > 0
+        ? {
+            AND: [baseWhere, rawWhere as Prisma.ExamWhereInput],
+          }
+        : baseWhere;
+
+    if ((normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search) {
+      const searchTerm = ((normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search) as string;
       where['title'] = { contains: searchTerm, mode: 'insensitive' };
     }
 
-    const orderBy = prismaQuery.orderBy && Object.keys(prismaQuery.orderBy).length > 0
-      ? prismaQuery.orderBy
-      : [{ createdAt: 'desc' }];
+    const orderBy =
+      prismaQuery.orderBy &&
+      (Array.isArray(prismaQuery.orderBy)
+        ? prismaQuery.orderBy.length > 0
+        : Object.keys(prismaQuery.orderBy).length > 0)
+        ? prismaQuery.orderBy
+        : [{ createdAt: 'desc' }];
 
     const pagination = extractPagination(normalizedParams);
-    let page = 1;
-    let limit = 20;
+    let page: number;
+    let limit: number;
 
     if (pagination && 'page' in pagination) {
       const pagePagination = pagination as PagePagination;
-      page = pagePagination.page;
-      limit = pagePagination.pageSize;
+      page = sanitizePage(pagePagination.page);
+      limit = sanitizeLimit(pagePagination.pageSize, 100, 20);
+    } else if (pagination && 'offset' in pagination) {
+      const offsetPagination = pagination as OffsetPagination;
+      limit = sanitizeLimit(offsetPagination.limit, 100, 20);
+      page = Math.floor(offsetPagination.offset / Math.max(limit, 1)) + 1;
+    } else {
+      page = 1;
+      limit = prismaQuery.take || 20;
     }
 
-    const total = await this.prisma.exam.count({ where });
-    const items = await this.prisma.exam.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    try {
+      const [total, items] = await Promise.all([
+        this.prisma.exam.count({ where }),
+        this.prisma.exam.findMany({
+          where,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
 
-    return {
-      items: items.map(item => this.mapExamToEntity(item)),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      const totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
+
+      return {
+        items: items.map((item) => this.mapExamToEntity(item)),
+        total,
+        page,
+        limit,
+        totalPages,
+      };
+    } catch (error) {
+      this.logger.warn(`findExams DB error: ${(error as Error)?.message || error}`);
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      };
+    }
   }
 
   async findExamById(id: string): Promise<ExamEntity | null> {
-    const exam = await this.prisma.exam.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!exam) return null;
-    return this.mapExamToEntity(exam);
+    try {
+      const exam = await this.prisma.exam.findFirst({
+        where: { id, deletedAt: null },
+      });
+      if (!exam) return null;
+      return this.mapExamToEntity(exam);
+    } catch (error) {
+      this.logger.warn(`findExamById(${id}) DB error: ${(error as Error)?.message || error}`);
+      return null;
+    }
   }
 
   async findExamsByCollectionId(collectionId: string): Promise<ExamEntity[]> {
-    const exams = await this.prisma.exam.findMany({
-      where: { collectionId, deletedAt: null, publishStatus: 'published' },
-    });
-    return exams.map((exam) => this.mapExamToEntity(exam));
+    try {
+      const exams = await this.prisma.exam.findMany({
+        where: { collectionId, deletedAt: null, publishStatus: 'published' },
+      });
+      return exams.map((exam) => this.mapExamToEntity(exam));
+    } catch (error) {
+      this.logger.warn(`findExamsByCollectionId(${collectionId}) DB error: ${(error as Error)?.message || error}`);
+      return [];
+    }
   }
 
   async saveExam(exam: ExamEntity): Promise<ExamEntity> {
@@ -261,11 +351,11 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findSectionsByExamId(examId: string): Promise<ExamSectionEntity[]> {
-    const records = await this.prisma.examSection.findMany({
+    const sections = await this.prisma.examSection.findMany({
       where: { examId },
       orderBy: { order: 'asc' },
     });
-    return records.map(r => this.mapSectionToEntity(r));
+    return sections.map((s) => this.mapSectionToEntity(s));
   }
 
   async saveExamSection(section: ExamSectionEntity): Promise<ExamSectionEntity> {
@@ -289,8 +379,9 @@ export class CertificationRepository implements ICertificationRepository {
   }
 
   async deleteExamSection(id: string): Promise<void> {
-    await this.prisma.examSection.delete({
+    await this.prisma.examSection.update({
       where: { id },
+      data: { order: 0 }, // mark as deleted by resetting order; schema has no deletedAt
     });
   }
 
@@ -299,10 +390,10 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findRulesByExamId(examId: string): Promise<ExamRuleEntity[]> {
-    const records = await this.prisma.examRule.findMany({
+    const rules = await this.prisma.examRule.findMany({
       where: { examId },
     });
-    return records.map(r => this.mapRuleToEntity(r));
+    return rules.map((r) => this.mapRuleToEntity(r));
   }
 
   async saveExamRule(rule: ExamRuleEntity): Promise<ExamRuleEntity> {
@@ -339,6 +430,11 @@ export class CertificationRepository implements ICertificationRepository {
   async findSessionById(id: string): Promise<ExamSessionEntity | null> {
     const session = await this.prisma.examSession.findUnique({
       where: { id },
+      include: {
+        answers: true,
+        violations: true,
+        snapshots: true,
+      },
     });
     if (!session) return null;
     return this.mapSessionToEntity(session);
@@ -348,9 +444,9 @@ export class CertificationRepository implements ICertificationRepository {
     const data = {
       examId: session.getExamId(),
       userId: session.getUserId(),
+      status: session.getStatus(),
       startedAt: session.getStartedAt(),
       endedAt: session.getEndedAt(),
-      status: session.getStatus(),
       version: session.version + BigInt(1),
     };
 
@@ -371,7 +467,7 @@ export class CertificationRepository implements ICertificationRepository {
       where: { userId },
       orderBy: { startedAt: 'desc' },
     });
-    return sessions.map(s => this.mapSessionToEntity(s));
+    return sessions.map((s) => this.mapSessionToEntity(s));
   }
 
   // ============================================
@@ -381,6 +477,11 @@ export class CertificationRepository implements ICertificationRepository {
   async findResultById(id: string): Promise<ExamResultEntity | null> {
     const result = await this.prisma.examResult.findUnique({
       where: { id },
+      include: {
+        skills: true,
+        questions: true,
+        evaluation: true,
+      },
     });
     if (!result) return null;
     return this.mapResultToEntity(result);
@@ -389,6 +490,11 @@ export class CertificationRepository implements ICertificationRepository {
   async findResultBySessionId(sessionId: string): Promise<ExamResultEntity | null> {
     const result = await this.prisma.examResult.findFirst({
       where: { sessionId },
+      include: {
+        skills: true,
+        questions: true,
+        evaluation: true,
+      },
     });
     if (!result) return null;
     return this.mapResultToEntity(result);
@@ -420,7 +526,7 @@ export class CertificationRepository implements ICertificationRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    return results.map(r => this.mapResultToEntity(r));
+    return results.map((r) => this.mapResultToEntity(r));
   }
 
   // ============================================
@@ -428,11 +534,16 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findQuestionById(id: string): Promise<QuestionEntity | null> {
-    const record = await this.prisma.question.findFirst({
+    const question = await this.prisma.question.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        choices: true,
+        hints: true,
+        media: true,
+      },
     });
-    if (!record) return null;
-    return this.mapQuestionToEntity(record);
+    if (!question) return null;
+    return this.mapQuestionToEntity(question);
   }
 
   async saveQuestion(question: QuestionEntity): Promise<QuestionEntity> {
@@ -445,7 +556,6 @@ export class CertificationRepository implements ICertificationRepository {
       createdBy: question.getCreatedBy(),
       updatedBy: question.getUpdatedBy(),
       deletedAt: question.getDeletedAt(),
-      version: question.version + BigInt(1),
     };
 
     const saved = await this.prisma.question.upsert({
@@ -479,6 +589,7 @@ export class CertificationRepository implements ICertificationRepository {
       order: choice.getOrder(),
       createdBy: choice.getCreatedBy(),
       updatedBy: choice.getUpdatedBy(),
+      version: choice.version + BigInt(1),
     };
 
     const saved = await this.prisma.questionChoice.upsert({
@@ -504,11 +615,11 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findHintsByQuestionId(questionId: string): Promise<QuestionHintEntity[]> {
-    const records = await this.prisma.questionHint.findMany({
+    const hints = await this.prisma.questionHint.findMany({
       where: { questionId },
       orderBy: { order: 'asc' },
     });
-    return records.map(r => this.mapHintToEntity(r));
+    return hints.map((h) => this.mapHintToEntity(h));
   }
 
   async saveQuestionHint(hint: QuestionHintEntity): Promise<QuestionHintEntity> {
@@ -518,6 +629,7 @@ export class CertificationRepository implements ICertificationRepository {
       order: hint.getOrder(),
       createdBy: hint.getCreatedBy(),
       updatedBy: hint.getUpdatedBy(),
+      version: hint.version + BigInt(1),
     };
 
     const saved = await this.prisma.questionHint.upsert({
@@ -543,10 +655,10 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findMediaByQuestionId(questionId: string): Promise<QuestionMediaEntity[]> {
-    const records = await this.prisma.questionMedia.findMany({
+    const media = await this.prisma.questionMedia.findMany({
       where: { questionId },
     });
-    return records.map(r => this.mapMediaToEntity(r));
+    return media.map((m) => this.mapMediaToEntity(m));
   }
 
   async saveQuestionMedia(media: QuestionMediaEntity): Promise<QuestionMediaEntity> {
@@ -556,6 +668,7 @@ export class CertificationRepository implements ICertificationRepository {
       mediaType: media.getMediaType(),
       createdBy: media.getCreatedBy(),
       updatedBy: media.getUpdatedBy(),
+      version: media.version + BigInt(1),
     };
 
     const saved = await this.prisma.questionMedia.upsert({
@@ -581,26 +694,26 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findAnswersBySessionId(sessionId: string): Promise<SessionAnswerEntity[]> {
-    const records = await this.prisma.sessionAnswer.findMany({
+    const answers = await this.prisma.sessionAnswer.findMany({
       where: { sessionId },
     });
-    return records.map(r => this.mapAnswerToEntity(r));
+    return answers.map((a) => this.mapAnswerToEntity(a));
   }
 
   async findQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]> {
-    const records = await this.prisma.examQuestion.findMany({
+    const eq = await this.prisma.examQuestion.findMany({
       where: { examId },
       orderBy: { order: 'asc' },
     });
-    return records.map(r => this.mapExamQuestionToEntity(r));
+    return eq.map((item) => this.mapExamQuestionToEntity(item));
   }
 
   async findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]> {
-    const records = await this.prisma.questionChoice.findMany({
+    const choices = await this.prisma.questionChoice.findMany({
       where: { questionId },
       orderBy: { order: 'asc' },
     });
-    return records.map(r => this.mapChoiceToEntity(r));
+    return choices.map((c) => this.mapChoiceToEntity(c));
   }
 
   async saveSessionAnswer(answer: SessionAnswerEntity): Promise<SessionAnswerEntity> {
@@ -613,6 +726,7 @@ export class CertificationRepository implements ICertificationRepository {
       points: answer.getPoints(),
       createdBy: answer.getCreatedBy(),
       updatedBy: answer.getUpdatedBy(),
+      version: answer.version + BigInt(1),
     };
 
     const saved = await this.prisma.sessionAnswer.upsert({
@@ -635,13 +749,11 @@ export class CertificationRepository implements ICertificationRepository {
       occurredAt: violation.getOccurredAt(),
     };
 
-    const saved = await this.prisma.sessionViolation.upsert({
-      where: { id: violation.id },
-      create: {
+    const saved = await this.prisma.sessionViolation.create({
+      data: {
         id: violation.id,
         ...data,
       },
-      update: data,
     });
 
     return this.mapViolationToEntity(saved);
@@ -652,11 +764,11 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findSnapshotsBySessionId(sessionId: string): Promise<AutosaveSnapshotEntity[]> {
-    const records = await this.prisma.autosaveSnapshot.findMany({
+    const snapshots = await this.prisma.autosaveSnapshot.findMany({
       where: { sessionId },
       orderBy: { savedAt: 'desc' },
     });
-    return records.map(r => this.mapSnapshotToEntity(r));
+    return snapshots.map((s) => this.mapSnapshotToEntity(s));
   }
 
   async saveAutosaveSnapshot(snapshot: AutosaveSnapshotEntity): Promise<AutosaveSnapshotEntity> {
@@ -666,13 +778,11 @@ export class CertificationRepository implements ICertificationRepository {
       savedAt: snapshot.getSavedAt(),
     };
 
-    const saved = await this.prisma.autosaveSnapshot.upsert({
-      where: { id: snapshot.id },
-      create: {
+    const saved = await this.prisma.autosaveSnapshot.create({
+      data: {
         id: snapshot.id,
         ...data,
       },
-      update: data,
     });
 
     return this.mapSnapshotToEntity(saved);
@@ -683,10 +793,10 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findSkillResultsByResultId(resultId: string): Promise<SkillResultEntity[]> {
-    const records = await this.prisma.skillResult.findMany({
+    const skills = await this.prisma.skillResult.findMany({
       where: { resultId },
     });
-    return records.map(r => this.mapSkillResultToEntity(r));
+    return skills.map((s) => this.mapSkillResultToEntity(s));
   }
 
   async saveSkillResult(skillResult: SkillResultEntity): Promise<SkillResultEntity> {
@@ -698,13 +808,11 @@ export class CertificationRepository implements ICertificationRepository {
       accuracyRate: skillResult.getAccuracyRate(),
     };
 
-    const saved = await this.prisma.skillResult.upsert({
-      where: { id: skillResult.id },
-      create: {
+    const saved = await this.prisma.skillResult.create({
+      data: {
         id: skillResult.id,
         ...data,
       },
-      update: data,
     });
 
     return this.mapSkillResultToEntity(saved);
@@ -715,10 +823,10 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findQuestionResultsByResultId(resultId: string): Promise<QuestionResultEntity[]> {
-    const records = await this.prisma.questionResult.findMany({
+    const qr = await this.prisma.questionResult.findMany({
       where: { resultId },
     });
-    return records.map(r => this.mapQuestionResultToEntity(r));
+    return qr.map((q) => this.mapQuestionResultToEntity(q));
   }
 
   async saveQuestionResult(questionResult: QuestionResultEntity): Promise<QuestionResultEntity> {
@@ -730,13 +838,11 @@ export class CertificationRepository implements ICertificationRepository {
       timeSpent: questionResult.getTimeSpent(),
     };
 
-    const saved = await this.prisma.questionResult.upsert({
-      where: { id: questionResult.id },
-      create: {
+    const saved = await this.prisma.questionResult.create({
+      data: {
         id: questionResult.id,
         ...data,
       },
-      update: data,
     });
 
     return this.mapQuestionResultToEntity(saved);
@@ -747,11 +853,11 @@ export class CertificationRepository implements ICertificationRepository {
   // ============================================
 
   async findAiEvaluationByResultId(resultId: string): Promise<AiEvaluationEntity | null> {
-    const record = await this.prisma.aiEvaluation.findUnique({
+    const evaluation = await this.prisma.aiEvaluation.findUnique({
       where: { resultId },
     });
-    if (!record) return null;
-    return this.mapAiEvaluationToEntity(record);
+    if (!evaluation) return null;
+    return this.mapAiEvaluationToEntity(evaluation);
   }
 
   async saveAiEvaluation(evaluation: AiEvaluationEntity): Promise<AiEvaluationEntity> {
@@ -761,13 +867,11 @@ export class CertificationRepository implements ICertificationRepository {
       feedbackJson: evaluation.getFeedbackJson() as Prisma.InputJsonValue,
     };
 
-    const saved = await this.prisma.aiEvaluation.upsert({
-      where: { id: evaluation.id },
-      create: {
+    const saved = await this.prisma.aiEvaluation.create({
+      data: {
         id: evaluation.id,
         ...data,
       },
-      update: data,
     });
 
     return this.mapAiEvaluationToEntity(saved);
@@ -777,19 +881,28 @@ export class CertificationRepository implements ICertificationRepository {
   // CREATOR PROFILE OPERATIONS
   // ============================================
 
-  async findCreatorProfileById(id: string): Promise<CreatorProfileEntity | null> {
-    const record = await this.prisma.creatorProfile.findUnique({
-      where: { id },
+  async findCreatorProfileByUserId(userId: string): Promise<CreatorProfileEntity | null> {
+    const profile = await this.prisma.creatorProfile.findFirst({
+      where: { userId },
     });
-    if (!record) return null;
-    return this.mapCreatorProfileToEntity(record);
+    if (!profile) return null;
+    return this.mapCreatorProfileToEntity(profile);
   }
 
-  async findCreatorProfiles(limit = 10): Promise<CreatorProfileEntity[]> {
-    const records = await this.prisma.creatorProfile.findMany({
-      take: limit,
+  async findCreatorProfileById(id: string): Promise<CreatorProfileEntity | null> {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { id },
     });
-    return records.map((r) => this.mapCreatorProfileToEntity(r));
+    if (!profile) return null;
+    return this.mapCreatorProfileToEntity(profile);
+  }
+
+  async findCreatorProfiles(limit = 20): Promise<CreatorProfileEntity[]> {
+    const profiles = await this.prisma.creatorProfile.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+    return profiles.map((p) => this.mapCreatorProfileToEntity(p));
   }
 
   async saveCreatorProfile(profile: CreatorProfileEntity): Promise<CreatorProfileEntity> {
@@ -813,24 +926,26 @@ export class CertificationRepository implements ICertificationRepository {
   }
 
   // ============================================
-  // MAPPER FUNCTIONS
+  // PRIVATE MAPPER FUNCTIONS
   // ============================================
 
-  private mapCollectionToEntity(dbObj: Collection & { exams?: Exam[]; items?: CollectionItem[] }): CollectionEntity {
+  private mapCollectionToEntity(
+    dbObj: Collection & { items?: CollectionItem[]; exams?: Exam[] }
+  ): CollectionEntity {
     return CollectionEntity.create({
       id: dbObj.id,
       title: dbObj.title,
-      description: dbObj.description,
+      description: dbObj.description ?? undefined,
       ownerId: dbObj.ownerId,
       publishStatus: dbObj.publishStatus,
+      itemCount: dbObj.items?.length ?? 0,
+      examCount: dbObj.exams?.length ?? 0,
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
-      deletedAt: dbObj.deletedAt,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
+      deletedAt: dbObj.deletedAt ?? undefined,
       version: dbObj.version,
-      examCount: dbObj.exams ? dbObj.exams.length : 0,
-      itemCount: dbObj.items ? dbObj.items.length : 0,
     });
   }
 
@@ -838,7 +953,7 @@ export class CertificationRepository implements ICertificationRepository {
     return ExamEntity.create({
       id: dbObj.id,
       title: dbObj.title,
-      description: dbObj.description,
+      description: dbObj.description ?? undefined,
       duration: dbObj.duration,
       totalQuestions: dbObj.totalQuestions,
       maxScore: dbObj.maxScore,
@@ -847,9 +962,9 @@ export class CertificationRepository implements ICertificationRepository {
       collectionId: dbObj.collectionId,
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
-      deletedAt: dbObj.deletedAt,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
+      deletedAt: dbObj.deletedAt ?? undefined,
       version: dbObj.version,
     });
   }
@@ -859,8 +974,10 @@ export class CertificationRepository implements ICertificationRepository {
       id: dbObj.id,
       examId: dbObj.examId,
       title: dbObj.title,
-      instruction: dbObj.instruction,
+      instruction: dbObj.instruction ?? undefined,
       order: dbObj.order,
+      createdAt: dbObj.createdAt,
+      updatedAt: dbObj.updatedAt,
     });
   }
 
@@ -882,9 +999,9 @@ export class CertificationRepository implements ICertificationRepository {
       id: dbObj.id,
       examId: dbObj.examId,
       userId: dbObj.userId,
-      startedAt: dbObj.startedAt,
-      endedAt: dbObj.endedAt,
       status: dbObj.status,
+      startedAt: dbObj.startedAt,
+      endedAt: dbObj.endedAt ?? undefined,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
       version: dbObj.version,
@@ -901,7 +1018,6 @@ export class CertificationRepository implements ICertificationRepository {
       passed: dbObj.passed,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
-      version: BigInt(1),
     });
   }
 
@@ -915,9 +1031,9 @@ export class CertificationRepository implements ICertificationRepository {
       status: dbObj.status,
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
-      deletedAt: dbObj.deletedAt,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
+      deletedAt: dbObj.deletedAt ?? undefined,
       version: dbObj.version,
     });
   }

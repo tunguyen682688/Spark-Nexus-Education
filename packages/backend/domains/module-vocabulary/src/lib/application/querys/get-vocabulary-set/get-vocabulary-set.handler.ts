@@ -1,13 +1,14 @@
 import { IQueryHandler, QueryHandler, QueryBus } from "@nestjs/cqrs";
 import { GetVocabularySetQuery } from "./get-vocabulary-set.query";
 import { VocabularySetResponseDto } from "../../dtos/reponse-vocabulary-set.dto";
-import { Inject, NotFoundException } from "@nestjs/common";
+import { Inject, NotFoundException, Logger } from "@nestjs/common";
 import * as vocabularySetRepositoryInterface from "../../../domain/repositories/vocabulary-set.repository.interface";
 import { GetUserProfileQuery } from "@spark-nest-ed/module-user";
 
 
 @QueryHandler(GetVocabularySetQuery)
 export class GetVocabularySetQueryHandler implements IQueryHandler<GetVocabularySetQuery, VocabularySetResponseDto> {
+    private readonly logger = new Logger(GetVocabularySetQueryHandler.name);
     
     constructor(
         @Inject(vocabularySetRepositoryInterface.VOCABULARY_SET_REPOSITORY)
@@ -34,7 +35,7 @@ export class GetVocabularySetQueryHandler implements IQueryHandler<GetVocabulary
             }
         } catch (error) {
             // Gracefully fail and fallback
-            console.error(`Failed to fetch user profile for ID ${creatorId}:`, error);
+            this.logger.error(`Failed to fetch user profile for ID ${creatorId}:`, error);
         }
 
         return {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@spark-nest-ed/infrastructure-database';
 import {
   IListeningRepository,
@@ -19,6 +19,8 @@ import { ListeningCacheService } from '../cache/listening-cache.service';
 
 @Injectable()
 export class ListeningRepository implements IListeningRepository {
+  private readonly logger = new Logger(ListeningRepository.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: ListeningCacheService
@@ -401,10 +403,10 @@ export class ListeningRepository implements IListeningRepository {
     
     // Invalidate caches asynchronously
     this.cacheService.delete(`listening:material:${materialId}:raw`).catch(err =>
-      console.error('Failed to delete cached material:', err)
+      this.logger.error('Failed to delete cached material:', err)
     );
     this.cacheService.clearPattern('listening:materials:raw:*').catch(err =>
-      console.error('Failed to clear cached lists:', err)
+      this.logger.error('Failed to clear cached lists:', err)
     );
 
     return updated;
@@ -472,7 +474,7 @@ export class ListeningRepository implements IListeningRepository {
 
     // Invalidate list caches asynchronously
     this.cacheService.clearPattern('listening:materials:raw:*').catch(err =>
-      console.error('Failed to clear cached lists:', err)
+      this.logger.error('Failed to clear cached lists:', err)
     );
 
     return created;

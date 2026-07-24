@@ -1654,6 +1654,50 @@ export const createRouter = () =>
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
+        {
+          path: 'certification/collections/:id',
+          lazy: async () => {
+            const { CertificationCollectionDetailPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCollectionDetailPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/exams/:id',
+          lazy: async () => {
+            const { CertificationExamDetailPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationExamDetailPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/session/:id',
+          lazy: async () => {
+            const { CertificationExamSessionPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationExamSessionPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/result/:id',
+          lazy: async () => {
+            const { CertificationExamResultPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationExamResultPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
       ],
     },
     // Admin routes

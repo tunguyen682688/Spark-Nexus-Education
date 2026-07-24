@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { LISTENING_REPOSITORY } from '../repositories/listening.repository.interface';
 import type { IListeningRepository } from '../repositories/listening.repository.interface';
 import { CreateListeningMaterialDto } from '../../application/dtos/create-material.dto';
@@ -6,6 +6,8 @@ import { UpdateListeningProgressDto } from '../../application/dtos/update-progre
 
 @Injectable()
 export class ListeningService {
+  private readonly logger = new Logger(ListeningService.name);
+
   constructor(
     @Inject(LISTENING_REPOSITORY)
     private readonly listeningRepository: IListeningRepository
@@ -94,7 +96,7 @@ export class ListeningService {
     try {
       await this.listeningRepository.createSession(userId, materialId, timeSpent);
     } catch (err) {
-      console.error('Failed to log listening session:', err);
+      this.logger.error('Failed to log listening session:', err);
     }
 
     return record;
@@ -119,7 +121,7 @@ export class ListeningService {
       throw new NotFoundException(`Listening material with ID ${id} not found`);
     }
     this.listeningRepository.incrementViewCount(id).catch((err) =>
-      console.error('Failed to increment view count:', err)
+      this.logger.error('Failed to increment view count:', err)
     );
     return material;
   }

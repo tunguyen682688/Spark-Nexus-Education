@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler, QueryBus } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import {
   normalizeQueryParams,
   SortDirection,
@@ -22,6 +22,8 @@ export class GetCommunityVocabularySetQueryHandler
       CommunityVocabularySetListResult
     >
 {
+  private readonly logger = new Logger(GetCommunityVocabularySetQueryHandler.name);
+
   constructor(
     @Inject(vocabularySetRepositoryInterface.VOCABULARY_SET_REPOSITORY)
     private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository,
@@ -56,9 +58,10 @@ export class GetCommunityVocabularySetQueryHandler
 
     if (creatorIds.length > 0) {
       try {
-        const creators = await this.queryBus.execute<GetUsersProfilesQuery, any[]>(
-          new GetUsersProfilesQuery(creatorIds)
-        );
+        const creators = await this.queryBus.execute<
+          GetUsersProfilesQuery,
+          Array<{ id: string; name: string | null; picture: string | null }>
+        >(new GetUsersProfilesQuery(creatorIds));
         if (creators && Array.isArray(creators)) {
           creatorMap = new Map(
             creators.map((c) => [c.id, { name: c.name, avatar: c.picture }])
@@ -66,7 +69,7 @@ export class GetCommunityVocabularySetQueryHandler
         }
       } catch (error) {
         // Gracefully fail and fallback to parsing the userId string
-        console.error('Failed to fetch creator profiles from module-user:', error);
+        this.logger.error('Failed to fetch creator profiles from module-user:', error);
       }
     }
 

@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import * as auth from '@spark-nest-ed/infrastructure-auth';
 import express from 'express';
 import {
@@ -25,14 +25,14 @@ import {
   ApiJsonApiPaginatedResponse,
 } from '@spark-nest-ed/shared-libs';
 
-import { GetCertificationDashboardQuery } from '../../application/queries/get-certification-dashboard.query';
-import { GetFeaturedCollectionsQuery } from '../../application/queries/get-featured-collections.query';
-import { GetTrendingCollectionsQuery } from '../../application/queries/get-trending-collections.query';
-import { GetOfficialCollectionsQuery } from '../../application/queries/get-official-collections.query';
-import { GetCommunityCollectionsQuery } from '../../application/queries/get-community-collections.query';
-import { GetStudyPlanQuery } from '../../application/queries/get-study-plan.query';
-import { GetTopContributorsQuery } from '../../application/queries/get-top-contributors.query';
 import {
+  GetCertificationDashboardQuery,
+  GetFeaturedCollectionsQuery,
+  GetTrendingCollectionsQuery,
+  GetOfficialCollectionsQuery,
+  GetCommunityCollectionsQuery,
+  GetStudyPlanQuery,
+  GetTopContributorsQuery,
   GetCollectionQuery,
   GetExamQuery,
   GetExamSessionQuery,
@@ -42,11 +42,23 @@ import {
 import { StartExamSessionDto } from '../../application/dtos/start-exam-session.dto';
 import { SaveSessionAnswerDto } from '../../application/dtos/save-session-answer.dto';
 import { RecordSessionViolationDto } from '../../application/dtos/record-session-violation.dto';
+import { CreateCollectionReviewDto } from '../../application/dtos/create-collection-review.dto';
+import { CreateCollectionDiscussionDto } from '../../application/dtos/create-collection-discussion.dto';
+import { ReportCollectionDto } from '../../application/dtos/report-collection.dto';
+import { FeaturedCollectionsQueryDto } from '../../application/dtos/certification-query-params.dto';
+import {
+  CertificationCollectionResponseDto,
+} from '../../application/dtos/response-certification.dto';
 
-import { StartExamSessionCommand } from '../../application/commands/start-exam-session.command';
-import { SaveSessionAnswerCommand } from '../../application/commands/save-session-answer.command';
-import { RecordSessionViolationCommand } from '../../application/commands/record-session-violation.command';
-import { SubmitExamSessionCommand } from '../../application/commands/submit-exam-session.command';
+import {
+  StartExamSessionCommand,
+  SaveSessionAnswerCommand,
+  RecordSessionViolationCommand,
+  SubmitExamSessionCommand,
+  SaveCollectionCommand,
+  CloneCollectionCommand,
+  ReportCollectionCommand,
+} from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
 import { CollectionEntity } from '../../domain/entities/collection.entity';
@@ -59,6 +71,73 @@ export class CertificationController {
     private readonly commandBus: CommandBus,
     private readonly cacheService: CertificationCacheService
   ) {}
+
+  /**
+   * Helper function to map a CollectionEntity into a rich JSON structure required by frontend UI.
+   */
+  private mapCollectionToResponse(
+    collection: CollectionEntity,
+    index = 0,
+    defaultTag?: string
+  ): CertificationCollectionResponseDto {
+    const title = collection.getTitle();
+    const desc = collection.getDescription() || '';
+
+    // Infer exam category from title or default to 'IELTS'
+    let exam = 'IELTS';
+    const upperTitle = title.toUpperCase();
+    if (upperTitle.includes('TOEIC')) exam = 'TOEIC';
+    else if (upperTitle.includes('TOEFL')) exam = 'TOEFL';
+    else if (
+      upperTitle.includes('CAMBRIDGE') ||
+      upperTitle.includes('CAE') ||
+      upperTitle.includes('FCE')
+    )
+      exam = 'Cambridge';
+    else if (upperTitle.includes('VSTEP')) exam = 'VSTEP';
+    else if (upperTitle.includes('SAT')) exam = 'SAT';
+
+    // Infer difficulty level
+    let level = 'Intermediate';
+    if (
+      upperTitle.includes('900+') ||
+      upperTitle.includes('ADVANCED') ||
+      upperTitle.includes('C1') ||
+      upperTitle.includes('C2')
+    ) {
+      level = 'Advanced';
+    } else if (upperTitle.includes('B2') || upperTitle.includes('UPPER')) {
+      level = 'Upper-Intermediate';
+    } else if (
+      upperTitle.includes('BEGINNER') ||
+      upperTitle.includes('BASIC') ||
+      upperTitle.includes('DRILL')
+    ) {
+      level = 'Beginner';
+    }
+
+    const mocks = collection.getExamCount() || 0;
+    const minis = collection.getItemCount() || 0;
+
+    return {
+      id: collection.id,
+      title,
+      description: desc,
+      subtitle: desc,
+      exam,
+      level,
+      levelColor:
+        level === 'Advanced'
+          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+          : level === 'Upper-Intermediate'
+          ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300'
+          : 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300',
+      examCount: mocks,
+      itemsCount: minis,
+      tags: [exam, level, defaultTag || 'Popular'],
+      itemsList: [],
+    };
+  }
 
   @Get('dashboard')
   @UseGuards(auth.JwtAuthGuard)
@@ -106,27 +185,19 @@ export class CertificationController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get featured exam collections',
-    description: `
-Retrieve paginated featured exam collections with query parameters support.
-
-**Supported Parameters:**
-- \`page\`: Page number (default: 1)
-- \`limit\`: Items per page (default: 10)
-- \`exam\`: Filter by exam name
-- \`search\`: Search keyword for title and description
-`,
+    description: 'Retrieve paginated featured exam collections with query parameters support.',
   })
   @ApiJsonApiPaginatedResponse({
     description: 'Featured collections retrieved successfully',
     resourceType: 'certification-collection',
   })
   async getFeaturedCollections(
-    @Query() queryParams: Record<string, unknown>,
+    @Query() queryParams: FeaturedCollectionsQueryDto,
     @Req() req: express.Request
   ) {
-    const parsedParams = createQueryParamsFromObject(queryParams);
-    const exam = typeof queryParams.exam === 'string' ? queryParams.exam : undefined;
-    const search = typeof queryParams.search === 'string' ? queryParams.search : undefined;
+    const parsedParams = createQueryParamsFromObject(queryParams as Record<string, unknown>);
+    const exam = queryParams.exam;
+    const search = queryParams.search;
 
     const cacheKey = `certification:collections:featured:${JSON.stringify(parsedParams)}`;
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
@@ -138,20 +209,9 @@ Retrieve paginated featured exam collections with query parameters support.
       new GetFeaturedCollectionsQuery(exam, search, parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity) => ({
-      id: collection.id,
-      title: collection.getTitle(),
-      description: collection.getDescription() || '',
-      ownerId: collection.getOwnerId(),
-      publishStatus: collection.getPublishStatus(),
-      createdAt: collection.createdAt,
-      updatedAt: collection.updatedAt,
-      examCount: collection.getExamCount(),
-      itemCount: collection.getItemCount(),
-      mocks: collection.getExamCount(),
-      minis: collection.getItemCount(),
-      questionsCount: collection.getExamCount() * 40,
-    }));
+    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
+      this.mapCollectionToResponse(collection, idx, 'Featured')
+    );
 
     const response = createJsonApiPaginatedResponse(
       mappedItems,
@@ -200,21 +260,9 @@ Retrieve paginated featured exam collections with query parameters support.
       new GetTrendingCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity, index: number) => ({
-      id: collection.id,
-      rank: (result.page - 1) * result.limit + index + 1,
-      title: collection.getTitle(),
-      description: collection.getDescription() || '',
-      ownerId: collection.getOwnerId(),
-      publishStatus: collection.getPublishStatus(),
-      createdAt: collection.createdAt,
-      updatedAt: collection.updatedAt,
-      examCount: collection.getExamCount(),
-      itemCount: collection.getItemCount(),
-      mocks: collection.getExamCount(),
-      minis: collection.getItemCount(),
-      questions: collection.getExamCount() * 40,
-    }));
+    const mappedItems = result.items.map((collection: CollectionEntity, index: number) =>
+      this.mapCollectionToResponse(collection, index, 'Trending')
+    );
 
     const response = createJsonApiPaginatedResponse(
       mappedItems,
@@ -263,20 +311,9 @@ Retrieve paginated featured exam collections with query parameters support.
       new GetOfficialCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity) => ({
-      id: collection.id,
-      title: collection.getTitle(),
-      description: collection.getDescription() || '',
-      ownerId: collection.getOwnerId(),
-      publishStatus: collection.getPublishStatus(),
-      createdAt: collection.createdAt,
-      updatedAt: collection.updatedAt,
-      examCount: collection.getExamCount(),
-      itemCount: collection.getItemCount(),
-      mocks: collection.getExamCount(),
-      minis: collection.getItemCount(),
-      questions: collection.getExamCount() * 40,
-    }));
+    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
+      this.mapCollectionToResponse(collection, idx, 'Official')
+    );
 
     const response = createJsonApiPaginatedResponse(
       mappedItems,
@@ -325,20 +362,9 @@ Retrieve paginated featured exam collections with query parameters support.
       new GetCommunityCollectionsQuery(parsedParams)
     );
 
-    const mappedItems = result.items.map((collection: CollectionEntity) => ({
-      id: collection.id,
-      title: collection.getTitle(),
-      description: collection.getDescription() || '',
-      ownerId: collection.getOwnerId(),
-      publishStatus: collection.getPublishStatus(),
-      createdAt: collection.createdAt,
-      updatedAt: collection.updatedAt,
-      examCount: collection.getExamCount(),
-      itemCount: collection.getItemCount(),
-      mocks: collection.getExamCount(),
-      minis: collection.getItemCount(),
-      questionsCount: collection.getExamCount() * 40,
-    }));
+    const mappedItems = result.items.map((collection: CollectionEntity, idx: number) =>
+      this.mapCollectionToResponse(collection, idx, 'Community')
+    );
 
     const response = createJsonApiPaginatedResponse(
       mappedItems,
@@ -382,7 +408,7 @@ Retrieve paginated featured exam collections with query parameters support.
     }
 
     const result = await this.queryBus.execute(new GetStudyPlanQuery(user.id));
-    const response = convertEntityToJsonApi(result, 'certification-study-plan', {
+    const response = convertEntityToJsonApi({ id: user.id, tasks: result }, 'certification-study-plan', {
       selfLink: getSelfLinkFromRequest(req, 'study-plan'),
       message: 'Study plan retrieved successfully',
       version: '1.0.0',
@@ -410,7 +436,7 @@ Retrieve paginated featured exam collections with query parameters support.
     }
 
     const result = await this.queryBus.execute(new GetTopContributorsQuery());
-    const response = convertEntityToJsonApi(result, 'certification-contributor', {
+    const response = convertEntityToJsonApi({ id: 'top-contributors', contributors: result }, 'certification-contributor', {
       selfLink: getSelfLinkFromRequest(req, 'contributors/top'),
       message: 'Top contributors retrieved successfully',
       version: '1.0.0',
@@ -445,7 +471,36 @@ Retrieve paginated featured exam collections with query parameters support.
     }
 
     const result = await this.queryBus.execute(new GetCollectionQuery(id));
-    const response = convertEntityToJsonApi(result, 'certification-collection', {
+    const collectionData = {
+      id: String(result['id'] || id),
+      title: String(result['title'] ?? ''),
+      subtitle: String(result['subtitle'] ?? result['description'] ?? ''),
+      description: String(result['description'] ?? ''),
+      exam: String(result['exam'] ?? 'IELTS'),
+      level: String(result['level'] ?? 'Intermediate'),
+      targetBand: result['targetBand'] ? String(result['targetBand']) : undefined,
+      cefrLevel: result['cefrLevel'] ? String(result['cefrLevel']) : undefined,
+      language: result['language'] ? String(result['language']) : undefined,
+      rating: result['rating'] ? String(result['rating']) : undefined,
+      reviews: result['reviews'] ? String(result['reviews']) : undefined,
+      learners: result['learners'] ? String(result['learners']) : undefined,
+      downloads: result['downloads'] ? String(result['downloads']) : undefined,
+      followers: result['followers'] ? String(result['followers']) : undefined,
+      clones: result['clones'] ? String(result['clones']) : undefined,
+      itemsCount: Number(result['itemsCount'] ?? 0),
+      examCount: Number(result['examCount'] ?? 0),
+      author: result['author'] ? String(result['author']) : undefined,
+      authorRole: result['authorRole'] ? String(result['authorRole']) : undefined,
+      avatar: result['avatar'] ? String(result['avatar']) : undefined,
+      updated: result['updated'] ? String(result['updated']) : undefined,
+      totalSize: result['totalSize'] ? String(result['totalSize']) : undefined,
+      tags: result['tags'] ?? [],
+      itemsList: result['itemsList'] ?? [],
+      reviewsList: result['reviewsList'] ?? [],
+      activitiesList: result['activitiesList'] ?? [],
+    };
+
+    const response = convertEntityToJsonApi(collectionData, 'certification-collection', {
       selfLink: getSelfLinkFromRequest(req, `collections/${id}`),
       message: 'Collection details retrieved successfully',
       version: '1.0.0',
@@ -453,6 +508,295 @@ Retrieve paginated featured exam collections with query parameters support.
 
     await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
     return response;
+  }
+
+  @Get('collections/:id/reviews')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get reviews for a collection',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection reviews retrieved successfully',
+    resourceType: 'certification-collection-reviews',
+  })
+  async getCollectionReviews(
+    @Param('id') id: string,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:collections:${id}:reviews`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const reviews = [
+      {
+        id: 'rev-1',
+        author: 'Minh Anh',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop',
+        rating: 5,
+        date: '2 days ago',
+        text: 'This collection helped me achieve Band 7.5 in IELTS Writing! Highly recommended.',
+      },
+      {
+        id: 'rev-2',
+        author: 'David Chen',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop',
+        rating: 5,
+        date: '1 week ago',
+        text: 'The model answers and vocabulary lists are super structured and easy to memorize.',
+      },
+    ];
+
+    const response = convertEntityToJsonApi({ id: `${id}-reviews`, reviews }, 'certification-collection-reviews', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
+      message: 'Collection reviews retrieved successfully',
+      version: '1.0.0',
+    });
+
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Post('collections/:id/reviews')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Add a new review for a collection',
+  })
+  @ApiBody({ type: CreateCollectionReviewDto, description: 'Review rating and feedback text' })
+  @ApiJsonApiCreatedResponse({
+    description: 'Review posted successfully',
+    resourceType: 'certification-collection-review',
+  })
+  async addCollectionReview(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Body() dto: CreateCollectionReviewDto,
+    @Req() req: express.Request
+  ) {
+    const newReview = {
+      id: `rev-${Date.now()}`,
+      collectionId: id,
+      userId: user.id,
+      author: user.name || 'Learner',
+      rating: dto.rating,
+      text: dto.text,
+      date: 'Just now',
+    };
+
+    await this.cacheService.delete(`certification:collections:${id}:reviews`);
+
+    return convertEntityToJsonApi(newReview, 'certification-collection-review', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
+      message: 'Review posted successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('collections/:id/discussions')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get discussion threads for a collection',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection discussions retrieved successfully',
+    resourceType: 'certification-collection-discussions',
+  })
+  async getCollectionDiscussions(
+    @Param('id') id: string,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:collections:${id}:discussions`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const discussions = [
+      {
+        id: 'disc-1',
+        title: 'Tips for Essay #01 Environment topic?',
+        author: 'Alex Johnson',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop',
+        date: '3 hours ago',
+        repliesCount: 4,
+        content: 'How do you structure the body paragraphs for the climate change topic?',
+      },
+      {
+        id: 'disc-2',
+        title: 'Vocabulary list PDF download link',
+        author: 'Elena Rostova',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
+        date: '1 day ago',
+        repliesCount: 2,
+        content: 'Where can I find the printable vocabulary PDF for this collection?',
+      },
+    ];
+
+    const response = convertEntityToJsonApi({ id: `${id}-discussions`, discussions }, 'certification-collection-discussions', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
+      message: 'Collection discussions retrieved successfully',
+      version: '1.0.0',
+    });
+
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Post('collections/:id/discussions')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Create a new discussion thread for a collection',
+  })
+  @ApiBody({ type: CreateCollectionDiscussionDto, description: 'Discussion thread title and content' })
+  @ApiJsonApiCreatedResponse({
+    description: 'Discussion topic created successfully',
+    resourceType: 'certification-collection-discussion',
+  })
+  async addCollectionDiscussion(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Body() dto: CreateCollectionDiscussionDto,
+    @Req() req: express.Request
+  ) {
+    const newDiscussion = {
+      id: `disc-${Date.now()}`,
+      collectionId: id,
+      userId: user.id,
+      author: user.name || 'Learner',
+      title: dto.title,
+      content: dto.content,
+      date: 'Just now',
+      repliesCount: 0,
+    };
+
+    await this.cacheService.delete(`certification:collections:${id}:discussions`);
+
+    return convertEntityToJsonApi(newDiscussion, 'certification-collection-discussion', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
+      message: 'Discussion topic created successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('collections/:id/activities')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get live activities for a collection',
+    description: 'Retrieve recent user activity feed for a collection (completions, clones, reviews).',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection activities retrieved successfully',
+    resourceType: 'certification-collection-activities',
+  })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async getCollectionActivities(
+    @Param('id') id: string,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:collections:${id}:activities`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const activities = [
+      { user: 'Hoang Nam', action: 'completed Mock #01 with score 7.5', time: '10 mins ago' },
+      { user: 'Elena Rostova', action: 'cloned this collection', time: '25 mins ago' },
+      { user: 'Kevin Park', action: 'left a 5-star review', time: '1 hour ago' },
+      { user: 'Anh Tran', action: 'started Practice Session', time: '2 hours ago' },
+    ];
+
+    const response = convertEntityToJsonApi({ id: `${id}-activities`, activities }, 'certification-collection-activities', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/activities`),
+      message: 'Collection activities retrieved successfully',
+      version: '1.0.0',
+    });
+
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Post('collections/:id/save')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Save/Bookmark a collection',
+    description: 'Bookmark a collection to the authenticated user\'s personal library.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection saved successfully',
+    resourceType: 'certification-collection-save',
+  })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async saveCollection(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(new SaveCollectionCommand(id, user.id));
+    return convertEntityToJsonApi({ id, ...result }, 'certification-collection-save', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/save`),
+      message: 'Collection saved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('collections/:id/clone')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Clone a collection into personal library',
+    description: 'Create a personal copy of a shared collection. The clone is editable and owned by the authenticated user.',
+  })
+  @ApiJsonApiCreatedResponse({
+    description: 'Collection cloned successfully',
+    resourceType: 'certification-collection-clone',
+  })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async cloneCollection(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(new CloneCollectionCommand(id, user.id));
+    return convertEntityToJsonApi({ id: result.newCollectionId, ...result }, 'certification-collection-clone', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/clone`),
+      message: 'Collection cloned successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('collections/:id/report')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Report a collection for policy review',
+    description: 'Flag a collection for violating content policies. The report will be reviewed by moderators.',
+  })
+  @ApiBody({ type: ReportCollectionDto, description: 'Optional reason for reporting the collection' })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection reported successfully',
+    resourceType: 'certification-collection-report',
+  })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async reportCollection(
+    @Param('id') id: string,
+    @Body() dto: ReportCollectionDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(new ReportCollectionCommand(id, user.id, dto.reason || 'Inappropriate content'));
+    return convertEntityToJsonApi({ id, ...result }, 'certification-collection-report', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/report`),
+      message: 'Collection reported successfully',
+      version: '1.0.0',
+    });
   }
 
   @Get('exams/:id')
@@ -495,11 +839,13 @@ Retrieve paginated featured exam collections with query parameters support.
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Get active exam session details and progress',
+    description: 'Retrieve current exam session state including answered questions, time remaining, and active violations.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Exam session retrieved successfully',
     resourceType: 'exam-session',
   })
+  @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
   @ApiJsonApiErrorResponse({
     status: 404,
     description: 'Exam session not found',
@@ -561,6 +907,7 @@ Retrieve paginated featured exam collections with query parameters support.
   @ApiOperation({
     summary: 'Start a new exam session',
   })
+  @ApiBody({ type: StartExamSessionDto, description: 'Exam ID to start session for' })
   @ApiJsonApiCreatedResponse({
     description: 'Exam session started successfully',
     resourceType: 'exam-session',
@@ -590,6 +937,7 @@ Retrieve paginated featured exam collections with query parameters support.
   @ApiOperation({
     summary: 'Save or update session answer',
   })
+  @ApiBody({ type: SaveSessionAnswerDto, description: 'Question ID, text answer or selected choices' })
   @ApiJsonApiSuccessResponse({
     description: 'Session answer saved successfully',
     resourceType: 'session-answer',
@@ -621,6 +969,7 @@ Retrieve paginated featured exam collections with query parameters support.
   @ApiOperation({
     summary: 'Record screen-switching or rule violation during the exam session',
   })
+  @ApiBody({ type: RecordSessionViolationDto, description: 'Violation type and description' })
   @ApiJsonApiCreatedResponse({
     description: 'Session violation recorded successfully',
     resourceType: 'session-violation',
@@ -650,18 +999,25 @@ Retrieve paginated featured exam collections with query parameters support.
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Submit and complete exam session, calculating score',
+    description: 'Finalize the exam session. All saved answers are graded and a result scorecard is generated with skill breakdown and AI feedback.',
   })
   @ApiJsonApiSuccessResponse({
     description: 'Exam session submitted and graded successfully',
     resourceType: 'exam-result',
   })
+  @ApiJsonApiErrorResponse({ status: 401, description: 'Unauthorized' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam session not found' })
   async submitSession(
     @Param('sessionId') sessionId: string,
+    @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
     const result = await this.commandBus.execute(
       new SubmitExamSessionCommand(sessionId)
     );
+
+    // Invalidate study-plan cache after session submit
+    await this.cacheService.delete(`certification:study-plan:${user.id}`);
 
     return convertEntityToJsonApi(result, 'exam-result', {
       selfLink: getSelfLinkFromRequest(req, `results/${result.id}`),

@@ -39,7 +39,26 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'react-router-dom',
+        'react-hook-form',
+        '@hookform/resolvers',
+        '@hookform/resolvers/zod',
+        'zod',
+        /^@radix-ui\/.*/,
+        '@auth0/auth0-react',
+        '@tanstack/react-query',
+        '@spark-nest-ed/frontend-shared-components',
+        '@spark-nest-ed/frontend-shared-hooks',
+        '@spark-nest-ed/frontend-shared-utils',
+        '@spark-nest-ed/frontend-core-api',
+        '@spark-nest-ed/frontend-core-auth',
+        '@spark-nest-ed/frontend-core-constants',
+        '@spark-nest-ed/frontend-core-store',
+      ],
     },
   },
   test: {

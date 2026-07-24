@@ -1,15 +1,21 @@
 import React from 'react';
-import { Star, Users, Clock, Play, Bookmark } from 'lucide-react';
+import { Star, Users, Clock, Play, Bookmark, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import type { ExamCollection } from '../types';
 
 interface FeaturedCollectionCardProps {
   item: ExamCollection;
+  onStart?: (id: string) => void;
+  isStarting?: boolean;
 }
 
-export const FeaturedCollectionCard: React.FC<FeaturedCollectionCardProps> = ({ item }) => {
+export const FeaturedCollectionCard: React.FC<FeaturedCollectionCardProps> = ({ 
+  item, 
+  onStart,
+  isStarting = false 
+}) => {
   return (
-    <Card className="hover:shadow-md transition-all duration-300 border-border group overflow-hidden flex flex-col justify-between">
+    <Card className="hover:shadow-md transition-all duration-300 border-border group overflow-hidden flex flex-col justify-between h-full">
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <img src={item.image} alt={item.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
@@ -18,7 +24,7 @@ export const FeaturedCollectionCard: React.FC<FeaturedCollectionCardProps> = ({ 
             {item.tag}
           </Badge>
         )}
-        <button className="absolute top-3 right-3 p-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white">
+        <button className="absolute top-3 right-3 p-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-colors">
           <Bookmark className="w-3.5 h-3.5 fill-current" />
         </button>
         <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -65,9 +71,17 @@ export const FeaturedCollectionCard: React.FC<FeaturedCollectionCardProps> = ({ 
           </span>
         </div>
 
-        <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-4 rounded-xl mt-2 flex items-center justify-center gap-2 group">
-          Start Learning
-          <Play className="w-3 h-3 fill-current transition-transform group-hover:scale-110" />
+        <Button 
+          disabled={isStarting}
+          onClick={() => onStart && onStart(item.id)}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3.5 rounded-xl mt-2 flex items-center justify-center gap-2 group cursor-pointer"
+        >
+          {isStarting ? (
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Play className="w-3.5 h-3.5 fill-current transition-transform group-hover:scale-110" />
+          )}
+          Xem bộ đề
         </Button>
       </CardContent>
     </Card>

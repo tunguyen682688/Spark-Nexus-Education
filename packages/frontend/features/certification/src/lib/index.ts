@@ -3,14 +3,9 @@
  */
 export const FEATURE_NAME = 'certification';
 
-export { CertificationDashboardPage } from './pages/CertificationDashboardPage';
-export { CertificationExamsPage } from './pages/CertificationExamsPage';
-export { CertificationStudyPlanPage } from './pages/CertificationStudyPlanPage';
-export { CertificationEditorialPicksPage } from './pages/CertificationEditorialPicksPage';
-export { CertificationSearchPage } from './pages/CertificationSearchPage';
-export { CertificationTrendingPage } from './pages/CertificationTrendingPage';
-export { CertificationOfficialPage } from './pages/CertificationOfficialPage';
-export { CertificationCommunityPage } from './pages/CertificationCommunityPage';
+export * from './pages';
+
+export * from './api/certification-api';
 export * from './hooks/use-certification';
 export * from './types';
 export * from './constants/certification.constants';

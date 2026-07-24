@@ -34,6 +34,27 @@ async function main() {
     await prisma.listeningMaterial.deleteMany();
     await prisma.userListeningStats.deleteMany();
 
+    // Clean up certification domain tables
+    await prisma.aiEvaluation.deleteMany();
+    await prisma.questionResult.deleteMany();
+    await prisma.skillResult.deleteMany();
+    await prisma.autosaveSnapshot.deleteMany();
+    await prisma.sessionViolation.deleteMany();
+    await prisma.sessionAnswer.deleteMany();
+    await prisma.examSession.deleteMany();
+    await prisma.examResult.deleteMany();
+    await prisma.questionChoice.deleteMany();
+    await prisma.questionHint.deleteMany();
+    await prisma.questionMedia.deleteMany();
+    await prisma.examQuestion.deleteMany();
+    await prisma.question.deleteMany();
+    await prisma.examSection.deleteMany();
+    await prisma.examRule.deleteMany();
+    await prisma.exam.deleteMany();
+    await prisma.collectionItem.deleteMany();
+    await prisma.collection.deleteMany();
+    await prisma.creatorProfile.deleteMany();
+
     console.log('✅ Cleaned up old database entries.');
   } catch (e) {
     console.log('⚠️ Cleanup warning (might be empty database):', (e as Error).message);
@@ -1061,6 +1082,193 @@ async function main() {
   });
 
   console.log('✅ Created 3 sample listening materials (Video, Podcast, Exam) and user stats!');
+
+  console.log('🌱 Seeding certification domain...');
+
+  // Create Creator Profiles
+  const creator1 = await prisma.creatorProfile.create({
+    data: {
+      id: 'creator-lisa',
+      userId: 'user-lisa',
+      displayName: 'Lisa Peterson, M.Ed.',
+      bio: 'Over 12 years of experience preparing students for IELTS Academic Writing band 7.5+',
+    }
+  });
+
+  const creator2 = await prisma.creatorProfile.create({
+    data: {
+      id: 'creator-david',
+      userId: 'user-david',
+      displayName: 'David Chen',
+      bio: 'Author of TOEIC 900+ Sprint Strategy Series',
+    }
+  });
+
+  // Create Collections
+  await prisma.collection.create({
+    data: {
+      id: 'c1',
+      ownerId: creator1.id,
+      title: 'IELTS Academic Writing Task 2 – Complete Guide & Model Essays',
+      description: 'A comprehensive collection of IELTS Writing Task 2 sample essays, model answers, vocabulary, and strategies for Band 7.0–8.5',
+      publishStatus: 'published',
+      exams: {
+        create: [
+          {
+            id: 'e1',
+            title: 'IELTS Academic Writing Task 2 - Essay Test 01',
+            description: 'Environment & Climate Change Essay with full AI scoring',
+            publishStatus: 'published',
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.collection.create({
+    data: {
+      id: 'c2',
+      ownerId: creator2.id,
+      title: 'TOEIC 900+ Full Practice Test Series 2025',
+      description: 'Authentic 200-question ETS format full mock tests with ETS standard audio and explanations',
+      publishStatus: 'published',
+      exams: {
+        create: [
+          {
+            id: 'e2',
+            title: 'TOEIC Full Practice Test 01 (2025 Edition)',
+            description: 'Full 200 questions TOEIC Listening & Reading examination',
+            publishStatus: 'published',
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.collection.create({
+    data: {
+      id: 'c3',
+      ownerId: creator1.id,
+      title: 'TOEFL iBT Complete Speaking & Listening Intensive Pack',
+      description: 'Real TOEFL iBT test simulations with integrated audio and automatic scoring',
+      publishStatus: 'published',
+      exams: {
+        create: [
+          {
+            id: 'e3',
+            title: 'TOEFL iBT Speaking & Listening Test 01',
+            description: 'Integrated tasks and academic lecture simulations',
+            publishStatus: 'published',
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.collection.create({
+    data: {
+      id: 'c4',
+      ownerId: creator2.id,
+      title: 'Cambridge B2 First (FCE) Practice Exam Collection',
+      description: 'Full Use of English, Reading, and Listening modules formatted to Cambridge standards',
+      publishStatus: 'published',
+      exams: {
+        create: [
+          {
+            id: 'e4',
+            title: 'Cambridge B2 First Full Practice Test 01',
+            description: 'Reading & Use of English parts 1-7',
+            publishStatus: 'published',
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.collection.create({
+    data: {
+      id: 'c5',
+      ownerId: creator1.id,
+      title: 'VSTEP B2-C1 Super Prep Intensive Mocks',
+      description: 'Comprehensive 4-skill mock tests specifically designed for Vietnamese VSTEP certification',
+      publishStatus: 'published',
+      exams: {
+        create: [
+          {
+            id: 'e5',
+            title: 'VSTEP B2-C1 Full Exam 01',
+            description: 'Complete 4-skill VSTEP standardized mock examination',
+            publishStatus: 'published',
+          }
+        ]
+      }
+    }
+  });
+
+  // Create Exam Sections & Questions for e2 (TOEIC Test 01)
+  const sec1 = await prisma.examSection.create({
+    data: {
+      id: 'sec-e2-1',
+      examId: 'e2',
+      title: 'Part 5: Incomplete Sentences',
+      instruction: 'Select the best answer to complete each sentence.',
+      order: 1,
+    }
+  });
+
+  const q1 = await prisma.question.create({
+    data: {
+      id: 'q-e2-1',
+      title: 'TOEIC Part 5 Question 1',
+      content: 'The marketing manager requested that the final report be submitted __________ Friday afternoon at the latest.',
+      type: 'MCQ',
+      difficulty: 'Intermediate',
+      status: 'active',
+      choices: {
+        create: [
+          { id: 'ch-1', content: 'by', isCorrect: true, order: 1 },
+          { id: 'ch-2', content: 'until', isCorrect: false, order: 2 },
+          { id: 'ch-3', content: 'during', isCorrect: false, order: 3 },
+          { id: 'ch-4', content: 'at', isCorrect: false, order: 4 },
+        ]
+      }
+    }
+  });
+
+  await prisma.examQuestion.create({
+    data: {
+      id: 'eq-1',
+      examId: 'e2',
+      questionId: q1.id,
+      order: 1,
+      points: 5,
+    }
+  });
+
+  // Seed sample completed exam session and result for mock-user-123
+  const session1 = await prisma.examSession.create({
+    data: {
+      id: 's1',
+      userId: 'mock-user-123',
+      examId: 'e2',
+      status: 'completed',
+      startedAt: new Date(Date.now() - 3600000 * 48),
+      endedAt: new Date(Date.now() - 3600000 * 46),
+    }
+  });
+
+  await prisma.examResult.create({
+    data: {
+      id: 'r1',
+      sessionId: session1.id,
+      userId: 'mock-user-123',
+      examId: 'e2',
+      totalScore: 850,
+      passed: true,
+    }
+  });
+
+  console.log('✅ Created 5 sample certification collections, exams, questions, and completed sessions/results for mock-user-123!');
 
   console.log('🎉 Seeding completed!');
 }

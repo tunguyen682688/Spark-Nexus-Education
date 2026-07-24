@@ -1,18 +1,28 @@
 import React from 'react';
-import { Star, Clock, Bookmark, ArrowUpRight } from 'lucide-react';
+import { Star, Clock, Bookmark, ArrowUpRight, Play, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import type { ExamCollection } from '../types';
 
 interface TrendingCollectionCardProps {
   item: ExamCollection;
+  onStart?: (id: string) => void;
+  isStarting?: boolean;
+  onBookmark?: (id: string) => void;
+  isBookmarked?: boolean;
 }
 
-export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ item }) => {
+export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ 
+  item,
+  onStart,
+  isStarting = false,
+  onBookmark,
+  isBookmarked = false,
+}) => {
   return (
-    <Card className={`border border-border hover:shadow-md transition-all duration-300 flex flex-col justify-between group overflow-hidden ${item.colorClass}`}>
+    <Card className={`border border-border hover:shadow-md transition-all duration-300 flex flex-col justify-between group overflow-hidden h-full ${item.colorClass || ''}`}>
       {/* Header Image section */}
       <div className="relative aspect-[1.4] w-full overflow-hidden">
-        <img src={item.image} alt={item.title} className="object-cover w-full h-full group-hover:scale-102 transition-transform duration-300" />
+        <img src={item.image} alt={item.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
         
         {/* Rank number badge (circle) */}
@@ -32,7 +42,7 @@ export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ 
 
         {/* Exam classification tag */}
         <div className="absolute bottom-3 left-3">
-          <Badge className={`${item.badgeColor} border-none text-[8px] font-black uppercase`}>
+          <Badge className={`${item.badgeColor || 'bg-indigo-600 text-white'} border-none text-[8px] font-black uppercase`}>
             {item.exam}
           </Badge>
         </div>
@@ -45,7 +55,7 @@ export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ 
             {item.title}
           </h4>
           <p className="text-[9px] text-muted-foreground line-clamp-2 leading-relaxed">
-            {item.desc}
+            {item.desc || item.subtitle}
           </p>
         </div>
 
@@ -77,7 +87,7 @@ export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ 
 
         {/* Level and Duration tags */}
         <div className="flex items-center justify-between text-[9px] text-muted-foreground pt-0.5">
-          <span className={`px-2 py-0.5 rounded font-bold ${item.levelColor}`}>
+          <span className={`px-2 py-0.5 rounded font-bold ${item.levelColor || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
             {item.level}
           </span>
           <span className="flex items-center gap-1">
@@ -86,13 +96,25 @@ export const TrendingCollectionCard: React.FC<TrendingCollectionCardProps> = ({ 
           </span>
         </div>
 
-        {/* Footer Buttons */}
+        {/* Footer Action Buttons */}
         <div className="flex items-center gap-2 pt-2 border-t border-border mt-1">
-          <Button className={`flex-1 text-xs py-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${item.btnColor}`}>
-            Start Learning
+          <Button 
+            disabled={isStarting}
+            onClick={() => onStart && onStart(item.id)}
+            className={`flex-1 text-xs py-3 rounded-lg font-bold flex items-center justify-center gap-1.5 cursor-pointer ${item.btnColor || 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}
+          >
+            {isStarting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+            Xem bộ đề
           </Button>
-          <button className="p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-800 text-muted-foreground">
-            <Bookmark className="w-3.5 h-3.5" />
+          <button 
+            onClick={() => onBookmark && onBookmark(item.id)}
+            className={`p-2 rounded-lg border border-border transition-colors ${
+              isBookmarked 
+                ? 'bg-amber-500 text-white border-amber-500' 
+                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-muted-foreground'
+            }`}
+          >
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
         </div>
       </CardContent>
