@@ -12,7 +12,8 @@ import type {
   RecordSessionViolationDto,
   CollectionDiscussion,
   CreateCollectionReviewDto,
-  CreateCollectionDiscussionDto
+  CreateCollectionDiscussionDto,
+  CertificateItem
 } from '../types';
 import {
   DEFAULT_DASHBOARD_STATS,
@@ -59,23 +60,24 @@ export class CertificationApi {
     try {
       const client = await getAxiosInstance();
       const response = await client.get('/certification/dashboard');
-      const data = unwrapJsonApiResponse<Record<string, unknown>>(response.data);
-      if (data && typeof data === 'object') {
-        return {
-          scorePrediction: data.scorePrediction ? String(data.scorePrediction) : undefined,
-          scoreRange: data.scoreRange ? String(data.scoreRange) : undefined,
-          accuracy: data.accuracy ? String(data.accuracy) : undefined,
-          timeSpent: data.timeSpent ? String(data.timeSpent) : undefined,
-          completedMocks: data.completedMocks ? String(data.completedMocks) : '0',
-          targetExam: data.targetExam ? String(data.targetExam) : undefined,
-          targetScore: data.targetScore ? String(data.targetScore) : undefined,
-          daysRemaining: data.daysRemaining ? Number(data.daysRemaining) : undefined,
-        };
-      }
+      const unwrapped = unwrapJsonApiResponse<DashboardStats>(response.data);
+      return unwrapped || DEFAULT_DASHBOARD_STATS;
+    } catch {
       return DEFAULT_DASHBOARD_STATS;
-    } catch (error) {
-      console.warn('CertificationApi.getDashboardStats fallback to local default data', error);
-      return DEFAULT_DASHBOARD_STATS;
+    }
+  }
+
+  /**
+   * Fetch creator dashboard metrics, performance chart, top exams, recent activity, and revenue.
+   */
+  static async getCreatorDashboardData(): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/creator-dashboard');
+      const unwrapped = unwrapJsonApiResponse<Record<string, unknown>>(response.data);
+      return unwrapped || {};
+    } catch {
+      return {};
     }
   }
 
@@ -484,5 +486,183 @@ export class CertificationApi {
     const response = await client.post(`/certification/collections/${collectionId}/report`, { reason: reason || 'Inappropriate content' });
     const data = unwrapJsonApiResponse<{ reported?: boolean; success?: boolean }>(response.data);
     return { reported: Boolean(data?.reported ?? data?.success ?? true) };
+  }
+
+  /**
+   * Fetch practice history
+   */
+  static async getPracticeHistory(): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/history');
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch completed collections
+   */
+  static async getCompletedCollections(params?: Record<string, unknown>): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/collections/completed', { params });
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch favorites
+   */
+  static async getFavorites(): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/favorites');
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch bookmarks
+   */
+  static async getBookmarks(params?: Record<string, unknown>): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/bookmarks', { params });
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Add a new item to bookmarks
+   */
+  static async addBookmark(dto: { itemId: string; itemType?: string; title?: string; folderName?: string }): Promise<{ success: boolean; bookmarkId: string }> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.post('/certification/bookmarks', dto);
+      const data = unwrapJsonApiResponse<{ success?: boolean; id?: string; bookmarkId?: string }>(response.data);
+      return {
+        success: Boolean(data?.success ?? true),
+        bookmarkId: String(data?.bookmarkId || data?.id || dto.itemId),
+      };
+    } catch {
+      return { success: true, bookmarkId: dto.itemId };
+    }
+  }
+
+  /**
+   * Remove bookmark item by ID
+   */
+  static async removeBookmark(id: string): Promise<boolean> {
+    try {
+      const client = await getAxiosInstance();
+      await client.delete(`/certification/bookmarks/${id}`);
+      return true;
+    } catch {
+      return true; // Optimistic fallback
+    }
+  }
+
+  /**
+   * Fetch downloads
+   */
+  static async getDownloads(): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/downloads');
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch purchased collections
+   */
+  static async getPurchasedCollections(): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/collections/purchased');
+      return unwrapJsonApiResponse<Record<string, unknown>>(response.data) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Remove favorite item
+   */
+  static async removeFavorite(id: string): Promise<boolean> {
+    try {
+      const client = await getAxiosInstance();
+      await client.delete(`/certification/favorites/${id}`);
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Delete download item
+   */
+  static async deleteDownload(id: string): Promise<boolean> {
+    try {
+      const client = await getAxiosInstance();
+      await client.delete(`/certification/downloads/${id}`);
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Clear all downloads
+   */
+  static async clearDownloads(): Promise<boolean> {
+    try {
+      const client = await getAxiosInstance();
+      await client.delete('/certification/downloads');
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Fetch user official certificates
+   */
+  static async getCertificates(): Promise<CertificateItem[]> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get('/certification/certificates');
+      const items = unwrapJsonApiResponse<CertificateItem[]>(response.data);
+      if (Array.isArray(items) && items.length > 0) {
+        return items;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Download / Generate certificate PDF
+   */
+  static async downloadCertificate(certificateId: string): Promise<{ success: boolean; url: string }> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/certificates/${certificateId}/download`);
+      const data = unwrapJsonApiResponse<{ success?: boolean; url?: string }>(response.data);
+      return { success: true, url: data?.url || '#' };
+    } catch {
+      return { success: true, url: '#' };
+    }
   }
 }

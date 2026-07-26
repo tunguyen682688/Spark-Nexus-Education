@@ -63,6 +63,12 @@ export const ROUTES = {
     SEARCH: '/certification/search',
     TRENDING: '/certification/trending',
     OFFICIAL: '/certification/official',
+    MY_LIBRARY: '/certification/library',
+    COMPLETED: '/certification/completed',
+    FAVORITES: '/certification/favorites',
+    BOOKMARKS: '/certification/bookmarks',
+    DOWNLOADS: '/certification/downloads',
+    PURCHASED: '/certification/purchased',
   },
 }
 

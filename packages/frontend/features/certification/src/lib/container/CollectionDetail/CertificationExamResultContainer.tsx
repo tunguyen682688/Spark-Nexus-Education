@@ -64,11 +64,11 @@ export const CertificationExamResultContainer: React.FC<
       {/* SCORECARD HERO BANNER */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-indigo-600 to-purple-700 text-white p-8 text-center shadow-xl space-y-4">
         <Badge className="bg-white/20 text-white border-none text-xs font-bold py-1 px-3">
-          <Trophy className="w-4 h-4 mr-1 text-amber-300" /> EXAM SCORECARD
+          <Trophy className="w-4 h-4 mr-1 text-amber-300" /> {CERTIFICATION_UI_TEXT.examResult.scorecardBadge}
         </Badge>
 
         <h1 className="text-3xl font-extrabold tracking-tight">
-          {result.examTitle || 'IELTS Mock Exam Completed'}
+          {result.examTitle || CERTIFICATION_UI_TEXT.examResult.defaultTitle}
         </h1>
 
         <div className="flex justify-center items-baseline gap-2 pt-2">
@@ -76,13 +76,12 @@ export const CertificationExamResultContainer: React.FC<
             {result.score || result.totalScore || '7.5'}
           </span>
           <span className="text-sm font-semibold text-emerald-100">
-            / {result.maxScore || '9.0'} Band Score
+            / {result.maxScore || '9.0'} {CERTIFICATION_UI_TEXT.examResult.bandScoreLabel}
           </span>
         </div>
 
         <p className="text-xs text-emerald-100 font-medium max-w-md mx-auto">
-          Congratulations! You performed significantly higher than 84% of
-          candidates this week.
+          {CERTIFICATION_UI_TEXT.examResult.congratulations}
         </p>
 
         <div className="pt-4 flex items-center justify-center gap-3">
@@ -90,17 +89,17 @@ export const CertificationExamResultContainer: React.FC<
             <Button
               onClick={onRetake}
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 text-xs font-bold py-2.5 px-5 rounded-xl"
+              className="border-white/30 text-white hover:bg-white/10 text-xs font-bold py-2.5 px-5 rounded-xl cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4 mr-1.5" /> Retake Exam
+              <RotateCcw className="w-4 h-4 mr-1.5" /> {CERTIFICATION_UI_TEXT.examResult.retakeExam}
             </Button>
           )}
           {onBackToDashboard && (
             <Button
               onClick={onBackToDashboard}
-              className="bg-white text-indigo-700 hover:bg-blue-50 text-xs font-bold py-2.5 px-5 rounded-xl shadow-md"
+              className="bg-white text-indigo-700 hover:bg-blue-50 text-xs font-bold py-2.5 px-5 rounded-xl shadow-md cursor-pointer"
             >
-              Dashboard <ArrowRight className="w-4 h-4 ml-1.5" />
+              {CERTIFICATION_UI_TEXT.examResult.backToDashboard} <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           )}
         </div>

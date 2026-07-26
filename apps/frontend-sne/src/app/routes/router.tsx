@@ -1533,15 +1533,78 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
+          path: 'certification/library',
+          lazy: async () => {
+            const { CertificationLibraryPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationLibraryPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
           path: 'certification/saved-collections',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Saved Collections</h1>
-                <p className="text-muted-foreground">This page is under development...</p>
-              </div>
+            const { CertificationLibraryPage } = await import(
+              '@spark-nest-ed/feature-certification'
             );
-            return { Component: PlaceholderPage };
+            return { Component: CertificationLibraryPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/completed',
+          lazy: async () => {
+            const { CertificationCompletedCollectionsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCompletedCollectionsPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/favorites',
+          lazy: async () => {
+            const { CertificationFavoritesPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationFavoritesPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/bookmarks',
+          lazy: async () => {
+            const { CertificationBookmarksPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationBookmarksPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/downloads',
+          lazy: async () => {
+            const { CertificationDownloadsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationDownloadsPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/purchased',
+          lazy: async () => {
+            const { CertificationPurchasedCollectionsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationPurchasedCollectionsPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -1588,13 +1651,10 @@ export const createRouter = () =>
         {
           path: 'certification/history',
           lazy: async () => {
-            const PlaceholderPage = () => (
-              <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">History</h1>
-                <p className="text-muted-foreground">This page is under development...</p>
-              </div>
+            const { CertificationPracticeHistoryPage } = await import(
+              '@spark-nest-ed/feature-certification'
             );
-            return { Component: PlaceholderPage };
+            return { Component: CertificationPracticeHistoryPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

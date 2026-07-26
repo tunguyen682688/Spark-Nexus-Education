@@ -144,13 +144,13 @@ export const CertificationDashboardContainer: React.FC = () => {
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {collection.desc ||
                             collection.subtitle ||
-                            'High-quality practice tests with detailed AI explanations.'}
+                            CERTIFICATION_UI_TEXT.dashboard.defaultCollectionDesc}
                         </p>
                       </div>
                       <div className="flex justify-between items-center text-xs pt-2 border-t border-border">
                         <span className="text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5" />{' '}
-                          {collection.duration || '120 mins'}
+                          {collection.duration || CERTIFICATION_UI_TEXT.dashboard.defaultDuration}
                         </span>
                         <Button
                           variant="ghost"

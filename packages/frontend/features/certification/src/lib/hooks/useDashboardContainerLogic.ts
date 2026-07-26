@@ -51,7 +51,7 @@ export function useDashboardContainerLogic() {
       value: dashboardData?.scorePrediction || '--',
       subtitle: dashboardData?.targetExam || selectedExamType,
       change: dashboardData?.targetScore
-        ? `Target: ${dashboardData.targetScore}`
+        ? `${CERTIFICATION_UI_TEXT.dashboard.statsBadges.targetLabel}: ${dashboardData.targetScore}`
         : CERTIFICATION_UI_TEXT.common.noData,
       trend: 'up',
       icon: Trophy,
@@ -61,7 +61,7 @@ export function useDashboardContainerLogic() {
       title: CERTIFICATION_UI_TEXT.dashboard.statsTitles.accuracy,
       value: dashboardData?.accuracy || '--',
       subtitle: CERTIFICATION_UI_TEXT.dashboard.statsSubtitles.recentTests,
-      change: 'Active',
+      change: CERTIFICATION_UI_TEXT.dashboard.statsBadges.active,
       trend: 'up',
       icon: Target,
       color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20',
@@ -70,7 +70,7 @@ export function useDashboardContainerLogic() {
       title: CERTIFICATION_UI_TEXT.dashboard.statsTitles.studyTime,
       value: dashboardData?.timeSpent || '--',
       subtitle: CERTIFICATION_UI_TEXT.dashboard.statsSubtitles.accumulated,
-      change: 'Updated',
+      change: CERTIFICATION_UI_TEXT.dashboard.statsBadges.updated,
       trend: 'up',
       icon: Clock,
       color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20',
@@ -79,7 +79,7 @@ export function useDashboardContainerLogic() {
       title: CERTIFICATION_UI_TEXT.dashboard.statsTitles.testsCompleted,
       value: dashboardData?.completedMocks || '--',
       subtitle: CERTIFICATION_UI_TEXT.dashboard.statsSubtitles.totalMocks,
-      change: 'Completed',
+      change: CERTIFICATION_UI_TEXT.dashboard.statsBadges.completed,
       trend: 'up',
       icon: ShieldCheck,
       color: 'text-sky-500 bg-sky-50 dark:bg-sky-950/20',
@@ -87,10 +87,10 @@ export function useDashboardContainerLogic() {
     {
       title: CERTIFICATION_UI_TEXT.dashboard.statsTitles.daysRemaining,
       value: dashboardData?.daysRemaining
-        ? `${dashboardData.daysRemaining} days`
+        ? `${dashboardData.daysRemaining} ${CERTIFICATION_UI_TEXT.dashboard.statsBadges.daysSuffix}`
         : '--',
       subtitle: CERTIFICATION_UI_TEXT.dashboard.statsSubtitles.countdown,
-      change: 'Schedule',
+      change: CERTIFICATION_UI_TEXT.dashboard.statsBadges.schedule,
       trend: 'neutral',
       icon: Award,
       color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/20',

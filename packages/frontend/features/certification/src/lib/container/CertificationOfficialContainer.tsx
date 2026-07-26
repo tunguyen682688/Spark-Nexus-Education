@@ -27,6 +27,7 @@ export const CertificationOfficialContainer: React.FC<CertificationOfficialConta
     totalPages,
     filteredOfficialCollections,
     paginatedOfficialCollections,
+    bookmarkedIds,
     isLoading,
     isError,
     error,
@@ -34,6 +35,7 @@ export const CertificationOfficialContainer: React.FC<CertificationOfficialConta
     handleExamCategoryChange,
     handleDifficultyLevelChange,
     handleViewCollectionDetail,
+    handleBookmarkCollection,
   } = useOfficialContainerLogic(onStartExam);
 
   if (isError) {
@@ -120,6 +122,8 @@ export const CertificationOfficialContainer: React.FC<CertificationOfficialConta
                 key={collectionItem.id}
                 item={collectionItem}
                 onStart={handleViewCollectionDetail}
+                onBookmark={handleBookmarkCollection}
+                isBookmarked={bookmarkedIds.has(collectionItem.id)}
               />
             ))}
           </div>

@@ -13,6 +13,7 @@ import type {
   SessionViolation,
   SaveSessionAnswerDto,
   RecordSessionViolationDto,
+  CertificateItem,
 } from '../types';
 
 // Standardized Query Cache Time Constants
@@ -25,6 +26,15 @@ export const useCertificationDashboard = () => {
   return useQuery<DashboardStats>({
     queryKey: ['certification', 'dashboard'],
     queryFn: () => CertificationApi.getDashboardStats(),
+    staleTime: STALE_TIME_DASHBOARD,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCreatorDashboardData = () => {
+  return useQuery<Record<string, unknown>>({
+    queryKey: ['certification', 'creator-dashboard'],
+    queryFn: () => CertificationApi.getCreatorDashboardData(),
     staleTime: STALE_TIME_DASHBOARD,
     refetchOnWindowFocus: false,
   });
@@ -325,6 +335,164 @@ export const useReportCollection = () => {
       toast({
         title: 'Đã gửi báo cáo',
         description: 'Cảm ơn bạn. Báo cáo của bạn đã được gửi cho ban quản trị xem xét.',
+      });
+    },
+  });
+};
+
+export const usePracticeHistoryData = () => {
+  return useQuery({
+    queryKey: ['certification', 'history'],
+    queryFn: () => CertificationApi.getPracticeHistory(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCompletedCollectionsData = (params?: Record<string, unknown>) => {
+  return useQuery({
+    queryKey: ['certification', 'completed', params],
+    queryFn: () => CertificationApi.getCompletedCollections(params),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useFavoritesData = () => {
+  return useQuery({
+    queryKey: ['certification', 'favorites'],
+    queryFn: () => CertificationApi.getFavorites(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useBookmarksData = (params?: Record<string, unknown>) => {
+  return useQuery({
+    queryKey: ['certification', 'bookmarks', params],
+    queryFn: () => CertificationApi.getBookmarks(params),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useAddBookmark = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (dto: { itemId: string; itemType?: string; title?: string; folderName?: string }) =>
+      CertificationApi.addBookmark(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'bookmarks'] });
+      toast({
+        title: 'Đã lưu Bookmark',
+        description: 'Bộ đề/Bài tập đã được lưu vào thư viện Bookmark cá nhân của bạn.',
+      });
+    },
+  });
+};
+
+export const useRemoveBookmark = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (id: string) => CertificationApi.removeBookmark(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'bookmarks'] });
+      toast({
+        title: 'Đã xóa đánh dấu',
+        description: 'Mục đánh dấu đã được loại bỏ khỏi thư viện cá nhân.',
+      });
+    },
+  });
+};
+
+export const useRemoveFavorite = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (id: string) => CertificationApi.removeFavorite(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'favorites'] });
+      toast({
+        title: 'Đã bỏ yêu thích',
+        description: 'Đã xóa mục khỏi danh sách yêu thích cá nhân.',
+      });
+    },
+  });
+};
+
+export const useDeleteDownload = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (id: string) => CertificationApi.deleteDownload(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'downloads'] });
+      toast({
+        title: 'Đã xóa tệp offline',
+        description: 'Tệp đã được giải phóng khỏi bộ nhớ thiết bị.',
+      });
+    },
+  });
+};
+
+export const useClearDownloads = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: () => CertificationApi.clearDownloads(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'downloads'] });
+      toast({
+        title: 'Đã dọn dẹp dung lượng',
+        description: 'Tất cả các tệp tải về đã được dọn sạch khỏi thiết bị.',
+      });
+    },
+  });
+};
+
+export const useDownloadsData = () => {
+  return useQuery({
+    queryKey: ['certification', 'downloads'],
+    queryFn: () => CertificationApi.getDownloads(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const usePurchasedCollectionsData = () => {
+  return useQuery({
+    queryKey: ['certification', 'purchased'],
+    queryFn: () => CertificationApi.getPurchasedCollections(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useUserCertificates = () => {
+  return useQuery<CertificateItem[]>({
+    queryKey: ['certification', 'user-certificates'],
+    queryFn: () => CertificationApi.getCertificates(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useDownloadCertificate = () => {
+  const { toast } = useToast();
+
+  return useMutation<{ success: boolean; url: string }, Error, string>({
+    mutationFn: (certificateId: string) => CertificationApi.downloadCertificate(certificateId),
+    onSuccess: () => {
+      toast({
+        title: 'Tải chứng chỉ PDF',
+        description: 'Bản PDF chứng chỉ chính thức đang được chuẩn bị và tải xuống thiết bị.',
       });
     },
   });

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -187,6 +188,190 @@ export class CertificationController {
     );
 
     await this.cacheService.set(cacheKey, response, 300); // 5 mins cache
+    return response;
+  }
+
+  @Get('creator-dashboard')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get creator dashboard analytics and performance metrics',
+    description:
+      'Retrieves total exams, questions, attempts, revenue, recent activity, and top performing exams for content creators.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Creator dashboard retrieved successfully',
+    resourceType: 'creator-dashboard',
+  })
+  async getCreatorDashboard(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:creator-dashboard:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = {
+      id: `creator-${user.id}`,
+      creatorName: user.name || user.email || 'Minh Anh',
+      role: 'Creator',
+      metrics: {
+        totalExams: 23,
+        totalExamsWeeklyChange: '+3 this week',
+        totalQuestions: 1248,
+        totalQuestionsWeeklyChange: '+86 this week',
+        totalAttempts: 12856,
+        totalAttemptsWeeklyChange: '+1,234 this week',
+        averageScore: '72.6%',
+        averageScoreWeeklyChange: '+4.8% vs last week',
+        likesReceived: 532,
+        likesReceivedWeeklyChange: '+48 this week',
+      },
+      performanceChart: {
+        timeframe: 'Last 7 Days',
+        dates: ['May 10', 'May 11', 'May 12', 'May 13', 'May 14', 'May 15', 'May 16'],
+        attempts: [1234, 1564, 1876, 2034, 1812, 2146, 2190],
+        averageScores: [70.2, 71.5, 72.0, 72.8, 71.9, 73.1, 72.6],
+        likes: [45, 62, 78, 85, 70, 92, 100],
+        revenue: [40, 65, 80, 110, 75, 125, 130],
+      },
+      recentActivity: [
+        {
+          id: 'act-1',
+          type: 'publish',
+          title: 'You published "TOEIC Full Test 10 (2024)"',
+          timestamp: 'May 16, 2024 10:15 AM',
+          iconType: 'check',
+          iconBgClass: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
+        },
+        {
+          id: 'act-2',
+          type: 'update',
+          title: 'You updated 15 questions in "Part 7: Reading"',
+          timestamp: 'May 15, 2024 03:42 PM',
+          iconType: 'document',
+          iconBgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400',
+        },
+        {
+          id: 'act-3',
+          type: 'like',
+          title: 'Your exam "Daily Grammar Quiz #12" got 48 likes',
+          timestamp: 'May 15, 2024 11:20 AM',
+          iconType: 'star',
+          iconBgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
+        },
+        {
+          id: 'act-4',
+          type: 'comment',
+          title: 'New comment on "Business Vocabulary Set 3"',
+          timestamp: 'May 14, 2024 09:18 PM',
+          iconType: 'comment',
+          iconBgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
+        },
+        {
+          id: 'act-5',
+          type: 'like',
+          title: 'Your exam "Listening Practice Set 5" got 32 likes',
+          timestamp: 'May 14, 2024 04:05 PM',
+          iconType: 'heart',
+          iconBgClass: 'bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400',
+        },
+      ],
+      topExams: [
+        {
+          rank: 1,
+          id: 'toeic-10',
+          title: 'TOEIC Full Test 10 (2024)',
+          category: 'Full Test',
+          categoryBadge: 'TOEIC',
+          categoryBadgeClass: 'bg-blue-600 text-white',
+          attempts: 2934,
+          avgScore: '78.4%',
+          likes: 128,
+        },
+        {
+          rank: 2,
+          id: 'reading-7',
+          title: 'Reading Practice Set 7',
+          category: 'Reading',
+          categoryBadge: 'READING',
+          categoryBadgeClass: 'bg-teal-600 text-white',
+          attempts: 1987,
+          avgScore: '71.2%',
+          likes: 96,
+        },
+        {
+          rank: 3,
+          id: 'listening-5',
+          title: 'Listening Practice Set 5',
+          category: 'Listening',
+          categoryBadge: 'LISTENING',
+          categoryBadgeClass: 'bg-indigo-600 text-white',
+          attempts: 1652,
+          avgScore: '69.1%',
+          likes: 84,
+        },
+        {
+          rank: 4,
+          id: 'grammar-3',
+          title: 'Grammar Quiz - Advanced #3',
+          category: 'Grammar',
+          categoryBadge: 'GRAMMAR',
+          categoryBadgeClass: 'bg-emerald-600 text-white',
+          attempts: 1243,
+          avgScore: '74.8%',
+          likes: 67,
+        },
+        {
+          rank: 5,
+          id: 'vocab-3',
+          title: 'Business Vocabulary Set 3',
+          category: 'Vocabulary',
+          categoryBadge: 'VOCAB',
+          categoryBadgeClass: 'bg-rose-600 text-white',
+          attempts: 1102,
+          avgScore: '68.3%',
+          likes: 55,
+        },
+      ],
+      revenue: {
+        totalRevenue: '$452.60',
+        revenueGrowth: '+12.6% vs last month',
+        payoutBalance: '$186.30',
+        dailyData: [
+          { day: 'May 1', amount: 20 },
+          { day: 'May 2', amount: 45 },
+          { day: 'May 3', amount: 35 },
+          { day: 'May 4', amount: 60 },
+          { day: 'May 5', amount: 40 },
+          { day: 'May 6', amount: 75 },
+          { day: 'May 7', amount: 50 },
+          { day: 'May 8', amount: 90 },
+          { day: 'May 9', amount: 110 },
+          { day: 'May 10', amount: 65 },
+          { day: 'May 11', amount: 70 },
+          { day: 'May 12', amount: 85 },
+          { day: 'May 13', amount: 40 },
+          { day: 'May 14', amount: 95 },
+          { day: 'May 15', amount: 120 },
+          { day: 'May 16', amount: 105 },
+        ],
+      },
+    };
+
+    const response = convertEntityToJsonApi(
+      data,
+      'creator-dashboard',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'creator-dashboard'),
+        message: 'Creator dashboard retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+
+    await this.cacheService.set(cacheKey, response, 300);
     return response;
   }
 
@@ -1230,5 +1415,590 @@ export class CertificationController {
       message: 'Exam session submitted and graded successfully',
       version: '1.0.0',
     });
+  }
+
+  @Get('history')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get practice session history for authenticated user',
+  })
+  async getPracticeHistory(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:history:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `history-${user.id}`,
+        userId: user.id,
+        totalSessions: 6,
+        items: [
+          {
+            id: 'IELTS-FULL-001',
+            code: 'ID: IELTS-FULL-001',
+            title: 'IELTS Academic Full Test 1',
+            type: 'Mock Test',
+            typeBadgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
+            iconBgClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400',
+            iconType: 'document',
+            examPart: 'Full Listening, Reading, Writing',
+            scoreDisplay: '7.5',
+            scoreSub: 'Listening: 8.0 • Reading: 7.5',
+            scoreColor: 'text-indigo-600 dark:text-indigo-400',
+            timeSpent: '2h 45m',
+            dateDisplay: 'May 20, 2025 09:30 AM',
+          },
+          {
+            id: 'TOEIC-READ-088',
+            code: 'ID: TOEIC-READ-088',
+            title: 'TOEIC Reading Part 7 Practice',
+            type: 'Practice by Part',
+            typeBadgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+            iconBgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
+            iconType: 'document',
+            examPart: 'TOEIC Reading',
+            scoreDisplay: '450/490',
+            scoreSub: '48/54 correct',
+            scoreColor: 'text-emerald-600 dark:text-emerald-400',
+            timeSpent: '55m',
+            dateDisplay: 'May 19, 2025 03:15 PM',
+          },
+          {
+            id: 'VOCAB-QUIZ-102',
+            code: 'ID: VOCAB-QUIZ-102',
+            title: 'Vocabulary Daily Quiz #14',
+            type: 'Quiz',
+            typeBadgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+            iconBgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
+            iconType: 'sparkles',
+            examPart: 'Essential Vocabulary',
+            scoreDisplay: '100%',
+            scoreSub: '20/20 correct',
+            scoreColor: 'text-emerald-600 dark:text-emerald-400',
+            timeSpent: '08m',
+            dateDisplay: 'May 18, 2025 11:00 AM',
+          },
+          {
+            id: 'VSTEP-B2-MOCK3',
+            code: 'ID: VSTEP-B2-MOCK3',
+            title: 'VSTEP B2 Preparation Mock Test 3',
+            type: 'Mock Test',
+            typeBadgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
+            iconBgClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400',
+            iconType: 'document',
+            examPart: 'Cambridge B2',
+            scoreDisplay: '68%',
+            scoreSub: '27/40',
+            scoreColor: 'text-amber-600 dark:text-amber-400',
+            timeSpent: '48m',
+            dateDisplay: 'May 17, 2025 06:30 PM',
+          },
+          {
+            id: 'IELTS-SP-P2-023',
+            code: 'ID: IELTS-SP-P2-023',
+            title: 'IELTS Speaking Part 2',
+            type: 'AI Practice',
+            typeBadgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+            iconBgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400',
+            iconType: 'mic',
+            examPart: 'IELTS Speaking',
+            scoreDisplay: '6.5',
+            scoreSub: 'Fair',
+            scoreColor: 'text-amber-600 dark:text-amber-400',
+            timeSpent: '24m',
+            dateDisplay: 'May 17, 2025 10:15 AM',
+          },
+          {
+            id: 'TOEIC-LIS-P1-001',
+            code: 'ID: TOEIC-LIS-P1-001',
+            title: 'TOEIC Listening Part 1 & 2',
+            type: 'Practice by Part',
+            typeBadgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+            iconBgClass: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
+            iconType: 'headphones',
+            examPart: 'TOEIC Listening',
+            scoreDisplay: '80%',
+            scoreSub: '32/40',
+            scoreColor: 'text-emerald-600 dark:text-emerald-400',
+            timeSpent: '28m',
+            dateDisplay: 'May 16, 2025 08:50 PM',
+          },
+        ],
+      },
+      'certification-history',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'history'),
+        message: 'Practice history retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/completed')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get completed collections for authenticated user',
+  })
+  async getCompletedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:completed:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `completed-${user.id}`,
+        userId: user.id,
+        totalCompleted: 3,
+        items: [
+          {
+            id: 'comp-1',
+            title: 'IELTS Cambridge 18 - Full Academic Test Collection',
+            category: 'Full Mock Test',
+            examType: 'IELTS Academic',
+            completedDate: 'May 18, 2025',
+            scoreText: 'Band 7.5 Overall',
+            iconBgClass: 'bg-indigo-600 text-white',
+            coverGradient: 'from-indigo-600 to-purple-700 text-white',
+            totalItems: 4,
+            certificateEligible: true,
+          },
+          {
+            id: 'comp-2',
+            title: 'TOEIC ETS 2024 Practice Tests 1-5',
+            category: 'Practice Bundle',
+            examType: 'TOEIC L&R',
+            completedDate: 'May 14, 2025',
+            scoreText: '880 / 990 PTS',
+            iconBgClass: 'bg-blue-600 text-white',
+            coverGradient: 'from-blue-600 to-sky-700 text-white',
+            totalItems: 5,
+            certificateEligible: true,
+          },
+          {
+            id: 'comp-3',
+            title: 'VSTEP B2 Reading & Listening Practice Collection',
+            category: 'Skill Drills',
+            examType: 'VSTEP',
+            completedDate: 'May 10, 2025',
+            scoreText: 'Passed B2 Standard',
+            iconBgClass: 'bg-emerald-600 text-white',
+            coverGradient: 'from-emerald-600 to-teal-700 text-white',
+            totalItems: 10,
+            certificateEligible: false,
+          },
+        ],
+      },
+      'certification-collections-completed',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/completed'),
+        message: 'Completed collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('favorites')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get user favorite items and collections',
+  })
+  async getFavorites(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:favorites:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `favorites-${user.id}`,
+        userId: user.id,
+        totalFavorites: 4,
+        items: [
+          {
+            id: 'fav-1',
+            title: 'IELTS Academic Full Mock Exam 2025',
+            type: 'Collection',
+            itemCountText: 'Collection • 45 items',
+            progressPercent: 75,
+            progressText: '75% Completed',
+            progressBarClass: 'bg-indigo-500',
+            stat1Label: 'Est. Band',
+            stat1Value: '7.5',
+            stat2Label: 'Learners',
+            stat2Value: '14.2K',
+            addedDate: 'May 20, 2025',
+            iconType: 'ielts',
+            bannerBgClass: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600',
+            isFavorited: true,
+          },
+          {
+            id: 'fav-2',
+            title: 'TOEIC Listening Part 3 & 4 Masterclass',
+            type: 'Test',
+            itemCountText: 'Test • 100 questions',
+            progressPercent: 50,
+            progressText: '50% Completed',
+            progressBarClass: 'bg-purple-500',
+            stat1Label: 'Target',
+            stat1Value: '900+',
+            stat2Label: 'Time',
+            stat2Value: '45 min',
+            addedDate: 'May 18, 2025',
+            iconType: 'toeic',
+            bannerBgClass: 'bg-purple-100 dark:bg-purple-950/40 text-purple-600',
+            isFavorited: true,
+          },
+          {
+            id: 'fav-3',
+            title: 'IELTS Reading - True/False/Not Given Drills',
+            type: 'Question Set',
+            itemCountText: 'Question Set • 30 questions',
+            progressPercent: 90,
+            progressText: '90% Completed',
+            progressBarClass: 'bg-indigo-500',
+            stat1Label: 'Accuracy',
+            stat1Value: '88%',
+            stat2Label: 'Avg Time',
+            stat2Value: '12 min',
+            addedDate: 'May 17, 2025',
+            iconType: 'reading',
+            bannerBgClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-600',
+            isFavorited: true,
+          },
+          {
+            id: 'fav-4',
+            title: 'TOEIC Essential 600 Vocabulary Package',
+            type: 'Vocabulary Set',
+            itemCountText: 'Vocabulary • 600 words',
+            progressPercent: 100,
+            progressText: '100% Learned',
+            progressBarClass: 'bg-emerald-500',
+            stat1Label: 'Mastery',
+            stat1Value: '92%',
+            stat2Label: 'Words',
+            stat2Value: '600',
+            addedDate: 'May 16, 2025',
+            iconType: 'vocabulary',
+            bannerBgClass: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600',
+            isFavorited: true,
+          },
+        ],
+      },
+      'certification-favorites',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'favorites'),
+        message: 'Favorites retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('bookmarks')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get user bookmarks and folders',
+  })
+  async getBookmarks(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:bookmarks:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `bookmarks-${user.id}`,
+        userId: user.id,
+        totalBookmarks: 2,
+        items: [
+          {
+            id: 'bm-1',
+            title: 'IELTS Reading Section 3 - True/False/Not Given',
+            type: 'Question',
+            folder: 'IELTS Reading',
+            savedDate: 'May 20, 2025',
+            notes: 'Remember to check key synonyms in passage paragraph C',
+          },
+          {
+            id: 'bm-2',
+            title: 'TOEIC Part 5 - Advanced Inversion Grammar Rule',
+            type: 'Grammar Rule',
+            folder: 'Grammar Notes',
+            savedDate: 'May 18, 2025',
+            notes: 'Scarcely had... when... structure',
+          },
+        ],
+      },
+      'certification-bookmarks',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'bookmarks'),
+        message: 'Bookmarks retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Delete('bookmarks/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Remove bookmark item by ID',
+  })
+  async removeBookmark(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    await this.cacheService.delete(`certification:bookmarks:${user.id}`);
+    return convertEntityToJsonApi(
+      { id, removed: true },
+      'certification-bookmark-remove',
+      {
+        selfLink: getSelfLinkFromRequest(req, `bookmarks/${id}`),
+        message: 'Bookmark removed successfully',
+      }
+    );
+  }
+
+  @Get('downloads')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get user offline downloads',
+  })
+  async getDownloads(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:downloads:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `downloads-${user.id}`,
+        userId: user.id,
+        totalDownloads: 4,
+        items: [
+          {
+            id: 'dl-1',
+            name: 'IELTS Cambridge 18 - Full Mock 1',
+            subtitle: 'Practice Test PDF',
+            fileFormat: 'PDF',
+            fileFormatBadgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
+            fileIconBgClass: 'bg-indigo-600 text-white',
+            downloadedOn: 'May 20, 2025 04:30 PM',
+            size: '8.4 MB',
+            expiresOn: 'May 20, 2026',
+            category: 'Tests',
+          },
+          {
+            id: 'dl-2',
+            name: 'TOEIC Economy Vol 5 - Test 3 Audio',
+            subtitle: 'Audio Files Bundle',
+            fileFormat: 'MP3',
+            fileFormatBadgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
+            fileIconBgClass: 'bg-purple-600 text-white',
+            downloadedOn: 'May 19, 2025 09:15 AM',
+            size: '42.1 MB',
+            expiresOn: 'May 19, 2026',
+            category: 'Tests',
+          },
+          {
+            id: 'dl-3',
+            name: 'Academic Vocabulary 1000 Words List',
+            subtitle: 'Vocabulary Flashcards',
+            fileFormat: 'DOCX',
+            fileFormatBadgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+            fileIconBgClass: 'bg-blue-600 text-white',
+            downloadedOn: 'May 18, 2025 02:00 PM',
+            size: '2.3 MB',
+            expiresOn: 'May 18, 2026',
+            category: 'Vocabulary',
+          },
+          {
+            id: 'dl-4',
+            name: 'IELTS Band 8.0 Scorecard Report',
+            subtitle: 'Official Analytics Report',
+            fileFormat: 'PDF',
+            fileFormatBadgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
+            fileIconBgClass: 'bg-emerald-600 text-white',
+            downloadedOn: 'May 17, 2025 11:45 AM',
+            size: '1.2 MB',
+            expiresOn: 'Lifetime',
+            category: 'Reports',
+          },
+        ],
+      },
+      'certification-downloads',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'downloads'),
+        message: 'Downloads retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/purchased')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get purchased premium collections for authenticated user',
+  })
+  async getPurchasedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:purchased:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const response = convertEntityToJsonApi(
+      {
+        id: `purchased-${user.id}`,
+        userId: user.id,
+        totalPurchased: 3,
+        items: [
+          {
+            id: 'pur-1',
+            orderId: 'ORD-9821',
+            title: 'IELTS Official Cambridge 15-18 Full Master Package',
+            category: 'Official Bundles',
+            examType: 'IELTS Academic',
+            coverGradient: 'from-indigo-600 to-purple-700 text-white',
+            pricePaid: '$49.00',
+            purchaseDate: 'May 10, 2025',
+            accessType: 'Lifetime Access',
+            completedTests: 12,
+            totalTests: 16,
+            progressPercent: 75,
+          },
+          {
+            id: 'pur-2',
+            orderId: 'ORD-8742',
+            title: 'TOEIC ETS 2024 Ultimate Target 900+ Vault',
+            category: 'TOEIC Master',
+            examType: 'TOEIC L&R',
+            coverGradient: 'from-blue-600 to-sky-700 text-white',
+            pricePaid: '$39.00',
+            purchaseDate: 'Apr 28, 2025',
+            accessType: 'Lifetime Access',
+            completedTests: 8,
+            totalTests: 10,
+            progressPercent: 80,
+          },
+          {
+            id: 'pur-3',
+            orderId: 'ORD-7612',
+            title: 'IELTS Writing Task 1 & 2 Band 8.0 Model Essays',
+            category: 'IELTS Pro',
+            examType: 'IELTS Writing',
+            coverGradient: 'from-purple-600 to-pink-700 text-white',
+            pricePaid: '$29.00',
+            purchaseDate: 'Apr 15, 2025',
+            accessType: '1-Year License',
+            completedTests: 25,
+            totalTests: 25,
+            progressPercent: 100,
+          },
+        ],
+      },
+      'certification-collections-purchased',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/purchased'),
+        message: 'Purchased collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Delete('favorites/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Remove favorite item by ID',
+  })
+  async removeFavorite(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    await this.cacheService.delete(`certification:favorites:${user.id}`);
+    return convertEntityToJsonApi(
+      { id, removed: true },
+      'certification-favorite-remove',
+      {
+        selfLink: getSelfLinkFromRequest(req, `favorites/${id}`),
+        message: 'Favorite item removed successfully',
+      }
+    );
+  }
+
+  @Delete('downloads/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Delete offline downloaded file by ID',
+  })
+  async deleteDownload(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    await this.cacheService.delete(`certification:downloads:${user.id}`);
+    return convertEntityToJsonApi(
+      { id, deleted: true },
+      'certification-download-delete',
+      {
+        selfLink: getSelfLinkFromRequest(req, `downloads/${id}`),
+        message: 'Downloaded file deleted successfully',
+      }
+    );
+  }
+
+  @Delete('downloads')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Clear all offline downloads',
+  })
+  async clearDownloads(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    await this.cacheService.delete(`certification:downloads:${user.id}`);
+    return convertEntityToJsonApi(
+      { id: `clear-${user.id}`, cleared: true },
+      'certification-downloads-clear',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'downloads'),
+        message: 'All downloads cleared successfully',
+      }
+    );
   }
 }

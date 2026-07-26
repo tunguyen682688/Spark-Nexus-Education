@@ -146,35 +146,34 @@ export const CertificationExamSessionContainer: React.FC<
               onClick={onExit}
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs font-bold"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" /> Exit
+              <ArrowLeft className="w-4 h-4 mr-1" /> {CERTIFICATION_UI_TEXT.examSession.exit}
             </Button>
           )}
           <h2 className="text-sm font-black">
-            {session.examTitle || session.title || 'IELTS Mock Exam Session'}
+            {session.examTitle || session.title || CERTIFICATION_UI_TEXT.examSession.defaultTitle}
           </h2>
         </div>
 
         <div className="flex items-center gap-4">
           {tabViolations > 0 && (
             <Badge variant="destructive" className="text-[10px] font-bold">
-              <ShieldAlert className="w-3 h-3 mr-1" /> {tabViolations} Tab
-              Switch Warning(s)
+              <ShieldAlert className="w-3 h-3 mr-1" /> {tabViolations} {CERTIFICATION_UI_TEXT.examSession.tabWarning}
             </Badge>
           )}
 
           <div className="flex items-center gap-1.5 font-bold text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 py-1.5 px-3 rounded-lg">
             <Clock className="w-4 h-4" />
-            <span>45:00 Remaining</span>
+            <span>45:00 {CERTIFICATION_UI_TEXT.examSession.timeRemaining}</span>
           </div>
 
           <Button
             disabled={isSubmitting}
             onClick={handleSubmit}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-4 rounded-xl"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-4 rounded-xl cursor-pointer"
           >
-            Submit Exam
+            {CERTIFICATION_UI_TEXT.examSession.submitExam}
           </Button>
         </div>
       </div>
@@ -224,7 +223,7 @@ export const CertificationExamSessionContainer: React.FC<
               size="sm"
               className="text-xs font-bold"
             >
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Previous
+              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> {CERTIFICATION_UI_TEXT.examSession.previousQuestion}
             </Button>
 
             <Button
@@ -236,7 +235,7 @@ export const CertificationExamSessionContainer: React.FC<
               }
               className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold"
             >
-              Next <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              {CERTIFICATION_UI_TEXT.examSession.nextQuestion} <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </div>
         </CardContent>

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOfficialCollections } from './use-certification';
+import { useOfficialCollections, useSaveCollection } from './use-certification';
 import { paginateItems } from '../services/certification-filter.service';
 
 export function useOfficialContainerLogic(onStartExam?: (examId: string) => void) {
@@ -8,7 +8,10 @@ export function useOfficialContainerLogic(onStartExam?: (examId: string) => void
   const [selectedExamCategory, setSelectedExamCategory] = useState<string>('All Exams');
   const [selectedDifficultyLevel, setSelectedDifficultyLevel] = useState<string>('All Levels');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const pageSize = 6;
+
+  const saveCollectionMutation = useSaveCollection();
 
   const {
     data: officialExamCollections = [],
@@ -53,6 +56,19 @@ export function useOfficialContainerLogic(onStartExam?: (examId: string) => void
     }
   };
 
+  const handleBookmarkCollection = (collectionId: string) => {
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(collectionId)) {
+        next.delete(collectionId);
+      } else {
+        next.add(collectionId);
+      }
+      return next;
+    });
+    saveCollectionMutation.mutate(collectionId);
+  };
+
   return {
     selectedExamCategory,
     selectedDifficultyLevel,
@@ -62,6 +78,7 @@ export function useOfficialContainerLogic(onStartExam?: (examId: string) => void
     totalPages,
     filteredOfficialCollections,
     paginatedOfficialCollections,
+    bookmarkedIds,
     isLoading,
     isError,
     error,
@@ -69,5 +86,6 @@ export function useOfficialContainerLogic(onStartExam?: (examId: string) => void
     handleExamCategoryChange,
     handleDifficultyLevelChange,
     handleViewCollectionDetail,
+    handleBookmarkCollection,
   };
 }

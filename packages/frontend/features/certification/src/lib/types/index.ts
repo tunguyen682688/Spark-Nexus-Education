@@ -221,3 +221,14 @@ export interface RecordSessionViolationDto {
   violationType: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'TIMEOUT';
   description?: string;
 }
+
+export interface CertificateItem {
+  id: string;
+  collectionId: string;
+  title: string;
+  examCategory: string;
+  issuedDate: string;
+  score: string;
+  downloadUrl?: string;
+  credentialCode: string;
+}

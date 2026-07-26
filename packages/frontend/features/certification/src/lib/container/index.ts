@@ -10,3 +10,11 @@ export { CertificationExamDetailContainer } from './CollectionDetail/Certificati
 export { CertificationExamSessionContainer } from './CollectionDetail/CertificationExamSessionContainer';
 export { CertificationExamResultContainer } from './CollectionDetail/CertificationExamResultContainer';
 export { CertificationCollectionDetailContainer } from './CollectionDetail/CertificationCollectionDetailContainer';
+export { CertificationLibraryContainer } from './CertificationLibraryContainer';
+export { CertificationPracticeHistoryContainer } from './CertificationPracticeHistoryContainer';
+export { CertificationCompletedCollectionsContainer } from './CertificationCompletedCollectionsContainer';
+export { CertificationFavoritesContainer } from './CertificationFavoritesContainer';
+export { CertificationBookmarksContainer } from './CertificationBookmarksContainer';
+export { CertificationDownloadsContainer } from './CertificationDownloadsContainer';
+export { CertificationPurchasedCollectionsContainer } from './CertificationPurchasedCollectionsContainer';
+export { CertificationCreatorDashboardContainer } from './CertificationCreatorDashboardContainer';
