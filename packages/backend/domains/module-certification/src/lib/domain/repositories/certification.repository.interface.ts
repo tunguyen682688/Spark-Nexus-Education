@@ -9,6 +9,7 @@ import { SessionViolationEntity } from '../entities/session-violation.entity';
 import { ExamSectionEntity } from '../entities/exam-section.entity';
 import { ExamRuleEntity } from '../entities/exam-rule.entity';
 import { QuestionEntity } from '../entities/question.entity';
+import { QuestionMetadataEntity } from '../entities/question-metadata.entity';
 import { QuestionHintEntity } from '../entities/question-hint.entity';
 import { QuestionMediaEntity } from '../entities/question-media.entity';
 import { AutosaveSnapshotEntity } from '../entities/autosave-snapshot.entity';
@@ -75,6 +76,23 @@ export interface ICertificationRepository {
   findQuestionById(id: string): Promise<QuestionEntity | null>;
   saveQuestion(question: QuestionEntity): Promise<QuestionEntity>;
   deleteQuestion(id: string): Promise<void>;
+
+  // Question Builder Operations
+  findQuestionWithBuilderData(id: string): Promise<{
+    question: QuestionEntity;
+    choices: QuestionChoiceEntity[];
+    metadata: QuestionMetadataEntity | null;
+  } | null>;
+  saveQuestionWithChoices(
+    question: QuestionEntity,
+    choices: QuestionChoiceEntity[],
+    metadata: QuestionMetadataEntity | null
+  ): Promise<void>;
+  deleteQuestionCascade(id: string): Promise<void>;
+
+  // Question Metadata Operations
+  findMetadataByQuestionId(questionId: string): Promise<QuestionMetadataEntity | null>;
+  saveQuestionMetadata(metadata: QuestionMetadataEntity): Promise<QuestionMetadataEntity>;
 
   // Question Choice Operations
   saveQuestionChoice(choice: QuestionChoiceEntity): Promise<QuestionChoiceEntity>;

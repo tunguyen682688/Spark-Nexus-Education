@@ -67,6 +67,35 @@ export interface CreateCollectionDiscussionDto {
   content: string;
 }
 
+export interface SaveQuestionOptionDto {
+  id: string;
+  label: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface SaveQuestionDto {
+  id?: string;
+  questionText: string;
+  questionType: string;
+  difficulty: string;
+  shuffleOptions?: boolean;
+  options: SaveQuestionOptionDto[];
+  explanation?: string;
+  points?: number;
+  estimatedTime?: string;
+  tags?: string[];
+  skills?: string[];
+  cognitiveLevel?: string;
+  target?: 'exam' | 'bank';
+}
+
+export interface SaveQuestionResult {
+  id: string;
+  savedToBank: boolean;
+  status: string;
+}
+
 export interface DashboardStats {
   scorePrediction?: string;
   scoreRange?: string;
@@ -231,4 +260,73 @@ export interface CertificateItem {
   score: string;
   downloadUrl?: string;
   credentialCode: string;
+}
+
+export interface QuestionVersion {
+  id: string;
+  questionId: string;
+  version: number;
+  content: string;
+  createdAt: Date | string;
+  createdBy: string | null;
+}
+
+export interface QuestionMetadata {
+  id: string;
+  questionId: string;
+  explanation: string | null;
+  points: number;
+  estimatedTime: string | null;
+  shuffleOptions: boolean;
+  referenceType: string | null;
+  passageSource: string | null;
+  highlight: string | null;
+  cognitiveLevel: string | null;
+  tags: string[];
+  skills: string[];
+  qualityScore: number | null;
+  qualityRating: string | null;
+}
+
+export interface QuestionBuilderData {
+  id: string;
+  badgeType: string;
+  status: string;
+  questionText: string;
+  questionType: string;
+  difficulty: string;
+  shuffleOptions: boolean;
+  options: Array<{
+    id: string;
+    label: string;
+    text: string;
+    isCorrect: boolean;
+  }>;
+  explanation: string;
+  reference: {
+    type: string | null;
+    passageSource: string | null;
+    highlight: string | null;
+  };
+  properties: {
+    id: string;
+    points: number;
+    estimatedTime: string;
+    tags: string[];
+    skills: string[];
+    cognitiveLevel: string;
+    createdDate: string;
+    lastUpdatedDate: string;
+    createdBy: string;
+  };
+  qualityScore: {
+    score: number;
+    rating: string;
+    description: string;
+    checks: string[];
+  };
+  usedIn: {
+    examTitle: string;
+    sectionInfo: string;
+  } | null;
 }

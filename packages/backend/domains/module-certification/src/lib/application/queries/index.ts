@@ -11,3 +11,5 @@ export * from './get-collection-items';
 export * from './get-exam';
 export * from './get-exam-session';
 export * from './get-exam-result';
+export * from './get-question-builder';
+export * from './get-question-history';

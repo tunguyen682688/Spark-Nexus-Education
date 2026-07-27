@@ -12,6 +12,7 @@ export * from './lib/domain/entities/question.entity';
 export * from './lib/domain/entities/question-choice.entity';
 export * from './lib/domain/entities/question-hint.entity';
 export * from './lib/domain/entities/question-media.entity';
+export * from './lib/domain/entities/question-metadata.entity';
 export * from './lib/domain/entities/exam-session.entity';
 export * from './lib/domain/entities/session-answer.entity';
 export * from './lib/domain/entities/session-violation.entity';

@@ -40,6 +40,8 @@ import {
   GetExamQuery,
   GetExamSessionQuery,
   GetExamResultQuery,
+  GetQuestionBuilderQuery,
+  GetQuestionHistoryQuery,
 } from '../../application/queries';
 
 import { StartExamSessionDto } from '../../application/dtos/start-exam-session.dto';
@@ -48,6 +50,7 @@ import { RecordSessionViolationDto } from '../../application/dtos/record-session
 import { CreateCollectionReviewDto } from '../../application/dtos/create-collection-review.dto';
 import { CreateCollectionDiscussionDto } from '../../application/dtos/create-collection-discussion.dto';
 import { ReportCollectionDto } from '../../application/dtos/report-collection.dto';
+import { SaveQuestionDto } from '../../application/dtos/save-question.dto';
 import { FeaturedCollectionsQueryDto } from '../../application/dtos/certification-query-params.dto';
 import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
 
@@ -59,6 +62,8 @@ import {
   SaveCollectionCommand,
   CloneCollectionCommand,
   ReportCollectionCommand,
+  SaveQuestionCommand,
+  DeleteQuestionCommand,
 } from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
@@ -373,6 +378,409 @@ export class CertificationController {
 
     await this.cacheService.set(cacheKey, response, 300);
     return response;
+  }
+
+  @Get('collections/:id/editor')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get collection editor details and structure',
+    description:
+      'Retrieves editable collection chapters, exams list, settings, and summary metadata for creators.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Collection editor details retrieved successfully',
+    resourceType: 'collection-editor',
+  })
+  async getCollectionEditor(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const data = {
+      id: id || 'toeic-mastery-collection',
+      status: 'Draft',
+      lastAutosaved: '2m ago',
+      details: {
+        title: 'TOEIC Mastery Collection',
+        subtitle: 'Comprehensive practice to master all TOEIC skills',
+        description:
+          'A complete collection of TOEIC practice tests covering all parts and skill levels. Perfect for learners who want to improve step by step and achieve a high score.',
+        level: 'Beginner to Advanced',
+        tags: ['TOEIC', 'Practice', 'Listening', 'Reading'],
+        visibility: 'Public',
+        allowDownloads: true,
+        coverImage:
+          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+        createdDate: 'May 10, 2024 10:15 AM',
+        lastUpdatedDate: 'May 16, 2024 02:45 PM',
+      },
+      chapters: [
+        {
+          id: 'chap-1',
+          number: 1,
+          title: 'Part 1: Getting Started',
+          description:
+            'Build a strong foundation with essential topics and easy-to-medium level exams.',
+          examCount: 3,
+          exams: [
+            {
+              id: 'exam-1',
+              number: 1,
+              title: 'TOEIC Practice Test 1',
+              subTitle: 'Basic Concepts',
+              questionsCount: 60,
+              durationMinutes: 60,
+              difficulty: 'Easy',
+              status: 'Published',
+              iconType: 'toeic',
+            },
+            {
+              id: 'exam-2',
+              number: 2,
+              title: 'TOEIC Practice Test 2',
+              subTitle: 'Daily Training',
+              questionsCount: 60,
+              durationMinutes: 60,
+              difficulty: 'Easy',
+              status: 'Published',
+              iconType: 'toeic',
+            },
+            {
+              id: 'exam-3',
+              number: 3,
+              title: 'TOEIC Practice Test 3',
+              subTitle: 'Vocabulary Focus',
+              questionsCount: 60,
+              durationMinutes: 60,
+              difficulty: 'Medium',
+              status: 'Draft',
+              iconType: 'toeic',
+            },
+          ],
+        },
+        {
+          id: 'chap-2',
+          number: 2,
+          title: 'Part 2: Building Skills',
+          description:
+            'Enhance your test-taking strategies with targeted skill-building tests.',
+          examCount: 4,
+          exams: [],
+        },
+        {
+          id: 'chap-3',
+          number: 3,
+          title: 'Part 3: Improving Accuracy',
+          description: 'Master tough question patterns and avoid common traps.',
+          examCount: 4,
+          exams: [],
+        },
+        {
+          id: 'chap-4',
+          number: 4,
+          title: 'Part 4: Advanced Practice',
+          description: 'Simulate high-pressure exam environments.',
+          examCount: 5,
+          exams: [],
+        },
+        {
+          id: 'chap-5',
+          number: 5,
+          title: 'Full Length Tests',
+          description: 'Full 2-hour 200 question mock examinations.',
+          examCount: 6,
+          exams: [],
+        },
+      ],
+      summary: {
+        totalChapters: 5,
+        totalExams: 22,
+        totalQuestions: 1320,
+        estimatedDurationHours: 22,
+        estimatedDurationMinutes: 0,
+        difficultyMix: {
+          easy: 45,
+          medium: 40,
+          hard: 15,
+        },
+      },
+    };
+
+    return convertEntityToJsonApi(data, 'collection-editor', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}/editor`),
+      message: 'Collection editor details retrieved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('exams/:id/builder')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get exam builder structure, sections, questions and settings',
+    description:
+      'Retrieves exam sections, questions list, blueprint totals, and settings for exam creation.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Exam builder details retrieved successfully',
+    resourceType: 'exam-builder',
+  })
+  async getExamBuilder(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const data = {
+      id: id || 'toeic-practice-test-1',
+      status: 'Draft',
+      lastAutosaved: 'All changes saved',
+      settings: {
+        title: 'TOEIC Practice Test 1',
+        description:
+          'A full-length TOEIC practice test for learners aiming to improve their listening, reading, speaking and writing skills.',
+        level: 'Intermediate',
+        language: 'English',
+        passingScore: 550,
+        maxScore: 990,
+        createdDate: 'May 10, 2024 10:15 AM',
+        lastUpdatedDate: 'May 16, 2024 02:45 PM',
+      },
+      sections: [
+        {
+          id: 'sec-1',
+          number: 1,
+          title: 'Listening',
+          subtitle: 'Part 1 - 4',
+          questionCount: 100,
+          durationMinutes: 45,
+          isBreak: false,
+          questions: [
+            {
+              id: 'q-1',
+              number: 1,
+              title: 'Look at the picture and choose the best description.',
+              partTag: 'Part 1',
+              type: 'Single Choice',
+              difficulty: 'Easy',
+              points: 1,
+              imageUrl:
+                'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop',
+            },
+            {
+              id: 'q-2',
+              number: 2,
+              title: 'Listen and choose the correct response.',
+              partTag: 'Part 2',
+              type: 'Single Choice',
+              difficulty: 'Easy',
+              points: 1,
+              imageUrl:
+                'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=150&auto=format&fit=crop',
+            },
+            {
+              id: 'q-3',
+              number: 3,
+              title: 'Listen to the conversation. What is the man asking about?',
+              partTag: 'Part 3',
+              type: 'Multiple Choice',
+              difficulty: 'Medium',
+              points: 1,
+              imageUrl:
+                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop',
+            },
+            {
+              id: 'q-4',
+              number: 4,
+              title: 'Listen to the talk. What is the purpose of the talk?',
+              partTag: 'Part 4',
+              type: 'Multiple Choice',
+              difficulty: 'Medium',
+              points: 1,
+              imageUrl:
+                'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=150&auto=format&fit=crop',
+            },
+            {
+              id: 'q-5',
+              number: 5,
+              title: 'Which word is closest in meaning to "essential"?',
+              partTag: 'Part 5',
+              type: 'Single Choice',
+              difficulty: 'Hard',
+              points: 1,
+              imageUrl: null,
+            },
+          ],
+        },
+        {
+          id: 'sec-2',
+          number: 2,
+          title: 'Reading',
+          subtitle: 'Part 5 - 6',
+          questionCount: 100,
+          durationMinutes: 75,
+          isBreak: false,
+          questions: [],
+        },
+        {
+          id: 'sec-3',
+          number: 3,
+          title: 'Break',
+          subtitle: '10 minutes',
+          questionCount: 0,
+          durationMinutes: 10,
+          isBreak: true,
+          questions: [],
+        },
+        {
+          id: 'sec-4',
+          number: 4,
+          title: 'Speaking',
+          subtitle: 'Part 1 - 7',
+          questionCount: 11,
+          durationMinutes: 20,
+          isBreak: false,
+          questions: [],
+        },
+        {
+          id: 'sec-5',
+          number: 5,
+          title: 'Writing',
+          subtitle: 'Part 1 - 2',
+          questionCount: 9,
+          durationMinutes: 35,
+          isBreak: false,
+          questions: [],
+        },
+      ],
+      blueprint: {
+        totalQuestions: 220,
+        totalTimeMinutes: 135,
+        totalPoints: 220,
+      },
+    };
+
+    return convertEntityToJsonApi(data, 'exam-builder', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${id}/builder`),
+      message: 'Exam builder details retrieved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('questions/:id/builder')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get question builder details, options, explanation and quality score',
+    description:
+      'Retrieves question text, answer options, reference, explanation, properties, and live preview data.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Question builder details retrieved successfully',
+    resourceType: 'question-builder',
+  })
+  async getQuestionBuilder(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.queryBus.execute(
+      new GetQuestionBuilderQuery(id)
+    );
+
+    return convertEntityToJsonApi(result, 'question-builder', {
+      selfLink: getSelfLinkFromRequest(req, `questions/${id}/builder`),
+      message: 'Question builder details retrieved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('questions/save')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Create or update a question from the Question Builder',
+    description:
+      'Persists question text, options, explanation, reference, tags/skills and properties. When target is "bank" the question is also stored in the reusable Question Bank.',
+  })
+  @ApiBody({
+    type: SaveQuestionDto,
+    description: 'Full question builder payload',
+  })
+  @ApiJsonApiCreatedResponse({
+    description: 'Question saved successfully',
+    resourceType: 'question-builder',
+  })
+  async saveQuestion(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Body() dto: SaveQuestionDto,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new SaveQuestionCommand(dto, user.id)
+    );
+
+    return convertEntityToJsonApi(result, 'question-builder', {
+      selfLink: getSelfLinkFromRequest(req, `questions/save`),
+      message: dto.target === 'bank'
+        ? 'Question saved to Question Bank successfully'
+        : 'Question saved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Delete('questions/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Delete a question and all associated data',
+    description: 'Permanently removes question, choices, metadata, versions, hints, and media.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Question deleted successfully',
+    resourceType: 'question-builder',
+  })
+  async deleteQuestion(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new DeleteQuestionCommand(id, user.id)
+    );
+
+    return convertEntityToJsonApi(result, 'question-builder', {
+      selfLink: getSelfLinkFromRequest(req, `questions/${id}`),
+      message: 'Question deleted successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Get('questions/:id/history')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get question version history',
+    description: 'Returns all versions of a question for the History tab.',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Question history retrieved successfully',
+    resourceType: 'question-history',
+  })
+  async getQuestionHistory(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const versions = await this.queryBus.execute(
+      new GetQuestionHistoryQuery(id)
+    );
+
+    return convertEntityToJsonApi(versions, 'question-history', {
+      selfLink: getSelfLinkFromRequest(req, `questions/${id}/history`),
+      message: 'Question history retrieved successfully',
+      version: '1.0.0',
+    });
   }
 
   @Get('collections/featured')

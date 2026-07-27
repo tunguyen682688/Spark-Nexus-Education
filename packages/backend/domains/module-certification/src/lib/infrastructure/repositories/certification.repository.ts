@@ -33,6 +33,7 @@ import { SessionViolationEntity } from '../../domain/entities/session-violation.
 import { ExamSectionEntity } from '../../domain/entities/exam-section.entity';
 import { ExamRuleEntity } from '../../domain/entities/exam-rule.entity';
 import { QuestionEntity } from '../../domain/entities/question.entity';
+import { QuestionMetadataEntity } from '../../domain/entities/question-metadata.entity';
 import { QuestionHintEntity } from '../../domain/entities/question-hint.entity';
 import { QuestionMediaEntity } from '../../domain/entities/question-media.entity';
 import { AutosaveSnapshotEntity } from '../../domain/entities/autosave-snapshot.entity';
@@ -631,6 +632,204 @@ export class CertificationRepository implements ICertificationRepository {
   }
 
   // ============================================
+  // QUESTION BUILDER OPERATIONS
+  // ============================================
+
+  async findQuestionWithBuilderData(id: string): Promise<{
+    question: QuestionEntity;
+    choices: QuestionChoiceEntity[];
+    metadata: QuestionMetadataEntity | null;
+  } | null> {
+    const question = await this.prisma.question.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        choices: { orderBy: { order: 'asc' } },
+        metadata: true,
+      },
+    });
+
+    if (!question) return null;
+
+    return {
+      question: this.mapQuestionToEntity(question),
+      choices: question.choices.map((c) => this.mapChoiceToEntity(c)),
+      metadata: question.metadata ? this.mapMetadataToEntity(question.metadata) : null,
+    };
+  }
+
+  async saveQuestionWithChoices(
+    question: QuestionEntity,
+    choices: QuestionChoiceEntity[],
+    metadata: QuestionMetadataEntity | null
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Upsert question
+      await tx.question.upsert({
+        where: { id: question.id },
+        create: {
+          id: question.id,
+          title: question.getTitle(),
+          content: question.getContent(),
+          type: question.getType(),
+          difficulty: question.getDifficulty(),
+          status: question.getStatus(),
+          createdBy: question.getCreatedBy(),
+          updatedBy: question.getUpdatedBy(),
+        },
+        update: {
+          title: question.getTitle(),
+          content: question.getContent(),
+          type: question.getType(),
+          difficulty: question.getDifficulty(),
+          status: question.getStatus(),
+          updatedBy: question.getUpdatedBy(),
+        },
+      });
+
+      // 2. Delete old choices and create new ones
+      await tx.questionChoice.deleteMany({ where: { questionId: question.id } });
+      if (choices.length > 0) {
+        await tx.questionChoice.createMany({
+          data: choices.map((c) => ({
+            id: c.id,
+            questionId: question.id,
+            content: c.getContent(),
+            isCorrect: c.getIsCorrect(),
+            order: c.getOrder(),
+            createdBy: c.getCreatedBy(),
+            updatedBy: c.getUpdatedBy(),
+          })),
+        });
+      }
+
+      // 3. Upsert metadata
+      if (metadata) {
+        await tx.questionMetadata.upsert({
+          where: { questionId: question.id },
+          create: {
+            id: metadata.id,
+            questionId: question.id,
+            explanation: metadata.getExplanation(),
+            points: metadata.getPoints(),
+            estimatedTime: metadata.getEstimatedTime(),
+            shuffleOptions: metadata.getShuffleOptions(),
+            referenceType: metadata.getReferenceType(),
+            passageSource: metadata.getPassageSource(),
+            highlight: metadata.getHighlight(),
+            cognitiveLevel: metadata.getCognitiveLevel(),
+            tags: metadata.getTags(),
+            skills: metadata.getSkills(),
+            qualityScore: metadata.getQualityScore(),
+            qualityRating: metadata.getQualityRating(),
+          },
+          update: {
+            explanation: metadata.getExplanation(),
+            points: metadata.getPoints(),
+            estimatedTime: metadata.getEstimatedTime(),
+            shuffleOptions: metadata.getShuffleOptions(),
+            referenceType: metadata.getReferenceType(),
+            passageSource: metadata.getPassageSource(),
+            highlight: metadata.getHighlight(),
+            cognitiveLevel: metadata.getCognitiveLevel(),
+            tags: metadata.getTags(),
+            skills: metadata.getSkills(),
+            qualityScore: metadata.getQualityScore(),
+            qualityRating: metadata.getQualityRating(),
+          },
+        });
+      }
+
+      // 4. Create version snapshot
+      const latestVersion = await tx.questionVersion.findFirst({
+        where: { questionId: question.id },
+        orderBy: { version: 'desc' },
+      });
+      const nextVersion = (latestVersion?.version ?? 0) + 1;
+      await tx.questionVersion.create({
+        data: {
+          questionId: question.id,
+          version: nextVersion,
+          content: JSON.stringify({
+            title: question.getTitle(),
+            content: question.getContent(),
+            type: question.getType(),
+            difficulty: question.getDifficulty(),
+            choices: choices.map((c) => ({
+              id: c.id,
+              content: c.getContent(),
+              isCorrect: c.getIsCorrect(),
+              order: c.getOrder(),
+            })),
+            metadata: metadata ? metadata.toPlainObject() : null,
+          }),
+          createdBy: question.getUpdatedBy() || question.getCreatedBy(),
+        },
+      });
+    });
+  }
+
+  async deleteQuestionCascade(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.questionChoice.deleteMany({ where: { questionId: id } });
+      await tx.questionHint.deleteMany({ where: { questionId: id } });
+      await tx.questionMedia.deleteMany({ where: { questionId: id } });
+      await tx.questionMetadata.deleteMany({ where: { questionId: id } });
+      await tx.questionVersion.deleteMany({ where: { questionId: id } });
+      await tx.question.delete({ where: { id } });
+    });
+  }
+
+  // ============================================
+  // QUESTION METADATA OPERATIONS
+  // ============================================
+
+  async findMetadataByQuestionId(questionId: string): Promise<QuestionMetadataEntity | null> {
+    const metadata = await this.prisma.questionMetadata.findUnique({
+      where: { questionId },
+    });
+    if (!metadata) return null;
+    return this.mapMetadataToEntity(metadata);
+  }
+
+  async saveQuestionMetadata(metadata: QuestionMetadataEntity): Promise<QuestionMetadataEntity> {
+    const saved = await this.prisma.questionMetadata.upsert({
+      where: { questionId: metadata.getQuestionId() },
+      create: {
+        id: metadata.id,
+        questionId: metadata.getQuestionId(),
+        explanation: metadata.getExplanation(),
+        points: metadata.getPoints(),
+        estimatedTime: metadata.getEstimatedTime(),
+        shuffleOptions: metadata.getShuffleOptions(),
+        referenceType: metadata.getReferenceType(),
+        passageSource: metadata.getPassageSource(),
+        highlight: metadata.getHighlight(),
+        cognitiveLevel: metadata.getCognitiveLevel(),
+        tags: metadata.getTags(),
+        skills: metadata.getSkills(),
+        qualityScore: metadata.getQualityScore(),
+        qualityRating: metadata.getQualityRating(),
+      },
+      update: {
+        explanation: metadata.getExplanation(),
+        points: metadata.getPoints(),
+        estimatedTime: metadata.getEstimatedTime(),
+        shuffleOptions: metadata.getShuffleOptions(),
+        referenceType: metadata.getReferenceType(),
+        passageSource: metadata.getPassageSource(),
+        highlight: metadata.getHighlight(),
+        cognitiveLevel: metadata.getCognitiveLevel(),
+        tags: metadata.getTags(),
+        skills: metadata.getSkills(),
+        qualityScore: metadata.getQualityScore(),
+        qualityRating: metadata.getQualityRating(),
+      },
+    });
+
+    return this.mapMetadataToEntity(saved);
+  }
+
+  // ============================================
   // QUESTION CHOICE OPERATIONS
   // ============================================
 
@@ -1156,6 +1355,44 @@ export class CertificationRepository implements ICertificationRepository {
       order: dbObj.order,
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
+      createdAt: dbObj.createdAt,
+      updatedAt: dbObj.updatedAt,
+    });
+  }
+
+  private mapMetadataToEntity(dbObj: {
+    id: string;
+    questionId: string;
+    explanation: string | null;
+    points: number;
+    estimatedTime: string | null;
+    shuffleOptions: boolean;
+    referenceType: string | null;
+    passageSource: string | null;
+    highlight: string | null;
+    cognitiveLevel: string | null;
+    tags: string[];
+    skills: string[];
+    qualityScore: number | null;
+    qualityRating: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): QuestionMetadataEntity {
+    return QuestionMetadataEntity.fromPersistence({
+      id: dbObj.id,
+      questionId: dbObj.questionId,
+      explanation: dbObj.explanation,
+      points: dbObj.points,
+      estimatedTime: dbObj.estimatedTime,
+      shuffleOptions: dbObj.shuffleOptions,
+      referenceType: dbObj.referenceType,
+      passageSource: dbObj.passageSource,
+      highlight: dbObj.highlight,
+      cognitiveLevel: dbObj.cognitiveLevel,
+      tags: dbObj.tags,
+      skills: dbObj.skills,
+      qualityScore: dbObj.qualityScore,
+      qualityRating: dbObj.qualityRating,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
     });

@@ -13,7 +13,11 @@ import type {
   CollectionDiscussion,
   CreateCollectionReviewDto,
   CreateCollectionDiscussionDto,
-  CertificateItem
+  SaveQuestionDto,
+  SaveQuestionResult,
+  CertificateItem,
+  QuestionBuilderData,
+  QuestionVersion,
 } from '../types';
 import {
   DEFAULT_DASHBOARD_STATS,
@@ -82,8 +86,80 @@ export class CertificationApi {
   }
 
   /**
-   * Fetch featured exam collections filtered by exam type or search keyword
+   * Fetch collection editor details and structure
    */
+  static async getCollectionEditorData(id: string): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/collections/${id}/editor`);
+      const unwrapped = unwrapJsonApiResponse<Record<string, unknown>>(response.data);
+      return unwrapped || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch exam builder details, sections, and questions list
+   */
+  static async getExamBuilderData(id: string): Promise<Record<string, unknown>> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/exams/${id}/builder`);
+      const unwrapped = unwrapJsonApiResponse<Record<string, unknown>>(response.data);
+      return unwrapped || {};
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Fetch question builder details, options, explanation and properties
+   */
+  static async getQuestionBuilderData(id: string): Promise<QuestionBuilderData | null> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/questions/${id}/builder`);
+      const unwrapped = unwrapJsonApiResponse<QuestionBuilderData>(response.data);
+      return unwrapped || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Create or update a question from the Question Builder.
+   * When dto.target === 'bank' the question is also stored in the reusable Question Bank.
+   */
+  static async saveQuestion(dto: SaveQuestionDto): Promise<SaveQuestionResult> {
+    const client = await getAxiosInstance();
+    const response = await client.post(`/certification/questions/save`, dto);
+    return unwrapJsonApiResponse<SaveQuestionResult>(response.data);
+  }
+
+  /**
+   * Delete a question and all associated data.
+   */
+  static async deleteQuestion(id: string): Promise<{ id: string; deleted: boolean }> {
+    const client = await getAxiosInstance();
+    const response = await client.delete(`/certification/questions/${id}`);
+    return unwrapJsonApiResponse<{ id: string; deleted: boolean }>(response.data);
+  }
+
+  /**
+   * Get question version history for the History tab.
+   */
+  static async getQuestionHistory(id: string): Promise<QuestionVersion[]> {
+    try {
+      const client = await getAxiosInstance();
+      const response = await client.get(`/certification/questions/${id}/history`);
+      const unwrapped = unwrapJsonApiResponse<QuestionVersion[]>(response.data);
+      return Array.isArray(unwrapped) ? unwrapped : [];
+    } catch {
+      return [];
+    }
+  }
+
   static async getFeaturedCollections(exam?: string, search?: string): Promise<ExamCollection[]> {
     try {
       const client = await getAxiosInstance();

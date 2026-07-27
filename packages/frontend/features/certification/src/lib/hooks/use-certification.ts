@@ -14,6 +14,10 @@ import type {
   SaveSessionAnswerDto,
   RecordSessionViolationDto,
   CertificateItem,
+  SaveQuestionDto,
+  SaveQuestionResult,
+  QuestionBuilderData,
+  QuestionVersion,
 } from '../types';
 
 // Standardized Query Cache Time Constants
@@ -36,6 +40,100 @@ export const useCreatorDashboardData = () => {
     queryKey: ['certification', 'creator-dashboard'],
     queryFn: () => CertificationApi.getCreatorDashboardData(),
     staleTime: STALE_TIME_DASHBOARD,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCollectionEditorData = (id: string) => {
+  return useQuery<Record<string, unknown>>({
+    queryKey: ['certification', 'collection-editor', id],
+    queryFn: () => CertificationApi.getCollectionEditorData(id),
+    enabled: Boolean(id),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useExamBuilderData = (id: string) => {
+  return useQuery<Record<string, unknown>>({
+    queryKey: ['certification', 'exam-builder', id],
+    queryFn: () => CertificationApi.getExamBuilderData(id),
+    enabled: Boolean(id),
+    staleTime: STALE_TIME_STATIC_EXAM,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useQuestionBuilderData = (id: string) => {
+  return useQuery<QuestionBuilderData | null>({
+    queryKey: ['certification', 'question-builder', id],
+    queryFn: () => CertificationApi.getQuestionBuilderData(id),
+    enabled: Boolean(id),
+    staleTime: STALE_TIME_STATIC_EXAM,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useSaveQuestion = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<SaveQuestionResult, Error, SaveQuestionDto>({
+    mutationFn: (dto: SaveQuestionDto) => CertificationApi.saveQuestion(dto),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({
+        queryKey: ['certification', 'question-builder', result.id],
+      });
+      toast({
+        title: result.savedToBank
+          ? 'Đã lưu vào Ngân hàng câu hỏi'
+          : 'Đã lưu câu hỏi',
+        description: result.savedToBank
+          ? 'Câu hỏi đã được lưu vào Ngân hàng câu hỏi để tái sử dụng.'
+          : 'Mọi thay đổi của câu hỏi đã được lưu.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lưu câu hỏi thất bại',
+        description: 'Đã xảy ra lỗi khi lưu câu hỏi. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useDeleteQuestion = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<{ id: string; deleted: boolean }, Error, string>({
+    mutationFn: (id: string) => CertificationApi.deleteQuestion(id),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({
+        queryKey: ['certification', 'question-builder', result.id],
+      });
+      toast({
+        title: 'Đã xóa câu hỏi',
+        description: 'Câu hỏi đã được xóa thành công.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Xóa câu hỏi thất bại',
+        description: 'Đã xảy ra lỗi khi xóa câu hỏi. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useQuestionHistory = (id: string) => {
+  return useQuery<QuestionVersion[]>({
+    queryKey: ['certification', 'question-history', id],
+    queryFn: () => CertificationApi.getQuestionHistory(id),
+    enabled: Boolean(id),
+    staleTime: STALE_TIME_SESSION,
     refetchOnWindowFocus: false,
   });
 };

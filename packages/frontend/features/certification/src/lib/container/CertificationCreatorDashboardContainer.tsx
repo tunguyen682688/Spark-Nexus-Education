@@ -26,9 +26,6 @@ import {
 } from 'lucide-react';
 import {
   Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Button,
   Badge,
 } from '@spark-nest-ed/frontend-shared-components';
@@ -36,6 +33,8 @@ import { useCreatorDashboardContainerLogic } from '../hooks/useCreatorDashboardC
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
+const dd = CERTIFICATION_UI_TEXT.dropdownItems;
+const tf = CERTIFICATION_UI_TEXT.timeframeOptions;
 
 export const CertificationCreatorDashboardContainer: React.FC = () => {
   const {
@@ -51,7 +50,6 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
     setRevenueTimeframe,
     isCreateDropdownOpen,
     setIsCreateDropdownOpen,
-    currentChartSeries,
     handleCreateNewExam,
     handleAIGenerateQuestions,
     handleImportQuestions,
@@ -109,7 +107,7 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary flex items-center gap-2"
                   >
                     <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    New Exam
+                    {dd.newExam}
                   </button>
                   <button
                     onClick={() => {
@@ -119,7 +117,7 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary flex items-center gap-2"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    AI Question Generator
+                    {dd.aiQuestionGenerator}
                   </button>
                   <button
                     onClick={() => {
@@ -129,7 +127,7 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary flex items-center gap-2"
                   >
                     <Upload className="w-3.5 h-3.5 text-blue-600" />
-                    Import Questions
+                    {dd.importQuestions}
                   </button>
                   <button
                     onClick={() => {
@@ -139,7 +137,7 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary flex items-center gap-2"
                   >
                     <FolderPlus className="w-3.5 h-3.5 text-emerald-600" />
-                    New Collection
+                    {dd.newCollection}
                   </button>
                 </div>
               </div>
@@ -298,9 +296,9 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                 onChange={(e) => setChartTimeframe(e.target.value as typeof chartTimeframe)}
                 className="appearance-none bg-background border border-border text-xs font-bold text-foreground py-1.5 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
-                <option value="Last 7 Days">Last 7 Days</option>
-                <option value="Last 30 Days">Last 30 Days</option>
-                <option value="This Month">This Month</option>
+                <option value={tf.last7Days}>{tf.last7Days}</option>
+                <option value={tf.last30Days}>{tf.last30Days}</option>
+                <option value={tf.thisMonth}>{tf.thisMonth}</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
@@ -308,7 +306,7 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
 
           {/* METRIC TABS FOR CHART */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {(['Attempts', 'Average Score', 'Likes', 'Revenue'] as const).map((tab) => (
+            {([CERTIFICATION_UI_TEXT.chartTabs.attempts, CERTIFICATION_UI_TEXT.chartTabs.averageScore, CERTIFICATION_UI_TEXT.chartTabs.likes, CERTIFICATION_UI_TEXT.chartTabs.revenue] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveChartTab(tab)}
@@ -549,9 +547,9 @@ export const CertificationCreatorDashboardContainer: React.FC = () => {
                 onChange={(e) => setRevenueTimeframe(e.target.value as typeof revenueTimeframe)}
                 className="appearance-none bg-background border border-border text-xs font-bold text-foreground py-1 pl-2.5 pr-7 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
-                <option value="This Month">This Month</option>
-                <option value="Last Month">Last Month</option>
-                <option value="This Year">This Year</option>
+                <option value={tf.thisMonth}>{tf.thisMonth}</option>
+                <option value={tf.lastMonth}>{tf.lastMonth}</option>
+                <option value={tf.thisYear}>{tf.thisYear}</option>
               </select>
               <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>

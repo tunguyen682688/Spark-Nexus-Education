@@ -21,6 +21,8 @@ import {
   GetExamQueryHandler,
   GetExamSessionQueryHandler,
   GetExamResultQueryHandler,
+  GetQuestionBuilderQueryHandler,
+  GetQuestionHistoryQueryHandler,
 } from './application/queries';
 
 // Command Handlers
@@ -32,6 +34,8 @@ import {
   SaveCollectionCommandHandler,
   CloneCollectionCommandHandler,
   ReportCollectionCommandHandler,
+  SaveQuestionHandler,
+  DeleteQuestionHandler,
 } from './application/commands';
 
 // Repository Implementations
@@ -61,6 +65,8 @@ const QueryHandlers = [
   GetExamQueryHandler,
   GetExamSessionQueryHandler,
   GetExamResultQueryHandler,
+  GetQuestionBuilderQueryHandler,
+  GetQuestionHistoryQueryHandler,
 ];
 
 const CommandHandlers = [
@@ -71,6 +77,8 @@ const CommandHandlers = [
   SaveCollectionCommandHandler,
   CloneCollectionCommandHandler,
   ReportCollectionCommandHandler,
+  SaveQuestionHandler,
+  DeleteQuestionHandler,
 ];
 
 @Module({

@@ -1758,6 +1758,117 @@ export const createRouter = () =>
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
+        // Certification Creator routes
+        {
+          path: 'certification/creator-dashboard',
+          lazy: async () => {
+            const { CertificationCreatorDashboardPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCreatorDashboardPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/create-exam',
+          lazy: async () => {
+            const { CertificationCreateExamPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCreateExamPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/ai-generator',
+          lazy: async () => {
+            const { CertificationAIGeneratorPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationAIGeneratorPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/import-questions',
+          lazy: async () => {
+            const { CertificationImportQuestionsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationImportQuestionsPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/create-collection',
+          lazy: async () => {
+            const { CertificationCreateCollectionPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCreateCollectionPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/analytics',
+          lazy: async () => {
+            const { CertificationAnalyticsPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationAnalyticsPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/collection-editor/:id?',
+          lazy: async () => {
+            const { CertificationCollectionEditorPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationCollectionEditorPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/exam-builder/:id?',
+          lazy: async () => {
+            const { CertificationExamBuilderPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationExamBuilderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/exam-builder/:examId/question-builder/:questionId',
+          lazy: async () => {
+            const { CertificationQuestionBuilderPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationQuestionBuilderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
+        {
+          path: 'certification/question-builder/:id?',
+          lazy: async () => {
+            const { CertificationQuestionBuilderPage } = await import(
+              '@spark-nest-ed/feature-certification'
+            );
+            return { Component: CertificationQuestionBuilderPage };
+          },
+          hydrateFallbackElement: <LoadingFallback />,
+          errorElement: <RouteErrorBoundary />,
+        },
       ],
     },
     // Admin routes

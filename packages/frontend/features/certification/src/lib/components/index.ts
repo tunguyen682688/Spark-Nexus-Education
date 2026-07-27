@@ -32,3 +32,6 @@ export * from './BookmarkCard';
 export * from './FavoriteCard';
 export * from './DownloadItemRow';
 export * from './PurchasedCollectionCard';
+export * from './ExplanationTab';
+export * from './TagsSkillsTab';
+export * from './HistoryTab';

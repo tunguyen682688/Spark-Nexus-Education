@@ -18,3 +18,6 @@ export { CertificationBookmarksContainer } from './CertificationBookmarksContain
 export { CertificationDownloadsContainer } from './CertificationDownloadsContainer';
 export { CertificationPurchasedCollectionsContainer } from './CertificationPurchasedCollectionsContainer';
 export { CertificationCreatorDashboardContainer } from './CertificationCreatorDashboardContainer';
+export { CertificationCollectionEditorContainer } from './CertificationCollectionEditorContainer';
+export { CertificationExamBuilderContainer } from './CertificationExamBuilderContainer';
+export { CertificationQuestionBuilderContainer } from './CertificationQuestionBuilderContainer';

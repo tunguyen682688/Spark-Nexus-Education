@@ -1401,6 +1401,7 @@ model Question {
   media         QuestionMedia[]
   versions      QuestionVersion[]
   examQuestions ExamQuestion[]
+  metadata      QuestionMetadata?
 
   @@index([status])
   @@map("questions")
@@ -1467,6 +1468,30 @@ model QuestionVersion {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@map("question_versions")
+}
+
+model QuestionMetadata {
+  id             String   @id @default(uuid())
+  questionId     String   @unique @map("question_id")
+  explanation    String?  @db.Text
+  points         Int      @default(1)
+  estimatedTime  String?  @map("estimated_time") @db.VarChar(10)
+  shuffleOptions Boolean  @default(false) @map("shuffle_options")
+  referenceType  String?  @map("reference_type") @db.VarChar(50) // passage, image, external_link
+  passageSource  String?  @map("passage_source") @db.VarChar(255)
+  highlight      String?  @db.VarChar(500)
+  cognitiveLevel String?  @map("cognitive_level") @db.VarChar(50) // remember, understand, apply, analyze, evaluate, create
+  tags           String[] @default([])
+  skills         String[] @default([])
+  qualityScore   Int?     @map("quality_score")
+  qualityRating  String?  @map("quality_rating") @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_metadata")
 }
 
 // ============================================

@@ -69,6 +69,23 @@ export const ROUTES = {
     BOOKMARKS: '/certification/bookmarks',
     DOWNLOADS: '/certification/downloads',
     PURCHASED: '/certification/purchased',
+    // Creator / Builder routes
+    CREATOR_DASHBOARD: '/certification/creator-dashboard',
+    COLLECTION_EDITOR: '/certification/collection-editor/:id',
+    EXAM_BUILDER: '/certification/exam-builder/:id',
+    QUESTION_BUILDER: '/certification/question-builder/:id',
+    QUESTION_BUILDER_IN_EXAM: '/certification/exam-builder/:examId/question-builder/:questionId',
+    // Detail / Session routes
+    COLLECTION_DETAIL: '/certification/collections/:id',
+    EXAM_DETAIL: '/certification/exams/:id',
+    SESSION: '/certification/session/:id',
+    RESULT: '/certification/result/:id',
+    // Placeholder routes (under development)
+    CREATE_EXAM: '/certification/create-exam',
+    AI_GENERATOR: '/certification/ai-generator',
+    IMPORT_QUESTIONS: '/certification/import-questions',
+    CREATE_COLLECTION: '/certification/create-collection',
+    ANALYTICS: '/certification/analytics',
   },
 }
 
