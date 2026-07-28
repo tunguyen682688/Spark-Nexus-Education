@@ -117,7 +117,7 @@ export class QuestionEntity extends AggregateRoot<string> {
       deletedAt: this.deletedAt,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      version: this.version,
+      version: typeof this.version === 'bigint' ? Number(this.version) : this.version,
     };
   }
 }

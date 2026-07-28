@@ -82,7 +82,7 @@ export class ExamSessionEntity extends AggregateRoot<string> {
       status: this.status,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      version: this.version,
+      version: typeof this.version === 'bigint' ? Number(this.version) : this.version,
     };
   }
 }

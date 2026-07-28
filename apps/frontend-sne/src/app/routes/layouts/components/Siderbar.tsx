@@ -16,14 +16,6 @@ import {
   Users,
   PlayCircle,
   Award,
-  Trophy,
-  Clock,
-  Bookmark,
-  BookMarked,
-  TrendingUp,
-  FileText,
-  ShieldCheck,
-  Bot,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
@@ -36,6 +28,7 @@ interface SubMenuItem {
   label: string;
   path: string;
   badge?: string;
+  isHeader?: boolean;
 }
 
 interface MenuItem {
@@ -133,19 +126,25 @@ const menuItems: MenuItem[] = [
     path: ROUTES.CERTIFICATION.DASHBOARD,
     children: [
       { label: 'Bảng điều khiển', path: ROUTES.CERTIFICATION.DASHBOARD },
+      { label: '── Khám phá & Duyệt ──', path: '', isHeader: true },
       { label: 'Thư viện đề thi', path: ROUTES.CERTIFICATION.EXAMS },
       { label: 'Bộ sưu tập Trending', path: ROUTES.CERTIFICATION.TRENDING },
       { label: 'Bộ sưu tập Chính thức', path: ROUTES.CERTIFICATION.OFFICIAL },
       { label: 'Bộ sưu tập Cộng đồng', path: ROUTES.CERTIFICATION.COMMUNITY_COLLECTIONS },
       { label: 'Lựa chọn biên tập viên', path: ROUTES.CERTIFICATION.EDITORIAL_PICKS },
+      { label: 'Tìm kiếm đề thi', path: ROUTES.CERTIFICATION.SEARCH },
+      { label: '── Học tập & Ôn luyện ──', path: '', isHeader: true },
       { label: 'Kế hoạch học tập AI', path: ROUTES.CERTIFICATION.STUDY_PLAN },
       { label: 'Thư viện của tôi', path: ROUTES.CERTIFICATION.MY_LIBRARY, badge: 'Hot' },
       { label: 'Lịch sử luyện tập', path: ROUTES.CERTIFICATION.HISTORY },
+      { label: 'Đã hoàn thành', path: ROUTES.CERTIFICATION.COMPLETED },
+      { label: '── Mua sắm & Tải về ──', path: '', isHeader: true },
       { label: 'Bộ sưu tập đã mua', path: ROUTES.CERTIFICATION.PURCHASED },
       { label: 'Mục yêu thích', path: ROUTES.CERTIFICATION.FAVORITES },
       { label: 'Mục đánh dấu', path: ROUTES.CERTIFICATION.BOOKMARKS },
       { label: 'Tệp tải về', path: ROUTES.CERTIFICATION.DOWNLOADS },
-      { label: 'Tìm kiếm đề thi', path: ROUTES.CERTIFICATION.SEARCH },
+      { label: '── Tạo nội dung ──', path: '', isHeader: true },
+      { label: 'Bảng điều khiển Creator', path: ROUTES.CERTIFICATION.CREATOR_DASHBOARD },
     ],
   },
   // --- Tài nguyên & Học tập (Resources) ---
@@ -282,7 +281,7 @@ const Sidebar = () => {
 
   const isChildActive = (children?: SubMenuItem[]) => {
     if (!children) return false;
-    return children.some((child) => isActive(child.path));
+    return children.some((child) => !child.isHeader && isActive(child.path));
   };
 
   // Auto-expand menu if any child is active
@@ -290,7 +289,7 @@ const Sidebar = () => {
     const newExpanded = new Set<string>();
     menuItems.forEach((item) => {
       if (item.children) {
-        const hasActiveChild = item.children.some((child) => isActive(child.path));
+        const hasActiveChild = item.children.some((child) => !child.isHeader && isActive(child.path));
         if (hasActiveChild) {
           newExpanded.add(item.label);
         }
@@ -358,6 +357,16 @@ const Sidebar = () => {
               {hasChildren && item.children ? (
                 <div className="space-y-0.5 px-1.5">
                   {item.children.map((child, childIdx) => {
+                    if (child.isHeader) {
+                      return (
+                        <div
+                          key={childIdx}
+                          className="px-2.5 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                        >
+                          {child.label}
+                        </div>
+                      );
+                    }
                     const childActive = isActive(child.path);
                     return (
                       <button
@@ -450,6 +459,16 @@ const Sidebar = () => {
           <CollapsibleContent>
             <div className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-4">
               {item.children?.map((child, childIndex) => {
+                if (child.isHeader) {
+                  return (
+                    <div
+                      key={childIndex}
+                      className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40"
+                    >
+                      {child.label}
+                    </div>
+                  );
+                }
                 const childActive = isActive(child.path);
                 return (
                   <button

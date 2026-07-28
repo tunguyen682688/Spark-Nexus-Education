@@ -159,7 +159,7 @@ export function useBookmarksContainerLogic() {
       alert('Chưa có câu hỏi nào trong danh sách Bookmark để làm bài ôn tập!');
       return;
     }
-    navigate(`/certification/exams/revision-quiz`);
+    navigate('/certification/study-plan');
   };
 
   const handleBackToLearning = () => {

@@ -65,7 +65,7 @@ export function usePracticeHistoryContainerLogic() {
   }, [sessions, selectedTypeFilter, activeCategoryTab, searchQuery]);
 
   const handleViewScorecard = (resultId: string) => {
-    navigate(`/certification/results/${resultId}`);
+    navigate(`/certification/result/${resultId}`);
   };
 
   const handleRetakeTest = (id: string, e: React.MouseEvent) => {

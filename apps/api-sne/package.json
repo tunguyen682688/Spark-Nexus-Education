@@ -53,7 +53,7 @@
         "options": {
           "commands": [
             "nx build api-sne --configuration=development",
-            "nx run-node api-sne"
+            "nx run api-sne:run-node"
           ],
           "parallel": false
         }

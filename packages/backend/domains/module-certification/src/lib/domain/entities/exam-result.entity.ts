@@ -70,7 +70,7 @@ export class ExamResultEntity extends AggregateRoot<string> {
       passed: this.passed,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      version: this.version,
+      version: typeof this.version === 'bigint' ? Number(this.version) : this.version,
     };
   }
 }

@@ -53,6 +53,7 @@ export const ROUTES = {
     STUDY_PLAN: '/certification/study-plan',
     PROGRESS: '/certification/progress',
     WRONG_NOTEBOOK: '/certification/wrong-notebook',
+    WEAK_AREAS: '/certification/weak-areas',
     COMMUNITY_COLLECTIONS: '/certification/community-collections',
     EDITORIAL_PICKS: '/certification/editorial-picks',
     AI_RECOMMENDATIONS: '/certification/ai-recommendations',

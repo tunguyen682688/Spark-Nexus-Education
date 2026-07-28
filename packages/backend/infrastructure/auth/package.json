@@ -19,6 +19,7 @@
   ],
   "nx": {
     "name": "infrastructure-auth",
+    "tags": ["backend"],
     "targets": {
       "build": {
         "executor": "@nx/js:tsc",

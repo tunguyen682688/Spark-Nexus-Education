@@ -119,8 +119,7 @@ export class CollectionEntity extends AggregateRoot<string> {
       deletedAt: this.deletedAt,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      version: this.version,
-      examCount: this.examCount,
+      version: typeof this.version === 'bigint' ? Number(this.version) : this.version,
       itemCount: this.itemCount,
     };
   }

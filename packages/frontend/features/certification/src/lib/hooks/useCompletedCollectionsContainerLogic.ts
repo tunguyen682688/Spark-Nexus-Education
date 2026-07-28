@@ -174,7 +174,7 @@ export function useCompletedCollectionsContainerLogic() {
 
   const handleViewAnalytics = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/certification/results/${id}`);
+    navigate(`/certification/result/${id}`);
   };
 
   const handleBackToLearning = () => {

@@ -15,7 +15,8 @@
     }
   },
   "nx": {
-    "name": "module-certification"
+    "name": "module-certification",
+    "tags": ["backend"]
   },
   "dependencies": {
     "tslib": "^2.3.0",

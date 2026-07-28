@@ -37,7 +37,6 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@nestjs/common": "^11.0.0",
-    "@nestjs/testing": "^11.0.0",
     "@spark-nest-ed/infrastructure-database": "0.0.1",
     "@spark-nest-ed/infrastructure-auth": "0.0.1",
     "@prisma/client": "^6.19.0",
@@ -48,5 +47,8 @@
     "uuid": "11.1.0",
     "@spark-nest-ed/shared-libs": "0.0.1",
     "express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.0.0"
   }
 }

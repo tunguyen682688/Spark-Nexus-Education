@@ -32,6 +32,7 @@ export class GetCollectionItemsQueryHandler
     }));
 
     return {
+      id: query.collectionId,
       collectionId: query.collectionId,
       totalItems: exams.length,
       itemsList,
