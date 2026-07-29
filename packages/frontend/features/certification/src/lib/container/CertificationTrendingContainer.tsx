@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTrendingContainerLogic } from '../hooks/useTrendingContainerLogic';
 import { TrendingCollectionCard } from '../components/TrendingCollectionCard';
 import { TrendingLeaderboardCard } from '../components/TrendingLeaderboardCard';
@@ -16,9 +15,9 @@ interface CertificationTrendingContainerProps {
   onStartExam?: (examId: string) => void;
 }
 
-export const CertificationTrendingContainer: React.FC<
+export const CertificationTrendingContainer = ({ onStartExam }: 
   CertificationTrendingContainerProps
-> = ({ onStartExam }) => {
+) => {
   const {
     selectedExamCategory,
     selectedDifficultyLevel,

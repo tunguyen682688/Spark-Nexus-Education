@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Bookmark,
   ChevronDown,
@@ -31,7 +30,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationBookmarksContainer: React.FC = () => {
+export const CertificationBookmarksContainer = () => {
   const {
     isApiLoading,
     isError,

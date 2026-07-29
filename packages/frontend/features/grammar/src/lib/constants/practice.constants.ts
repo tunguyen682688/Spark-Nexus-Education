@@ -118,6 +118,8 @@ export const practiceConstants = {
     awardDesc: 'Độ thông thạo đạt **{proficiency}%**. Thành tích ôn luyện đã được lưu vết tiến độ.',
     xpBonus: 'XP Cộng thêm',
     lessonState: 'Trạng Thái bài học',
+    masteredState: 'Đã Làm Chủ',
+    needsReviewState: 'Cần Ôn Tập',
     diagnosticLabel: '💡 Phân Tích Năng Lực & Đề Xuất Ôn Tập',
     diagnosticDesc: 'Hệ thống phân tích bạn cần củng cố thêm về: {skills}. Hãy xem lại lý thuyết của các bài liên quan trên lộ trình!',
     perfectLabel: '✨ Làm Chủ Ngữ Pháp Tuyệt Đối!',

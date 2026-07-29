@@ -1,4 +1,3 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { CertificationCollectionDetailContainer } from '../container/CollectionDetail/CertificationCollectionDetailContainer';
 
@@ -7,9 +6,9 @@ interface CertificationCollectionDetailPageProps {
   onStartLearning?: (examId: string) => void;
 }
 
-export const CertificationCollectionDetailPage: React.FC<
+export const CertificationCollectionDetailPage = ({ collectionId, onStartLearning }: 
   CertificationCollectionDetailPageProps
-> = ({ collectionId, onStartLearning }) => {
+) => {
   const params = useParams<{ id: string }>();
   const activeId = collectionId || params.id || 'c1';
 

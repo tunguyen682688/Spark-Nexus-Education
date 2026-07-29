@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Star,
   Download,
@@ -22,9 +21,9 @@ interface CollectionDetailHeroProps {
   collection: CollectionViewModel;
 }
 
-export const CollectionDetailHero: React.FC<CollectionDetailHeroProps> = ({
+export const CollectionDetailHero = ({
   collection,
-}) => {
+}: CollectionDetailHeroProps) => {
   return (
     <div className="space-y-6">
       {/* Breadcrumb & Top Actions */}

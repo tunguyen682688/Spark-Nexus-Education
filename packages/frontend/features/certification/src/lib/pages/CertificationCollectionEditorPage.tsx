@@ -1,6 +1,5 @@
-import React from 'react';
-import { CertificationCollectionEditorContainer } from '../container/CertificationCollectionEditorContainer';
+import { CertificationCollectionEditorContainer } from '../container/CollectionEditor/CertificationCollectionEditorContainer';
 
-export const CertificationCollectionEditorPage: React.FC = () => {
+export const CertificationCollectionEditorPage = () => {
   return <CertificationCollectionEditorContainer />;
 };

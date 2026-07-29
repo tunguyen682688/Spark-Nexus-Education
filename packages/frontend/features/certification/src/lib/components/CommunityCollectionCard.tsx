@@ -1,4 +1,3 @@
-import React from 'react';
 import { Star, Users, Clock, Heart, Bookmark, Play, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import type { ExamCollection } from '../types';
@@ -11,13 +10,13 @@ interface CommunityCollectionCardProps {
   isBookmarked?: boolean;
 }
 
-export const CommunityCollectionCard: React.FC<CommunityCollectionCardProps> = ({ 
+export const CommunityCollectionCard = ({ 
   item,
   onStart,
   isStarting = false,
   onBookmark,
   isBookmarked = false,
-}) => {
+}: CommunityCollectionCardProps) => {
   return (
     <Card className="border-border hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between group h-full">
       {/* Image top with badges */}

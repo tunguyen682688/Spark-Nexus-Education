@@ -1,4 +1,3 @@
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 
@@ -10,13 +9,13 @@ interface PaginationProps {
   pageSize?: number;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
+export const Pagination = ({
   currentPage,
   totalPages,
   onPageChange,
   totalItems,
   pageSize
-}) => {
+}: PaginationProps) => {
   if (totalPages <= 1) return null;
 
   const startItem = totalItems && pageSize ? (currentPage - 1) * pageSize + 1 : undefined;

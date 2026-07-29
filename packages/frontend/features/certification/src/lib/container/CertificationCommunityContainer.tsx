@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCommunityContainerLogic } from '../hooks/useCommunityContainerLogic';
 import { CommunityStatsHeaderCard } from '../components/CommunityStatsHeaderCard';
 import { CommunityFilterBar } from '../components/CommunityFilterBar';
@@ -13,9 +12,9 @@ interface CertificationCommunityContainerProps {
   onStartExam?: (examId: string) => void;
 }
 
-export const CertificationCommunityContainer: React.FC<
+export const CertificationCommunityContainer = ({ onStartExam }: 
   CertificationCommunityContainerProps
-> = ({ onStartExam }) => {
+) => {
   const {
     selectedCommunitySortFilter,
     selectedExamCategory,

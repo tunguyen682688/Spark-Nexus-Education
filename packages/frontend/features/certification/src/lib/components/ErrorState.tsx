@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button, Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
@@ -9,11 +8,11 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-export const ErrorState: React.FC<ErrorStateProps> = ({ 
+export const ErrorState = ({ 
   title = CERTIFICATION_UI_TEXT.error.title,
   message = CERTIFICATION_UI_TEXT.error.defaultMessage,
   onRetry 
-}) => {
+}: ErrorStateProps) => {
   return (
     <Card className="border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/10 p-6 rounded-2xl my-6">
       <CardContent className="flex flex-col items-center justify-center text-center space-y-4 py-6">

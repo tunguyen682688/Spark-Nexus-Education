@@ -1,6 +1,7 @@
 export * from './LoadingSkeleton';
 export * from './ErrorState';
 export * from './Pagination';
+export * from './CertificateModal';
 export * from './DashboardHeroBanner';
 export * from './DashboardStatsGrid';
 export * from './DashboardPopularExamsPills';

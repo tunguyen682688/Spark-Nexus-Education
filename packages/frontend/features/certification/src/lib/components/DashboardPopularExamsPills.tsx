@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Card,
   CardContent,
@@ -17,9 +16,9 @@ interface DashboardPopularExamsPillsProps {
   onSelectExamType: (type: string) => void;
 }
 
-export const DashboardPopularExamsPills: React.FC<
+export const DashboardPopularExamsPills = ({ selectedExamType, onSelectExamType }: 
   DashboardPopularExamsPillsProps
-> = ({ selectedExamType, onSelectExamType }) => {
+) => {
   return (
     <Card className="border-border">
       <CardHeader className="flex flex-row items-center justify-between pb-2">

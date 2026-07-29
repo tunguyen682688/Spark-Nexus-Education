@@ -1,4 +1,3 @@
-import React from 'react';
 import { Clock } from 'lucide-react';
 import {
   Card,
@@ -15,7 +14,7 @@ import { CardSkeleton, ListSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationDashboardContainer: React.FC = () => {
+export const CertificationDashboardContainer = () => {
   const {
     selectedExamType,
     setSelectedExamType,

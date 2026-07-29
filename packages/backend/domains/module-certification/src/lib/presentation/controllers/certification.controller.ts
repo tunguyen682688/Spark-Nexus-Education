@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
   Inject,
+  NotFoundException,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
@@ -29,6 +30,9 @@ import {
 
 import {
   GetCertificationDashboardQuery,
+  GetCreatorDashboardQuery,
+  GetCollectionEditorQuery,
+  GetExamBuilderQuery,
   GetFeaturedCollectionsQuery,
   GetTrendingCollectionsQuery,
   GetOfficialCollectionsQuery,
@@ -42,6 +46,15 @@ import {
   GetExamResultQuery,
   GetQuestionBuilderQuery,
   GetQuestionHistoryQuery,
+  GetFavoritesQuery,
+  GetBookmarksQuery,
+  GetDownloadsQuery,
+  GetPurchasedCollectionsQuery,
+  GetCompletedCollectionsQuery,
+  GetPracticeHistoryQuery,
+  GetSavedCollectionsQuery,
+  GetCollectionReviewsQuery,
+  GetCollectionDiscussionsQuery,
 } from '../../application/queries';
 
 import { StartExamSessionDto } from '../../application/dtos/start-exam-session.dto';
@@ -51,6 +64,10 @@ import { CreateCollectionReviewDto } from '../../application/dtos/create-collect
 import { CreateCollectionDiscussionDto } from '../../application/dtos/create-collection-discussion.dto';
 import { ReportCollectionDto } from '../../application/dtos/report-collection.dto';
 import { SaveQuestionDto } from '../../application/dtos/save-question.dto';
+import { CreateCollectionDto } from '../../application/dtos/create-collection.dto';
+import { UpdateCollectionDto } from '../../application/dtos/update-collection.dto';
+import { CreateExamDto } from '../../application/dtos/create-exam.dto';
+import { UpdateExamDto } from '../../application/dtos/update-exam.dto';
 import { FeaturedCollectionsQueryDto } from '../../application/dtos/certification-query-params.dto';
 import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
 
@@ -59,11 +76,26 @@ import {
   SaveSessionAnswerCommand,
   RecordSessionViolationCommand,
   SubmitExamSessionCommand,
+  CreateCollectionCommand,
+  UpdateCollectionCommand,
+  DeleteCollectionCommand,
+  CreateExamCommand,
+  UpdateExamCommand,
+  DeleteExamCommand,
   SaveCollectionCommand,
   CloneCollectionCommand,
-  ReportCollectionCommand,
   SaveQuestionCommand,
   DeleteQuestionCommand,
+  AddFavoriteCommand,
+  RemoveFavoriteCommand,
+  AddBookmarkCommand,
+  RemoveBookmarkCommand,
+  DeleteDownloadCommand,
+  ClearDownloadsCommand,
+  SaveReportCommand,
+  AddCollectionReviewCommand,
+  AddCollectionDiscussionCommand,
+  SyncChaptersCommand,
 } from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
@@ -86,7 +118,6 @@ export class CertificationController {
    */
   private mapCollectionToResponse(
     collection: CollectionEntity,
-    _index = 0,
     defaultTag?: string
   ): CertificationCollectionResponseDto {
     const title = collection.getTitle();
@@ -218,153 +249,7 @@ export class CertificationController {
       return cached;
     }
 
-    const data = {
-      id: `creator-${user.id}`,
-      creatorName: user.name || user.email || 'Minh Anh',
-      role: 'Creator',
-      metrics: {
-        totalExams: 23,
-        totalExamsWeeklyChange: '+3 this week',
-        totalQuestions: 1248,
-        totalQuestionsWeeklyChange: '+86 this week',
-        totalAttempts: 12856,
-        totalAttemptsWeeklyChange: '+1,234 this week',
-        averageScore: '72.6%',
-        averageScoreWeeklyChange: '+4.8% vs last week',
-        likesReceived: 532,
-        likesReceivedWeeklyChange: '+48 this week',
-      },
-      performanceChart: {
-        timeframe: 'Last 7 Days',
-        dates: ['May 10', 'May 11', 'May 12', 'May 13', 'May 14', 'May 15', 'May 16'],
-        attempts: [1234, 1564, 1876, 2034, 1812, 2146, 2190],
-        averageScores: [70.2, 71.5, 72.0, 72.8, 71.9, 73.1, 72.6],
-        likes: [45, 62, 78, 85, 70, 92, 100],
-        revenue: [40, 65, 80, 110, 75, 125, 130],
-      },
-      recentActivity: [
-        {
-          id: 'act-1',
-          type: 'publish',
-          title: 'You published "TOEIC Full Test 10 (2024)"',
-          timestamp: 'May 16, 2024 10:15 AM',
-          iconType: 'check',
-          iconBgClass: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-        },
-        {
-          id: 'act-2',
-          type: 'update',
-          title: 'You updated 15 questions in "Part 7: Reading"',
-          timestamp: 'May 15, 2024 03:42 PM',
-          iconType: 'document',
-          iconBgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400',
-        },
-        {
-          id: 'act-3',
-          type: 'like',
-          title: 'Your exam "Daily Grammar Quiz #12" got 48 likes',
-          timestamp: 'May 15, 2024 11:20 AM',
-          iconType: 'star',
-          iconBgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-        },
-        {
-          id: 'act-4',
-          type: 'comment',
-          title: 'New comment on "Business Vocabulary Set 3"',
-          timestamp: 'May 14, 2024 09:18 PM',
-          iconType: 'comment',
-          iconBgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
-        },
-        {
-          id: 'act-5',
-          type: 'like',
-          title: 'Your exam "Listening Practice Set 5" got 32 likes',
-          timestamp: 'May 14, 2024 04:05 PM',
-          iconType: 'heart',
-          iconBgClass: 'bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400',
-        },
-      ],
-      topExams: [
-        {
-          rank: 1,
-          id: 'toeic-10',
-          title: 'TOEIC Full Test 10 (2024)',
-          category: 'Full Test',
-          categoryBadge: 'TOEIC',
-          categoryBadgeClass: 'bg-blue-600 text-white',
-          attempts: 2934,
-          avgScore: '78.4%',
-          likes: 128,
-        },
-        {
-          rank: 2,
-          id: 'reading-7',
-          title: 'Reading Practice Set 7',
-          category: 'Reading',
-          categoryBadge: 'READING',
-          categoryBadgeClass: 'bg-teal-600 text-white',
-          attempts: 1987,
-          avgScore: '71.2%',
-          likes: 96,
-        },
-        {
-          rank: 3,
-          id: 'listening-5',
-          title: 'Listening Practice Set 5',
-          category: 'Listening',
-          categoryBadge: 'LISTENING',
-          categoryBadgeClass: 'bg-indigo-600 text-white',
-          attempts: 1652,
-          avgScore: '69.1%',
-          likes: 84,
-        },
-        {
-          rank: 4,
-          id: 'grammar-3',
-          title: 'Grammar Quiz - Advanced #3',
-          category: 'Grammar',
-          categoryBadge: 'GRAMMAR',
-          categoryBadgeClass: 'bg-emerald-600 text-white',
-          attempts: 1243,
-          avgScore: '74.8%',
-          likes: 67,
-        },
-        {
-          rank: 5,
-          id: 'vocab-3',
-          title: 'Business Vocabulary Set 3',
-          category: 'Vocabulary',
-          categoryBadge: 'VOCAB',
-          categoryBadgeClass: 'bg-rose-600 text-white',
-          attempts: 1102,
-          avgScore: '68.3%',
-          likes: 55,
-        },
-      ],
-      revenue: {
-        totalRevenue: '$452.60',
-        revenueGrowth: '+12.6% vs last month',
-        payoutBalance: '$186.30',
-        dailyData: [
-          { day: 'May 1', amount: 20 },
-          { day: 'May 2', amount: 45 },
-          { day: 'May 3', amount: 35 },
-          { day: 'May 4', amount: 60 },
-          { day: 'May 5', amount: 40 },
-          { day: 'May 6', amount: 75 },
-          { day: 'May 7', amount: 50 },
-          { day: 'May 8', amount: 90 },
-          { day: 'May 9', amount: 110 },
-          { day: 'May 10', amount: 65 },
-          { day: 'May 11', amount: 70 },
-          { day: 'May 12', amount: 85 },
-          { day: 'May 13', amount: 40 },
-          { day: 'May 14', amount: 95 },
-          { day: 'May 15', amount: 120 },
-          { day: 'May 16', amount: 105 },
-        ],
-      },
-    };
+    const data = await this.queryBus.execute(new GetCreatorDashboardQuery(user.id));
 
     const response = convertEntityToJsonApi(
       data,
@@ -397,115 +282,7 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const data = {
-      id: id || 'toeic-mastery-collection',
-      status: 'Draft',
-      lastAutosaved: '2m ago',
-      details: {
-        title: 'TOEIC Mastery Collection',
-        subtitle: 'Comprehensive practice to master all TOEIC skills',
-        description:
-          'A complete collection of TOEIC practice tests covering all parts and skill levels. Perfect for learners who want to improve step by step and achieve a high score.',
-        level: 'Beginner to Advanced',
-        tags: ['TOEIC', 'Practice', 'Listening', 'Reading'],
-        visibility: 'Public',
-        allowDownloads: true,
-        coverImage:
-          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
-        createdDate: 'May 10, 2024 10:15 AM',
-        lastUpdatedDate: 'May 16, 2024 02:45 PM',
-      },
-      chapters: [
-        {
-          id: 'chap-1',
-          number: 1,
-          title: 'Part 1: Getting Started',
-          description:
-            'Build a strong foundation with essential topics and easy-to-medium level exams.',
-          examCount: 3,
-          exams: [
-            {
-              id: 'exam-1',
-              number: 1,
-              title: 'TOEIC Practice Test 1',
-              subTitle: 'Basic Concepts',
-              questionsCount: 60,
-              durationMinutes: 60,
-              difficulty: 'Easy',
-              status: 'Published',
-              iconType: 'toeic',
-            },
-            {
-              id: 'exam-2',
-              number: 2,
-              title: 'TOEIC Practice Test 2',
-              subTitle: 'Daily Training',
-              questionsCount: 60,
-              durationMinutes: 60,
-              difficulty: 'Easy',
-              status: 'Published',
-              iconType: 'toeic',
-            },
-            {
-              id: 'exam-3',
-              number: 3,
-              title: 'TOEIC Practice Test 3',
-              subTitle: 'Vocabulary Focus',
-              questionsCount: 60,
-              durationMinutes: 60,
-              difficulty: 'Medium',
-              status: 'Draft',
-              iconType: 'toeic',
-            },
-          ],
-        },
-        {
-          id: 'chap-2',
-          number: 2,
-          title: 'Part 2: Building Skills',
-          description:
-            'Enhance your test-taking strategies with targeted skill-building tests.',
-          examCount: 4,
-          exams: [],
-        },
-        {
-          id: 'chap-3',
-          number: 3,
-          title: 'Part 3: Improving Accuracy',
-          description: 'Master tough question patterns and avoid common traps.',
-          examCount: 4,
-          exams: [],
-        },
-        {
-          id: 'chap-4',
-          number: 4,
-          title: 'Part 4: Advanced Practice',
-          description: 'Simulate high-pressure exam environments.',
-          examCount: 5,
-          exams: [],
-        },
-        {
-          id: 'chap-5',
-          number: 5,
-          title: 'Full Length Tests',
-          description: 'Full 2-hour 200 question mock examinations.',
-          examCount: 6,
-          exams: [],
-        },
-      ],
-      summary: {
-        totalChapters: 5,
-        totalExams: 22,
-        totalQuestions: 1320,
-        estimatedDurationHours: 22,
-        estimatedDurationMinutes: 0,
-        difficultyMix: {
-          easy: 45,
-          medium: 40,
-          hard: 15,
-        },
-      },
-    };
+    const data = await this.queryBus.execute(new GetCollectionEditorQuery(id, user.id));
 
     return convertEntityToJsonApi(data, 'collection-editor', {
       selfLink: getSelfLinkFromRequest(req, `collections/${id}/editor`),
@@ -531,134 +308,7 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const data = {
-      id: id || 'toeic-practice-test-1',
-      status: 'Draft',
-      lastAutosaved: 'All changes saved',
-      settings: {
-        title: 'TOEIC Practice Test 1',
-        description:
-          'A full-length TOEIC practice test for learners aiming to improve their listening, reading, speaking and writing skills.',
-        level: 'Intermediate',
-        language: 'English',
-        passingScore: 550,
-        maxScore: 990,
-        createdDate: 'May 10, 2024 10:15 AM',
-        lastUpdatedDate: 'May 16, 2024 02:45 PM',
-      },
-      sections: [
-        {
-          id: 'sec-1',
-          number: 1,
-          title: 'Listening',
-          subtitle: 'Part 1 - 4',
-          questionCount: 100,
-          durationMinutes: 45,
-          isBreak: false,
-          questions: [
-            {
-              id: 'q-1',
-              number: 1,
-              title: 'Look at the picture and choose the best description.',
-              partTag: 'Part 1',
-              type: 'Single Choice',
-              difficulty: 'Easy',
-              points: 1,
-              imageUrl:
-                'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop',
-            },
-            {
-              id: 'q-2',
-              number: 2,
-              title: 'Listen and choose the correct response.',
-              partTag: 'Part 2',
-              type: 'Single Choice',
-              difficulty: 'Easy',
-              points: 1,
-              imageUrl:
-                'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=150&auto=format&fit=crop',
-            },
-            {
-              id: 'q-3',
-              number: 3,
-              title: 'Listen to the conversation. What is the man asking about?',
-              partTag: 'Part 3',
-              type: 'Multiple Choice',
-              difficulty: 'Medium',
-              points: 1,
-              imageUrl:
-                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop',
-            },
-            {
-              id: 'q-4',
-              number: 4,
-              title: 'Listen to the talk. What is the purpose of the talk?',
-              partTag: 'Part 4',
-              type: 'Multiple Choice',
-              difficulty: 'Medium',
-              points: 1,
-              imageUrl:
-                'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=150&auto=format&fit=crop',
-            },
-            {
-              id: 'q-5',
-              number: 5,
-              title: 'Which word is closest in meaning to "essential"?',
-              partTag: 'Part 5',
-              type: 'Single Choice',
-              difficulty: 'Hard',
-              points: 1,
-              imageUrl: null,
-            },
-          ],
-        },
-        {
-          id: 'sec-2',
-          number: 2,
-          title: 'Reading',
-          subtitle: 'Part 5 - 6',
-          questionCount: 100,
-          durationMinutes: 75,
-          isBreak: false,
-          questions: [],
-        },
-        {
-          id: 'sec-3',
-          number: 3,
-          title: 'Break',
-          subtitle: '10 minutes',
-          questionCount: 0,
-          durationMinutes: 10,
-          isBreak: true,
-          questions: [],
-        },
-        {
-          id: 'sec-4',
-          number: 4,
-          title: 'Speaking',
-          subtitle: 'Part 1 - 7',
-          questionCount: 11,
-          durationMinutes: 20,
-          isBreak: false,
-          questions: [],
-        },
-        {
-          id: 'sec-5',
-          number: 5,
-          title: 'Writing',
-          subtitle: 'Part 1 - 2',
-          questionCount: 9,
-          durationMinutes: 35,
-          isBreak: false,
-          questions: [],
-        },
-      ],
-      blueprint: {
-        totalQuestions: 220,
-        totalTimeMinutes: 135,
-        totalPoints: 220,
-      },
-    };
+    const data = await this.queryBus.execute(new GetExamBuilderQuery(id, user.id));
 
     return convertEntityToJsonApi(data, 'exam-builder', {
       selfLink: getSelfLinkFromRequest(req, `exams/${id}/builder`),
@@ -820,8 +470,8 @@ export class CertificationController {
     );
 
     const mappedItems = result.items.map(
-      (collection: CollectionEntity, idx: number) =>
-        this.mapCollectionToResponse(collection, idx, 'Featured')
+      (collection: CollectionEntity) =>
+        this.mapCollectionToResponse(collection, 'Featured')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -877,8 +527,8 @@ export class CertificationController {
     );
 
     const mappedItems = result.items.map(
-      (collection: CollectionEntity, index: number) =>
-        this.mapCollectionToResponse(collection, index, 'Trending')
+      (collection: CollectionEntity) =>
+        this.mapCollectionToResponse(collection, 'Trending')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -933,8 +583,8 @@ export class CertificationController {
     );
 
     const mappedItems = result.items.map(
-      (collection: CollectionEntity, idx: number) =>
-        this.mapCollectionToResponse(collection, idx, 'Official')
+      (collection: CollectionEntity) =>
+        this.mapCollectionToResponse(collection, 'Official')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -990,8 +640,8 @@ export class CertificationController {
     );
 
     const mappedItems = result.items.map(
-      (collection: CollectionEntity, idx: number) =>
-        this.mapCollectionToResponse(collection, idx, 'Community')
+      (collection: CollectionEntity) =>
+        this.mapCollectionToResponse(collection, 'Community')
     );
 
     const response = createJsonApiPaginatedResponse(
@@ -1083,6 +733,226 @@ export class CertificationController {
     );
 
     await this.cacheService.set(cacheKey, response, 1800); // 30 mins cache
+    return response;
+  }
+
+  @Get('collections/saved')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get bookmarked/saved collections for current user',
+  })
+  @ApiJsonApiSuccessResponse({
+    description: 'Saved collections retrieved successfully',
+    resourceType: 'certification-collections',
+  })
+  async getSavedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:saved:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(
+      cacheKey
+    );
+    if (cached) {
+      return cached;
+    }
+
+    const result = await this.queryBus.execute(
+      new GetSavedCollectionsQuery(user.id)
+    ) as { items: Array<Record<string, unknown>>; total: number };
+
+    const mappedItems = (result.items || []).map((item) => {
+      const title = String(item.title || '');
+      const upperTitle = title.toUpperCase();
+      let exam = 'IELTS';
+      if (upperTitle.includes('TOEIC')) exam = 'TOEIC';
+      else if (upperTitle.includes('TOEFL')) exam = 'TOEFL';
+      else if (upperTitle.includes('CAMBRIDGE') || upperTitle.includes('CAE')) exam = 'Cambridge';
+      else if (upperTitle.includes('VSTEP')) exam = 'VSTEP';
+      else if (upperTitle.includes('SAT')) exam = 'SAT';
+
+      let level = 'Intermediate';
+      if (upperTitle.includes('900+') || upperTitle.includes('ADVANCED') || upperTitle.includes('C1') || upperTitle.includes('C2')) {
+        level = 'Advanced';
+      } else if (upperTitle.includes('B2') || upperTitle.includes('UPPER')) {
+        level = 'Upper-Intermediate';
+      } else if (upperTitle.includes('BEGINNER') || upperTitle.includes('BASIC') || upperTitle.includes('DRILL')) {
+        level = 'Beginner';
+      }
+
+      return {
+        ...item,
+        exam,
+        level,
+        author: 'Bạn',
+        tags: [exam, level],
+      };
+    });
+
+    const response = convertEntityToJsonApi(
+      { id: `saved-${user.id}`, items: mappedItems, total: result.total },
+      'certification-collections',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/saved'),
+        message: 'Saved collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/cloned')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get cloned collections for authenticated user' })
+  async getClonedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:cloned:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.repository.findClonedCollectionsByUserId(user.id);
+
+    const items = (result || []).map((col) => ({
+      id: col.id,
+      title: col.title,
+      description: col.description || '',
+      ownerId: col.ownerId,
+      publishStatus: col.publishStatus,
+      createdAt: col.createdAt,
+      examCount: col.examCount,
+      itemCount: col.itemCount,
+    }));
+
+    const response = convertEntityToJsonApi(
+      { id: `cloned-${user.id}`, userId: user.id, totalCloned: items.length, items },
+      'certification-collections-cloned',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/cloned'),
+        message: 'Cloned collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/completed')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get completed collections for authenticated user',
+  })
+  async getCompletedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:completed:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.queryBus.execute(new GetCompletedCollectionsQuery(user.id)) as Array<Record<string, unknown>>;
+
+    const items = (result || []).map((item) => {
+      const collection = item.collection as Record<string, unknown> | null;
+      const exam = item.exam as Record<string, unknown> | null;
+      const examResult = item.result as Record<string, unknown> | null;
+      const title = collection ? String(collection.title || '') : 'Unknown';
+      const upperTitle = title.toUpperCase();
+
+      let category = 'General';
+      if (upperTitle.includes('IELTS')) category = 'IELTS';
+      else if (upperTitle.includes('TOEIC')) category = 'TOEIC';
+      else if (upperTitle.includes('TOEFL')) category = 'TOEFL';
+      else if (upperTitle.includes('CAMBRIDGE') || upperTitle.includes('CAE')) category = 'Cambridge';
+
+      let examType = 'Full Mock';
+      if (upperTitle.includes('MINI')) examType = 'Mini Test';
+      else if (upperTitle.includes('SECTION')) examType = 'Section Practice';
+
+      const totalScore = examResult ? Number(examResult.totalScore || 0) : 0;
+
+      return {
+        id: String(item.collectionId || ''),
+        title,
+        category,
+        examType,
+        completedDate: examResult?.createdAt
+          ? new Date(String(examResult.createdAt)).toLocaleDateString('vi-VN')
+          : '',
+        scoreText: `${totalScore} điểm`,
+        totalItems: exam ? Number((exam as Record<string, unknown>).totalQuestions || 0) : 0,
+        certificateEligible: Boolean(examResult?.passed),
+      };
+    });
+
+    const response = convertEntityToJsonApi(
+      { id: `completed-${user.id}`, userId: user.id, totalCompleted: items.length, items },
+      'certification-collections-completed',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/completed'),
+        message: 'Completed collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/purchased')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get purchased premium collections for authenticated user',
+  })
+  async getPurchasedCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:purchased:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.queryBus.execute(
+      new GetPurchasedCollectionsQuery(user.id)
+    ) as Array<Record<string, unknown>>;
+
+    const items = (result || []).map((purchase) => {
+      const collection = purchase.collection as Record<string, unknown> | null;
+      const title = collection ? String(collection.title || '') : 'Unknown';
+      const upperTitle = title.toUpperCase();
+      let exam = 'IELTS';
+      if (upperTitle.includes('TOEIC')) exam = 'TOEIC';
+      else if (upperTitle.includes('TOEFL')) exam = 'TOEFL';
+      else if (upperTitle.includes('CAMBRIDGE') || upperTitle.includes('CAE')) exam = 'Cambridge';
+      else if (upperTitle.includes('VSTEP')) exam = 'VSTEP';
+      else if (upperTitle.includes('SAT')) exam = 'SAT';
+
+      return {
+        id: String(purchase.id || ''),
+        collectionId: String(purchase.collectionId || ''),
+        title,
+        exam,
+        purchasedAt: purchase.purchasedAt ? new Date(String(purchase.purchasedAt)).toLocaleDateString('vi-VN') : '',
+        price: Number(purchase.amount || 0),
+      };
+    });
+
+    const response = convertEntityToJsonApi(
+      { id: `purchased-${user.id}`, userId: user.id, totalPurchased: items.length, items },
+      'certification-collections-purchased',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/purchased'),
+        message: 'Purchased collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
     return response;
   }
 
@@ -1208,21 +1078,12 @@ export class CertificationController {
     @Param('id') id: string,
     @Req() req: express.Request
   ) {
-    const cacheKey = `certification:collections:${id}:reviews`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
+    const result = await this.queryBus.execute(
+      new GetCollectionReviewsQuery(id)
     );
-    if (cached) {
-      return cached;
-    }
 
-    const storedReviews =
-      (await this.cacheService.get<Array<Record<string, unknown>>>(
-        `certification:reviews_store:${id}`
-      )) || [];
-
-    const response = convertEntityToJsonApi(
-      { id: `${id}-reviews`, reviews: storedReviews },
+    return convertEntityToJsonApi(
+      { id: `${id}-reviews`, items: result.items, avgRating: result.avgRating },
       'certification-collection-reviews',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
@@ -1230,9 +1091,6 @@ export class CertificationController {
         version: '1.0.0',
       }
     );
-
-    await this.cacheService.set(cacheKey, response, 300);
-    return response;
   }
 
   @Post('collections/:id/reviews')
@@ -1255,27 +1113,12 @@ export class CertificationController {
     @Body() dto: CreateCollectionReviewDto,
     @Req() req: express.Request
   ) {
-    const storeKey = `certification:reviews_store:${id}`;
-    const existing =
-      (await this.cacheService.get<Array<Record<string, unknown>>>(storeKey)) ||
-      [];
-
-    const newReview = {
-      id: `rev-${Date.now()}`,
-      collectionId: id,
-      userId: user.id,
-      author: user.name || user.email || 'Learner',
-      rating: dto.rating,
-      text: dto.text,
-      date: 'Just now',
-    };
-
-    existing.unshift(newReview);
-    await this.cacheService.set(storeKey, existing, 86400 * 30);
-    await this.cacheService.delete(`certification:collections:${id}:reviews`);
+    const result = await this.commandBus.execute(
+      new AddCollectionReviewCommand(id, user.id, dto.rating, dto.text)
+    );
 
     return convertEntityToJsonApi(
-      newReview,
+      result,
       'certification-collection-review',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/reviews`),
@@ -1299,21 +1142,12 @@ export class CertificationController {
     @Param('id') id: string,
     @Req() req: express.Request
   ) {
-    const cacheKey = `certification:collections:${id}:discussions`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
+    const result = await this.queryBus.execute(
+      new GetCollectionDiscussionsQuery(id)
     );
-    if (cached) {
-      return cached;
-    }
 
-    const storedDiscussions =
-      (await this.cacheService.get<Array<Record<string, unknown>>>(
-        `certification:discussions_store:${id}`
-      )) || [];
-
-    const response = convertEntityToJsonApi(
-      { id: `${id}-discussions`, discussions: storedDiscussions },
+    return convertEntityToJsonApi(
+      { id: `${id}-discussions`, items: result.items },
       'certification-collection-discussions',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
@@ -1321,9 +1155,6 @@ export class CertificationController {
         version: '1.0.0',
       }
     );
-
-    await this.cacheService.set(cacheKey, response, 300);
-    return response;
   }
 
   @Post('collections/:id/discussions')
@@ -1346,30 +1177,12 @@ export class CertificationController {
     @Body() dto: CreateCollectionDiscussionDto,
     @Req() req: express.Request
   ) {
-    const storeKey = `certification:discussions_store:${id}`;
-    const existing =
-      (await this.cacheService.get<Array<Record<string, unknown>>>(storeKey)) ||
-      [];
-
-    const newDiscussion = {
-      id: `disc-${Date.now()}`,
-      collectionId: id,
-      userId: user.id,
-      author: user.name || user.email || 'Learner',
-      title: dto.title,
-      content: dto.content,
-      date: 'Just now',
-      repliesCount: 0,
-    };
-
-    existing.unshift(newDiscussion);
-    await this.cacheService.set(storeKey, existing, 86400 * 30);
-    await this.cacheService.delete(
-      `certification:collections:${id}:discussions`
+    const result = await this.commandBus.execute(
+      new AddCollectionDiscussionCommand(id, user.id, dto.title, dto.content)
     );
 
     return convertEntityToJsonApi(
-      newDiscussion,
+      result,
       'certification-collection-discussion',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/discussions`),
@@ -1423,6 +1236,169 @@ export class CertificationController {
     return response;
   }
 
+  @Post('collections')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Create a new collection', description: 'Create a new collection owned by the authenticated user.' })
+  @ApiJsonApiCreatedResponse({ description: 'Collection created successfully', resourceType: 'certification-collection' })
+  async createCollection(
+    @Body() dto: CreateCollectionDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new CreateCollectionCommand(user.id, dto.title, dto.description)
+    );
+    return convertEntityToJsonApi(result, 'certification-collection', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${result.id}`),
+      message: 'Collection created successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('collections/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Update a collection', description: 'Update collection title, description, or publish status.' })
+  @ApiJsonApiSuccessResponse({ description: 'Collection updated successfully', resourceType: 'certification-collection' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
+  async updateCollection(
+    @Param('id') id: string,
+    @Body() dto: UpdateCollectionDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new UpdateCollectionCommand(id, user.id, dto.title, dto.description, dto.publishStatus)
+    );
+    await this.cacheService.delete(`certification:editor:${id}`);
+    return convertEntityToJsonApi(result, 'certification-collection', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}`),
+      message: 'Collection updated successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('collections/:id/chapters')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Sync chapters for a collection', description: 'Replace all chapters for a collection with the provided list.' })
+  @ApiJsonApiSuccessResponse({ description: 'Chapters synced successfully', resourceType: 'certification-chapter' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
+  async syncChapters(
+    @Param('id') id: string,
+    @Body() dto: { chapters: Array<{ id?: string; title: string; description?: string | null; order: number }> },
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new SyncChaptersCommand(id, user.id, dto.chapters || [])
+    );
+    await this.cacheService.delete(`certification:editor:${id}`);
+    return { data: result };
+  }
+
+  @Delete('collections/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Delete a collection', description: 'Soft-delete a collection owned by the authenticated user.' })
+  @ApiJsonApiSuccessResponse({ description: 'Collection deleted successfully', resourceType: 'certification-collection' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
+  async deleteCollection(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new DeleteCollectionCommand(id, user.id)
+    );
+    await this.cacheService.delete(`certification:editor:${id}`);
+    return convertEntityToJsonApi({ id, ...result }, 'certification-collection', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${id}`),
+      message: 'Collection deleted successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('collections/:id/exams')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Create a new exam in a collection', description: 'Add a new exam to the specified collection.' })
+  @ApiJsonApiCreatedResponse({ description: 'Exam created successfully', resourceType: 'certification-exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async createExam(
+    @Param('id') collectionId: string,
+    @Body() dto: CreateExamDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new CreateExamCommand(user.id, collectionId, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore, dto.examType, dto.certificationType, dto.chapterId, dto.sections)
+    );
+    await this.cacheService.delete(`certification:editor:${collectionId}`);
+    return convertEntityToJsonApi(result, 'certification-exam', {
+      selfLink: getSelfLinkFromRequest(req, `collections/${collectionId}/exams/${result.id}`),
+      message: 'Exam created successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('exams/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Update an exam', description: 'Update exam metadata (title, duration, etc).' })
+  @ApiJsonApiSuccessResponse({ description: 'Exam updated successfully', resourceType: 'certification-exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam not found' })
+  @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
+  async updateExam(
+    @Param('id') examId: string,
+    @Body() dto: UpdateExamDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new UpdateExamCommand(examId, user.id, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore)
+    );
+    const exam = await this.repository.findExamById(examId);
+    if (exam) {
+      await this.cacheService.delete(`certification:editor:${exam.getCollectionId()}`);
+    }
+    return convertEntityToJsonApi(result, 'certification-exam', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}`),
+      message: 'Exam updated successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Delete('exams/:id')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Delete an exam', description: 'Soft-delete an exam from its collection.' })
+  @ApiJsonApiSuccessResponse({ description: 'Exam deleted successfully', resourceType: 'certification-exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam not found' })
+  @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
+  async deleteExam(
+    @Param('id') examId: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const exam = await this.repository.findExamById(examId);
+    const result = await this.commandBus.execute(
+      new DeleteExamCommand(examId, user.id)
+    );
+    if (exam) {
+      await this.cacheService.delete(`certification:editor:${exam.getCollectionId()}`);
+    }
+    return convertEntityToJsonApi({ id: examId, ...result }, 'certification-exam', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}`),
+      message: 'Exam deleted successfully',
+      version: '1.0.0',
+    });
+  }
+
   @Post('collections/:id/save')
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
@@ -1444,58 +1420,50 @@ export class CertificationController {
     const result = await this.commandBus.execute(
       new SaveCollectionCommand(id, user.id)
     );
+    await this.cacheService.delete(`certification:saved:${user.id}`);
+    await this.cacheService.delete(`certification:bookmarks:${user.id}`);
     return convertEntityToJsonApi(
       { id, ...result },
       'certification-collection-save',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/save`),
-        message: 'Collection saved successfully',
+        message: result.saved ? 'Collection saved successfully' : 'Collection unsaved successfully',
         version: '1.0.0',
       }
     );
   }
 
-  @Get('collections/saved')
+  @Post('collections/:id/favorite')
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
   @ApiOperation({
-    summary: 'Get bookmarked/saved collections for current user',
+    summary: 'Add a collection to favorites',
+    description:
+      "Add a collection to the authenticated user's favorites list.",
   })
   @ApiJsonApiSuccessResponse({
-    description: 'Saved collections retrieved successfully',
-    resourceType: 'certification-collections',
+    description: 'Collection favorited successfully',
+    resourceType: 'certification-collection-favorite',
   })
-  async getSavedCollections(
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Collection not found' })
+  async addFavorite(
+    @Param('id') id: string,
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const cacheKey = `certification:saved:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
+    const result = await this.commandBus.execute(
+      new AddFavoriteCommand(user.id, id)
     );
-    if (cached) {
-      return cached;
-    }
-
-    const featured = await this.queryBus.execute(
-      new GetFeaturedCollectionsQuery()
-    );
-    const savedCollections = Array.isArray(featured)
-      ? featured.slice(0, 3)
-      : [];
-
-    const response = convertEntityToJsonApi(
-      { id: `saved-${user.id}`, collections: savedCollections },
-      'certification-collections',
+    await this.cacheService.delete(`certification:favorites:${user.id}`);
+    return convertEntityToJsonApi(
+      { id, ...result },
+      'certification-collection-favorite',
       {
-        selfLink: getSelfLinkFromRequest(req, 'collections/saved'),
-        message: 'Saved collections retrieved successfully',
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/favorite`),
+        message: 'Collection favorited successfully',
         version: '1.0.0',
       }
     );
-
-    await this.cacheService.set(cacheKey, response, 300);
-    return response;
   }
 
   @Post('collections/:id/clone')
@@ -1554,14 +1522,14 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const result = await this.commandBus.execute(
-      new ReportCollectionCommand(
+      new SaveReportCommand(
         id,
         user.id,
         dto.reason || 'Inappropriate content'
       )
     );
     return convertEntityToJsonApi(
-      { id, ...result },
+      { id: result.id, collectionId: id, reason: result.reason, createdAt: result.createdAt },
       'certification-collection-report',
       {
         selfLink: getSelfLinkFromRequest(req, `collections/${id}/report`),
@@ -1602,6 +1570,52 @@ export class CertificationController {
     });
 
     await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
+    return response;
+  }
+
+  @Get('sessions/in-progress')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get in-progress exam sessions for authenticated user' })
+  async getInProgressSessions(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:in-progress:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const sessions = await this.repository.findInProgressSessionsByUserId(user.id);
+
+    const items = (sessions || []).map((session) => {
+      const exam = session.exam;
+      const startedAt = new Date(session.startedAt);
+      const now = new Date();
+      const minutesAgo = Math.round((now.getTime() - startedAt.getTime()) / 60000);
+      const timeAgo = minutesAgo < 60 ? `${minutesAgo} phút trước` : `${Math.round(minutesAgo / 60)} giờ trước`;
+
+      return {
+        id: session.id,
+        examId: session.examId,
+        title: exam ? exam.title : 'Unknown Exam',
+        status: session.status,
+        startedAt: session.startedAt,
+        timeAgo,
+        examTitle: exam ? exam.title : 'Unknown',
+        totalQuestions: exam ? exam.totalQuestions : 0,
+      };
+    });
+
+    const response = convertEntityToJsonApi(
+      { id: `in-progress-${user.id}`, userId: user.id, totalInProgress: items.length, items },
+      'certification-sessions-in-progress',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'sessions/in-progress'),
+        message: 'In-progress sessions retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
     return response;
   }
 
@@ -1728,6 +1742,7 @@ export class CertificationController {
     resourceType: 'session-answer',
   })
   async saveAnswer(
+    @auth.CurrentUser() user: auth.AuthUser,
     @Param('sessionId') sessionId: string,
     @Body() dto: SaveSessionAnswerDto,
     @Req() req: express.Request
@@ -1736,6 +1751,7 @@ export class CertificationController {
       new SaveSessionAnswerCommand(
         sessionId,
         dto.questionId,
+        user.id,
         dto.answerText ?? null,
         dto.choiceIds ?? []
       )
@@ -1767,6 +1783,7 @@ export class CertificationController {
     resourceType: 'session-violation',
   })
   async recordViolation(
+    @auth.CurrentUser() user: auth.AuthUser,
     @Param('sessionId') sessionId: string,
     @Body() dto: RecordSessionViolationDto,
     @Req() req: express.Request
@@ -1774,6 +1791,7 @@ export class CertificationController {
     const result = await this.commandBus.execute(
       new RecordSessionViolationCommand(
         sessionId,
+        user.id,
         dto.violationType,
         dto.description ?? null
       )
@@ -1839,177 +1857,44 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
+    const result = await this.queryBus.execute(new GetPracticeHistoryQuery(user.id)) as Array<Record<string, unknown>>;
+
+    const items = (result || []).map((session) => {
+      const exam = session.exam as Record<string, unknown> | null;
+      const examResult = session.result as Record<string, unknown> | null;
+      const examTitle = exam ? String(exam.title || '') : 'Unknown Exam';
+      const startedAt = session.startedAt ? new Date(String(session.startedAt)) : new Date();
+      const endedAt = session.endedAt ? new Date(String(session.endedAt)) : null;
+      const timeSpentMin = endedAt ? Math.round((endedAt.getTime() - startedAt.getTime()) / 60000) : 0;
+
+      let examType = 'Mock Test';
+      const upperTitle = examTitle.toUpperCase();
+      if (upperTitle.includes('MINI') || upperTitle.includes('SECTION')) examType = 'Practice by Part';
+      else if (upperTitle.includes('QUIZ')) examType = 'Quiz';
+      else if (upperTitle.includes('AI')) examType = 'AI Practice';
+
+      const totalScore = examResult ? Number(examResult.totalScore || 0) : 0;
+      const passed = examResult ? Boolean(examResult.passed) : false;
+
+      return {
+        id: String(session.sessionId || ''),
+        code: examTitle.substring(0, 20),
+        title: examTitle,
+        type: examType,
+        examPart: upperTitle.includes('READING') ? 'Reading' : upperTitle.includes('LISTENING') ? 'Listening' : upperTitle.includes('WRITING') ? 'Writing' : upperTitle.includes('SPEAKING') ? 'Speaking' : 'Full Test',
+        scoreDisplay: examResult ? `${totalScore}` : '-',
+        scoreSub: passed ? 'Đạt' : 'Chưa đạt',
+        timeSpent: `${timeSpentMin} phút`,
+        dateDisplay: startedAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      };
+    });
+
     const response = convertEntityToJsonApi(
-      {
-        id: `history-${user.id}`,
-        userId: user.id,
-        totalSessions: 6,
-        items: [
-          {
-            id: 'IELTS-FULL-001',
-            code: 'ID: IELTS-FULL-001',
-            title: 'IELTS Academic Full Test 1',
-            type: 'Mock Test',
-            typeBadgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
-            iconBgClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400',
-            iconType: 'document',
-            examPart: 'Full Listening, Reading, Writing',
-            scoreDisplay: '7.5',
-            scoreSub: 'Listening: 8.0 • Reading: 7.5',
-            scoreColor: 'text-indigo-600 dark:text-indigo-400',
-            timeSpent: '2h 45m',
-            dateDisplay: 'May 20, 2025 09:30 AM',
-          },
-          {
-            id: 'TOEIC-READ-088',
-            code: 'ID: TOEIC-READ-088',
-            title: 'TOEIC Reading Part 7 Practice',
-            type: 'Practice by Part',
-            typeBadgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-            iconBgClass: 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
-            iconType: 'document',
-            examPart: 'TOEIC Reading',
-            scoreDisplay: '450/490',
-            scoreSub: '48/54 correct',
-            scoreColor: 'text-emerald-600 dark:text-emerald-400',
-            timeSpent: '55m',
-            dateDisplay: 'May 19, 2025 03:15 PM',
-          },
-          {
-            id: 'VOCAB-QUIZ-102',
-            code: 'ID: VOCAB-QUIZ-102',
-            title: 'Vocabulary Daily Quiz #14',
-            type: 'Quiz',
-            typeBadgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
-            iconBgClass: 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-            iconType: 'sparkles',
-            examPart: 'Essential Vocabulary',
-            scoreDisplay: '100%',
-            scoreSub: '20/20 correct',
-            scoreColor: 'text-emerald-600 dark:text-emerald-400',
-            timeSpent: '08m',
-            dateDisplay: 'May 18, 2025 11:00 AM',
-          },
-          {
-            id: 'VSTEP-B2-MOCK3',
-            code: 'ID: VSTEP-B2-MOCK3',
-            title: 'VSTEP B2 Preparation Mock Test 3',
-            type: 'Mock Test',
-            typeBadgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
-            iconBgClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400',
-            iconType: 'document',
-            examPart: 'Cambridge B2',
-            scoreDisplay: '68%',
-            scoreSub: '27/40',
-            scoreColor: 'text-amber-600 dark:text-amber-400',
-            timeSpent: '48m',
-            dateDisplay: 'May 17, 2025 06:30 PM',
-          },
-          {
-            id: 'IELTS-SP-P2-023',
-            code: 'ID: IELTS-SP-P2-023',
-            title: 'IELTS Speaking Part 2',
-            type: 'AI Practice',
-            typeBadgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
-            iconBgClass: 'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400',
-            iconType: 'mic',
-            examPart: 'IELTS Speaking',
-            scoreDisplay: '6.5',
-            scoreSub: 'Fair',
-            scoreColor: 'text-amber-600 dark:text-amber-400',
-            timeSpent: '24m',
-            dateDisplay: 'May 17, 2025 10:15 AM',
-          },
-          {
-            id: 'TOEIC-LIS-P1-001',
-            code: 'ID: TOEIC-LIS-P1-001',
-            title: 'TOEIC Listening Part 1 & 2',
-            type: 'Practice by Part',
-            typeBadgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-            iconBgClass: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-            iconType: 'headphones',
-            examPart: 'TOEIC Listening',
-            scoreDisplay: '80%',
-            scoreSub: '32/40',
-            scoreColor: 'text-emerald-600 dark:text-emerald-400',
-            timeSpent: '28m',
-            dateDisplay: 'May 16, 2025 08:50 PM',
-          },
-        ],
-      },
+      { id: `history-${user.id}`, userId: user.id, totalSessions: items.length, items },
       'certification-history',
       {
         selfLink: getSelfLinkFromRequest(req, 'history'),
         message: 'Practice history retrieved successfully',
-        version: '1.0.0',
-      }
-    );
-    await this.cacheService.set(cacheKey, response, 300);
-    return response;
-  }
-
-  @Get('collections/completed')
-  @UseGuards(auth.JwtAuthGuard)
-  @ApiBearerAuth('JWT')
-  @ApiOperation({
-    summary: 'Get completed collections for authenticated user',
-  })
-  async getCompletedCollections(
-    @auth.CurrentUser() user: auth.AuthUser,
-    @Req() req: express.Request
-  ) {
-    const cacheKey = `certification:completed:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
-    if (cached) return cached;
-
-    const response = convertEntityToJsonApi(
-      {
-        id: `completed-${user.id}`,
-        userId: user.id,
-        totalCompleted: 3,
-        items: [
-          {
-            id: 'comp-1',
-            title: 'IELTS Cambridge 18 - Full Academic Test Collection',
-            category: 'Full Mock Test',
-            examType: 'IELTS Academic',
-            completedDate: 'May 18, 2025',
-            scoreText: 'Band 7.5 Overall',
-            iconBgClass: 'bg-indigo-600 text-white',
-            coverGradient: 'from-indigo-600 to-purple-700 text-white',
-            totalItems: 4,
-            certificateEligible: true,
-          },
-          {
-            id: 'comp-2',
-            title: 'TOEIC ETS 2024 Practice Tests 1-5',
-            category: 'Practice Bundle',
-            examType: 'TOEIC L&R',
-            completedDate: 'May 14, 2025',
-            scoreText: '880 / 990 PTS',
-            iconBgClass: 'bg-blue-600 text-white',
-            coverGradient: 'from-blue-600 to-sky-700 text-white',
-            totalItems: 5,
-            certificateEligible: true,
-          },
-          {
-            id: 'comp-3',
-            title: 'VSTEP B2 Reading & Listening Practice Collection',
-            category: 'Skill Drills',
-            examType: 'VSTEP',
-            completedDate: 'May 10, 2025',
-            scoreText: 'Passed B2 Standard',
-            iconBgClass: 'bg-emerald-600 text-white',
-            coverGradient: 'from-emerald-600 to-teal-700 text-white',
-            totalItems: 10,
-            certificateEligible: false,
-          },
-        ],
-      },
-      'certification-collections-completed',
-      {
-        selfLink: getSelfLinkFromRequest(req, 'collections/completed'),
-        message: 'Completed collections retrieved successfully',
         version: '1.0.0',
       }
     );
@@ -2031,82 +1916,30 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
+    const result = await this.queryBus.execute(new GetFavoritesQuery(user.id)) as Array<Record<string, unknown>>;
+
+    const items = (result || []).map((fav) => {
+      const collection = fav.collection as Record<string, unknown> | null;
+      const title = collection ? String(collection.title || '') : 'Unknown';
+      const upperTitle = title.toUpperCase();
+      let exam = 'IELTS';
+      if (upperTitle.includes('TOEIC')) exam = 'TOEIC';
+      else if (upperTitle.includes('TOEFL')) exam = 'TOEFL';
+      else if (upperTitle.includes('CAMBRIDGE') || upperTitle.includes('CAE')) exam = 'Cambridge';
+      else if (upperTitle.includes('VSTEP')) exam = 'VSTEP';
+      else if (upperTitle.includes('SAT')) exam = 'SAT';
+
+      return {
+        id: String(fav.id || ''),
+        collectionId: String(fav.collectionId || ''),
+        title,
+        exam,
+        addedAt: fav.createdAt ? new Date(String(fav.createdAt)).toLocaleDateString('vi-VN') : '',
+      };
+    });
+
     const response = convertEntityToJsonApi(
-      {
-        id: `favorites-${user.id}`,
-        userId: user.id,
-        totalFavorites: 4,
-        items: [
-          {
-            id: 'fav-1',
-            title: 'IELTS Academic Full Mock Exam 2025',
-            type: 'Collection',
-            itemCountText: 'Collection • 45 items',
-            progressPercent: 75,
-            progressText: '75% Completed',
-            progressBarClass: 'bg-indigo-500',
-            stat1Label: 'Est. Band',
-            stat1Value: '7.5',
-            stat2Label: 'Learners',
-            stat2Value: '14.2K',
-            addedDate: 'May 20, 2025',
-            iconType: 'ielts',
-            bannerBgClass: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600',
-            isFavorited: true,
-          },
-          {
-            id: 'fav-2',
-            title: 'TOEIC Listening Part 3 & 4 Masterclass',
-            type: 'Test',
-            itemCountText: 'Test • 100 questions',
-            progressPercent: 50,
-            progressText: '50% Completed',
-            progressBarClass: 'bg-purple-500',
-            stat1Label: 'Target',
-            stat1Value: '900+',
-            stat2Label: 'Time',
-            stat2Value: '45 min',
-            addedDate: 'May 18, 2025',
-            iconType: 'toeic',
-            bannerBgClass: 'bg-purple-100 dark:bg-purple-950/40 text-purple-600',
-            isFavorited: true,
-          },
-          {
-            id: 'fav-3',
-            title: 'IELTS Reading - True/False/Not Given Drills',
-            type: 'Question Set',
-            itemCountText: 'Question Set • 30 questions',
-            progressPercent: 90,
-            progressText: '90% Completed',
-            progressBarClass: 'bg-indigo-500',
-            stat1Label: 'Accuracy',
-            stat1Value: '88%',
-            stat2Label: 'Avg Time',
-            stat2Value: '12 min',
-            addedDate: 'May 17, 2025',
-            iconType: 'reading',
-            bannerBgClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-600',
-            isFavorited: true,
-          },
-          {
-            id: 'fav-4',
-            title: 'TOEIC Essential 600 Vocabulary Package',
-            type: 'Vocabulary Set',
-            itemCountText: 'Vocabulary • 600 words',
-            progressPercent: 100,
-            progressText: '100% Learned',
-            progressBarClass: 'bg-emerald-500',
-            stat1Label: 'Mastery',
-            stat1Value: '92%',
-            stat2Label: 'Words',
-            stat2Value: '600',
-            addedDate: 'May 16, 2025',
-            iconType: 'vocabulary',
-            bannerBgClass: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600',
-            isFavorited: true,
-          },
-        ],
-      },
+      { id: `favorites-${user.id}`, userId: user.id, totalFavorites: items.length, items },
       'certification-favorites',
       {
         selfLink: getSelfLinkFromRequest(req, 'favorites'),
@@ -2132,30 +1965,24 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
+    const result = await this.queryBus.execute(new GetBookmarksQuery(user.id)) as Array<Record<string, unknown>>;
+
+    const items = (result || []).map((bm) => {
+      const collection = bm.collection as Record<string, unknown> | null;
+      const title = collection ? String(collection.title || '') : 'Unknown';
+
+      return {
+        id: String(bm.id || ''),
+        itemId: String(bm.collectionId || ''),
+        itemType: 'collection',
+        title,
+        folderName: 'Mặc định',
+        createdAt: bm.createdAt ? new Date(String(bm.createdAt)).toLocaleDateString('vi-VN') : '',
+      };
+    });
+
     const response = convertEntityToJsonApi(
-      {
-        id: `bookmarks-${user.id}`,
-        userId: user.id,
-        totalBookmarks: 2,
-        items: [
-          {
-            id: 'bm-1',
-            title: 'IELTS Reading Section 3 - True/False/Not Given',
-            type: 'Question',
-            folder: 'IELTS Reading',
-            savedDate: 'May 20, 2025',
-            notes: 'Remember to check key synonyms in passage paragraph C',
-          },
-          {
-            id: 'bm-2',
-            title: 'TOEIC Part 5 - Advanced Inversion Grammar Rule',
-            type: 'Grammar Rule',
-            folder: 'Grammar Notes',
-            savedDate: 'May 18, 2025',
-            notes: 'Scarcely had... when... structure',
-          },
-        ],
-      },
+      { id: `bookmarks-${user.id}`, userId: user.id, totalBookmarks: items.length, items },
       'certification-bookmarks',
       {
         selfLink: getSelfLinkFromRequest(req, 'bookmarks'),
@@ -2165,6 +1992,114 @@ export class CertificationController {
     );
     await this.cacheService.set(cacheKey, response, 300);
     return response;
+  }
+
+  @Post('bookmarks')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Add a bookmark for a collection',
+  })
+  async addBookmark(
+    @Body() body: { itemId: string; itemType?: string; title?: string; folderName?: string },
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new AddBookmarkCommand(user.id, body.itemId)
+    );
+    await this.cacheService.delete(`certification:bookmarks:${user.id}`);
+    return convertEntityToJsonApi(
+      { id: body.itemId, success: result.bookmarked, bookmarkId: body.itemId },
+      'certification-bookmark-add',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'bookmarks'),
+        message: 'Bookmark added successfully',
+        version: '1.0.0',
+      }
+    );
+  }
+
+  @Get('certificates')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get user certificates',
+  })
+  async getCertificates(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:certificates:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const results = await this.queryBus.execute(new GetCompletedCollectionsQuery(user.id)) as Array<Record<string, unknown>>;
+
+    const certificates = (results || [])
+      .filter((item) => {
+        const examResult = item.result as Record<string, unknown> | null;
+        return examResult?.passed;
+      })
+      .map((item, index) => {
+        const collection = item.collection as Record<string, unknown> | null;
+        const examResult = item.result as Record<string, unknown> | null;
+        const title = collection ? String(collection.title || '') : 'Unknown';
+        const upperTitle = title.toUpperCase();
+        let examCategory = 'General';
+        if (upperTitle.includes('IELTS')) examCategory = 'IELTS';
+        else if (upperTitle.includes('TOEIC')) examCategory = 'TOEIC';
+        else if (upperTitle.includes('TOEFL')) examCategory = 'TOEFL';
+
+        const totalScore = examResult ? Number(examResult.totalScore || 0) : 0;
+
+        return {
+          id: `cert-${index}-${user.id}`,
+          collectionId: String(item.collectionId || ''),
+          title,
+          examCategory,
+          issuedDate: examResult?.createdAt
+            ? new Date(String(examResult.createdAt)).toLocaleDateString('vi-VN')
+            : '',
+          score: `${totalScore}`,
+          downloadUrl: '#',
+          credentialCode: `CRED-${String(item.collectionId || '').substring(0, 8).toUpperCase()}-${user.id.substring(0, 4).toUpperCase()}`,
+        };
+      });
+
+    const response = convertEntityToJsonApi(
+      { id: `certificates-${user.id}`, certificates },
+      'certification-certificates',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'certificates'),
+        message: 'Certificates retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('certificates/:id/download')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Download a certificate',
+  })
+  async downloadCertificate(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    return convertEntityToJsonApi(
+      { id, success: true, url: '#', message: 'Certificate download initiated' },
+      'certification-certificate-download',
+      {
+        selfLink: getSelfLinkFromRequest(req, `certificates/${id}/download`),
+        message: 'Certificate download initiated',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Delete('bookmarks/:id')
@@ -2178,6 +2113,13 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
+    const bookmark = await this.repository.findBookmarkById(id);
+    if (!bookmark) {
+      throw new NotFoundException(`Bookmark with ID ${id} not found`);
+    }
+    await this.commandBus.execute(
+      new RemoveBookmarkCommand(user.id, bookmark.collectionId)
+    );
     await this.cacheService.delete(`certification:bookmarks:${user.id}`);
     return convertEntityToJsonApi(
       { id, removed: true },
@@ -2203,144 +2145,12 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
-    const response = convertEntityToJsonApi(
-      {
-        id: `downloads-${user.id}`,
-        userId: user.id,
-        totalDownloads: 4,
-        items: [
-          {
-            id: 'dl-1',
-            name: 'IELTS Cambridge 18 - Full Mock 1',
-            subtitle: 'Practice Test PDF',
-            fileFormat: 'PDF',
-            fileFormatBadgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
-            fileIconBgClass: 'bg-indigo-600 text-white',
-            downloadedOn: 'May 20, 2025 04:30 PM',
-            size: '8.4 MB',
-            expiresOn: 'May 20, 2026',
-            category: 'Tests',
-          },
-          {
-            id: 'dl-2',
-            name: 'TOEIC Economy Vol 5 - Test 3 Audio',
-            subtitle: 'Audio Files Bundle',
-            fileFormat: 'MP3',
-            fileFormatBadgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
-            fileIconBgClass: 'bg-purple-600 text-white',
-            downloadedOn: 'May 19, 2025 09:15 AM',
-            size: '42.1 MB',
-            expiresOn: 'May 19, 2026',
-            category: 'Tests',
-          },
-          {
-            id: 'dl-3',
-            name: 'Academic Vocabulary 1000 Words List',
-            subtitle: 'Vocabulary Flashcards',
-            fileFormat: 'DOCX',
-            fileFormatBadgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
-            fileIconBgClass: 'bg-blue-600 text-white',
-            downloadedOn: 'May 18, 2025 02:00 PM',
-            size: '2.3 MB',
-            expiresOn: 'May 18, 2026',
-            category: 'Vocabulary',
-          },
-          {
-            id: 'dl-4',
-            name: 'IELTS Band 8.0 Scorecard Report',
-            subtitle: 'Official Analytics Report',
-            fileFormat: 'PDF',
-            fileFormatBadgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
-            fileIconBgClass: 'bg-emerald-600 text-white',
-            downloadedOn: 'May 17, 2025 11:45 AM',
-            size: '1.2 MB',
-            expiresOn: 'Lifetime',
-            category: 'Reports',
-          },
-        ],
-      },
-      'certification-downloads',
-      {
-        selfLink: getSelfLinkFromRequest(req, 'downloads'),
-        message: 'Downloads retrieved successfully',
-        version: '1.0.0',
-      }
-    );
-    await this.cacheService.set(cacheKey, response, 300);
-    return response;
-  }
-
-  @Get('collections/purchased')
-  @UseGuards(auth.JwtAuthGuard)
-  @ApiBearerAuth('JWT')
-  @ApiOperation({
-    summary: 'Get purchased premium collections for authenticated user',
-  })
-  async getPurchasedCollections(
-    @auth.CurrentUser() user: auth.AuthUser,
-    @Req() req: express.Request
-  ) {
-    const cacheKey = `certification:purchased:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
-    if (cached) return cached;
-
-    const response = convertEntityToJsonApi(
-      {
-        id: `purchased-${user.id}`,
-        userId: user.id,
-        totalPurchased: 3,
-        items: [
-          {
-            id: 'pur-1',
-            orderId: 'ORD-9821',
-            title: 'IELTS Official Cambridge 15-18 Full Master Package',
-            category: 'Official Bundles',
-            examType: 'IELTS Academic',
-            coverGradient: 'from-indigo-600 to-purple-700 text-white',
-            pricePaid: '$49.00',
-            purchaseDate: 'May 10, 2025',
-            accessType: 'Lifetime Access',
-            completedTests: 12,
-            totalTests: 16,
-            progressPercent: 75,
-          },
-          {
-            id: 'pur-2',
-            orderId: 'ORD-8742',
-            title: 'TOEIC ETS 2024 Ultimate Target 900+ Vault',
-            category: 'TOEIC Master',
-            examType: 'TOEIC L&R',
-            coverGradient: 'from-blue-600 to-sky-700 text-white',
-            pricePaid: '$39.00',
-            purchaseDate: 'Apr 28, 2025',
-            accessType: 'Lifetime Access',
-            completedTests: 8,
-            totalTests: 10,
-            progressPercent: 80,
-          },
-          {
-            id: 'pur-3',
-            orderId: 'ORD-7612',
-            title: 'IELTS Writing Task 1 & 2 Band 8.0 Model Essays',
-            category: 'IELTS Pro',
-            examType: 'IELTS Writing',
-            coverGradient: 'from-purple-600 to-pink-700 text-white',
-            pricePaid: '$29.00',
-            purchaseDate: 'Apr 15, 2025',
-            accessType: '1-Year License',
-            completedTests: 25,
-            totalTests: 25,
-            progressPercent: 100,
-          },
-        ],
-      },
-      'certification-collections-purchased',
-      {
-        selfLink: getSelfLinkFromRequest(req, 'collections/purchased'),
-        message: 'Purchased collections retrieved successfully',
-        version: '1.0.0',
-      }
-    );
+    const result = await this.queryBus.execute(new GetDownloadsQuery(user.id));
+    const response = convertEntityToJsonApi({ id: `downloads-${user.id}`, items: result }, 'certification-downloads', {
+      selfLink: getSelfLinkFromRequest(req, 'downloads'),
+      message: 'Downloads retrieved successfully',
+      version: '1.0.0',
+    });
     await this.cacheService.set(cacheKey, response, 300);
     return response;
   }
@@ -2356,6 +2166,13 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
+    const favorite = await this.repository.findFavoriteById(id);
+    if (!favorite) {
+      throw new NotFoundException(`Favorite with ID ${id} not found`);
+    }
+    await this.commandBus.execute(
+      new RemoveFavoriteCommand(user.id, favorite.collectionId)
+    );
     await this.cacheService.delete(`certification:favorites:${user.id}`);
     return convertEntityToJsonApi(
       { id, removed: true },
@@ -2378,6 +2195,9 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
+    await this.commandBus.execute(
+      new DeleteDownloadCommand(id)
+    );
     await this.cacheService.delete(`certification:downloads:${user.id}`);
     return convertEntityToJsonApi(
       { id, deleted: true },
@@ -2399,6 +2219,9 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
+    await this.commandBus.execute(
+      new ClearDownloadsCommand(user.id)
+    );
     await this.cacheService.delete(`certification:downloads:${user.id}`);
     return convertEntityToJsonApi(
       { id: `clear-${user.id}`, cleared: true },

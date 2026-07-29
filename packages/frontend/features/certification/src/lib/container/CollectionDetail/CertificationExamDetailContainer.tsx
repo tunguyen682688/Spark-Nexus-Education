@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -32,9 +31,9 @@ interface CertificationExamDetailContainerProps {
   onSessionStarted?: (sessionId: string) => void;
 }
 
-export const CertificationExamDetailContainer: React.FC<
+export const CertificationExamDetailContainer = ({ examId = 'default-exam', onSessionStarted }: 
   CertificationExamDetailContainerProps
-> = ({ examId = 'default-exam', onSessionStarted }) => {
+) => {
   const navigate = useNavigate();
 
   const handleBack = () => {

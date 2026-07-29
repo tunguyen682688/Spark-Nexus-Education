@@ -9,11 +9,11 @@ interface BookmarkCardProps {
   onRemoveBookmark: (id: string, e: React.MouseEvent) => void;
 }
 
-export const BookmarkCard: React.FC<BookmarkCardProps> = ({
+export const BookmarkCard = ({
   item,
   onOpenItem,
   onRemoveBookmark,
-}) => {
+}: BookmarkCardProps) => {
   const renderIcon = (iconType: string) => {
     switch (iconType) {
       case 'listening':

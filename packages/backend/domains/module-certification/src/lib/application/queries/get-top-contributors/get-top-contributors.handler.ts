@@ -10,8 +10,7 @@ export class GetTopContributorsQueryHandler implements IQueryHandler<GetTopContr
     private readonly repository: certificationRepoInterface.ICertificationRepository
   ) {}
 
-  async execute(query: GetTopContributorsQuery) {
-    void query;
+  async execute(_query: GetTopContributorsQuery) {
     const creators = await this.repository.findCreatorProfiles(10);
 
     return creators.map((creator, index) => ({

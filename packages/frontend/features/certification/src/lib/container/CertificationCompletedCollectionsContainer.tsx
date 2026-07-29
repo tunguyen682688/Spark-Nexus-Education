@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   CheckCircle2,
   Filter,
@@ -28,7 +27,7 @@ import { Pagination } from '../components/Pagination';
 import { CertificateModal } from '../components/CertificateModal';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationCompletedCollectionsContainer: React.FC = () => {
+export const CertificationCompletedCollectionsContainer = () => {
   const {
     isApiLoading,
     isError,

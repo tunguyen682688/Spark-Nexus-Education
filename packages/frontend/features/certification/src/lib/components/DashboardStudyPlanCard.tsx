@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Card,
   CardContent,
@@ -16,10 +15,10 @@ interface DashboardStudyPlanCardProps {
   isLoading: boolean;
 }
 
-export const DashboardStudyPlanCard: React.FC<DashboardStudyPlanCardProps> = ({
+export const DashboardStudyPlanCard = ({
   studyPlan,
   isLoading,
-}) => {
+}: DashboardStudyPlanCardProps) => {
   return (
     <Card className="border-border">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">

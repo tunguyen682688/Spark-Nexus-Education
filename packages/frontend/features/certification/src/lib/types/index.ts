@@ -141,7 +141,7 @@ export interface ExamQuestion {
   orderIndex?: number;
   points?: number;
   explanation?: string;
-  choices?: ExamQuestionChoice[] | string[] | any;
+  choices?: ExamQuestionChoice[];
 }
 
 export interface ExamSection {
@@ -329,4 +329,247 @@ export interface QuestionBuilderData {
     examTitle: string;
     sectionInfo: string;
   } | null;
+}
+
+export interface CreatorDashboardResponse {
+  metrics: {
+    totalExams: number;
+    totalExamsWeeklyChange: string;
+    totalQuestions: number;
+    totalQuestionsWeeklyChange: string;
+    totalAttempts: number;
+    totalAttemptsWeeklyChange: string;
+    averageScore: number;
+    averageScoreWeeklyChange: string;
+    totalLikes: number;
+    likesReceived: number;
+    likesReceivedWeeklyChange: string;
+  };
+  performanceChart: {
+    timeframe: string;
+    dates: string[];
+    attempts: number[];
+    averageScores: number[];
+    likes: number[];
+    revenue: number[];
+  };
+  topExams: Array<{
+    rank: number;
+    id: string;
+    title: string;
+    category: string;
+    categoryBadge: string;
+    categoryBadgeClass: string;
+    attempts: number;
+    avgScore: string;
+    likes: number;
+  }>;
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    title: string;
+    timestamp: string;
+    iconType: 'check' | 'document' | 'star' | 'comment' | 'heart';
+    iconBgClass: string;
+  }>;
+  revenue: {
+    totalRevenue: string;
+    revenueGrowth: string;
+    payoutBalance: string;
+    dailyData: Array<{ day: string; amount: number }>;
+  };
+}
+
+export interface CollectionEditorResponse {
+  id: string;
+  title: string;
+  description: string;
+  examCategory: string;
+  details: {
+    title: string;
+    description: string;
+    category: string;
+    level: string;
+    estimatedHours: number;
+  };
+  chapters: Array<{
+    id: string;
+    title: string;
+    description: string;
+    examCount: number;
+    exams: Array<{
+      id: string;
+      title: string;
+      description: string;
+      examType: string;
+      durationMinutes: number;
+      totalQuestions: number;
+      sections: ExamSection[];
+    }>;
+  }>;
+  summary: {
+    totalExams: number;
+    totalQuestions: number;
+    totalChapters: number;
+    estimatedHours: number;
+  };
+  exams: Array<{
+    id: string;
+    title: string;
+    description: string;
+    examType: string;
+    durationMinutes: number;
+    totalQuestions: number;
+    sections: ExamSection[];
+  }>;
+}
+
+export interface ExamBuilderResponse {
+  id: string;
+  title: string;
+  description: string;
+  examType: string;
+  durationMinutes: number;
+  totalQuestions: number;
+  passingScore: number;
+  settings: {
+    title: string;
+    description: string;
+    duration: number;
+    passingScore: number;
+    difficulty: string;
+    instructions: string;
+  };
+  sections: ExamSection[];
+}
+
+export interface QuestionBuilderResponse {
+  id: string;
+  questionText: string;
+  questionType: string;
+  difficulty: string;
+  options: AnswerOptionItem[];
+  explanation: string;
+  properties: Record<string, unknown>;
+  metadata: {
+    id: string;
+    lastUpdatedDate: string;
+    createdBy: string;
+  };
+}
+
+export interface BookmarksApiResponse {
+  id: string;
+  userId: string;
+  totalBookmarks: number;
+  folders: BookmarkFolder[];
+  items: BookmarkItem[];
+}
+
+export interface PracticeHistoryResponse {
+  id: string;
+  userId: string;
+  totalSessions: number;
+  items: Array<{
+    id: string;
+    code: string;
+    title: string;
+    type: string;
+    examPart: string;
+    scoreDisplay: string;
+    scoreSub: string;
+    timeSpent: string;
+    dateDisplay: string;
+  }>;
+}
+
+export interface CompletedCollectionsResponse {
+  id: string;
+  userId: string;
+  totalCompleted: number;
+  items: Array<{
+    id: string;
+    title: string;
+    category: string;
+    examType: string;
+    completedDate: string;
+    scoreText: string;
+    totalItems: number;
+    certificateEligible: boolean;
+  }>;
+}
+
+export interface FavoritesResponse {
+  id: string;
+  userId: string;
+  totalFavorites: number;
+  items: Array<{
+    id: string;
+    collectionId: string;
+    title: string;
+    exam: string;
+    addedAt: string;
+  }>;
+}
+
+export interface BookmarksResponse {
+  id: string;
+  userId: string;
+  totalBookmarks: number;
+  items: Array<{
+    id: string;
+    itemId: string;
+    itemType: string;
+    title: string;
+    folderName: string;
+    createdAt: string;
+  }>;
+}
+
+export interface DownloadsResponse {
+  id: string;
+  userId: string;
+  totalDownloads: number;
+  items: Array<{
+    id: string;
+    collectionId: string;
+    title: string;
+    downloadedAt: string;
+    fileSize: string;
+  }>;
+}
+
+export interface PurchasedCollectionsResponse {
+  id: string;
+  userId: string;
+  totalPurchased: number;
+  items: Array<{
+    id: string;
+    collectionId: string;
+    title: string;
+    exam: string;
+    purchasedAt: string;
+    price: number;
+  }>;
+}
+
+export interface AnswerOptionItem {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface BookmarkFolder {
+  id: string;
+  name: string;
+  itemCount: number;
+}
+
+export interface BookmarkItem {
+  id: string;
+  itemId: string;
+  itemType: string;
+  title: string;
+  folderName: string;
+  createdAt: string;
 }

@@ -39,7 +39,7 @@ export class GetCertificationDashboardQueryHandler implements IQueryHandler<GetC
     const globalRank = examsCompleted > 0 ? Math.max(1, 5000 - xpEarned * 3) : 0;
 
     const scorePredictionStr = averageScore > 0 ? `${averageScore}` : null;
-    const accuracyStr = examsCompleted > 0 ? `${Math.min(99, Math.round(80 + examsCompleted * 2))}%` : null;
+    const accuracyStr = examsCompleted > 0 ? `${Math.round((results.filter((r) => r.isPassed()).length / examsCompleted) * 100)}%` : null;
     const hoursSpent = Math.round((learningTimeMinutes / 60) * 10) / 10;
 
     return {

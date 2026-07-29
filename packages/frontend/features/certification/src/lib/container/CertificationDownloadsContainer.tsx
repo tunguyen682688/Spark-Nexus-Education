@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Download,
   Filter,
@@ -28,7 +27,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationDownloadsContainer: React.FC = () => {
+export const CertificationDownloadsContainer = () => {
   const {
     isApiLoading,
     isError,

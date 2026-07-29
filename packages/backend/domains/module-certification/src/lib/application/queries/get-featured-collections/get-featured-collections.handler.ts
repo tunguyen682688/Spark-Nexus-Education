@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { SortDirection } from '@spark-nest-ed/shared-libs';
 import { GetFeaturedCollectionsQuery } from './get-featured-collections.query';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 
@@ -17,6 +18,8 @@ export class GetFeaturedCollectionsQueryHandler implements IQueryHandler<GetFeat
     if (search || (exam && exam !== 'All')) {
       finalParams.search = search || (exam && exam !== 'All' ? exam : undefined);
     }
+    finalParams.sortBy = 'examCount';
+    finalParams.sortDirection = SortDirection.DESC;
 
     const result = await this.repository.findCollections(finalParams);
     return result;

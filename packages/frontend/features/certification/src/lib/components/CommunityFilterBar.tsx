@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   COMMUNITY_SORT_FILTERS,
   EXAM_CATEGORY_OPTIONS,
@@ -11,12 +10,12 @@ interface CommunityFilterBarProps {
   onCategoryChange: (category: string) => void;
 }
 
-export const CommunityFilterBar: React.FC<CommunityFilterBarProps> = ({
+export const CommunityFilterBar = ({
   selectedSortFilter,
   selectedCategory,
   onSortFilterChange,
   onCategoryChange,
-}) => {
+}: CommunityFilterBarProps) => {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex flex-wrap items-center gap-2">

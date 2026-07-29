@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFavoritesData, useRemoveFavorite } from './use-certification';
+import { useFavoritesData, useAddFavorite, useRemoveFavorite } from './use-certification';
 import { paginateItems } from '../services/certification-filter.service';
 
 export interface FavoriteItem {
@@ -24,6 +24,7 @@ export interface FavoriteItem {
 export function useFavoritesContainerLogic() {
   const navigate = useNavigate();
   const { data: apiData, isLoading: isApiLoading, isError, refetch } = useFavoritesData();
+  const addFavoriteMutation = useAddFavorite();
   const removeFavoriteMutation = useRemoveFavorite();
 
   const [items, setItems] = useState<FavoriteItem[]>([]);
@@ -38,10 +39,9 @@ export function useFavoritesContainerLogic() {
 
   useEffect(() => {
     if (apiData && typeof apiData === 'object') {
-      const record = apiData as Record<string, unknown>;
-      const fetched = 'items' in record && Array.isArray(record['items'])
-        ? (record['items'] as FavoriteItem[])
-        : Array.isArray(apiData) ? (apiData as FavoriteItem[]) : [];
+      const fetched = Array.isArray(apiData.items)
+        ? (apiData.items as unknown as FavoriteItem[])
+        : [];
       setItems(fetched);
     }
   }, [apiData]);
@@ -117,12 +117,21 @@ export function useFavoritesContainerLogic() {
 
   const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const item = items.find((it) => it.id === id);
+    if (!item) return;
+
+    const newFavoritedState = !item.isFavorited;
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isFavorited: !item.isFavorited } : item
+      prev.map((it) =>
+        it.id === id ? { ...it, isFavorited: newFavoritedState } : it
       )
     );
-    removeFavoriteMutation.mutate(id);
+
+    if (newFavoritedState) {
+      addFavoriteMutation.mutate(id);
+    } else {
+      removeFavoriteMutation.mutate(id);
+    }
   };
 
   const handleOpenItem = (id: string) => {

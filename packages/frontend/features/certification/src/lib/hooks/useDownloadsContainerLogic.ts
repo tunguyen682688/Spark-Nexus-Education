@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDownloadsData, useDeleteDownload, useClearDownloads } from './use-certification';
+import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { paginateItems } from '../services/certification-filter.service';
+import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
 export interface DownloadFileItem {
   id: string;
@@ -18,6 +20,7 @@ export interface DownloadFileItem {
 
 export function useDownloadsContainerLogic() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { data: apiData, isLoading: isApiLoading, isError, refetch } = useDownloadsData();
   const deleteDownloadMutation = useDeleteDownload();
   const clearDownloadsMutation = useClearDownloads();
@@ -34,10 +37,9 @@ export function useDownloadsContainerLogic() {
 
   useEffect(() => {
     if (apiData && typeof apiData === 'object') {
-      const record = apiData as Record<string, unknown>;
-      const fetched = 'items' in record && Array.isArray(record['items'])
-        ? (record['items'] as DownloadFileItem[])
-        : Array.isArray(apiData) ? (apiData as DownloadFileItem[]) : [];
+      const fetched = Array.isArray(apiData.items)
+        ? (apiData.items as unknown as DownloadFileItem[])
+        : [];
       setFiles(fetched);
     }
   }, [apiData]);
@@ -109,10 +111,9 @@ export function useDownloadsContainerLogic() {
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Bạn có chắc chắn muốn dọn dẹp toàn bộ tệp tải xuống offline không?')) {
-      setFiles([]);
-      clearDownloadsMutation.mutate();
-    }
+    toast(CERTIFICATION_UI_TEXT.toast.clearDownloadsSuccess);
+    setFiles([]);
+    clearDownloadsMutation.mutate();
   };
 
   const handleBackToLearning = () => {

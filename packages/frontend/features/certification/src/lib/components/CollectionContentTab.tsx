@@ -1,4 +1,3 @@
-import React from 'react';
 import { Play, Clock, RefreshCw } from 'lucide-react';
 import {
   Card,
@@ -18,12 +17,12 @@ interface CollectionContentTabProps {
   onStartLearning: (id: string) => void;
 }
 
-export const CollectionContentTab: React.FC<CollectionContentTabProps> = ({
+export const CollectionContentTab = ({
   contentItems,
   itemsCount,
   isStartingExamSession,
   onStartLearning,
-}) => {
+}: CollectionContentTabProps) => {
   return (
     <Card className="border-border">
       <CardHeader>

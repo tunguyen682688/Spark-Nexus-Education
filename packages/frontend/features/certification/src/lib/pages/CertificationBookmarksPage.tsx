@@ -1,6 +1,5 @@
-import React from 'react';
 import { CertificationBookmarksContainer } from '../container/CertificationBookmarksContainer';
 
-export const CertificationBookmarksPage: React.FC = () => {
+export const CertificationBookmarksPage = () => {
   return <CertificationBookmarksContainer />;
 };

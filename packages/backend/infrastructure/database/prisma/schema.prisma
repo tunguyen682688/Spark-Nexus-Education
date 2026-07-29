@@ -761,6 +761,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  reviews CollectionReview[]
+
   @@map("users")
 }
 
@@ -1229,11 +1231,34 @@ model Collection {
   collaborators CollectionCollaborator[]
   favorites     CollectionFavorite[]
   bookmarks     CollectionBookmark[]
+  chapters      Chapter[]
   exams         Exam[]
+  reviews       CollectionReview[]
+  discussions   CollectionDiscussion[]
 
   @@index([ownerId])
   @@index([publishStatus])
   @@map("collections")
+}
+
+model Chapter {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  title        String   @db.VarChar(255)
+  description  String?  @db.Text
+  order        Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdBy    String?  @map("created_by")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  exams      Exam[]
+
+  @@index([collectionId])
+  @@map("chapters")
 }
 
 model CollectionItem {
@@ -1298,44 +1323,52 @@ model CollectionBookmark {
 // ============================================
 
 model Exam {
-  id            String    @id @default(uuid())
-  collectionId  String    @map("collection_id")
-  title         String    @db.VarChar(255)
-  description   String?   @db.Text
-  publishStatus String    @default("draft") @map("publish_status") @db.VarChar(50)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  createdBy     String?   @map("created_by")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  updatedBy     String?   @map("updated_by")
-  deletedAt     DateTime? @map("deleted_at")
-  version       BigInt    @default(1)
-  duration      Int       @default(0)
-  totalQuestions Int      @default(0) @map("total_questions")
-  maxScore      Float     @default(100.0) @map("max_score")
-  passScore     Float     @default(50.0) @map("pass_score")
+  id                String    @id @default(uuid())
+  collectionId      String    @map("collection_id")
+  chapterId         String?   @map("chapter_id")
+  title             String    @db.VarChar(255)
+  description       String?   @db.Text
+  publishStatus     String    @default("draft") @map("publish_status") @db.VarChar(50)
+  examType          String    @default("FULL_MOCK") @map("exam_type") @db.VarChar(50)
+  certificationType String?   @map("certification_type") @db.VarChar(50)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  createdBy         String?   @map("created_by")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedBy         String?   @map("updated_by")
+  deletedAt         DateTime? @map("deleted_at")
+  version           BigInt    @default(1)
+  duration          Int       @default(0)
+  totalQuestions    Int       @default(0) @map("total_questions")
+  maxScore          Float     @default(100.0) @map("max_score")
+  passScore         Float     @default(50.0) @map("pass_score")
 
   // Relations
   collection    Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  chapter       Chapter?       @relation(fields: [chapterId], references: [id], onDelete: SetNull)
   sections      ExamSection[]
   rules         ExamRule[]
   examQuestions ExamQuestion[]
   sessions      ExamSession[]
 
   @@index([collectionId])
+  @@index([chapterId])
   @@index([publishStatus])
+  @@index([certificationType])
   @@map("exams")
 }
 
 model ExamSection {
-  id          String   @id @default(uuid())
-  examId      String   @map("exam_id")
-  title       String   @db.VarChar(255)
-  instruction String?  @db.Text
-  order       Int
-  createdAt   DateTime @default(now()) @map("created_at")
-  createdBy   String?  @map("created_by")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  updatedBy   String?  @map("updated_by")
+  id              String   @id @default(uuid())
+  examId          String   @map("exam_id")
+  title           String   @db.VarChar(255)
+  sectionType     String   @default("general") @map("section_type") @db.VarChar(50)
+  instruction     String?  @db.Text
+  order           Int
+  durationMinutes Int      @default(0) @map("duration_minutes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdBy       String?  @map("created_by")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  updatedBy       String?  @map("updated_by")
 
   // Relations
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -2002,4 +2035,93 @@ model BackupPolicy {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("backup_policies")
+}
+
+// ============================================
+// CERTIFICATION PLATFORM - USER DATA SCHEMA
+// ============================================
+
+model UserDownload {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  itemType    String   @map("item_type") @db.VarChar(50) // collection, exam, question
+  itemId      String   @map("item_id")
+  fileName    String   @map("file_name") @db.VarChar(255)
+  fileSize    Int      @default(0) @map("file_size")
+  downloadUrl String?  @map("download_url") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("user_downloads")
+}
+
+model CollectionPurchase {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  collectionId  String   @map("collection_id")
+  purchasedAt   DateTime @default(now()) @map("purchased_at")
+  amount        Float    @default(0.0)
+  currency      String   @default("USD") @db.VarChar(10)
+  paymentStatus String   @default("completed") @db.VarChar(50) @map("payment_status")
+
+  @@unique([userId, collectionId])
+  @@map("collection_purchases")
+}
+
+model CollectionReport {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  userId       String   @map("user_id")
+  reason       String?  @db.Text
+  status       String   @default("pending") @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("collection_reports")
+}
+
+model CollectionReview {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  userId       String   @map("user_id")
+  rating       Int      @db.SmallInt
+  text         String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId])
+  @@index([userId])
+  @@map("collection_reviews")
+}
+
+model CollectionDiscussion {
+  id           String   @id @default(uuid())
+  collectionId String   @map("collection_id")
+  userId       String   @map("user_id")
+  title        String   @db.VarChar(255)
+  content      String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  collection Collection        @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  replies    DiscussionReply[]
+
+  @@index([collectionId])
+  @@index([userId])
+  @@map("collection_discussions")
+}
+
+model DiscussionReply {
+  id            String   @id @default(uuid())
+  discussionId  String   @map("discussion_id")
+  userId        String   @map("user_id")
+  content       String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  discussion CollectionDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+
+  @@index([discussionId])
+  @@map("discussion_replies")
 }

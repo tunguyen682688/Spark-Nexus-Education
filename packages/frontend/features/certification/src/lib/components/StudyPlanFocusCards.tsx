@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { StudyPlanFocusCard } from '../hooks/useStudyPlanContainerLogic';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
@@ -7,9 +6,9 @@ interface StudyPlanFocusCardsProps {
   cards: StudyPlanFocusCard[];
 }
 
-export const StudyPlanFocusCards: React.FC<StudyPlanFocusCardsProps> = ({
+export const StudyPlanFocusCards = ({
   cards,
-}) => {
+}: StudyPlanFocusCardsProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card, idx) => {

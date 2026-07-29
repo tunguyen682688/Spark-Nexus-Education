@@ -9,11 +9,11 @@ interface PracticeHistoryCardProps {
   onRetakeTest: (id: string, e: React.MouseEvent) => void;
 }
 
-export const PracticeHistoryCard: React.FC<PracticeHistoryCardProps> = ({
+export const PracticeHistoryCard = ({
   item,
   onViewScorecard,
   onRetakeTest,
-}) => {
+}: PracticeHistoryCardProps) => {
   const renderIcon = (type: string) => {
     switch (type) {
       case 'listening':

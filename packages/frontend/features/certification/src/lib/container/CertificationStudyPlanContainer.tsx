@@ -1,4 +1,3 @@
-import React from 'react';
 import { RotateCcw, CheckCircle, PlayCircle, RefreshCw } from 'lucide-react';
 import {
   Card,
@@ -18,9 +17,9 @@ interface CertificationStudyPlanContainerProps {
   onStartExam?: (examId: string) => void;
 }
 
-export const CertificationStudyPlanContainer: React.FC<
+export const CertificationStudyPlanContainer = ({ onStartExam }: 
   CertificationStudyPlanContainerProps
-> = ({ onStartExam }) => {
+) => {
   const {
     planDays,
     completedTasks,

@@ -1,4 +1,3 @@
-import React from 'react';
 import type { QuestionVersion } from '../types';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
@@ -7,10 +6,10 @@ interface HistoryTabProps {
   isLoading: boolean;
 }
 
-export const HistoryTab: React.FC<HistoryTabProps> = ({
+export const HistoryTab = ({
   versions,
   isLoading,
-}) => {
+}: HistoryTabProps) => {
   const text = CERTIFICATION_UI_TEXT.historyTab;
 
   if (isLoading) {

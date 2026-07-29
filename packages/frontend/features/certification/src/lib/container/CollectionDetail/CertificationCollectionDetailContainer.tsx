@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,9 +22,9 @@ interface CertificationCollectionDetailContainerProps {
   onBack?: () => void;
 }
 
-export const CertificationCollectionDetailContainer: React.FC<
+export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', onStartLearning, onBack }: 
   CertificationCollectionDetailContainerProps
-> = ({ collectionId = 'c1', onStartLearning, onBack }) => {
+) => {
   const navigate = useNavigate();
 
   const handleBack = () => {

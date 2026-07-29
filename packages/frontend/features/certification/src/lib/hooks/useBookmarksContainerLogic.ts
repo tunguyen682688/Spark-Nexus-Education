@@ -1,13 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBookmarksData, useAddBookmark, useRemoveBookmark } from './use-certification';
+import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { paginateItems } from '../services/certification-filter.service';
-
-export interface BookmarkFolder {
-  id: string;
-  name: string;
-  count: number;
-}
+import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
 export interface BookmarkFolder {
   id: string;
@@ -29,6 +25,11 @@ export interface BookmarkItem {
   folderName: string;
   iconType: 'ielts_writing' | 'toeic_listening' | 'essay' | 'vocabulary' | 'speaking' | 'grammar';
   bannerBgClass: string;
+}
+
+interface BookmarksApiData {
+  items?: BookmarkItem[];
+  folders?: BookmarkFolder[];
 }
 
 export function useBookmarksContainerLogic() {
@@ -57,14 +58,14 @@ export function useBookmarksContainerLogic() {
   // Sync API data if returned from server
   useEffect(() => {
     if (apiData && typeof apiData === 'object') {
-      const record = apiData as Record<string, unknown>;
-      const fetchedItems = 'items' in record && Array.isArray(record['items']) 
-        ? (record['items'] as BookmarkItem[]) 
+      const record = apiData as unknown as BookmarksApiData;
+      const fetchedItems = Array.isArray(record.items)
+        ? record.items
         : Array.isArray(apiData) ? (apiData as BookmarkItem[]) : [];
       setItems(fetchedItems);
 
-      if ('folders' in record && Array.isArray(record['folders'])) {
-        setFolders(record['folders'] as BookmarkFolder[]);
+      if (Array.isArray(record.folders)) {
+        setFolders(record.folders);
       } else {
         // Derive folder counts from items
         const folderCounts: Record<string, number> = {};
@@ -154,9 +155,10 @@ export function useBookmarksContainerLogic() {
     removeBookmarkMutation.mutate(id);
   };
 
+  const { toast } = useToast();
   const handleStartRevisionQuiz = () => {
     if (items.length === 0) {
-      alert('Chưa có câu hỏi nào trong danh sách Bookmark để làm bài ôn tập!');
+      toast(CERTIFICATION_UI_TEXT.toast.startPracticeError);
       return;
     }
     navigate('/certification/study-plan');

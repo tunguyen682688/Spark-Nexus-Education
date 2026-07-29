@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePracticeHistoryData } from './use-certification';
+import { useToast } from '@spark-nest-ed/frontend-shared-components';
+import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
 export interface PracticeHistorySessionItem {
   id: string;
@@ -35,10 +37,9 @@ export function usePracticeHistoryContainerLogic() {
 
   useEffect(() => {
     if (apiData && typeof apiData === 'object') {
-      const record = apiData as Record<string, unknown>;
-      const fetched = 'items' in record && Array.isArray(record['items'])
-        ? (record['items'] as PracticeHistorySessionItem[])
-        : Array.isArray(apiData) ? (apiData as PracticeHistorySessionItem[]) : [];
+      const fetched = Array.isArray(apiData.items)
+        ? (apiData.items as PracticeHistorySessionItem[])
+        : [];
       setSessions(fetched);
     }
   }, [apiData]);
@@ -77,8 +78,9 @@ export function usePracticeHistoryContainerLogic() {
     navigate('/certification/library');
   };
 
+  const { toast } = useToast();
   const handleExportHistory = () => {
-    alert('Exporting Practice History data to CSV/PDF...');
+    toast(CERTIFICATION_UI_TEXT.toast.exportHistory);
   };
 
   return {

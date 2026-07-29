@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import { useEditorialPicksContainerLogic } from '../hooks/useEditorialPicksContainerLogic';
@@ -12,7 +11,7 @@ import {
   EXAM_CATEGORY_OPTIONS,
 } from '../constants/certification.constants';
 
-export const CertificationEditorialPicksContainer: React.FC = () => {
+export const CertificationEditorialPicksContainer = () => {
   const {
     selectedLevelFilter,
     selectedExamCategory,

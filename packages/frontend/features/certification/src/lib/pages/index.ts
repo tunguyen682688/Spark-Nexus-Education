@@ -21,8 +21,7 @@ export * from './CertificationCreatorDashboardPage';
 export * from './CertificationCollectionEditorPage';
 export * from './CertificationExamBuilderPage';
 export * from './CertificationQuestionBuilderPage';
-export * from './CertificationCreateExamPage';
 export * from './CertificationAIGeneratorPage';
 export * from './CertificationImportQuestionsPage';
-export * from './CertificationCreateCollectionPage';
+
 export * from './CertificationAnalyticsPage';

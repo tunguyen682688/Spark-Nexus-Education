@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePurchasedCollectionsData } from './use-certification';
+import { useToast } from '@spark-nest-ed/frontend-shared-components';
+import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
 export interface PurchasedCollectionItem {
   id: string;
@@ -31,10 +33,9 @@ export function usePurchasedCollectionsContainerLogic() {
 
   useEffect(() => {
     if (apiData && typeof apiData === 'object') {
-      const record = apiData as Record<string, unknown>;
-      const fetched = 'items' in record && Array.isArray(record['items'])
-        ? (record['items'] as PurchasedCollectionItem[])
-        : Array.isArray(apiData) ? (apiData as PurchasedCollectionItem[]) : [];
+      const fetched = Array.isArray(apiData.items)
+        ? (apiData.items as unknown as PurchasedCollectionItem[])
+        : [];
       setItems(fetched);
     }
   }, [apiData]);
@@ -56,9 +57,10 @@ export function usePurchasedCollectionsContainerLogic() {
     navigate(`/certification/collections/${id}`);
   };
 
+  const { toast } = useToast();
   const handleViewReceipt = (orderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    alert(`Opening official invoice & receipt for Order #${orderId}...`);
+    toast(CERTIFICATION_UI_TEXT.toast.viewReceipt);
   };
 
   const handleBackToLearning = () => {

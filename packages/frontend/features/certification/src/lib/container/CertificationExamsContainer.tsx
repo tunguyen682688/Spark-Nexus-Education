@@ -1,4 +1,3 @@
-import React from 'react';
 import { useExamsContainerLogic } from '../hooks/useExamsContainerLogic';
 import { FeaturedCollectionCard } from '../components/FeaturedCollectionCard';
 import { CardSkeleton } from '../components/LoadingSkeleton';
@@ -13,9 +12,9 @@ interface CertificationExamsContainerProps {
   onStartExam?: (examId: string) => void;
 }
 
-export const CertificationExamsContainer: React.FC<CertificationExamsContainerProps> = ({
+export const CertificationExamsContainer = ({
   onStartExam,
-}) => {
+}: CertificationExamsContainerProps) => {
   const {
     selectedExamCategory,
     collectionSearchQuery,

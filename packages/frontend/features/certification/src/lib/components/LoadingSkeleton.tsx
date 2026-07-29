@@ -1,6 +1,5 @@
-import React from 'react';
 
-export const CardSkeleton: React.FC = () => {
+export const CardSkeleton = () => {
   return (
     <div className="animate-pulse border border-border bg-card rounded-2xl overflow-hidden flex flex-col justify-between aspect-[3/4] w-full p-4 space-y-4">
       <div className="bg-slate-200 dark:bg-slate-800 rounded-xl aspect-[16/10] w-full" />
@@ -13,7 +12,7 @@ export const CardSkeleton: React.FC = () => {
   );
 };
 
-export const ListSkeleton: React.FC = () => {
+export const ListSkeleton = () => {
   return (
     <div className="animate-pulse border border-border bg-card rounded-2xl p-4 flex items-center justify-between gap-4 w-full">
       <div className="flex items-center gap-4 flex-1">
@@ -28,7 +27,7 @@ export const ListSkeleton: React.FC = () => {
   );
 };
 
-export const LoadingSkeleton: React.FC<{ count?: number }> = ({ count = 6 }) => {
+export const LoadingSkeleton = ({ count = 6 }: { count?: number }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 w-full py-6">
       {Array.from({ length: count }).map((_, idx) => (

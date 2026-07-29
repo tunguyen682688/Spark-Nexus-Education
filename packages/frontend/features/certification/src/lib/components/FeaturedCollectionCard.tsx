@@ -1,4 +1,3 @@
-import React from 'react';
 import { Star, Users, Clock, Play, Bookmark, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import type { ExamCollection } from '../types';
@@ -9,11 +8,11 @@ interface FeaturedCollectionCardProps {
   isStarting?: boolean;
 }
 
-export const FeaturedCollectionCard: React.FC<FeaturedCollectionCardProps> = ({ 
+export const FeaturedCollectionCard = ({ 
   item, 
   onStart,
   isStarting = false 
-}) => {
+}: FeaturedCollectionCardProps) => {
   return (
     <Card className="hover:shadow-md transition-all duration-300 border-border group overflow-hidden flex flex-col justify-between h-full">
       <div className="relative aspect-[4/3] w-full overflow-hidden">

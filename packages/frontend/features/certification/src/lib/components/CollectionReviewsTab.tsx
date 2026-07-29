@@ -17,11 +17,11 @@ interface CollectionReviewsTabProps {
   reviewsCount?: string;
 }
 
-export const CollectionReviewsTab: React.FC<CollectionReviewsTabProps> = ({
+export const CollectionReviewsTab = ({
   collectionId,
   userReviews = [],
   reviewsCount,
-}) => {
+}: CollectionReviewsTabProps) => {
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const { mutate: addReview, isPending } = useAddCollectionReview();
@@ -119,8 +119,8 @@ export const CollectionReviewsTab: React.FC<CollectionReviewsTabProps> = ({
             />
           ) : (
             <div className="space-y-4 divide-y divide-border">
-              {userReviews.map((rev, idx) => (
-                <div key={idx} className="space-y-2 pt-3 first:pt-0">
+              {userReviews.map((rev) => (
+                <div key={rev.id} className="space-y-2 pt-3 first:pt-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {rev.avatar ? (

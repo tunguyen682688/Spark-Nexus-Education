@@ -5,8 +5,10 @@ export class ExamSectionEntity extends Entity<string> {
     id: string,
     private examId: string,
     private title: string,
+    private sectionType: string,
     private instruction: string | null,
     private order: number,
+    private durationMinutes: number,
     createdAt: Date,
     updatedAt: Date
   ) {
@@ -17,8 +19,10 @@ export class ExamSectionEntity extends Entity<string> {
     id: string;
     examId: string;
     title: string;
+    sectionType?: string;
     instruction?: string | null;
     order: number;
+    durationMinutes?: number;
     createdAt?: Date;
     updatedAt?: Date;
   }): ExamSectionEntity {
@@ -27,8 +31,10 @@ export class ExamSectionEntity extends Entity<string> {
       params.id,
       params.examId,
       params.title,
+      params.sectionType ?? 'general',
       params.instruction ?? null,
       params.order,
+      params.durationMinutes ?? 0,
       params.createdAt ?? now,
       params.updatedAt ?? now
     );
@@ -42,6 +48,10 @@ export class ExamSectionEntity extends Entity<string> {
     return this.title;
   }
 
+  getSectionType(): string {
+    return this.sectionType;
+  }
+
   getInstruction(): string | null {
     return this.instruction;
   }
@@ -50,13 +60,19 @@ export class ExamSectionEntity extends Entity<string> {
     return this.order;
   }
 
+  getDurationMinutes(): number {
+    return this.durationMinutes;
+  }
+
   toPlainObject(): Record<string, unknown> {
     return {
       id: this.id,
       examId: this.examId,
       title: this.title,
+      sectionType: this.sectionType,
       instruction: this.instruction,
       order: this.order,
+      durationMinutes: this.durationMinutes,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

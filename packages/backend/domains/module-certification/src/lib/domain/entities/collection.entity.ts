@@ -13,8 +13,8 @@ export class CollectionEntity extends AggregateRoot<string> {
     createdAt: Date,
     updatedAt: Date,
     version: bigint,
-    private examCount: number = 0,
-    private itemCount: number = 0
+    private examCount = 0,
+    private itemCount = 0
   ) {
     super(id, createdAt, updatedAt, version);
   }

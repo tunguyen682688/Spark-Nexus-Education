@@ -21,6 +21,13 @@ export const analyticsConstants = {
     radarTitle: 'Phát Triển Đa Chiều Năng Lực Ngữ Pháp',
     radarBadge: 'Radar Chart',
     chartTooltipLabel: 'XP tích lũy',
+    decompositionLabel: 'Phân Tích Chi Tiết',
+    sidebarTitle: 'Bảng Điều Khiển Bẫy Lỗi',
+    sidebarHasTraps: '{count} bẫy đang mắc',
+    sidebarNoTraps: 'Sạch bẫy!',
+    sidebarAlertTitle: 'Bạn đang vướng {count} bẫy lỗi cần phá hủy!',
+    sidebarBtnAction: 'Đi Phá Bẫy Ngay',
+    sidebarPerfectTitle: 'Tuyệt vời! Bạn chưa vướng bẫy nào!',
   },
   leaderboard: {
     title: 'Bảng Vàng Danh Dự',

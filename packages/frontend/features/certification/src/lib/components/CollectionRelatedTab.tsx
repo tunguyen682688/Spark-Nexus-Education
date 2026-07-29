@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFeaturedCollections } from '../hooks/use-certification';
 import { FeaturedCollectionCard } from './FeaturedCollectionCard';
 import { CardSkeleton } from './LoadingSkeleton';
@@ -9,10 +8,10 @@ interface CollectionRelatedTabProps {
   isStartingExamSession: boolean;
 }
 
-export const CollectionRelatedTab: React.FC<CollectionRelatedTabProps> = ({
+export const CollectionRelatedTab = ({
   onStartRelatedCollectionExam,
   isStartingExamSession,
-}) => {
+}: CollectionRelatedTabProps) => {
   const { data: relatedCollections = [], isLoading: isLoadingRelated } =
     useFeaturedCollections();
 

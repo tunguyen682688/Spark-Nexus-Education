@@ -10,11 +10,11 @@ interface PurchasedCollectionCardProps {
   onViewReceipt: (orderId: string, e: React.MouseEvent) => void;
 }
 
-export const PurchasedCollectionCard: React.FC<PurchasedCollectionCardProps> = ({
+export const PurchasedCollectionCard = ({
   item,
   onOpenCollection,
   onViewReceipt,
-}) => {
+}: PurchasedCollectionCardProps) => {
   const cardText = CERTIFICATION_UI_TEXT.purchasedCollections.card;
 
   return (

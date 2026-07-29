@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFeaturedCollections } from './use-certification';
-import { useDebounce } from './useDebounce';
+import { useDebounceValue } from 'usehooks-ts';
 import { paginateItems } from '../services/certification-filter.service';
 import {
   CERTIFICATION_UI_TEXT,
@@ -17,7 +17,7 @@ export function useSearchContainerLogic() {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Debounce search query to optimize API request frequency
-  const debouncedSearchKeyword = useDebounce(searchKeyword, 350);
+  const [debouncedSearchKeyword] = useDebounceValue(searchKeyword, 350);
 
   const {
     data: searchResults = [],

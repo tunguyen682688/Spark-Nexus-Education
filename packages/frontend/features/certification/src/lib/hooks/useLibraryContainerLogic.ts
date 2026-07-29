@@ -4,7 +4,9 @@ import {
   useSavedCollections,
   useSaveCollection,
   useCertificationDashboard,
-  useFeaturedCollections,
+  usePracticeHistoryData,
+  useInProgressSessions,
+  useClonedCollections,
 } from './use-certification';
 import { ExamCollection } from '../types';
 
@@ -25,34 +27,78 @@ export function useLibraryContainerLogic() {
   } = useSavedCollections();
 
   const { data: dashboardStats } = useCertificationDashboard();
-  const { data: featuredData } = useFeaturedCollections();
   const { mutate: saveCollection, isPending: isUnbookmarking } = useSaveCollection();
 
-  // Combine fetched saved data or fallback to a portion of featured collections if empty
-  const rawSavedCollections: ExamCollection[] = useMemo(() => {
-    if (savedCollectionsData && savedCollectionsData.length > 0) {
-      return savedCollectionsData;
-    }
-    return featuredData ? featuredData.slice(0, 3) : [];
-  }, [savedCollectionsData, featuredData]);
+  const { data: practiceHistoryData, isLoading: isLoadingHistory, isError: isErrorHistory, refetch: refetchHistory } = usePracticeHistoryData();
+  const { data: inProgressData, isLoading: isLoadingInProgress, isError: isErrorInProgress, refetch: refetchInProgress } = useInProgressSessions();
+  const { data: clonedData, isLoading: isLoadingCloned, isError: isErrorCloned, refetch: refetchCloned } = useClonedCollections();
 
-  // Filtered & Sorted saved collections
-  const filteredSavedCollections = useMemo(() => {
-    return rawSavedCollections.filter((collection) => {
+  const filterByExamAndSearch = (items: ExamCollection[]) => {
+    return items.filter((item) => {
       const matchExam =
         selectedExamFilter === 'All' ||
-        collection.exam?.toUpperCase() === selectedExamFilter.toUpperCase();
+        item.exam?.toUpperCase() === selectedExamFilter.toUpperCase();
       const matchSearch =
         !searchQuery ||
-        collection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (collection.description &&
-          collection.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description &&
+          item.description.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchExam && matchSearch;
     });
-  }, [rawSavedCollections, selectedExamFilter, searchQuery]);
+  };
+
+  const sortCollections = (items: ExamCollection[]) => {
+    const sorted = [...items];
+    if (sortBy === 'title') {
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      sorted.sort((a, b) => {
+        const dateA = (a as unknown as Record<string, unknown>).updatedAt as string | undefined;
+        const dateB = (b as unknown as Record<string, unknown>).updatedAt as string | undefined;
+        if (dateA && dateB) return new Date(dateB).getTime() - new Date(dateA).getTime();
+        return 0;
+      });
+    }
+    return sorted;
+  };
+
+  const savedCollections = useMemo(() => {
+    if (!savedCollectionsData) return [];
+    return sortCollections(filterByExamAndSearch(savedCollectionsData));
+  }, [savedCollectionsData, selectedExamFilter, searchQuery, sortBy]);
+
+  const totalSavedCount = savedCollectionsData?.length ?? 0;
+
+  const inProgressSessions = useMemo(() => {
+    const items = inProgressData?.items || [];
+    if (selectedExamFilter === 'All') return items;
+    return items.filter((s: Record<string, unknown>) => {
+      const examType = (s.examType || s.exam || '') as string;
+      return examType.toUpperCase() === selectedExamFilter.toUpperCase();
+    });
+  }, [inProgressData, selectedExamFilter]);
+
+  const practiceHistoryItems = useMemo(() => {
+    const items = practiceHistoryData?.items || [];
+    if (selectedExamFilter === 'All') return items;
+    return items.filter((h: Record<string, unknown>) => {
+      const examType = (h.examType || h.exam || '') as string;
+      return examType.toUpperCase() === selectedExamFilter.toUpperCase();
+    });
+  }, [practiceHistoryData, selectedExamFilter]);
+
+  const clonedCollections = useMemo(() => {
+    const items = clonedData?.items || [];
+    if (selectedExamFilter === 'All') return items;
+    return items.filter((c: Record<string, unknown>) => {
+      const examType = (c.examType || c.exam || '') as string;
+      return examType.toUpperCase() === selectedExamFilter.toUpperCase();
+    });
+  }, [clonedData, selectedExamFilter]);
 
   const handleUnbookmark = (collectionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!window.confirm('Bỏ lưu bộ sưu tập này?')) return;
     saveCollection(collectionId, {
       onSuccess: () => refetchSaved(),
     });
@@ -80,13 +126,25 @@ export function useLibraryContainerLogic() {
     setSelectedExamFilter,
     sortBy,
     setSortBy,
-    savedCollections: filteredSavedCollections,
-    totalSavedCount: rawSavedCollections.length,
+    savedCollections,
+    totalSavedCount,
     dashboardStats,
     isLoadingSaved,
     isErrorSaved,
     isUnbookmarking,
     refetchSaved,
+    inProgressSessions,
+    isLoadingInProgress,
+    isErrorInProgress,
+    practiceHistoryItems,
+    isLoadingHistory,
+    isErrorHistory,
+    clonedCollections,
+    isLoadingCloned,
+    isErrorCloned,
+    refetchInProgress,
+    refetchHistory,
+    refetchCloned,
     handleUnbookmark,
     handleOpenCollection,
     handleStartExam,

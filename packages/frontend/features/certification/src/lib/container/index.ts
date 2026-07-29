@@ -17,7 +17,7 @@ export { CertificationFavoritesContainer } from './CertificationFavoritesContain
 export { CertificationBookmarksContainer } from './CertificationBookmarksContainer';
 export { CertificationDownloadsContainer } from './CertificationDownloadsContainer';
 export { CertificationPurchasedCollectionsContainer } from './CertificationPurchasedCollectionsContainer';
-export { CertificationCreatorDashboardContainer } from './CertificationCreatorDashboardContainer';
-export { CertificationCollectionEditorContainer } from './CertificationCollectionEditorContainer';
-export { CertificationExamBuilderContainer } from './CertificationExamBuilderContainer';
-export { CertificationQuestionBuilderContainer } from './CertificationQuestionBuilderContainer';
+export { CertificationCreatorDashboardContainer } from './CollectionEditor/CertificationCreatorDashboardContainer';
+export { CertificationCollectionEditorContainer } from './CollectionEditor/CertificationCollectionEditorContainer';
+export { CertificationExamBuilderContainer } from './CollectionEditor/CertificationExamBuilderContainer';
+export { CertificationQuestionBuilderContainer } from './CollectionEditor/CertificationQuestionBuilderContainer';

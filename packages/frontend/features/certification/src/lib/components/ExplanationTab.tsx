@@ -1,4 +1,3 @@
-import React from 'react';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
 interface ExplanationTabProps {
@@ -9,13 +8,13 @@ interface ExplanationTabProps {
   onExplanationChange: (value: string) => void;
 }
 
-export const ExplanationTab: React.FC<ExplanationTabProps> = ({
+export const ExplanationTab = ({
   explanation,
   referenceType,
   passageSource,
   highlight,
   onExplanationChange,
-}) => {
+}: ExplanationTabProps) => {
   const text = CERTIFICATION_UI_TEXT.explanationTab;
 
   return (

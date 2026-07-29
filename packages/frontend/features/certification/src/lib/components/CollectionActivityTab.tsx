@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity, RefreshCw } from 'lucide-react';
 import {
   Card,
@@ -15,10 +14,10 @@ interface CollectionActivityTabProps {
   recentActivities?: RecentActivity[];
 }
 
-export const CollectionActivityTab: React.FC<CollectionActivityTabProps> = ({
+export const CollectionActivityTab = ({
   collectionId,
   recentActivities: fallbackActivities = [],
-}) => {
+}: CollectionActivityTabProps) => {
   const { data: liveActivities = [], isLoading } = useCollectionActivities(collectionId);
 
   const activities = liveActivities.length > 0 ? liveActivities : fallbackActivities;

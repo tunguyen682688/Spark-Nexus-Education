@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Heart,
   Filter,
@@ -25,7 +24,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationFavoritesContainer: React.FC = () => {
+export const CertificationFavoritesContainer = () => {
   const {
     isApiLoading,
     isError,

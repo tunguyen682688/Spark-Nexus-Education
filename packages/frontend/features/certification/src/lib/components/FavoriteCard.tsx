@@ -10,11 +10,11 @@ interface FavoriteCardProps {
   onRemoveFavorite: (id: string, e: React.MouseEvent) => void;
 }
 
-export const FavoriteCard: React.FC<FavoriteCardProps> = ({
+export const FavoriteCard = ({
   item,
   onOpenItem,
   onRemoveFavorite,
-}) => {
+}: FavoriteCardProps) => {
   const cardText = CERTIFICATION_UI_TEXT.favorites.card;
 
   const renderIcon = (iconType: string) => {

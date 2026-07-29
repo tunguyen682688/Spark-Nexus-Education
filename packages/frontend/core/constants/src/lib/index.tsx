@@ -72,7 +72,7 @@ export const ROUTES = {
     PURCHASED: '/certification/purchased',
     // Creator / Builder routes
     CREATOR_DASHBOARD: '/certification/creator-dashboard',
-    COLLECTION_EDITOR: '/certification/collection-editor/:id',
+    COLLECTION_EDITOR: '/certification/collection-editor/:id?',
     EXAM_BUILDER: '/certification/exam-builder/:id',
     QUESTION_BUILDER: '/certification/question-builder/:id',
     QUESTION_BUILDER_IN_EXAM: '/certification/exam-builder/:examId/question-builder/:questionId',
@@ -85,7 +85,7 @@ export const ROUTES = {
     CREATE_EXAM: '/certification/create-exam',
     AI_GENERATOR: '/certification/ai-generator',
     IMPORT_QUESTIONS: '/certification/import-questions',
-    CREATE_COLLECTION: '/certification/create-collection',
+    CREATE_COLLECTION: '/certification/collection-editor',
     ANALYTICS: '/certification/analytics',
   },
 }

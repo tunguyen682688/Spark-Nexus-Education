@@ -10,6 +10,9 @@ import { CertificationController } from './presentation/controllers/certificatio
 // Query Handlers
 import {
   GetCertificationDashboardQueryHandler,
+  GetCreatorDashboardQueryHandler,
+  GetCollectionEditorQueryHandler,
+  GetExamBuilderQueryHandler,
   GetFeaturedCollectionsQueryHandler,
   GetTrendingCollectionsQueryHandler,
   GetOfficialCollectionsQueryHandler,
@@ -23,6 +26,15 @@ import {
   GetExamResultQueryHandler,
   GetQuestionBuilderQueryHandler,
   GetQuestionHistoryQueryHandler,
+  GetFavoritesQueryHandler,
+  GetBookmarksQueryHandler,
+  GetDownloadsQueryHandler,
+  GetPurchasedCollectionsQueryHandler,
+  GetCompletedCollectionsQueryHandler,
+  GetPracticeHistoryQueryHandler,
+  GetSavedCollectionsQueryHandler,
+  GetCollectionReviewsQueryHandler,
+  GetCollectionDiscussionsQueryHandler,
 } from './application/queries';
 
 // Command Handlers
@@ -31,11 +43,26 @@ import {
   SaveSessionAnswerHandler,
   RecordSessionViolationHandler,
   SubmitExamSessionHandler,
+  CreateCollectionCommandHandler,
+  UpdateCollectionCommandHandler,
+  DeleteCollectionCommandHandler,
+  CreateExamCommandHandler,
+  UpdateExamCommandHandler,
+  DeleteExamCommandHandler,
   SaveCollectionCommandHandler,
   CloneCollectionCommandHandler,
-  ReportCollectionCommandHandler,
   SaveQuestionHandler,
   DeleteQuestionHandler,
+  AddFavoriteCommandHandler,
+  RemoveFavoriteCommandHandler,
+  AddBookmarkCommandHandler,
+  RemoveBookmarkCommandHandler,
+  DeleteDownloadCommandHandler,
+  ClearDownloadsCommandHandler,
+  SaveReportCommandHandler,
+  AddCollectionReviewCommandHandler,
+  AddCollectionDiscussionCommandHandler,
+  SyncChaptersCommandHandler,
 } from './application/commands';
 
 // Repository Implementations
@@ -54,6 +81,9 @@ import { CertificationProcessor } from './infrastructure/processors/certificatio
 
 const QueryHandlers = [
   GetCertificationDashboardQueryHandler,
+  GetCreatorDashboardQueryHandler,
+  GetCollectionEditorQueryHandler,
+  GetExamBuilderQueryHandler,
   GetFeaturedCollectionsQueryHandler,
   GetTrendingCollectionsQueryHandler,
   GetOfficialCollectionsQueryHandler,
@@ -67,6 +97,15 @@ const QueryHandlers = [
   GetExamResultQueryHandler,
   GetQuestionBuilderQueryHandler,
   GetQuestionHistoryQueryHandler,
+  GetFavoritesQueryHandler,
+  GetBookmarksQueryHandler,
+  GetDownloadsQueryHandler,
+  GetPurchasedCollectionsQueryHandler,
+  GetCompletedCollectionsQueryHandler,
+  GetPracticeHistoryQueryHandler,
+  GetSavedCollectionsQueryHandler,
+  GetCollectionReviewsQueryHandler,
+  GetCollectionDiscussionsQueryHandler,
 ];
 
 const CommandHandlers = [
@@ -74,11 +113,26 @@ const CommandHandlers = [
   SaveSessionAnswerHandler,
   RecordSessionViolationHandler,
   SubmitExamSessionHandler,
+  CreateCollectionCommandHandler,
+  UpdateCollectionCommandHandler,
+  DeleteCollectionCommandHandler,
+  CreateExamCommandHandler,
+  UpdateExamCommandHandler,
+  DeleteExamCommandHandler,
   SaveCollectionCommandHandler,
   CloneCollectionCommandHandler,
-  ReportCollectionCommandHandler,
   SaveQuestionHandler,
   DeleteQuestionHandler,
+  AddFavoriteCommandHandler,
+  RemoveFavoriteCommandHandler,
+  AddBookmarkCommandHandler,
+  RemoveBookmarkCommandHandler,
+  DeleteDownloadCommandHandler,
+  ClearDownloadsCommandHandler,
+  SaveReportCommandHandler,
+  AddCollectionReviewCommandHandler,
+  AddCollectionDiscussionCommandHandler,
+  SyncChaptersCommandHandler,
 ];
 
 @Module({

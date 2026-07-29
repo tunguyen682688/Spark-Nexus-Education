@@ -1,6 +1,5 @@
-import React from 'react';
 import { CertificationPurchasedCollectionsContainer } from '../container/CertificationPurchasedCollectionsContainer';
 
-export const CertificationPurchasedCollectionsPage: React.FC = () => {
+export const CertificationPurchasedCollectionsPage = () => {
   return <CertificationPurchasedCollectionsContainer />;
 };

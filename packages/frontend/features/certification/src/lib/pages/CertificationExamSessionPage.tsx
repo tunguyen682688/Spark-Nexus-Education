@@ -1,4 +1,3 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { CertificationExamSessionContainer } from '../container';
 
@@ -8,9 +7,9 @@ interface CertificationExamSessionPageProps {
   onExit?: () => void;
 }
 
-export const CertificationExamSessionPage: React.FC<
+export const CertificationExamSessionPage = ({ sessionId, onSubmitted, onExit }: 
   CertificationExamSessionPageProps
-> = ({ sessionId, onSubmitted, onExit }) => {
+) => {
   const params = useParams<{ id: string }>();
   const activeId = sessionId || params.id || 's1';
 

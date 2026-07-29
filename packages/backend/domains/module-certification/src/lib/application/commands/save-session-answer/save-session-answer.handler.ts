@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { SessionAnswerEntity } from '../../../domain/entities/session-answer.entity';
 import { ExamSessionEntity } from '../../../domain/entities/exam-session.entity';
@@ -17,6 +17,10 @@ export class SaveSessionAnswerCommandHandler implements ICommandHandler<SaveSess
     const session = await this.certificationRepo.findSessionById(command.sessionId);
     if (!session) {
       throw new NotFoundException(`Exam session with ID ${command.sessionId} not found`);
+    }
+
+    if (session.getUserId() !== command.userId) {
+      throw new ForbiddenException('You do not have permission to modify this session');
     }
 
     if (session.getStatus() !== 'started' && session.getStatus() !== 'in_progress') {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { DashboardStatCard } from '../hooks/useDashboardContainerLogic';
 
@@ -6,9 +5,9 @@ interface DashboardStatsGridProps {
   stats: DashboardStatCard[];
 }
 
-export const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({
+export const DashboardStatsGrid = ({
   stats,
-}) => {
+}: DashboardStatsGridProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {stats.map((stat, idx) => {

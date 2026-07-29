@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import {
   Card,
@@ -13,9 +12,9 @@ interface WhyTrendingCardProps {
   reasons: WhyTrendingReason[];
 }
 
-export const WhyTrendingCard: React.FC<WhyTrendingCardProps> = ({
+export const WhyTrendingCard = ({
   reasons,
-}) => {
+}: WhyTrendingCardProps) => {
   return (
     <Card className="border-border bg-slate-50 dark:bg-slate-900/40">
       <CardHeader className="pb-2 border-b border-border mb-3">

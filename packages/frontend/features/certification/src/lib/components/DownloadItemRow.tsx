@@ -9,11 +9,11 @@ interface DownloadItemRowProps {
   onDeleteFile: (id: string, e: React.MouseEvent) => void;
 }
 
-export const DownloadItemRow: React.FC<DownloadItemRowProps> = ({
+export const DownloadItemRow = ({
   file,
   onOpenFile,
   onDeleteFile,
-}) => {
+}: DownloadItemRowProps) => {
   const renderFormatIcon = (format: string) => {
     switch (format) {
       case 'PDF':

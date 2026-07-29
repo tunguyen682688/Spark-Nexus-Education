@@ -1,4 +1,3 @@
-import React from 'react';
 import { Award } from 'lucide-react';
 import { Card, CardContent, Badge } from '@spark-nest-ed/frontend-shared-components';
 import { EditorialBadgeItem } from '../hooks/useEditorialPicksContainerLogic';
@@ -8,9 +7,9 @@ interface EditorialPicksHeaderProps {
   badges: EditorialBadgeItem[];
 }
 
-export const EditorialPicksHeader: React.FC<EditorialPicksHeaderProps> = ({
+export const EditorialPicksHeader = ({
   badges,
-}) => {
+}: EditorialPicksHeaderProps) => {
   return (
     <div className="space-y-6">
       {/* HERO TITLE BANNER */}

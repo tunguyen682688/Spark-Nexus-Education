@@ -1,10 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationAIGeneratorPage: React.FC = () => {
+export const CertificationAIGeneratorPage = () => {
   const navigate = useNavigate();
   const text = CERTIFICATION_UI_TEXT.placeholderPages.aiGenerator;
   const bc = CERTIFICATION_UI_TEXT.breadcrumbs;

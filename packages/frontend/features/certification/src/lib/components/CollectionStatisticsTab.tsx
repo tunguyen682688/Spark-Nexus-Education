@@ -1,4 +1,3 @@
-import React from 'react';
 import { BarChart2, Star, Users, Layers, Award, HardDrive } from 'lucide-react';
 import {
   Card,
@@ -18,7 +17,7 @@ interface CollectionStatisticsTabProps {
   totalSize?: string;
 }
 
-export const CollectionStatisticsTab: React.FC<CollectionStatisticsTabProps> = ({
+export const CollectionStatisticsTab = ({
   rating = '4.9',
   reviewsCount = '2.4K',
   downloads = '58.3K',
@@ -27,7 +26,7 @@ export const CollectionStatisticsTab: React.FC<CollectionStatisticsTabProps> = (
   cefrLevel = 'B2 – C1',
   targetBand = '6.0 – 8.0+',
   totalSize = '45.2 MB',
-}) => {
+}: CollectionStatisticsTabProps) => {
   const statCards = [
     {
       label: 'Learner Rating',

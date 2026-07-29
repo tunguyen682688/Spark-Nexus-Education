@@ -1,10 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3 } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationAnalyticsPage: React.FC = () => {
+export const CertificationAnalyticsPage = () => {
   const navigate = useNavigate();
   const text = CERTIFICATION_UI_TEXT.placeholderPages.analytics;
   const bc = CERTIFICATION_UI_TEXT.breadcrumbs;

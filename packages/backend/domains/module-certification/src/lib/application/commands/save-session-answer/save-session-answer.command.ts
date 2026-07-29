@@ -5,6 +5,7 @@ export class SaveSessionAnswerCommand extends Command<SessionAnswerEntity> {
   constructor(
     public readonly sessionId: string,
     public readonly questionId: string,
+    public readonly userId: string,
     public readonly answerText?: string | null,
     public readonly choiceIds?: string[]
   ) {

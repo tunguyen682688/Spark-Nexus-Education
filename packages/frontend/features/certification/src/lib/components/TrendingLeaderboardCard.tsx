@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flame, Bookmark } from 'lucide-react';
 import {
   Card,
@@ -16,11 +15,11 @@ interface TrendingLeaderboardCardProps {
   onBookmark: (id: string) => void;
 }
 
-export const TrendingLeaderboardCard: React.FC<TrendingLeaderboardCardProps> = ({
+export const TrendingLeaderboardCard = ({
   collections,
   bookmarkedCollectionIds,
   onBookmark,
-}) => {
+}: TrendingLeaderboardCardProps) => {
   return (
     <Card className="xl:col-span-2 border-border">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border mb-2">

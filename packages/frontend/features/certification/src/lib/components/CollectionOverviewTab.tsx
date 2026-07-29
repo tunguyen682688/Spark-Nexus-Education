@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, FileText, Clock } from 'lucide-react';
 import {
   Card,
@@ -16,10 +15,10 @@ interface CollectionOverviewTabProps {
   onSelectTab: (tab: CollectionTabType) => void;
 }
 
-export const CollectionOverviewTab: React.FC<CollectionOverviewTabProps> = ({
+export const CollectionOverviewTab = ({
   contentItems,
   onSelectTab,
-}) => {
+}: CollectionOverviewTabProps) => {
   return (
     <Card className="border-border">
       <CardHeader className="flex flex-row items-center justify-between pb-2">

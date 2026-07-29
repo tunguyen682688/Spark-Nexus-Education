@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, List, Grid } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import { useSearchContainerLogic } from '../hooks/useSearchContainerLogic';
@@ -7,7 +6,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationSearchContainer: React.FC = () => {
+export const CertificationSearchContainer = () => {
   const {
     searchKeyword,
     activeResultTab,

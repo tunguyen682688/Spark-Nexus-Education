@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Bookmark,
   BookOpen,
@@ -13,6 +12,7 @@ import {
   Trophy,
   History,
   FolderHeart,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   Card,
@@ -38,7 +38,7 @@ const LIBRARY_EXAM_FILTERS = [
   { id: 'Cambridge', label: 'Cambridge' },
 ];
 
-export const CertificationLibraryContainer: React.FC = () => {
+export const CertificationLibraryContainer = () => {
   const {
     activeTab,
     setActiveTab,
@@ -46,12 +46,26 @@ export const CertificationLibraryContainer: React.FC = () => {
     setSearchQuery,
     selectedExamFilter,
     setSelectedExamFilter,
+    sortBy,
+    setSortBy,
     savedCollections,
     totalSavedCount,
     dashboardStats,
     isLoadingSaved,
     isErrorSaved,
     refetchSaved,
+    inProgressSessions,
+    isLoadingInProgress,
+    isErrorInProgress,
+    practiceHistoryItems,
+    isLoadingHistory,
+    isErrorHistory,
+    clonedCollections,
+    isLoadingCloned,
+    isErrorCloned,
+    refetchInProgress,
+    refetchHistory,
+    refetchCloned,
     handleUnbookmark,
     handleOpenCollection,
     handleStartExam,
@@ -107,7 +121,7 @@ export const CertificationLibraryContainer: React.FC = () => {
                 {libText.metrics.mocksCompleted}
               </span>
               <span className="text-xl font-black text-emerald-300">
-                {dashboardStats?.completedMocks || '2'}
+                {dashboardStats?.completedMocks || '0'}
               </span>
             </div>
 
@@ -116,7 +130,7 @@ export const CertificationLibraryContainer: React.FC = () => {
                 {libText.metrics.accuracyScore}
               </span>
               <span className="text-xl font-black text-amber-300">
-                {dashboardStats?.accuracy || '78.5%'}
+                {dashboardStats?.accuracy || '0%'}
               </span>
             </div>
 
@@ -125,7 +139,7 @@ export const CertificationLibraryContainer: React.FC = () => {
                 {libText.metrics.targetScore}
               </span>
               <span className="text-xl font-black text-sky-300">
-                {dashboardStats?.targetScore || 'Band 7.5'}
+                {dashboardStats?.targetScore || '-'}
               </span>
             </div>
           </div>
@@ -161,6 +175,18 @@ export const CertificationLibraryContainer: React.FC = () => {
               {opt.label}
             </button>
           ))}
+
+          <div className="ml-2 border-l border-border pl-2 flex items-center gap-1.5">
+            <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'recent' | 'title')}
+              className="text-xs font-bold text-foreground bg-transparent border-none focus:outline-none cursor-pointer"
+            >
+              <option value="recent">Gần đây</option>
+              <option value="title">Tên A-Z</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -333,28 +359,45 @@ export const CertificationLibraryContainer: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-secondary/30">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-amber-500 text-white text-[10px]">
-                    {libText.inProgressTab.badge}
-                  </Badge>
-                  <h4 className="font-bold text-sm text-foreground">
-                    IELTS Academic Reading & Writing Full Mock 01
-                  </h4>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Saved 15 minutes ago &bull; 24 of 40 questions answered
-                </p>
+            {isLoadingInProgress ? (
+              <div className="space-y-3">
+                <CardSkeleton />
+                <CardSkeleton />
               </div>
-              <Button
-                onClick={() => handleStartExam('c1')}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />{' '}
-                {libText.inProgressTab.resumeBtn}
-              </Button>
-            </div>
+            ) : isErrorInProgress ? (
+              <ErrorState onRetry={refetchInProgress} message={CERTIFICATION_UI_TEXT.error.practiceHistory} />
+            ) : inProgressSessions.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-xl space-y-2">
+                <Clock className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                <p>Không có phiên thi đang thực hiện</p>
+                <p className="text-[11px]">Bắt đầu một bài thi để phiên hiện xuất hiện ở đây</p>
+              </div>
+            ) : (
+              inProgressSessions.map((session) => (
+                <div key={session.id} className="p-4 border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-secondary/30">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-amber-500 text-white text-[10px]">
+                        {libText.inProgressTab.badge}
+                      </Badge>
+                      <h4 className="font-bold text-sm text-foreground">
+                        {session.title || session.examTitle}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {session.timeAgo} &bull; {session.totalQuestions} câu hỏi
+                    </p>
+                  </div>
+                  <Button
+                    onClick={(e) => handleStartExam(session.examId, e)}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />{' '}
+                    {libText.inProgressTab.resumeBtn}
+                  </Button>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       )}
@@ -370,36 +413,53 @@ export const CertificationLibraryContainer: React.FC = () => {
             <CardDescription>{libText.historyTab.description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="p-4 border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-emerald-500 text-white text-[10px]">
-                    {libText.historyTab.completedBadge}
-                  </Badge>
-                  <h4 className="font-bold text-sm text-foreground">
-                    TOEIC Listening & Reading 900+ Target Mock
-                  </h4>
-                </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-3">
-                  <span>
-                    Score:{' '}
-                    <strong className="text-emerald-600 dark:text-emerald-400">
-                      865 / 990
-                    </strong>
-                  </span>
-                  <span>&bull; Date: Yesterday</span>
-                  <span>&bull; Time: 115 mins</span>
-                </p>
+            {isLoadingHistory ? (
+              <div className="space-y-3">
+                <CardSkeleton />
+                <CardSkeleton />
               </div>
-              <Button
-                onClick={() => handleStartExam('c2')}
-                variant="outline"
-                className="font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{' '}
-                {libText.historyTab.viewScorecardBtn}
-              </Button>
-            </div>
+            ) : isErrorHistory ? (
+              <ErrorState onRetry={refetchHistory} message={CERTIFICATION_UI_TEXT.error.practiceHistory} />
+            ) : practiceHistoryItems.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-xl space-y-2">
+                <Trophy className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                <p>Chưa có lịch sử thi</p>
+                <p className="text-[11px]">Hoàn thành một bài thi để xem kết quả ở đây</p>
+              </div>
+            ) : (
+              practiceHistoryItems.map((item) => (
+                <div key={item.id} className="p-4 border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge className={item.scoreSub === 'Đạt' ? 'bg-emerald-500 text-white text-[10px]' : 'bg-red-500 text-white text-[10px]'}>
+                        {item.scoreSub === 'Đạt' ? libText.historyTab.completedBadge : 'Chưa đạt'}
+                      </Badge>
+                      <h4 className="font-bold text-sm text-foreground">
+                        {item.title}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-3">
+                      <span>
+                        Điểm:{' '}
+                        <strong className="text-emerald-600 dark:text-emerald-400">
+                          {item.scoreDisplay}
+                        </strong>
+                      </span>
+                      <span>&bull; {item.dateDisplay}</span>
+                      <span>&bull; {item.timeSpent}</span>
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleStartExam(item.id)}
+                    variant="outline"
+                    className="font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{' '}
+                    {libText.historyTab.viewScorecardBtn}
+                  </Button>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       )}
@@ -415,10 +475,53 @@ export const CertificationLibraryContainer: React.FC = () => {
             <CardDescription>{libText.myClonesTab.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-xl space-y-2">
-              <p>{libText.myClonesTab.emptyTitle}</p>
-              <p className="text-[11px]">{libText.myClonesTab.emptyDesc}</p>
-            </div>
+            {isLoadingCloned ? (
+              <div className="space-y-3">
+                <CardSkeleton />
+                <CardSkeleton />
+              </div>
+            ) : isErrorCloned ? (
+              <ErrorState onRetry={refetchCloned} message={CERTIFICATION_UI_TEXT.error.collections} />
+            ) : clonedCollections.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-xl space-y-2">
+                <Sparkles className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                <p>{libText.myClonesTab.emptyTitle}</p>
+                <p className="text-[11px]">{libText.myClonesTab.emptyDesc}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {clonedCollections.map((col) => (
+                  <Card
+                    key={col.id}
+                    onClick={() => handleOpenCollection(col.id)}
+                    className="border-border hover:border-amber-500/50 transition-all duration-300 hover:shadow-lg cursor-pointer group"
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <Badge variant="secondary" className="text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                          Bản nháp
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-sm font-extrabold text-foreground group-hover:text-amber-600 transition-colors line-clamp-2">
+                        {col.title}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                        {col.description || 'Chưa có mô tả'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/50 pt-3">
+                        <span className="flex items-center gap-1 font-semibold">
+                          <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                          {col.examCount} đề thi
+                        </span>
+                        <span>{col.itemCount} mục</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

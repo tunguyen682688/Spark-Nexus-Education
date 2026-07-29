@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useOfficialContainerLogic } from '../hooks/useOfficialContainerLogic';
 import { OfficialCollectionCard } from '../components/OfficialCollectionCard';
@@ -15,9 +14,9 @@ interface CertificationOfficialContainerProps {
   onStartExam?: (examId: string) => void;
 }
 
-export const CertificationOfficialContainer: React.FC<CertificationOfficialContainerProps> = ({
+export const CertificationOfficialContainer = ({
   onStartExam,
-}) => {
+}: CertificationOfficialContainerProps) => {
   const {
     selectedExamCategory,
     selectedDifficultyLevel,

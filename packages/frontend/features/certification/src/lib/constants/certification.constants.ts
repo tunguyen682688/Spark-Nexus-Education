@@ -1,382 +1,5 @@
-import type { 
-  ExamCollection, 
-  DashboardStats, 
-  StudyPlanDay, 
-  Contributor 
-} from '../types';
-
 export const DEFAULT_PAGE_SIZE = 10;
 export const DEFAULT_SEARCH_KEYWORD = '';
-
-export const DEFAULT_DASHBOARD_STATS: DashboardStats = {
-  scorePrediction: '7.5',
-  scoreRange: '7.0 - 8.0',
-  accuracy: '78%',
-  timeSpent: '12.5 hrs',
-  completedMocks: '8/15',
-  targetExam: 'IELTS Academic',
-  targetScore: '8.0',
-  daysRemaining: 18
-};
-
-export const FEATURED_COLLECTIONS: ExamCollection[] = [
-  {
-    id: 'f1',
-    exam: 'IELTS',
-    title: 'IELTS Academic Official Collection',
-    tag: 'Featured',
-    tagColor: 'bg-orange-500 text-white',
-    updated: 'Updated Apr 30, 2026',
-    rating: '4.9',
-    reviews: '12.6K',
-    learners: '45,200',
-    mocks: '12',
-    minis: '5',
-    questions: '260+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300',
-    duration: '180 mins',
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'f2',
-    exam: 'TOEIC',
-    title: 'TOEIC 900+ Target Collection',
-    tag: 'Best Seller',
-    tagColor: 'bg-emerald-500 text-white',
-    updated: 'Updated May 12, 2026',
-    rating: '4.8',
-    reviews: '8.9K',
-    learners: '32,100',
-    mocks: '10',
-    minis: '3',
-    questions: '200+',
-    level: 'Advanced',
-    levelColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300',
-    duration: '150 mins',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'f3',
-    exam: 'Cambridge',
-    title: 'Cambridge C1 Complete Practice',
-    tag: 'AI Recommended',
-    tagColor: 'bg-purple-500 text-white',
-    updated: 'Updated May 5, 2026',
-    rating: '4.9',
-    reviews: '6.3K',
-    learners: '18,700',
-    mocks: '8',
-    minis: '4',
-    questions: '180+',
-    level: 'Upper-Intermediate',
-    levelColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300',
-    duration: '165 mins',
-    image: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'f4',
-    exam: 'TOEFL',
-    title: 'TOEFL iBT Ultimate Prep',
-    tag: 'New',
-    tagColor: 'bg-sky-500 text-white',
-    updated: 'Updated May 20, 2026',
-    rating: '4.7',
-    reviews: '4.1K',
-    learners: '14,300',
-    mocks: '7',
-    minis: '3',
-    questions: '160+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300',
-    duration: '180 mins',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'f5',
-    exam: 'VSTEP',
-    title: 'VSTEP B2 Complete Practice',
-    tag: 'Trending',
-    tagColor: 'bg-amber-500 text-white',
-    updated: 'Updated May 18, 2026',
-    rating: '4.8',
-    reviews: '2.7K',
-    learners: '9,800',
-    mocks: '6',
-    minis: '2',
-    questions: '120+',
-    level: 'Intermediate',
-    levelColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300',
-    duration: '120 mins',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=300&auto=format&fit=crop'
-  }
-];
-
-export const TRENDING_COLLECTIONS: ExamCollection[] = [
-  {
-    id: 't1',
-    rank: 1,
-    exam: 'IELTS',
-    title: 'IELTS Academic Official Collection 2025',
-    desc: 'Official-style mock tests with latest question patterns.',
-    rating: '4.9',
-    reviews: '12.6K',
-    learners: '45.2K',
-    mocks: '12',
-    minis: '5',
-    questions: '260+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    duration: '180 mins',
-    trend: '35%',
-    btnColor: 'bg-blue-600 hover:bg-blue-500 text-white',
-    badgeColor: 'bg-blue-600 text-white',
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 't2',
-    rank: 2,
-    exam: 'TOEIC',
-    title: 'TOEIC 900+ Target Collection',
-    desc: 'Score 900+ with high-quality practice tests.',
-    rating: '4.8',
-    reviews: '8.9K',
-    learners: '32.1K',
-    mocks: '10',
-    minis: '3',
-    questions: '200+',
-    level: 'Advanced',
-    levelColor: 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300',
-    duration: '150 mins',
-    trend: '28%',
-    btnColor: 'bg-teal-600 hover:bg-teal-50 text-teal-600 dark:border-teal-900 dark:hover:bg-teal-950/40 dark:text-teal-400',
-    badgeColor: 'bg-teal-600 text-white',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 't3',
-    rank: 3,
-    exam: 'Cambridge',
-    title: 'Cambridge C1 Complete Practice',
-    desc: 'Comprehensive practice for Cambridge C1 Advanced.',
-    rating: '4.8',
-    reviews: '6.3K',
-    learners: '18.7K',
-    mocks: '8',
-    minis: '4',
-    questions: '180+',
-    level: 'Upper-Intermediate',
-    levelColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
-    duration: '165 mins',
-    trend: '22%',
-    btnColor: 'bg-indigo-600 hover:bg-indigo-500 text-white',
-    badgeColor: 'bg-purple-600 text-white',
-    image: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 't4',
-    rank: 4,
-    exam: 'TOEFL',
-    title: 'TOEFL iBT Ultimate Prep',
-    desc: 'Ace the TOEFL iBT with proven strategies.',
-    rating: '4.7',
-    reviews: '4.1K',
-    learners: '14.3K',
-    mocks: '7',
-    minis: '3',
-    questions: '160+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    duration: '180 mins',
-    trend: '18%',
-    btnColor: 'bg-blue-600 hover:bg-blue-500 text-white',
-    badgeColor: 'bg-sky-600 text-white',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 't5',
-    rank: 5,
-    exam: 'VSTEP',
-    title: 'VSTEP B2 Complete Practice',
-    desc: 'Full practice for VSTEP B2 with detailed solutions.',
-    rating: '4.7',
-    reviews: '2.9K',
-    learners: '9.8K',
-    mocks: '6',
-    minis: '2',
-    questions: '120+',
-    level: 'Intermediate',
-    levelColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-    duration: '120 mins',
-    trend: '16%',
-    btnColor: 'bg-orange-600 hover:bg-orange-500 text-white',
-    badgeColor: 'bg-orange-600 text-white',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=300&auto=format&fit=crop'
-  }
-];
-
-export const OFFICIAL_COLLECTIONS: ExamCollection[] = [
-  {
-    id: 'o1',
-    title: 'IELTS Academic Official Practice Tests 2024',
-    exam: 'IELTS',
-    rating: '4.9',
-    reviews: '12.6K',
-    learners: '58.3K',
-    mocks: 20,
-    minis: 10,
-    questions: '4000+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    duration: '180-210 mins',
-    btnColor: 'border-blue-200 hover:bg-blue-50 text-blue-600 dark:border-blue-900 dark:hover:bg-blue-950/40 dark:text-blue-400',
-    badgeColor: 'bg-indigo-600 text-white',
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'o2',
-    title: 'TOEIC Official Learning and Practice',
-    exam: 'TOEIC',
-    rating: '4.8',
-    reviews: '9.4K',
-    learners: '42.1K',
-    mocks: 17,
-    minis: 5,
-    questions: '3500+',
-    level: 'Advanced',
-    levelColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    duration: '120-180 mins',
-    btnColor: 'border-teal-200 hover:bg-teal-50 text-teal-600 dark:border-teal-900 dark:hover:bg-teal-950/40 dark:text-teal-400',
-    badgeColor: 'bg-teal-600 text-white',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'o3',
-    title: 'Cambridge English C1 Advanced (CAE)',
-    exam: 'Cambridge',
-    rating: '4.9',
-    reviews: '8.1K',
-    learners: '28.7K',
-    mocks: 12,
-    minis: 6,
-    questions: '2800+',
-    level: 'Upper-Intermediate',
-    levelColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
-    duration: '140-180 mins',
-    btnColor: 'border-purple-200 hover:bg-purple-50 text-purple-600 dark:border-purple-900 dark:hover:bg-purple-950/40 dark:text-purple-400',
-    badgeColor: 'bg-purple-600 text-white',
-    image: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'o4',
-    title: 'TOEFL iBT® Official Guide 6th Edition',
-    exam: 'TOEFL',
-    rating: '4.8',
-    reviews: '4.7K',
-    learners: '21.5K',
-    mocks: 8,
-    minis: 4,
-    questions: '1900+',
-    level: 'Advanced',
-    levelColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    duration: '120 mins',
-    btnColor: 'border-sky-200 hover:bg-sky-50 text-sky-600 dark:border-sky-900 dark:hover:bg-sky-950/40 dark:text-sky-400',
-    badgeColor: 'bg-sky-600 text-white',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'o5',
-    title: 'VSTEP Official Practice Collection',
-    exam: 'VSTEP',
-    rating: '4.7',
-    reviews: '2.3K',
-    learners: '11.2K',
-    mocks: 10,
-    minis: 4,
-    questions: '2200+',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    duration: '90-120 mins',
-    btnColor: 'border-orange-200 hover:bg-orange-50 text-orange-600 dark:border-orange-900 dark:hover:bg-orange-950/40 dark:text-orange-400',
-    badgeColor: 'bg-orange-600 text-white',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=300&auto=format&fit=crop'
-  }
-];
-
-export const COMMUNITY_COLLECTIONS: ExamCollection[] = [
-  {
-    id: 'c1',
-    title: 'IELTS Writing Task 2 Band 7+ Samples',
-    desc: '50+ high score essays with model answers and vocabulary.',
-    author: 'Sarah Nguyen',
-    authorRole: 'IELTS 8.0',
-    exam: 'IELTS',
-    rating: '4.9',
-    reviews: '2.1K',
-    learners: '28.4K',
-    duration: '60-90 mins',
-    tag: 'Trending',
-    tagColor: 'bg-emerald-500 text-white',
-    level: 'Intermediate',
-    levelColor: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=300&auto=format&fit=crop',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=80&auto=format&fit=crop'
-  },
-  {
-    id: 'c2',
-    title: 'TOEIC Part 5 & 6 Drill Pack',
-    desc: 'Grammar essentials with detailed explanations.',
-    author: 'Minh Le',
-    authorRole: 'TOEIC 945',
-    exam: 'TOEIC',
-    rating: '4.8',
-    reviews: '1.7K',
-    learners: '45.2K',
-    duration: '30-45 mins',
-    tag: 'Most Cloned',
-    tagColor: 'bg-orange-500 text-white',
-    level: 'Beginner',
-    levelColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=300&auto=format&fit=crop',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=80&auto=format&fit=crop'
-  },
-  {
-    id: 'c3',
-    title: 'Cambridge B2 First Complete Practice',
-    desc: 'Full practice tests with audio and answer explanations.',
-    author: 'John D.',
-    authorRole: 'B2 Certified',
-    exam: 'Cambridge',
-    rating: '4.9',
-    reviews: '3.3K',
-    learners: '19.6K',
-    duration: '120 mins',
-    tag: 'Top Rated',
-    tagColor: 'bg-blue-600 text-white',
-    level: 'Upper-Intermediate',
-    levelColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
-    image: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=300&auto=format&fit=crop',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=80&auto=format&fit=crop'
-  }
-];
-
-export const STUDY_PLAN_DAYS: StudyPlanDay[] = [
-  { day: 'Mon', title: 'Diagnostic Test', topic: 'Full Mock Test (Listening & Reading)', duration: '120 mins', type: 'mock', completed: true },
-  { day: 'Tue', title: 'Vocabulary Practice', topic: 'High-Frequency Vocabulary Set 01', duration: '45 mins', type: 'skills', completed: true },
-  { day: 'Wed', title: 'Skills Practice', topic: 'Academic Reading - Paragraph Headings', duration: '60 mins', type: 'skills', completed: false, matchRate: '95%' },
-  { day: 'Thu', title: 'Skills Practice', topic: 'Listening Part 3 - Multiple Choice', duration: '60 mins', type: 'skills', completed: false, matchRate: '90%' },
-  { day: 'Fri', title: 'Mock Practice', topic: 'Section Practice - Academic Writing Task 1', duration: '40 mins', type: 'mock', completed: false },
-  { day: 'Sat', title: 'Review Session', topic: 'AI Weakness Analysis & Error Notebook', duration: '90 mins', type: 'review', completed: false },
-  { day: 'Sun', title: 'Rest Day', topic: 'Weekly Performance Analysis & Recovery', duration: '0 mins', type: 'rest', completed: false }
-];
-
-export const TOP_CONTRIBUTORS: Contributor[] = [
-  { rank: 1, name: 'Sarah Nguyen', details: 'IELTS 8.5', points: '12.5K', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=80&auto=format&fit=crop' },
-  { rank: 2, name: 'Minh Le', details: 'TOEIC 945', points: '9.2K', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=80&auto=format&fit=crop' },
-  { rank: 3, name: 'John D.', details: 'B2 Certified', points: '7.8K', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=80&auto=format&fit=crop' },
-  { rank: 4, name: 'Hana Kim', details: 'TOEFL 112', points: '5.1K', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=80&auto=format&fit=crop' },
-  { rank: 5, name: 'Anh Tran', details: 'VSTEP B2', points: '5.3K', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=80&auto=format&fit=crop' }
-];
 
 // ===== STANDARDIZED CERTIFICATION UI CONSTANTS & FILTER OPTIONS =====
 
@@ -439,6 +62,257 @@ export const POPULAR_EXAM_BADGES: Array<{
   { type: 'VSTEP', badge: 'B1 - C1', badgeType: 'secondary' },
   { type: 'SAT', badge: 'Math & Verbal', badgeType: 'outline' },
 ];
+
+// ===== CERTIFICATE TYPE TEMPLATES =====
+
+export interface CertificateSectionTemplate {
+  title: string;
+  sectionType: string;
+  instruction: string;
+  durationMinutes: number;
+  questionCount: number;
+}
+
+export interface CertificateTypeTemplate {
+  id: string;
+  label: string;
+  labelVi: string;
+  description: string;
+  defaultDuration: number;
+  defaultTotalQuestions: number;
+  defaultMaxScore: number;
+  defaultPassScore: number;
+  passScoreLabel: string;
+  sections: CertificateSectionTemplate[];
+}
+
+export const CERTIFICATE_TYPE_TEMPLATES: Record<string, CertificateTypeTemplate> = {
+  TOEIC: {
+    id: 'TOEIC',
+    label: 'TOEIC',
+    labelVi: 'Toeic',
+    description: 'Thi tiếng Anh giao tiếp quốc tế — 200 câu hỏi, 2 phần Listening & Reading',
+    defaultDuration: 120,
+    defaultTotalQuestions: 200,
+    defaultMaxScore: 990,
+    defaultPassScore: 450,
+    passScoreLabel: 'Điểm cần đạt',
+    sections: [
+      {
+        title: 'Listening',
+        sectionType: 'listening',
+        instruction: 'Part 1 - 4: Photographs, Question-Response, Conversations, Short Talks',
+        durationMinutes: 45,
+        questionCount: 100,
+      },
+      {
+        title: 'Reading',
+        sectionType: 'reading',
+        instruction: 'Part 5 - 7: Incomplete Sentences, Text Completion, Reading Comprehension',
+        durationMinutes: 75,
+        questionCount: 100,
+      },
+    ],
+  },
+  IELTS: {
+    id: 'IELTS',
+    label: 'IELTS',
+    labelVi: 'Ielts',
+    description: 'Hệ thống kiểm tra tiếng Anh quốc tế — 4 kỹ năng Listening, Reading, Writing, Speaking',
+    defaultDuration: 165,
+    defaultTotalQuestions: 80,
+    defaultMaxScore: 9,
+    defaultPassScore: 6,
+    passScoreLabel: 'Band điểm mục tiêu',
+    sections: [
+      {
+        title: 'Listening',
+        sectionType: 'listening',
+        instruction: '4 sections, 40 questions —录音材料播放一次',
+        durationMinutes: 30,
+        questionCount: 40,
+      },
+      {
+        title: 'Reading',
+        sectionType: 'reading',
+        instruction: '3 passages, 40 questions — Academic reading comprehension',
+        durationMinutes: 60,
+        questionCount: 40,
+      },
+      {
+        title: 'Writing',
+        sectionType: 'writing',
+        instruction: 'Task 1: Describe visual data (150 words) + Task 2: Essay (250 words)',
+        durationMinutes: 60,
+        questionCount: 2,
+      },
+      {
+        title: 'Speaking',
+        sectionType: 'speaking',
+        instruction: 'Part 1: Introduction, Part 2: Long turn, Part 3: Discussion',
+        durationMinutes: 15,
+        questionCount: 3,
+      },
+    ],
+  },
+  CAMBRIDGE: {
+    id: 'CAMBRIDGE',
+    label: 'Cambridge',
+    labelVi: 'Cambridge (FCE/CAE/CPE)',
+    description: 'Chứng chỉ Cambridge — FCE (B2), CAE (C1), CPE (C2) với Use of English',
+    defaultDuration: 240,
+    defaultTotalQuestions: 55,
+    defaultMaxScore: 230,
+    defaultPassScore: 180,
+    passScoreLabel: 'Score cần đạt (160-230)',
+    sections: [
+      {
+        title: 'Reading & Use of English',
+        sectionType: 'reading',
+        instruction: 'Parts 1-8: Multiple choice, Open cloze, Word formation, Key word transformations',
+        durationMinutes: 90,
+        questionCount: 30,
+      },
+      {
+        title: 'Writing',
+        sectionType: 'writing',
+        instruction: 'Part 1: Compulsory essay + Part 2: Choose 1 of 3 tasks (letter, story, review)',
+        durationMinutes: 90,
+        questionCount: 2,
+      },
+      {
+        title: 'Listening',
+        sectionType: 'listening',
+        instruction: 'Parts 1-4: Multiple choice, Sentence completion, Multiple matching',
+        durationMinutes: 40,
+        questionCount: 20,
+      },
+      {
+        title: 'Speaking',
+        sectionType: 'speaking',
+        instruction: 'Interview, Long turn, Collaborative task, Discussion',
+        durationMinutes: 15,
+        questionCount: 4,
+      },
+    ],
+  },
+  VSTEP: {
+    id: 'VSTEP',
+    label: 'VSTEP',
+    labelVi: 'Vstep (B1-C1)',
+    description: 'Kỳ thi đánh giá năng lực tiếng Anh theo khung NLTS Việt Nam',
+    defaultDuration: 160,
+    defaultTotalQuestions: 75,
+    defaultMaxScore: 100,
+    defaultPassScore: 60,
+    passScoreLabel: 'Điểm cần đạt',
+    sections: [
+      {
+        title: 'Listening',
+        sectionType: 'listening',
+        instruction: 'Parts 1-4: Conversations, Talks, Lectures — 30 câu hỏi',
+        durationMinutes: 40,
+        questionCount: 30,
+      },
+      {
+        title: 'Reading',
+        sectionType: 'reading',
+        instruction: '3 passages: Fact, Opinion, Argument — 25 câu hỏi',
+        durationMinutes: 60,
+        questionCount: 25,
+      },
+      {
+        title: 'Writing',
+        sectionType: 'writing',
+        instruction: 'Task 1: Email/letter + Task 2: Essay (250-300 từ)',
+        durationMinutes: 60,
+        questionCount: 2,
+      },
+      {
+        title: 'Speaking',
+        sectionType: 'speaking',
+        instruction: 'Interview: Describe picture, Discussion, Abstract topic',
+        durationMinutes: 15,
+        questionCount: 4,
+      },
+    ],
+  },
+  TOEFL: {
+    id: 'TOEFL',
+    label: 'TOEFL iBT',
+    labelVi: 'Toefl iBT',
+    description: 'Thi tiếng Anh học thuật quốc tế — Reading, Listening, Speaking, Writing trên máy tính',
+    defaultDuration: 200,
+    defaultTotalQuestions: 70,
+    defaultMaxScore: 120,
+    defaultPassScore: 80,
+    passScoreLabel: 'Score cần đạt',
+    sections: [
+      {
+        title: 'Reading',
+        sectionType: 'reading',
+        instruction: '3-4 passages, 30 questions — Academic reading, 54-72 minutes',
+        durationMinutes: 72,
+        questionCount: 30,
+      },
+      {
+        title: 'Listening',
+        sectionType: 'listening',
+        instruction: '3-4 lectures + 2-3 conversations, 28 questions',
+        durationMinutes: 60,
+        questionCount: 28,
+      },
+      {
+        title: 'Speaking',
+        sectionType: 'speaking',
+        instruction: '4 tasks: Independent (1) + Integrated (3)',
+        durationMinutes: 17,
+        questionCount: 4,
+      },
+      {
+        title: 'Writing',
+        sectionType: 'writing',
+        instruction: 'Integrated writing (20 min) + Writing for an Academic Discussion (10 min)',
+        durationMinutes: 30,
+        questionCount: 2,
+      },
+    ],
+  },
+  SAT: {
+    id: 'SAT',
+    label: 'SAT',
+    labelVi: 'Sat',
+    description: 'Kỳ thi tuyển sinh đại học Mỹ — Evidence-Based Reading & Writing + Math',
+    defaultDuration: 180,
+    defaultTotalQuestions: 98,
+    defaultMaxScore: 1600,
+    defaultPassScore: 1050,
+    passScoreLabel: 'Score cần đạt',
+    sections: [
+      {
+        title: 'Reading & Writing',
+        sectionType: 'reading',
+        instruction: 'Reading comprehension, grammar, rhetoric — 54 câu (2 module, 32 min each)',
+        durationMinutes: 64,
+        questionCount: 54,
+      },
+      {
+        title: 'Math',
+        sectionType: 'math',
+        instruction: 'Algebra, Advanced Math, Problem-Solving — 44 câu (2 module, 35 min each)',
+        durationMinutes: 70,
+        questionCount: 44,
+      },
+    ],
+  },
+};
+
+export const CERTIFICATE_TYPE_OPTIONS = Object.values(CERTIFICATE_TYPE_TEMPLATES).map((t) => ({
+  id: t.id,
+  label: t.label,
+  labelVi: t.labelVi,
+  description: t.description,
+}));
 
 export const CERTIFICATION_UI_TEXT = {
   common: {
@@ -1004,10 +878,9 @@ export const CERTIFICATION_UI_TEXT = {
     },
     quickActions: {
       title: 'Quick Actions',
-      createExam: 'Create New Exam',
-      aiGenerate: 'AI Generate Questions',
-      importQuestions: 'Import Questions',
       createCollection: 'Create Collection',
+      viewCollections: 'My Collections',
+      browseMarketplace: 'Marketplace',
       viewAnalytics: 'View Analytics',
     },
     creatorTips: {
@@ -1402,6 +1275,214 @@ export const CERTIFICATION_UI_TEXT = {
       title: 'Thao tác thất bại',
       description:
         'Có lỗi kết nối xảy ra. Vui lòng kiểm tra lại đường truyền mạng.',
+    },
+    saveQuestionToBankSuccess: {
+      title: 'Đã lưu vào ngân hàng câu hỏi',
+      description: 'Câu hỏi đã được lưu thành công vào ngân hàng câu hỏi.',
+    },
+    saveQuestionSuccess: {
+      title: 'Đã lưu câu hỏi',
+      description: 'Câu hỏi đã được lưu thành công.',
+    },
+    saveQuestionError: {
+      title: 'Lưu câu hỏi thất bại',
+      description: 'Không thể lưu câu hỏi. Vui lòng thử lại.',
+    },
+    deleteQuestionSuccess: {
+      title: 'Đã xóa câu hỏi',
+      description: 'Câu hỏi đã được xóa thành công.',
+    },
+    deleteQuestionError: {
+      title: 'Xóa câu hỏi thất bại',
+      description: 'Không thể xóa câu hỏi. Vui lòng thử lại.',
+    },
+    addReviewSuccess: {
+      title: 'Đã gửi đánh giá',
+      description: 'Đánh giá của bạn đã được gửi thành công.',
+    },
+    addReviewError: {
+      title: 'Gửi đánh giá thất bại',
+      description: 'Không thể gửi đánh giá. Vui lòng thử lại.',
+    },
+    addDiscussionSuccess: {
+      title: 'Đã tạo thảo luận',
+      description: 'Bài thảo luận của bạn đã được đăng thành công.',
+    },
+    addDiscussionError: {
+      title: 'Tạo thảo luận thất bại',
+      description: 'Không thể tạo thảo luận. Vui lòng thử lại.',
+    },
+    startSessionError: {
+      title: 'Không thể bắt đầu phiên thi',
+      description: 'Có lỗi xảy ra khi bắt đầu phiên thi. Vui lòng thử lại.',
+    },
+    saveAnswerError: {
+      title: 'Lưu đáp án thất bại',
+      description: 'Không thể lưu đáp án. Vui lòng thử lại.',
+    },
+    recordViolationError: {
+      title: 'Ghi nhận vi phạm thất bại',
+      description: 'Không thể ghi nhận vi phạm. Vui lòng thử lại.',
+    },
+    submitSessionError: {
+      title: 'Nộp bài thất bại',
+      description: 'Không thể nộp bài thi. Vui lòng thử lại.',
+    },
+    saveCollectionSuccess: {
+      title: 'Đã lưu bộ sưu tập',
+      description: 'Bộ sưu tập đã được lưu thành công.',
+    },
+    saveCollectionError: {
+      title: 'Lưu bộ sưu tập thất bại',
+      description: 'Không thể lưu bộ sưu tập. Vui lòng thử lại.',
+    },
+    cloneCollectionSuccess: {
+      title: 'Đã sao chép bộ sưu tập',
+      description: 'Bộ sưu tập đã được sao chép vào thư viện cá nhân.',
+    },
+    cloneCollectionError: {
+      title: 'Sao chép bộ sưu tập thất bại',
+      description: 'Không thể sao chép bộ sưu tập. Vui lòng thử lại.',
+    },
+    reportCollectionSuccess: {
+      title: 'Đã báo cáo',
+      description: 'Báo cáo của bạn đã được gửi. Chúng tôi sẽ xem xét trong 24h.',
+    },
+    reportCollectionError: {
+      title: 'Báo cáo thất bại',
+      description: 'Không thể gửi báo cáo. Vui lòng thử lại.',
+    },
+    addBookmarkSuccess: {
+      title: 'Đã đánh dấu',
+      description: 'Mục đã được thêm vào danh sách đánh dấu.',
+    },
+    addBookmarkError: {
+      title: 'Đánh dấu thất bại',
+      description: 'Không thể đánh dấu mục. Vui lòng thử lại.',
+    },
+    removeBookmarkSuccess: {
+      title: 'Đã bỏ đánh dấu',
+      description: 'Mục đã được xóa khỏi danh sách đánh dấu.',
+    },
+    removeBookmarkError: {
+      title: 'Bỏ đánh dấu thất bại',
+      description: 'Không thể bỏ đánh dấu. Vui lòng thử lại.',
+    },
+    addFavoriteSuccess: {
+      title: 'Đã thêm vào yêu thích',
+      description: 'Mục đã được thêm vào danh sách yêu thích.',
+    },
+    addFavoriteError: {
+      title: 'Thêm yêu thích thất bại',
+      description: 'Không thể thêm vào yêu thích. Vui lòng thử lại.',
+    },
+    removeFavoriteSuccess: {
+      title: 'Đã xóa khỏi yêu thích',
+      description: 'Mục đã được xóa khỏi danh sách yêu thích.',
+    },
+    removeFavoriteError: {
+      title: 'Xóa yêu thích thất bại',
+      description: 'Không thể xóa khỏi yêu thích. Vui lòng thử lại.',
+    },
+    deleteDownloadSuccess: {
+      title: 'Đã xóa tệp',
+      description: 'Tệp đã được xóa khỏi danh sách tải xuống.',
+    },
+    deleteDownloadError: {
+      title: 'Xóa tệp thất bại',
+      description: 'Không thể xóa tệp. Vui lòng thử lại.',
+    },
+    clearDownloadsSuccess: {
+      title: 'Đã xóa tất cả',
+      description: 'Tất cả tệp đã được xóa khỏi danh sách tải xuống.',
+    },
+    clearDownloadsError: {
+      title: 'Xóa tất cả thất bại',
+      description: 'Không thể xóa tất cả tệp. Vui lòng thử lại.',
+    },
+    downloadCertificateSuccess: {
+      title: 'Tải chứng chỉ PDF',
+      description: 'Bản PDF chứng chỉ chính thức đang được chuẩn bị và tải xuống thiết bị.',
+    },
+    downloadCertificateError: {
+      title: 'Tải chứng chỉ thất bại',
+      description: 'Không thể tải chứng chỉ. Vui lòng thử lại.',
+    },
+    saveDraftSuccess: {
+      title: 'Đã lưu bản nháp',
+      description: 'Bản nháp đã được lưu thành công.',
+    },
+    publishSuccess: {
+      title: 'Đã xuất bản',
+      description: 'Đã xuất bản thành công.',
+    },
+    createCollectionSuccess: {
+      title: 'Đã tạo bộ sưu tập',
+      description: 'Bộ sưu tập mới đã được tạo thành công.',
+    },
+    createCollectionError: {
+      title: 'Tạo bộ sưu tập thất bại',
+      description: 'Không thể tạo bộ sưu tập. Vui lòng thử lại.',
+    },
+    updateCollectionSuccess: {
+      title: 'Đã cập nhật bộ sưu tập',
+      description: 'Bộ sưu tập đã được cập nhật thành công.',
+    },
+    updateCollectionError: {
+      title: 'Cập nhật bộ sưu tập thất bại',
+      description: 'Không thể cập nhật bộ sưu tập. Vui lòng thử lại.',
+    },
+    deleteCollectionSuccess: {
+      title: 'Đã xóa bộ sưu tập',
+      description: 'Bộ sưu tập đã được xóa thành công.',
+    },
+    deleteCollectionError: {
+      title: 'Xóa bộ sưu tập thất bại',
+      description: 'Không thể xóa bộ sưu tập. Vui lòng thử lại.',
+    },
+    createExamSuccess: {
+      title: 'Đã tạo đề thi',
+      description: 'Đề thi mới đã được thêm vào bộ sưu tập.',
+    },
+    createExamError: {
+      title: 'Tạo đề thi thất bại',
+      description: 'Không thể tạo đề thi. Vui lòng thử lại.',
+    },
+    updateExamSuccess: {
+      title: 'Đã cập nhật đề thi',
+      description: 'Đề thi đã được cập nhật thành công.',
+    },
+    updateExamError: {
+      title: 'Cập nhật đề thi thất bại',
+      description: 'Không thể cập nhật đề thi. Vui lòng thử lại.',
+    },
+    deleteExamSuccess: {
+      title: 'Đã xóa đề thi',
+      description: 'Đề thi đã được xóa khỏi bộ sưu tập.',
+    },
+    deleteExamError: {
+      title: 'Xóa đề thi thất bại',
+      description: 'Không thể xóa đề thi. Vui lòng thử lại.',
+    },
+    withdrawSuccess: {
+      title: 'Yêu cầu rút tiền',
+      description: 'Yêu cầu rút tiền đã được gửi.',
+    },
+    previewOpening: {
+      title: 'Xem trước',
+      description: 'Đang mở xem trước toàn màn hình...',
+    },
+    viewReceipt: {
+      title: 'Xem hóa đơn',
+      description: 'Đang mở hóa đơn & biên lai chính thức...',
+    },
+    exportHistory: {
+      title: 'Xuất dữ liệu',
+      description: 'Đang xuất dữ liệu lịch sử luyện tập...',
+    },
+    startPracticeError: {
+      title: 'Không thể bắt đầu ôn tập',
+      description: 'Chưa có câu hỏi nào trong danh sách Bookmark để làm bài ôn tập!',
     },
   },
   examSession: {

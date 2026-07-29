@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Award, Download, Copy, Check, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   Dialog,
@@ -26,12 +26,12 @@ interface CertificateModalProps {
   onDownload?: (id: string) => void;
 }
 
-export const CertificateModal: React.FC<CertificateModalProps> = ({
+export const CertificateModal = ({
   isOpen,
   onClose,
   certificate,
   onDownload,
-}) => {
+}: CertificateModalProps) => {
   const [copied, setCopied] = useState(false);
 
   if (!certificate) return null;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { StudyPlanTopStat } from '../hooks/useStudyPlanContainerLogic';
 
@@ -6,9 +5,9 @@ interface StudyPlanStatsGridProps {
   stats: StudyPlanTopStat[];
 }
 
-export const StudyPlanStatsGrid: React.FC<StudyPlanStatsGridProps> = ({
+export const StudyPlanStatsGrid = ({
   stats,
-}) => {
+}: StudyPlanStatsGridProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {stats.map((stat, idx) => (

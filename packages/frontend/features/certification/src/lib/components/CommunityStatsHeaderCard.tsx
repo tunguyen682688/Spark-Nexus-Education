@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent } from '@spark-nest-ed/frontend-shared-components';
 import { CommunityHighlightStat } from '../hooks/useCommunityContainerLogic';
 
@@ -6,9 +5,9 @@ interface CommunityStatsHeaderCardProps {
   stats: CommunityHighlightStat[];
 }
 
-export const CommunityStatsHeaderCard: React.FC<CommunityStatsHeaderCardProps> = ({
+export const CommunityStatsHeaderCard = ({
   stats,
-}) => {
+}: CommunityStatsHeaderCardProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {stats.map((stat) => (

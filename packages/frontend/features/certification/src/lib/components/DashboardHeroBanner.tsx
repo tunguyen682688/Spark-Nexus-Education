@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowRight, Trophy, Target } from 'lucide-react';
 import { Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
@@ -12,13 +11,13 @@ interface DashboardHeroBannerProps {
   onExploreLibrary: () => void;
 }
 
-export const DashboardHeroBanner: React.FC<DashboardHeroBannerProps> = ({
+export const DashboardHeroBanner = ({
   dashboardData,
   selectedExamType,
   topStudentName,
   onExploreCollection,
   onExploreLibrary,
-}) => {
+}: DashboardHeroBannerProps) => {
   return (
     <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white p-6 sm:p-8 md:p-10 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
       {/* Left Hero Text Content */}

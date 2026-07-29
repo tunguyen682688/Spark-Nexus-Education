@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Clock,
   Filter,
@@ -31,7 +30,7 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 
-export const CertificationPracticeHistoryContainer: React.FC = () => {
+export const CertificationPracticeHistoryContainer = () => {
   const {
     isApiLoading,
     isError,

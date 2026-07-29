@@ -11,12 +11,12 @@ interface CompletedCollectionCardProps {
   onViewAnalytics: (id: string, e: React.MouseEvent) => void;
 }
 
-export const CompletedCollectionCard: React.FC<CompletedCollectionCardProps> = ({
+export const CompletedCollectionCard = ({
   item,
   onOpenCollection,
   onViewCertificate,
   onViewAnalytics,
-}) => {
+}: CompletedCollectionCardProps) => {
   const cardText = CERTIFICATION_UI_TEXT.completedCollections.card;
 
   return (

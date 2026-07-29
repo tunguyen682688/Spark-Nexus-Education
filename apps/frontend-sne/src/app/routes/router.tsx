@@ -1673,10 +1673,10 @@ export const createRouter = () =>
         {
           path: 'certification/ai-recommendations',
           lazy: async () => {
-            const { CertificationStudyPlanPage } = await import(
+            const { CertificationAIGeneratorPage } = await import(
               '@spark-nest-ed/feature-certification'
             );
-            return { Component: CertificationStudyPlanPage };
+            return { Component: CertificationAIGeneratorPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -1771,17 +1771,6 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'certification/create-exam',
-          lazy: async () => {
-            const { CertificationCreateExamPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationCreateExamPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
           path: 'certification/ai-generator',
           lazy: async () => {
             const { CertificationAIGeneratorPage } = await import(
@@ -1799,17 +1788,6 @@ export const createRouter = () =>
               '@spark-nest-ed/feature-certification'
             );
             return { Component: CertificationImportQuestionsPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
-          path: 'certification/create-collection',
-          lazy: async () => {
-            const { CertificationCreateCollectionPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationCreateCollectionPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,

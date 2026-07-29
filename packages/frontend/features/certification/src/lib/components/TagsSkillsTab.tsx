@@ -12,14 +12,14 @@ interface TagsSkillsTabProps {
 
 const COGNITIVE_LEVELS = CERTIFICATION_UI_TEXT.tagsSkillsTab.cognitiveLevels;
 
-export const TagsSkillsTab: React.FC<TagsSkillsTabProps> = ({
+export const TagsSkillsTab = ({
   tags,
   skills,
   cognitiveLevel,
   onTagsChange,
   onSkillsChange,
   onCognitiveLevelChange,
-}) => {
+}: TagsSkillsTabProps) => {
   const [tagInput, setTagInput] = useState('');
   const [skillInput, setSkillInput] = useState('');
 

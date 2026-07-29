@@ -11,6 +11,9 @@ export class ExamEntity extends AggregateRoot<string> {
     private passScore: number,
     private publishStatus: string,
     private collectionId: string,
+    private examType: string,
+    private certificationType: string | null,
+    private chapterId: string | null,
     private createdBy: string | null,
     private updatedBy: string | null,
     private deletedAt: Date | null,
@@ -31,6 +34,9 @@ export class ExamEntity extends AggregateRoot<string> {
     passScore: number;
     publishStatus?: string;
     collectionId: string;
+    examType?: string;
+    certificationType?: string | null;
+    chapterId?: string | null;
     createdBy?: string | null;
     updatedBy?: string | null;
     deletedAt?: Date | null;
@@ -49,6 +55,9 @@ export class ExamEntity extends AggregateRoot<string> {
       params.passScore,
       params.publishStatus ?? 'draft',
       params.collectionId,
+      params.examType ?? 'FULL_MOCK',
+      params.certificationType ?? null,
+      params.chapterId ?? null,
       params.createdBy ?? null,
       params.updatedBy ?? null,
       params.deletedAt ?? null,
@@ -90,6 +99,18 @@ export class ExamEntity extends AggregateRoot<string> {
     return this.collectionId;
   }
 
+  getExamType(): string {
+    return this.examType;
+  }
+
+  getCertificationType(): string | null {
+    return this.certificationType;
+  }
+
+  getChapterId(): string | null {
+    return this.chapterId;
+  }
+
   getCreatedBy(): string | null {
     return this.createdBy;
   }
@@ -111,6 +132,9 @@ export class ExamEntity extends AggregateRoot<string> {
     passScore?: number;
     publishStatus?: string;
     collectionId?: string;
+    examType?: string;
+    certificationType?: string | null;
+    chapterId?: string | null;
     updatedBy?: string | null;
   }): void {
     if (params.title !== undefined) this.title = params.title;
@@ -121,6 +145,9 @@ export class ExamEntity extends AggregateRoot<string> {
     if (params.passScore !== undefined) this.passScore = params.passScore;
     if (params.publishStatus !== undefined) this.publishStatus = params.publishStatus;
     if (params.collectionId !== undefined) this.collectionId = params.collectionId;
+    if (params.examType !== undefined) this.examType = params.examType;
+    if (params.certificationType !== undefined) this.certificationType = params.certificationType;
+    if (params.chapterId !== undefined) this.chapterId = params.chapterId;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
     this.markAsUpdated();
   }
@@ -142,6 +169,9 @@ export class ExamEntity extends AggregateRoot<string> {
       passScore: this.passScore,
       publishStatus: this.publishStatus,
       collectionId: this.collectionId,
+      examType: this.examType,
+      certificationType: this.certificationType,
+      chapterId: this.chapterId,
       createdBy: this.createdBy,
       updatedBy: this.updatedBy,
       deletedAt: this.deletedAt,

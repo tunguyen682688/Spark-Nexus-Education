@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Play,
   Bookmark,
@@ -34,7 +33,7 @@ interface CollectionDetailSidebarProps {
   onReport: () => void;
 }
 
-export const CollectionDetailSidebar: React.FC<CollectionDetailSidebarProps> = ({
+export const CollectionDetailSidebar = ({
   collection,
   isStartingExamSession,
   isSaving,
@@ -46,7 +45,7 @@ export const CollectionDetailSidebar: React.FC<CollectionDetailSidebarProps> = (
   onToggleBookmark,
   onToggleClone,
   onReport,
-}) => {
+}: CollectionDetailSidebarProps) => {
   return (
     <div className="space-y-6">
       {/* ABOUT THIS COLLECTION */}

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { CertificationApi } from '../api/certification-api';
+import { CERTIFICATION_UI_TEXT } from '../constants/certification.constants';
 import type {
   DashboardStats,
   ExamCollection,
@@ -18,6 +19,15 @@ import type {
   SaveQuestionResult,
   QuestionBuilderData,
   QuestionVersion,
+  CreatorDashboardResponse,
+  CollectionEditorResponse,
+  ExamBuilderResponse,
+  PracticeHistoryResponse,
+  CompletedCollectionsResponse,
+  FavoritesResponse,
+  BookmarksResponse,
+  DownloadsResponse,
+  PurchasedCollectionsResponse,
 } from '../types';
 
 // Standardized Query Cache Time Constants
@@ -36,7 +46,7 @@ export const useCertificationDashboard = () => {
 };
 
 export const useCreatorDashboardData = () => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<CreatorDashboardResponse>({
     queryKey: ['certification', 'creator-dashboard'],
     queryFn: () => CertificationApi.getCreatorDashboardData(),
     staleTime: STALE_TIME_DASHBOARD,
@@ -45,7 +55,7 @@ export const useCreatorDashboardData = () => {
 };
 
 export const useCollectionEditorData = (id: string) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<CollectionEditorResponse | null>({
     queryKey: ['certification', 'collection-editor', id],
     queryFn: () => CertificationApi.getCollectionEditorData(id),
     enabled: Boolean(id),
@@ -55,7 +65,7 @@ export const useCollectionEditorData = (id: string) => {
 };
 
 export const useExamBuilderData = (id: string) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<ExamBuilderResponse | null>({
     queryKey: ['certification', 'exam-builder', id],
     queryFn: () => CertificationApi.getExamBuilderData(id),
     enabled: Boolean(id),
@@ -84,21 +94,13 @@ export const useSaveQuestion = () => {
       queryClient.invalidateQueries({
         queryKey: ['certification', 'question-builder', result.id],
       });
-      toast({
-        title: result.savedToBank
-          ? 'Đã lưu vào Ngân hàng câu hỏi'
-          : 'Đã lưu câu hỏi',
-        description: result.savedToBank
-          ? 'Câu hỏi đã được lưu vào Ngân hàng câu hỏi để tái sử dụng.'
-          : 'Mọi thay đổi của câu hỏi đã được lưu.',
-      });
+      const msg = result.savedToBank
+        ? CERTIFICATION_UI_TEXT.toast.saveQuestionToBankSuccess
+        : CERTIFICATION_UI_TEXT.toast.saveQuestionSuccess;
+      toast(msg);
     },
     onError: () => {
-      toast({
-        title: 'Lưu câu hỏi thất bại',
-        description: 'Đã xảy ra lỗi khi lưu câu hỏi. Vui lòng thử lại.',
-        variant: 'destructive',
-      });
+      toast({ ...CERTIFICATION_UI_TEXT.toast.saveQuestionError, variant: 'destructive' });
     },
   });
 };
@@ -113,17 +115,10 @@ export const useDeleteQuestion = () => {
       queryClient.invalidateQueries({
         queryKey: ['certification', 'question-builder', result.id],
       });
-      toast({
-        title: 'Đã xóa câu hỏi',
-        description: 'Câu hỏi đã được xóa thành công.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.deleteQuestionSuccess);
     },
     onError: () => {
-      toast({
-        title: 'Xóa câu hỏi thất bại',
-        description: 'Đã xảy ra lỗi khi xóa câu hỏi. Vui lòng thử lại.',
-        variant: 'destructive',
-      });
+      toast({ ...CERTIFICATION_UI_TEXT.toast.deleteQuestionError, variant: 'destructive' });
     },
   });
 };
@@ -213,13 +208,45 @@ export const useAddCollectionReview = () => {
   return useMutation({
     mutationFn: ({ collectionId, rating, text }: { collectionId: string; rating: number; text: string }) =>
       CertificationApi.addCollectionReview(collectionId, { rating, text }),
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      const { collectionId, rating, text } = variables;
+
+      await queryClient.cancelQueries({ queryKey: ['certification', 'collection-reviews', collectionId] });
+
+      const previousReviews = queryClient.getQueryData<Array<{ id: string; author: string; avatar?: string; rating: number; date: string; text: string }>>(
+        ['certification', 'collection-reviews', collectionId]
+      );
+
+      queryClient.setQueryData<Array<{ id: string; author: string; avatar?: string; rating: number; date: string; text: string }>>(
+        ['certification', 'collection-reviews', collectionId],
+        (old) => {
+          const optimisticReview = {
+            id: `optimistic-${Date.now()}`,
+            author: 'You',
+            avatar: undefined as string | undefined,
+            rating,
+            text,
+            date: 'Just now',
+          };
+          return [optimisticReview, ...(old || [])];
+        }
+      );
+
+      return { previousReviews, collectionId };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousReviews) {
+        queryClient.setQueryData(
+          ['certification', 'collection-reviews', context.collectionId],
+          context.previousReviews
+        );
+      }
+      toast({ ...CERTIFICATION_UI_TEXT.toast.addReviewError, variant: 'destructive' });
+    },
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'collection-reviews', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['certification', 'collection', variables.collectionId] });
-      toast({
-        title: 'Đã gửi đánh giá',
-        description: 'Cảm ơn bạn đã gửi đánh giá cho bộ đề này!',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.addReviewSuccess);
     },
   });
 };
@@ -243,10 +270,10 @@ export const useAddCollectionDiscussion = () => {
       CertificationApi.addCollectionDiscussion(collectionId, { title, content }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'collection-discussions', variables.collectionId] });
-      toast({
-        title: 'Đã tạo thảo luận',
-        description: 'Chủ đề thảo luận của bạn đã được đăng thành công!',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.addDiscussionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.addDiscussionError, variant: 'destructive' });
     },
   });
 };
@@ -292,11 +319,16 @@ export const useExamDetail = (id: string) => {
 export const useStartExamSession = () => {
   const queryClient = useQueryClient();
 
+  const { toast } = useToast();
+
   return useMutation<ExamSession, Error, string>({
     mutationFn: (examId: string) => CertificationApi.startExamSession(examId),
     onSuccess: (sessionData) => {
       queryClient.setQueryData(['certification', 'session', sessionData.id], sessionData);
       queryClient.invalidateQueries({ queryKey: ['certification', 'dashboard'] });
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.startSessionError, variant: 'destructive' });
     },
   });
 };
@@ -313,6 +345,7 @@ export const useExamSession = (sessionId: string) => {
 
 export const useSaveSessionAnswer = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation<SessionAnswer, Error, { sessionId: string; dto: SaveSessionAnswerDto }>({
     mutationFn: ({ sessionId, dto }) => CertificationApi.saveSessionAnswer(sessionId, dto),
@@ -353,17 +386,26 @@ export const useSaveSessionAnswer = () => {
         }
       );
     },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.saveAnswerError, variant: 'destructive' });
+    },
   });
 };
 
 export const useRecordSessionViolation = () => {
+  const { toast } = useToast();
+
   return useMutation<SessionViolation, Error, { sessionId: string; dto: RecordSessionViolationDto }>({
     mutationFn: ({ sessionId, dto }) => CertificationApi.recordSessionViolation(sessionId, dto),
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.recordViolationError, variant: 'destructive' });
+    },
   });
 };
 
 export const useSubmitExamSession = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation<ExamResult, Error, string>({
     mutationFn: (sessionId: string) => CertificationApi.submitExamSession(sessionId),
@@ -371,6 +413,9 @@ export const useSubmitExamSession = () => {
       queryClient.setQueryData(['certification', 'result', resultData.id], resultData);
       queryClient.invalidateQueries({ queryKey: ['certification', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['certification', 'study-plan'] });
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.submitSessionError, variant: 'destructive' });
     },
   });
 };
@@ -402,24 +447,26 @@ export const useSaveCollection = () => {
     mutationFn: (id: string) => CertificationApi.saveCollection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'saved-collections'] });
-      toast({
-        title: 'Đã lưu bộ đề',
-        description: 'Bộ sưu tập đã được lưu vào thư viện cá nhân của bạn.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.saveCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.saveCollectionError, variant: 'destructive' });
     },
   });
 };
 
 export const useCloneCollection = () => {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation<{ cloned: boolean; newCollectionId: string }, Error, string>({
     mutationFn: (id: string) => CertificationApi.cloneCollection(id),
     onSuccess: () => {
-      toast({
-        title: 'Nhân bản thành công',
-        description: 'Bộ sưu tập đã được tạo bản sao vào thư viện cá nhân.',
-      });
+      queryClient.invalidateQueries({ queryKey: ['certification', 'collections'] });
+      toast(CERTIFICATION_UI_TEXT.toast.cloneCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.cloneCollectionError, variant: 'destructive' });
     },
   });
 };
@@ -430,16 +477,16 @@ export const useReportCollection = () => {
   return useMutation<{ reported: boolean }, Error, { id: string; reason?: string }>({
     mutationFn: ({ id, reason }) => CertificationApi.reportCollection(id, reason),
     onSuccess: () => {
-      toast({
-        title: 'Đã gửi báo cáo',
-        description: 'Cảm ơn bạn. Báo cáo của bạn đã được gửi cho ban quản trị xem xét.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.reportCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.reportCollectionError, variant: 'destructive' });
     },
   });
 };
 
 export const usePracticeHistoryData = () => {
-  return useQuery({
+  return useQuery<PracticeHistoryResponse>({
     queryKey: ['certification', 'history'],
     queryFn: () => CertificationApi.getPracticeHistory(),
     staleTime: STALE_TIME_COLLECTIONS,
@@ -447,17 +494,17 @@ export const usePracticeHistoryData = () => {
   });
 };
 
-export const useCompletedCollectionsData = (params?: Record<string, unknown>) => {
-  return useQuery({
-    queryKey: ['certification', 'completed', params],
-    queryFn: () => CertificationApi.getCompletedCollections(params),
+export const useCompletedCollectionsData = () => {
+  return useQuery<CompletedCollectionsResponse>({
+    queryKey: ['certification', 'completed'],
+    queryFn: () => CertificationApi.getCompletedCollections(),
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });
 };
 
 export const useFavoritesData = () => {
-  return useQuery({
+  return useQuery<FavoritesResponse>({
     queryKey: ['certification', 'favorites'],
     queryFn: () => CertificationApi.getFavorites(),
     staleTime: STALE_TIME_COLLECTIONS,
@@ -465,10 +512,28 @@ export const useFavoritesData = () => {
   });
 };
 
-export const useBookmarksData = (params?: Record<string, unknown>) => {
+export const useBookmarksData = () => {
+  return useQuery<BookmarksResponse>({
+    queryKey: ['certification', 'bookmarks'],
+    queryFn: () => CertificationApi.getBookmarks(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useInProgressSessions = () => {
   return useQuery({
-    queryKey: ['certification', 'bookmarks', params],
-    queryFn: () => CertificationApi.getBookmarks(params),
+    queryKey: ['certification', 'in-progress'],
+    queryFn: () => CertificationApi.getInProgressSessions(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useClonedCollections = () => {
+  return useQuery({
+    queryKey: ['certification', 'cloned'],
+    queryFn: () => CertificationApi.getClonedCollections(),
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });
@@ -483,10 +548,10 @@ export const useAddBookmark = () => {
       CertificationApi.addBookmark(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'bookmarks'] });
-      toast({
-        title: 'Đã lưu Bookmark',
-        description: 'Bộ đề/Bài tập đã được lưu vào thư viện Bookmark cá nhân của bạn.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.addBookmarkSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.addBookmarkError, variant: 'destructive' });
     },
   });
 };
@@ -499,10 +564,26 @@ export const useRemoveBookmark = () => {
     mutationFn: (id: string) => CertificationApi.removeBookmark(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'bookmarks'] });
-      toast({
-        title: 'Đã xóa đánh dấu',
-        description: 'Mục đánh dấu đã được loại bỏ khỏi thư viện cá nhân.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.removeBookmarkSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.removeBookmarkError, variant: 'destructive' });
+    },
+  });
+};
+
+export const useAddFavorite = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (collectionId: string) => CertificationApi.addFavorite(collectionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'favorites'] });
+      toast(CERTIFICATION_UI_TEXT.toast.addFavoriteSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.addFavoriteError, variant: 'destructive' });
     },
   });
 };
@@ -515,10 +596,10 @@ export const useRemoveFavorite = () => {
     mutationFn: (id: string) => CertificationApi.removeFavorite(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'favorites'] });
-      toast({
-        title: 'Đã bỏ yêu thích',
-        description: 'Đã xóa mục khỏi danh sách yêu thích cá nhân.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.removeFavoriteSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.removeFavoriteError, variant: 'destructive' });
     },
   });
 };
@@ -531,10 +612,10 @@ export const useDeleteDownload = () => {
     mutationFn: (id: string) => CertificationApi.deleteDownload(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'downloads'] });
-      toast({
-        title: 'Đã xóa tệp offline',
-        description: 'Tệp đã được giải phóng khỏi bộ nhớ thiết bị.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.deleteDownloadSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.deleteDownloadError, variant: 'destructive' });
     },
   });
 };
@@ -547,16 +628,16 @@ export const useClearDownloads = () => {
     mutationFn: () => CertificationApi.clearDownloads(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'downloads'] });
-      toast({
-        title: 'Đã dọn dẹp dung lượng',
-        description: 'Tất cả các tệp tải về đã được dọn sạch khỏi thiết bị.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.clearDownloadsSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.clearDownloadsError, variant: 'destructive' });
     },
   });
 };
 
 export const useDownloadsData = () => {
-  return useQuery({
+  return useQuery<DownloadsResponse>({
     queryKey: ['certification', 'downloads'],
     queryFn: () => CertificationApi.getDownloads(),
     staleTime: STALE_TIME_COLLECTIONS,
@@ -565,7 +646,7 @@ export const useDownloadsData = () => {
 };
 
 export const usePurchasedCollectionsData = () => {
-  return useQuery({
+  return useQuery<PurchasedCollectionsResponse>({
     queryKey: ['certification', 'purchased'],
     queryFn: () => CertificationApi.getPurchasedCollections(),
     staleTime: STALE_TIME_COLLECTIONS,
@@ -588,10 +669,118 @@ export const useDownloadCertificate = () => {
   return useMutation<{ success: boolean; url: string }, Error, string>({
     mutationFn: (certificateId: string) => CertificationApi.downloadCertificate(certificateId),
     onSuccess: () => {
-      toast({
-        title: 'Tải chứng chỉ PDF',
-        description: 'Bản PDF chứng chỉ chính thức đang được chuẩn bị và tải xuống thiết bị.',
-      });
+      toast(CERTIFICATION_UI_TEXT.toast.downloadCertificateSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.downloadCertificateError, variant: 'destructive' });
+    },
+  });
+};
+
+// ===== Collection Editor Mutations =====
+
+export const useCreateCollection = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<{ id: string; title: string; description: string | null }, Error, { title: string; description?: string | null }>({
+    mutationFn: (dto) => CertificationApi.createCollection(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'collections'] });
+      toast(CERTIFICATION_UI_TEXT.toast.createCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.createCollectionError, variant: 'destructive' });
+    },
+  });
+};
+
+export const useUpdateCollection = () => {
+  const { toast } = useToast();
+
+  return useMutation<{ id: string }, Error, { collectionId: string; title?: string; description?: string | null; publishStatus?: string }>({
+    mutationFn: ({ collectionId, ...dto }) => CertificationApi.updateCollection(collectionId, dto),
+    onSuccess: () => {
+      toast(CERTIFICATION_UI_TEXT.toast.updateCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.updateCollectionError, variant: 'destructive' });
+    },
+  });
+};
+
+export const useDeleteCollection = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation<{ deleted: boolean }, Error, string>({
+    mutationFn: (collectionId) => CertificationApi.deleteCollection(collectionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certification', 'collections'] });
+      toast(CERTIFICATION_UI_TEXT.toast.deleteCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.deleteCollectionError, variant: 'destructive' });
+    },
+  });
+};
+
+// ===== Exam CRUD Mutations =====
+
+export const useCreateExam = () => {
+  const { toast } = useToast();
+
+  return useMutation<{ id: string; title: string; collectionId: string }, Error, { collectionId: string; title: string; description?: string | null; duration?: number; totalQuestions?: number; maxScore?: number; passScore?: number; examType?: string; certificationType?: string; chapterId?: string; sections?: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number }> }>({
+    mutationFn: ({ collectionId, ...dto }) => CertificationApi.createExam(collectionId, dto),
+    onSuccess: () => {
+      toast(CERTIFICATION_UI_TEXT.toast.createExamSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.createExamError, variant: 'destructive' });
+    },
+  });
+};
+
+export const useUpdateExam = () => {
+  const { toast } = useToast();
+
+  return useMutation<{ id: string }, Error, { examId: string; title?: string; description?: string | null; duration?: number; totalQuestions?: number; maxScore?: number; passScore?: number; publishStatus?: string }>({
+    mutationFn: ({ examId, ...dto }) => CertificationApi.updateExam(examId, dto),
+    onSuccess: () => {
+      toast(CERTIFICATION_UI_TEXT.toast.updateExamSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.updateExamError, variant: 'destructive' });
+    },
+  });
+};
+
+export const useDeleteExam = () => {
+  const { toast } = useToast();
+
+  return useMutation<{ deleted: boolean }, Error, { examId: string; collectionId: string }>({
+    mutationFn: ({ examId }) => CertificationApi.deleteExam(examId),
+    onSuccess: () => {
+      toast(CERTIFICATION_UI_TEXT.toast.deleteExamSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.deleteExamError, variant: 'destructive' });
+    },
+  });
+};
+
+// ===== Chapter CRUD Mutations =====
+
+export const useSyncChapters = () => {
+  const { toast } = useToast();
+
+  return useMutation<Array<{ id: string }>, Error, { collectionId: string; chapters: Array<{ id?: string; title: string; description?: string | null; order: number }> }>({
+    mutationFn: ({ collectionId, chapters }) => CertificationApi.syncChapters(collectionId, chapters),
+    onSuccess: () => {
+      toast(CERTIFICATION_UI_TEXT.toast.updateCollectionSuccess);
+    },
+    onError: () => {
+      toast({ ...CERTIFICATION_UI_TEXT.toast.updateCollectionError, variant: 'destructive' });
     },
   });
 };

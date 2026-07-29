@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Trophy,
   CheckCircle2,
@@ -24,9 +23,9 @@ interface CertificationExamResultContainerProps {
   onBackToDashboard?: () => void;
 }
 
-export const CertificationExamResultContainer: React.FC<
+export const CertificationExamResultContainer = ({ resultId = 'result-123', onRetake, onBackToDashboard }: 
   CertificationExamResultContainerProps
-> = ({ resultId = 'result-123', onRetake, onBackToDashboard }) => {
+) => {
   const {
     data: result,
     isLoading,

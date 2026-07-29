@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Card,
   CardContent,
@@ -12,9 +11,9 @@ interface CommunityContributorsCardProps {
   contributors: Contributor[];
 }
 
-export const CommunityContributorsCard: React.FC<CommunityContributorsCardProps> = ({
+export const CommunityContributorsCard = ({
   contributors,
-}) => {
+}: CommunityContributorsCardProps) => {
   return (
     <Card className="border-border">
       <CardHeader>

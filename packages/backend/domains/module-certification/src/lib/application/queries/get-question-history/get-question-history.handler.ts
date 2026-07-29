@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PrismaService } from '@spark-nest-ed/infrastructure-database';
+import { Inject } from '@nestjs/common';
+import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { GetQuestionHistoryQuery } from './get-question-history.query';
 
 export interface QuestionVersionDto {
@@ -15,21 +16,12 @@ export interface QuestionVersionDto {
 export class GetQuestionHistoryQueryHandler
   implements IQueryHandler<GetQuestionHistoryQuery, QuestionVersionDto[]>
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(certificationRepoInterface.CERTIFICATION_REPOSITORY)
+    private readonly repository: certificationRepoInterface.ICertificationRepository
+  ) {}
 
   async execute(query: GetQuestionHistoryQuery): Promise<QuestionVersionDto[]> {
-    const versions = await this.prisma.questionVersion.findMany({
-      where: { questionId: query.questionId },
-      orderBy: { version: 'desc' },
-    });
-
-    return versions.map((v) => ({
-      id: v.id,
-      questionId: v.questionId,
-      version: v.version,
-      content: v.content,
-      createdAt: v.createdAt,
-      createdBy: v.createdBy,
-    }));
+    return this.repository.findQuestionVersionsByQuestionId(query.questionId);
   }
 }

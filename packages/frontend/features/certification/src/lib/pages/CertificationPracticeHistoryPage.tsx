@@ -1,6 +1,5 @@
-import React from 'react';
 import { CertificationPracticeHistoryContainer } from '../container/CertificationPracticeHistoryContainer';
 
-export const CertificationPracticeHistoryPage: React.FC = () => {
+export const CertificationPracticeHistoryPage = () => {
   return <CertificationPracticeHistoryContainer />;
 };
