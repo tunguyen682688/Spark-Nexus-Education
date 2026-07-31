@@ -4,6 +4,7 @@ import { SessionViolationEntity } from '../../../domain/entities/session-violati
 export class RecordSessionViolationCommand extends Command<SessionViolationEntity> {
   constructor(
     public readonly sessionId: string,
+    public readonly userId: string,
     public readonly violationType: string,
     public readonly description: string | null
   ) {

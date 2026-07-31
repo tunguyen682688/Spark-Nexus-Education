@@ -64,8 +64,10 @@ export interface ICertificationRepository {
   saveExam(exam: ExamEntity): Promise<ExamEntity>;
   deleteExam(id: string): Promise<void>;
   updateExamChapterId(examId: string, chapterId: string | null): Promise<void>;
+  updateExamOrder(examId: string, order: number): Promise<void>;
 
   // Chapter Operations
+  findChapterById(id: string): Promise<ChapterEntity | null>;
   findChaptersByCollectionId(collectionId: string): Promise<ChapterEntity[]>;
   saveChapter(chapter: ChapterEntity): Promise<ChapterEntity>;
   deleteChapter(id: string): Promise<void>;

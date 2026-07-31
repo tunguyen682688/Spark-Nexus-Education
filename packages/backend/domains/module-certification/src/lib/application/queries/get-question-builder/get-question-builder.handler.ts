@@ -85,10 +85,16 @@ export class GetQuestionBuilderQueryHandler
 
     // Get exam context
     let usedIn: QuestionBuilderResponseDto['usedIn'] = null;
-    try {
-      // TODO: Query exam context if needed
-    } catch {
-      // Ignore - usedIn is optional
+    const examQuestions = await this.repo.findExamQuestionsByQuestionId(query.questionId);
+    if (examQuestions.length > 0) {
+      const examId = examQuestions[0].getExamId();
+      const exam = await this.repo.findExamById(examId);
+      if (exam) {
+        usedIn = {
+          examTitle: exam.getTitle(),
+          sectionInfo: 'Main Section',
+        };
+      }
     }
 
     return {

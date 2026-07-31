@@ -42,6 +42,9 @@ export interface ExamCollection {
   language?: string;
   totalSize?: string;
   tags?: string[];
+  saved?: boolean;
+  bookmarked?: boolean;
+  cloned?: boolean;
   itemsList?: Array<{ id: string; title: string; type: string; duration: string; items: string }>;
   reviewsList?: Array<{ id?: string; author: string; avatar?: string; rating: number; date: string; text: string }>;
   activitiesList?: Array<{ user: string; action: string; time: string }>;
@@ -382,46 +385,51 @@ export interface CreatorDashboardResponse {
 
 export interface CollectionEditorResponse {
   id: string;
-  title: string;
-  description: string;
-  examCategory: string;
+  status: string;
+  lastAutosaved: string;
   details: {
     title: string;
+    subtitle: string;
     description: string;
-    category: string;
     level: string;
-    estimatedHours: number;
+    tags: string[];
+    visibility: string;
+    allowDownloads: boolean;
+    coverImage: string;
+    createdDate: string;
+    lastUpdatedDate: string;
   };
   chapters: Array<{
     id: string;
+    number: number;
     title: string;
     description: string;
     examCount: number;
     exams: Array<{
       id: string;
+      number: number;
       title: string;
-      description: string;
-      examType: string;
+      subTitle: string;
+      questionsCount: number;
       durationMinutes: number;
-      totalQuestions: number;
-      sections: ExamSection[];
+      difficulty: string;
+      status: string;
+      iconType: string;
+      chapterId?: string;
     }>;
   }>;
   summary: {
+    totalChapters: number;
     totalExams: number;
     totalQuestions: number;
-    totalChapters: number;
-    estimatedHours: number;
+    estimatedDurationHours: number;
+    estimatedDurationMinutes: number;
+    difficultyMix: {
+      easy: number;
+      medium: number;
+      hard: number;
+    };
   };
-  exams: Array<{
-    id: string;
-    title: string;
-    description: string;
-    examType: string;
-    durationMinutes: number;
-    totalQuestions: number;
-    sections: ExamSection[];
-  }>;
 }
 
 export interface ExamBuilderResponse {
@@ -516,6 +524,7 @@ export interface BookmarksResponse {
   id: string;
   userId: string;
   totalBookmarks: number;
+  folders?: Array<{ id: string; name: string; itemCount: number }>;
   items: Array<{
     id: string;
     itemId: string;

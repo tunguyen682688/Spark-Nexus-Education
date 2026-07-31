@@ -178,6 +178,12 @@ export class CertificationRepository implements ICertificationRepository {
     const data = {
       title: collection.getTitle(),
       description: collection.getDescription(),
+      subtitle: collection.getSubtitle(),
+      level: collection.getLevel(),
+      tags: collection.getTags(),
+      visibility: collection.getVisibility(),
+      allowDownloads: collection.getAllowDownloads(),
+      coverImage: collection.getCoverImage(),
       ownerId: collection.getOwnerId(),
       publishStatus: collection.getPublishStatus(),
       createdBy: collection.getCreatedBy(),
@@ -221,6 +227,12 @@ export class CertificationRepository implements ICertificationRepository {
         id: newCollectionId,
         title: `${source.title} (Copy)`,
         description: source.description,
+        subtitle: source.subtitle,
+        level: source.level,
+        tags: source.tags,
+        visibility: source.visibility,
+        allowDownloads: source.allowDownloads,
+        coverImage: source.coverImage,
         ownerId: newOwnerId,
         createdBy: newOwnerId,
         updatedBy: newOwnerId,
@@ -486,7 +498,8 @@ export class CertificationRepository implements ICertificationRepository {
   async findExamsByCollectionId(collectionId: string): Promise<ExamEntity[]> {
     try {
       const exams = await this.prisma.exam.findMany({
-        where: { collectionId, deletedAt: null, publishStatus: 'published' },
+        where: { collectionId, deletedAt: null },
+        orderBy: { order: 'asc' },
       });
       return exams.map((exam) => this.mapExamToEntity(exam));
     } catch (error) {
@@ -506,6 +519,7 @@ export class CertificationRepository implements ICertificationRepository {
       publishStatus: exam.getPublishStatus(),
       collectionId: exam.getCollectionId(),
       chapterId: exam.getChapterId(),
+      order: exam.getOrder(),
       createdBy: exam.getCreatedBy(),
       updatedBy: exam.getUpdatedBy(),
       deletedAt: exam.getDeletedAt(),
@@ -534,7 +548,7 @@ export class CertificationRepository implements ICertificationRepository {
   async findExamsByChapterId(chapterId: string): Promise<ExamEntity[]> {
     const exams = await this.prisma.exam.findMany({
       where: { chapterId, deletedAt: null },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { order: 'asc' },
     });
     return exams.map((e) => this.mapExamToEntity(e));
   }
@@ -546,9 +560,23 @@ export class CertificationRepository implements ICertificationRepository {
     });
   }
 
+  async updateExamOrder(examId: string, order: number): Promise<void> {
+    await this.prisma.exam.update({
+      where: { id: examId },
+      data: { order },
+    });
+  }
+
   // ============================================
   // CHAPTER OPERATIONS
   // ============================================
+
+  async findChapterById(id: string): Promise<ChapterEntity | null> {
+    const chapter = await this.prisma.chapter.findFirst({
+      where: { id, deletedAt: null },
+    });
+    return chapter ? this.mapChapterToEntity(chapter) : null;
+  }
 
   async findChaptersByCollectionId(collectionId: string): Promise<ChapterEntity[]> {
     const chapters = await this.prisma.chapter.findMany({
@@ -1762,6 +1790,12 @@ export class CertificationRepository implements ICertificationRepository {
       id: dbObj.id,
       title: dbObj.title,
       description: dbObj.description ?? undefined,
+      subtitle: dbObj.subtitle ?? undefined,
+      level: dbObj.level ?? undefined,
+      tags: dbObj.tags ?? [],
+      visibility: dbObj.visibility,
+      allowDownloads: dbObj.allowDownloads,
+      coverImage: dbObj.coverImage ?? undefined,
       ownerId: dbObj.ownerId,
       publishStatus: dbObj.publishStatus,
       itemCount: dbObj.items?.length ?? 0,
@@ -1787,6 +1821,7 @@ export class CertificationRepository implements ICertificationRepository {
       publishStatus: dbObj.publishStatus,
       collectionId: dbObj.collectionId,
       chapterId: dbObj.chapterId ?? undefined,
+      order: dbObj.order,
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
       createdAt: dbObj.createdAt,

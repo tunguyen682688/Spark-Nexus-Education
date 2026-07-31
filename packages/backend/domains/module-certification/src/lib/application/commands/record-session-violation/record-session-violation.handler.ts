@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { SessionViolationEntity } from '../../../domain/entities/session-violation.entity';
@@ -18,6 +18,10 @@ export class RecordSessionViolationHandler implements ICommandHandler<RecordSess
     const session = await this.certificationRepo.findSessionById(command.sessionId);
     if (!session) {
       throw new NotFoundException(`Exam session with ID ${command.sessionId} not found`);
+    }
+
+    if (session.getUserId() !== command.userId) {
+      throw new ForbiddenException('You do not have permission to record violations for this session');
     }
 
     const violation = SessionViolationEntity.create({

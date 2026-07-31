@@ -161,6 +161,7 @@ export class CertificationController {
 
     return {
       id: collection.id,
+      ownerId: collection.getOwnerId(),
       title,
       description: desc,
       subtitle: desc,
@@ -879,6 +880,7 @@ export class CertificationController {
 
       return {
         id: String(item.collectionId || ''),
+        ownerId: collection ? String(collection.ownerId || '') : '',
         title,
         category,
         examType,
@@ -936,6 +938,7 @@ export class CertificationController {
       return {
         id: String(purchase.id || ''),
         collectionId: String(purchase.collectionId || ''),
+        ownerId: collection ? String(collection.ownerId || '') : '',
         title,
         exam,
         purchasedAt: purchase.purchasedAt ? new Date(String(purchase.purchasedAt)).toLocaleDateString('vi-VN') : '',
@@ -985,6 +988,7 @@ export class CertificationController {
       title: String(result['title'] ?? ''),
       subtitle: String(result['subtitle'] ?? result['description'] ?? ''),
       description: String(result['description'] ?? ''),
+      ownerId: result['ownerId'] ? String(result['ownerId']) : undefined,
       exam: String(result['exam'] ?? 'IELTS'),
       level: String(result['level'] ?? 'Intermediate'),
       targetBand: result['targetBand']
@@ -1270,7 +1274,7 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const result = await this.commandBus.execute(
-      new UpdateCollectionCommand(id, user.id, dto.title, dto.description, dto.publishStatus)
+      new UpdateCollectionCommand(id, user.id, dto.title, dto.description, dto.subtitle, dto.level, dto.tags, dto.visibility, dto.allowDownloads, dto.coverImage, dto.publishStatus)
     );
     await this.cacheService.delete(`certification:editor:${id}`);
     return convertEntityToJsonApi(result, 'certification-collection', {
@@ -1932,6 +1936,7 @@ export class CertificationController {
       return {
         id: String(fav.id || ''),
         collectionId: String(fav.collectionId || ''),
+        ownerId: collection ? String(collection.ownerId || '') : '',
         title,
         exam,
         addedAt: fav.createdAt ? new Date(String(fav.createdAt)).toLocaleDateString('vi-VN') : '',
@@ -1975,6 +1980,7 @@ export class CertificationController {
         id: String(bm.id || ''),
         itemId: String(bm.collectionId || ''),
         itemType: 'collection',
+        ownerId: collection ? String(collection.ownerId || '') : '',
         title,
         folderName: 'Mặc định',
         createdAt: bm.createdAt ? new Date(String(bm.createdAt)).toLocaleDateString('vi-VN') : '',

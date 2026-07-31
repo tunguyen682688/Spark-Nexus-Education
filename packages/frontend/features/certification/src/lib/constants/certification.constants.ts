@@ -911,7 +911,7 @@ export const CERTIFICATION_UI_TEXT = {
     },
     chapterDetail: {
       descriptionPlaceholder: 'Description (optional)',
-      addExam: '+ Add Exam',
+      addExam: 'Add Exam',
       reorder: 'Reorder',
       importExams: 'Import Exams',
       dragDropFooter: 'Drag and drop exams to reorder',
@@ -975,7 +975,7 @@ export const CERTIFICATION_UI_TEXT = {
       questionsTab: 'Questions',
       instructionsTab: 'Instructions',
       timingTab: 'Timing',
-      addQuestion: '+ Add Question',
+      addQuestion: 'Add Question',
       bank: 'Bank',
       aiGenerate: 'AI Generate',
       import: 'Import',

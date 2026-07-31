@@ -369,7 +369,17 @@ export class CertificationApi {
     return unwrapJsonApiResponse<{ id: string; title: string; description: string | null }>(response.data);
   }
 
-  static async updateCollection(collectionId: string, dto: { title?: string; description?: string | null; publishStatus?: string }): Promise<{ id: string }> {
+  static async updateCollection(collectionId: string, dto: { 
+    title?: string; 
+    description?: string | null; 
+    subtitle?: string | null; 
+    level?: string | null; 
+    tags?: string[]; 
+    visibility?: string; 
+    allowDownloads?: boolean; 
+    coverImage?: string | null; 
+    publishStatus?: string 
+  }): Promise<{ id: string }> {
     const client = await getAxiosInstance();
     const response = await client.put(`/certification/collections/${collectionId}`, dto);
     return unwrapJsonApiResponse<{ id: string }>(response.data);

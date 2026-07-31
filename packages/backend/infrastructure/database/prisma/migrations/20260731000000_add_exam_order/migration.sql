@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "exams" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;

@@ -1217,6 +1217,12 @@ model Collection {
   id            String    @id @default(uuid())
   title         String    @db.VarChar(255)
   description   String?   @db.Text
+  subtitle      String?   @db.Text
+  level         String?   @db.VarChar(50)
+  tags          String[]  @default([])
+  visibility    String    @default("Public") @db.VarChar(50)
+  allowDownloads Boolean  @default(true) @map("allow_downloads")
+  coverImage    String?   @map("cover_image")
   ownerId       String    @map("owner_id")
   publishStatus String    @default("draft") @map("publish_status") @db.VarChar(50)
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -1331,6 +1337,7 @@ model Exam {
   publishStatus     String    @default("draft") @map("publish_status") @db.VarChar(50)
   examType          String    @default("FULL_MOCK") @map("exam_type") @db.VarChar(50)
   certificationType String?   @map("certification_type") @db.VarChar(50)
+  order             Int       @default(0)
   createdAt         DateTime  @default(now()) @map("created_at")
   createdBy         String?   @map("created_by")
   updatedAt         DateTime  @updatedAt @map("updated_at")

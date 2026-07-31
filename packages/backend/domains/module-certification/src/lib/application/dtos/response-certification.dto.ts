@@ -71,6 +71,9 @@ export class CertificationCollectionResponseDto {
   @ApiProperty({ example: 'c1' })
   id!: string;
 
+  @ApiPropertyOptional({ example: 'auth0|abc123' })
+  ownerId?: string;
+
   @ApiProperty({ example: 'IELTS Academic Writing Task 2' })
   title!: string;
 

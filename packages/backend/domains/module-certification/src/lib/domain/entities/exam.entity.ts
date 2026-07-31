@@ -14,6 +14,7 @@ export class ExamEntity extends AggregateRoot<string> {
     private examType: string,
     private certificationType: string | null,
     private chapterId: string | null,
+    private order: number,
     private createdBy: string | null,
     private updatedBy: string | null,
     private deletedAt: Date | null,
@@ -37,6 +38,7 @@ export class ExamEntity extends AggregateRoot<string> {
     examType?: string;
     certificationType?: string | null;
     chapterId?: string | null;
+    order?: number;
     createdBy?: string | null;
     updatedBy?: string | null;
     deletedAt?: Date | null;
@@ -58,6 +60,7 @@ export class ExamEntity extends AggregateRoot<string> {
       params.examType ?? 'FULL_MOCK',
       params.certificationType ?? null,
       params.chapterId ?? null,
+      params.order ?? 0,
       params.createdBy ?? null,
       params.updatedBy ?? null,
       params.deletedAt ?? null,
@@ -111,6 +114,10 @@ export class ExamEntity extends AggregateRoot<string> {
     return this.chapterId;
   }
 
+  getOrder(): number {
+    return this.order;
+  }
+
   getCreatedBy(): string | null {
     return this.createdBy;
   }
@@ -135,6 +142,7 @@ export class ExamEntity extends AggregateRoot<string> {
     examType?: string;
     certificationType?: string | null;
     chapterId?: string | null;
+    order?: number;
     updatedBy?: string | null;
   }): void {
     if (params.title !== undefined) this.title = params.title;
@@ -148,6 +156,7 @@ export class ExamEntity extends AggregateRoot<string> {
     if (params.examType !== undefined) this.examType = params.examType;
     if (params.certificationType !== undefined) this.certificationType = params.certificationType;
     if (params.chapterId !== undefined) this.chapterId = params.chapterId;
+    if (params.order !== undefined) this.order = params.order;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
     this.markAsUpdated();
   }
@@ -172,6 +181,7 @@ export class ExamEntity extends AggregateRoot<string> {
       examType: this.examType,
       certificationType: this.certificationType,
       chapterId: this.chapterId,
+      order: this.order,
       createdBy: this.createdBy,
       updatedBy: this.updatedBy,
       deletedAt: this.deletedAt,
