@@ -22,6 +22,7 @@ export * from './collection/CollectionActivityTab';
 export * from './collection/CollectionRelatedTab';
 export * from './collection/AddExamModal';
 export * from './collection/SortableExamRow';
+export * from './collection/SortableChapterCard';
 export * from './collection/ExplanationTab';
 export * from './collection/TagsSkillsTab';
 

@@ -71,7 +71,7 @@ export function useCollectionEditorContainerLogic() {
   const activeCollectionId = id || createdCollectionIdRef.current;
 
   const activeChapter = useMemo(
-    () => chapters.find((ch) => ch.id === activeChapterId) || chapters[0],
+    () => chapters.find((chapter) => chapter.id === activeChapterId) || chapters[0],
     [chapters, activeChapterId],
   );
 
@@ -79,11 +79,11 @@ export function useCollectionEditorContainerLogic() {
     let totalExams = 0;
     let totalQuestions = 0;
     let totalMinutes = 0;
-    chapters.forEach((ch) => {
-      totalExams += ch.exams.length;
-      ch.exams.forEach((ex) => {
-        totalQuestions += ex.questionsCount;
-        totalMinutes += ex.durationMinutes;
+    chapters.forEach((chapter) => {
+      totalExams += chapter.exams.length;
+      chapter.exams.forEach((exam) => {
+        totalQuestions += exam.questionsCount;
+        totalMinutes += exam.durationMinutes;
       });
     });
     const hours = Math.floor(totalMinutes / 60);
@@ -112,8 +112,8 @@ export function useCollectionEditorContainerLogic() {
   const takeSnapshot = useCallback(
     (collectionDetail: CollectionDetailsForm, chapters: EditorChapter[]) =>
       JSON.stringify({
-        detailCollection: { title: collectionDetail.title, subtitle: collectionDetail.subtitle, level: collectionDetail.level, tags: collectionDetail.tags, visibility: collectionDetail.visibility },
-        chapters: chapters.map((chapter) => ({ id: chapter.id, title: chapter.title, exams: chapter.exams.map((e) => e.id) })),
+        detailCollection: { title: collectionDetail.title, subtitle: collectionDetail.subtitle, description: collectionDetail.description, level: collectionDetail.level, tags: collectionDetail.tags, visibility: collectionDetail.visibility, allowDownloads: collectionDetail.allowDownloads },
+        chapters: chapters.map((chapter) => ({ id: chapter.id, title: chapter.title, description: chapter.description, exams: chapter.exams.map((e) => e.id) })),
       }),
     [],
   );
@@ -151,17 +151,59 @@ export function useCollectionEditorContainerLogic() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ===== localStorage draft backup =====
+  const DRAFT_KEY = 'sne-collection-draft';
+  const saveDraftToLocalStorage = useCallback(() => {
+    if (!activeCollectionId) return;
+    try {
+      const draft = { collectionId: activeCollectionId, details, chapters, savedAt: Date.now() };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch { /* quota exceeded or private browsing */ }
+  }, [activeCollectionId, details, chapters]);
+
+  const loadDraftFromLocalStorage = useCallback((collectionId: string) => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return null;
+      const draft = JSON.parse(raw);
+      if (draft.collectionId !== collectionId) return null;
+      // Only use draft if it's less than 24 hours old
+      if (Date.now() - draft.savedAt > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(DRAFT_KEY);
+        return null;
+      }
+      return draft;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const clearDraftFromLocalStorage = useCallback(() => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+  }, []);
+
   // ===== Effect 2: Hydrate từ API khi có data =====
   useEffect(() => {
     if (!isEditMode || hydratedRef.current || !apiData) return;
     hydratedRef.current = true;
     const parsed = parseApiDataToState(apiData);
-    setDetails(parsed.details);
-    setChapters(parsed.chapters);
-    if (parsed.chapters.length > 0) setActiveChapterId(parsed.chapters[0].id);
-    lastSyncedSnapshotRef.current = takeSnapshot(parsed.details, parsed.chapters);
+
+    // Check for localStorage draft backup
+    const draft = id ? loadDraftFromLocalStorage(id) : null;
+    if (draft) {
+      setDetails(draft.details);
+      setChapters(draft.chapters);
+      if (draft.chapters.length > 0) setActiveChapterId(draft.chapters[0].id);
+      lastSyncedSnapshotRef.current = takeSnapshot(draft.details, draft.chapters);
+      toast({ title: 'Khôi phục bản nháp', description: 'Đã khôi phục thay đổi chưa lưu từ trình duyệt.', variant: 'default' as never });
+    } else {
+      setDetails(parsed.details);
+      setChapters(parsed.chapters);
+      if (parsed.chapters.length > 0) setActiveChapterId(parsed.chapters[0].id);
+      lastSyncedSnapshotRef.current = takeSnapshot(parsed.details, parsed.chapters);
+    }
     setSyncStatus('synced');
-  }, [apiData, isEditMode, takeSnapshot]);
+  }, [apiData, isEditMode, id, takeSnapshot, loadDraftFromLocalStorage, toast]);
 
   // ===== Effect 3: Mark dirty khi local state thay đổi =====
   useEffect(() => {
@@ -171,6 +213,51 @@ export function useCollectionEditorContainerLogic() {
 
   // Track dirty state (separate from effect to avoid stale closure)
   const [isDirty, setIsDirty] = useState(false);
+  const isDirtyRef = useRef(false);
+  isDirtyRef.current = isDirty;
+
+  // ===== Effect: beforeunload — chặn close/refresh khi có thay đổi chưa lưu =====
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
+
+  // ===== Online/offline detection =====
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isOnlineRef = useRef(navigator.onLine);
+  isOnlineRef.current = isOnline;
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      isOnlineRef.current = true;
+      toast({ title: 'Đã khôi phục mạng', description: 'Kết nối internet đã trở lại.', variant: 'default' as never });
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      isOnlineRef.current = false;
+      toast({ title: 'Mất kết nối', description: 'Bạn đang offline. Thay đổi sẽ được lưu tạm vào trình duyệt.', variant: 'destructive' });
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [toast]);
+
+  // Auto-save draft to localStorage every time state changes (debounced via effect)
+  useEffect(() => {
+    if (!hydratedRef.current || !isDirty) return;
+    const timer = setTimeout(saveDraftToLocalStorage, 1000);
+    return () => clearTimeout(timer);
+  }, [isDirty, saveDraftToLocalStorage]);
 
   // ===== Core: Refetch + hydrate =====
   const refetchAndHydrate = useCallback(async () => {
@@ -220,10 +307,16 @@ export function useCollectionEditorContainerLogic() {
 
   // ===== Core: Persist collection (save / publish) =====
   const handlePersist = useCallback(
-    async (publishStatus?: 'draft' | 'published') => {
+    async (publishStatus?: 'draft' | 'published'): Promise<boolean> => {
       if (!activeCollectionId) {
         toast({ title: 'Lỗi', description: 'Không tìm thấy bộ sưu tập.', variant: 'destructive' });
-        return;
+        return false;
+      }
+
+      if (!isOnlineRef.current) {
+        toast({ title: 'Offline', description: 'Không thể lưu khi mất kết nối. Thay đổi đã được lưu tạm vào trình duyệt.', variant: 'destructive' });
+        saveDraftToLocalStorage();
+        return false;
       }
 
       setSyncStatus('retrying');
@@ -241,15 +334,21 @@ export function useCollectionEditorContainerLogic() {
         );
         await syncChaptersToServer(activeCollectionId, chapters);
         setLastSavedAt(new Date());
+        clearDraftFromLocalStorage();
         const message = publishStatus === 'published'
           ? CERTIFICATION_UI_TEXT.toast.publishSuccess
           : CERTIFICATION_UI_TEXT.toast.saveDraftSuccess;
         toast(message);
-      } catch {
+        return true;
+      } catch (err) {
+        console.error('[CollectionEditor] Persist failed:', err);
         setSyncStatus('error');
+        toast(CERTIFICATION_UI_TEXT.toast.errorOccurred);
+        saveDraftToLocalStorage();
+        return false;
       }
     },
-    [activeCollectionId, details, chapters, updateCollectionMutation, syncChaptersToServer, toast],
+    [activeCollectionId, details, chapters, updateCollectionMutation, syncChaptersToServer, toast, isOnline, saveDraftToLocalStorage, clearDraftFromLocalStorage],
   );
 
   // ===== Chapter handlers =====
@@ -352,13 +451,13 @@ export function useCollectionEditorContainerLogic() {
     (oldIndex: number, newIndex: number) => {
       if (!activeChapterId) return;
       setChapters((prev) =>
-        prev.map((ch) => {
-          if (ch.id !== activeChapterId) return ch;
-          const reordered = arrayMove(ch.exams, oldIndex, newIndex);
+        prev.map((chapter) => {
+          if (chapter.id !== activeChapterId) return chapter;
+          const reordered = arrayMove(chapter.exams, oldIndex, newIndex);
           // Update order fields to match new positions
           return {
-            ...ch,
-            exams: reordered.map((ex, idx) => ({ ...ex, order: idx, number: idx + 1 })),
+            ...chapter,
+            exams: reordered.map((exam, idx) => ({ ...exam, order: idx, number: idx + 1 })),
           };
         }),
       );
@@ -366,9 +465,20 @@ export function useCollectionEditorContainerLogic() {
     [activeChapterId],
   );
 
+  // ===== Chapter reorder handler (drag-and-drop) =====
+  const handleReorderChapters = useCallback(
+    (oldIndex: number, newIndex: number) => {
+      setChapters((prev) => {
+        const reordered = arrayMove(prev, oldIndex, newIndex);
+        return reordered.map((chapter, idx) => ({ ...chapter, number: idx + 1 }));
+      });
+    },
+    [],
+  );
+
   // ===== Tag handlers =====
   const handleRemoveTag = useCallback((tagToRemove: string) => {
-    setDetails((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tagToRemove) }));
+    setDetails((prev) => ({ ...prev, tags: prev.tags.filter((tags) => tags !== tagToRemove) }));
   }, []);
 
   const handleAddTag = useCallback(
@@ -382,21 +492,84 @@ export function useCollectionEditorContainerLogic() {
     [newTagInput],
   );
 
+  // ===== Settings handlers =====
+  const handleSaveSettings = useCallback(async () => {
+    if (!activeCollectionId) {
+      toast({ title: 'Lỗi', description: 'Không tìm thấy bộ sưu tập.', variant: 'destructive' });
+      return;
+    }
+    setSyncStatus('retrying');
+    try {
+      await withRetry(
+        () =>
+          updateCollectionMutation.mutateAsync({
+            collectionId: activeCollectionId,
+            ...buildCollectionDetailsPayload(details),
+            silent: true,
+          }),
+        RETRY_COUNT,
+        RETRY_DELAY_MS,
+      );
+      await refetchAndHydrate();
+      setLastSavedAt(new Date());
+      toast({ title: 'Đã lưu', description: 'Cài đặt đã được lưu thành công.', variant: 'default' as never });
+    } catch {
+      setSyncStatus('error');
+    }
+  }, [activeCollectionId, details, updateCollectionMutation, refetchAndHydrate, toast]);
+
+  const handleResetSettings = useCallback(() => {
+    if (!apiData) return;
+    const parsed = parseApiDataToState(apiData);
+    setDetails(parsed.details);
+    lastSyncedSnapshotRef.current = takeSnapshot(parsed.details, chapters);
+    setIsDirty(false);
+    setSyncStatus('synced');
+  }, [apiData, chapters, takeSnapshot]);
+
   // ===== Navigation handlers =====
   const handleSaveDraft = useCallback(() => handlePersist(), [handlePersist]);
   const handlePublishCollection = useCallback(() => handlePersist('published'), [handlePersist]);
-  const handlePreviewCollection = useCallback(() => { if (activeCollectionId) navigate(`/certification/collections/${activeCollectionId}`); }, [activeCollectionId, navigate]);
-  const handleEditExam = useCallback((examId: string) => navigate(`/certification/exam-builder/${examId}`), [navigate]);
 
-  const handleBackToDashboard = useCallback(async () => {
-    if (isDirty) {
-      const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có muốn lưu trước khi rời đi?');
-      if (confirmed) {
-        try { await handlePersist(); } catch { /* navigate anyway */ }
+  /** Retry sync when status is error — gọi từ UI retry button */
+  const handleRetrySync = useCallback(async () => {
+    if (syncStatus !== 'error') return;
+    await refetchAndHydrate();
+  }, [syncStatus, refetchAndHydrate]);
+
+  /** Hỏi người dùng trước khi rời đi nếu có thay đổi chưa lưu. Return true = đồng ý rời. */
+  const confirmLeave = useCallback(async (): Promise<boolean> => {
+    if (!isDirtyRef.current) return true;
+    const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có muốn lưu trước khi rời đi?');
+    if (confirmed) {
+      const saved = await handlePersist();
+      if (!saved) {
+        // Save failed — ask if user still wants to leave
+        const leaveAnyway = window.confirm(
+          'Lưu thất bại. Dữ liệu đã được lưu tạm vào trình duyệt.\n\nBạn có muốn rời đi không?',
+        );
+        return leaveAnyway;
       }
     }
+    return true;
+  }, [handlePersist]);
+
+  const handlePreviewCollection = useCallback(async () => {
+    if (await confirmLeave()) {
+      if (activeCollectionId) navigate(`/certification/collections/${activeCollectionId}`);
+    }
+  }, [confirmLeave, activeCollectionId, navigate]);
+
+  const handleEditExam = useCallback(async (examId: string) => {
+    if (await confirmLeave()) {
+      navigate(`/certification/exam-builder/${examId}`);
+    }
+  }, [confirmLeave, navigate]);
+
+  const handleBackToDashboard = useCallback(async () => {
+    await confirmLeave();
     navigate('/certification/creator-dashboard');
-  }, [isDirty, handlePersist, navigate]);
+  }, [confirmLeave, navigate]);
 
   // ===== Return =====
   return {
@@ -428,6 +601,7 @@ export function useCollectionEditorContainerLogic() {
     handleUpdateActiveChapterTitle,
     handleUpdateActiveChapterDescription,
     handleDeleteChapter,
+    handleReorderChapters,
     // Handlers — exam
     handleAddExamToChapter: () => setIsAddExamModalOpen(true),
     handleAddExamConfirm,
@@ -437,11 +611,16 @@ export function useCollectionEditorContainerLogic() {
     // Handlers — tags
     handleRemoveTag,
     handleAddTag,
+    // Handlers — settings
+    handleSaveSettings,
+    handleResetSettings,
     // Handlers — save / publish / navigate
     handleSaveDraft,
     handlePublishCollection,
     handlePreviewCollection,
     handleBackToDashboard,
+    // Handlers — sync
+    handleRetrySync,
     // Status
     isSaving,
     autosavedText,
@@ -449,5 +628,6 @@ export function useCollectionEditorContainerLogic() {
     setIsAddExamModalOpen,
     syncStatus,
     isDirty,
+    isOnline,
   };
 }

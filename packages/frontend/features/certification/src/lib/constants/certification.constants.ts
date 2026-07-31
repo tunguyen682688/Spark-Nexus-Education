@@ -1169,7 +1169,7 @@ export const CERTIFICATION_UI_TEXT = {
   },
   examBuilderLevels: ['Intermediate', 'Beginner', 'Advanced'],
   examBuilderLanguages: ['English', 'Vietnamese'],
-  collectionEditorLevels: ['Beginner to Advanced', 'Intermediate', 'Advanced'],
+  collectionEditorLevels: ['Beginner', 'Beginner to Advanced', 'Intermediate', 'Advanced'],
   placeholderPages: {
     createExam: {
       title: 'Create Exam',

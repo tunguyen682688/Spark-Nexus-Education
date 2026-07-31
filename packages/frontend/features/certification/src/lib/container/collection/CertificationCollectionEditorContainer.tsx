@@ -42,6 +42,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useCollectionEditorContainerLogic } from '../../hooks/editor/use-collection-editor-container-logic';
 import { AddExamModal } from '../../components/collection/AddExamModal';
 import { SortableExamRow } from '../../components/collection/SortableExamRow';
+import { SortableChapterCard } from '../../components/collection/SortableChapterCard';
 import { LoadingSkeleton } from '../../components/shared/LoadingSkeleton';
 import { ErrorState } from '../../components/shared/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
@@ -73,8 +74,11 @@ export const CertificationCollectionEditorContainer = () => {
     handleAddExamToChapter,
     handleRemoveExamFromChapter,
     handleDeleteChapter,
+    handleReorderChapters,
     handleRemoveTag,
     handleAddTag,
+    handleSaveSettings,
+    handleResetSettings,
     handleSaveDraft,
     handlePublishCollection,
     handlePreviewCollection,
@@ -88,6 +92,8 @@ export const CertificationCollectionEditorContainer = () => {
     handleAddExamConfirm,
     syncStatus,
     isDirty,
+    isOnline,
+    handleRetrySync,
   } = useCollectionEditorContainerLogic();
 
   const { toast } = useToast();
@@ -112,6 +118,18 @@ export const CertificationCollectionEditorContainer = () => {
 
     if (oldIndex !== -1 && newIndex !== -1) {
       handleReorderExams(oldIndex, newIndex);
+    }
+  };
+
+  const handleChapterDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = chapters.findIndex((ch) => ch.id === active.id);
+    const newIndex = chapters.findIndex((ch) => ch.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      handleReorderChapters(oldIndex, newIndex);
     }
   };
 
@@ -168,12 +186,21 @@ export const CertificationCollectionEditorContainer = () => {
 
           {/* TOP RIGHT ACTION BUTTONS */}
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Online/offline indicator */}
+            {!isOnline && (
+              <div className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-lg">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Offline</span>
+              </div>
+            )}
+
+            {/* Sync status */}
             <div className={`flex items-center gap-1 text-xs font-bold mr-2 ${
-              syncStatus === 'error' ? 'text-rose-600' : syncStatus === 'syncing' ? 'text-amber-600' : 'text-emerald-600'
+              syncStatus === 'error' ? 'text-rose-600' : syncStatus === 'syncing' || syncStatus === 'retrying' ? 'text-amber-600' : 'text-emerald-600'
             }`}>
               {syncStatus === 'error' ? (
                 <AlertCircle className="w-4 h-4" />
-              ) : syncStatus === 'syncing' ? (
+              ) : syncStatus === 'syncing' || syncStatus === 'retrying' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <CheckCircle2 className="w-4 h-4" />
@@ -181,6 +208,14 @@ export const CertificationCollectionEditorContainer = () => {
               <span>{autosavedText}</span>
               {isDirty && syncStatus === 'synced' && (
                 <span className="text-amber-500 ml-1">(chưa lưu)</span>
+              )}
+              {syncStatus === 'error' && (
+                <button
+                  onClick={handleRetrySync}
+                  className="ml-1 text-rose-600 hover:text-rose-700 underline cursor-pointer font-extrabold"
+                >
+                  Thử lại
+                </button>
               )}
             </div>
 
@@ -259,44 +294,23 @@ export const CertificationCollectionEditorContainer = () => {
             </div>
 
             {/* CHAPTER CARDS LIST */}
-            <div className="space-y-2.5">
-              {chapters.map((chap) => {
-                const isActive = chap.id === activeChapterId;
-                return (
-                  <div
-                    key={chap.id}
-                    onClick={() => setActiveChapterId(chap.id)}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                      isActive
-                        ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-sm'
-                        : 'border-border bg-card hover:bg-secondary/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-xs text-muted-foreground">{chap.number}</span>
-                      <div>
-                        <div className="font-bold text-xs text-foreground leading-snug">
-                          {chap.title}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground font-medium">
-                          {chap.exams.length} exams
-                        </div>
-                      </div>
-                    </div>
-
-                    {chapters.length > 1 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteChapterId(chap.id); }}
-                        disabled={isSaving}
-                        className="text-muted-foreground hover:text-rose-600 cursor-pointer p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleChapterDragEnd}>
+              <SortableContext items={chapters.map((ch) => ch.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2.5">
+                  {chapters.map((chap) => (
+                    <SortableChapterCard
+                      key={chap.id}
+                      chapter={chap}
+                      isActive={chap.id === activeChapterId}
+                      isSaving={isSaving}
+                      canDelete={chapters.length > 1}
+                      onSelect={setActiveChapterId}
+                      onDelete={setConfirmDeleteChapterId}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             {/* ADD CHAPTER BOTTOM BUTTON */}
             <button
@@ -758,14 +772,80 @@ export const CertificationCollectionEditorContainer = () => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <div className="xl:col-span-6 xl:col-start-4 space-y-4">
             <Card className="border-border shadow-sm bg-card p-5 space-y-5">
-              <h3 className="font-extrabold text-base text-foreground pb-2 border-b border-border">
-                Cài đặt bộ sưu tập
-              </h3>
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <h3 className="font-extrabold text-base text-foreground">
+                  Collection Settings
+                </h3>
+                {isDirty && (
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">
+                    Unsaved changes
+                  </span>
+                )}
+              </div>
 
               <div className="space-y-4 text-xs font-medium">
+                {/* TITLE */}
                 <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Title <span className="text-rose-500">*</span>
+                    </label>
+                    <span className={`text-[10px] font-bold ${details.title.length > 90 ? 'text-rose-500' : 'text-muted-foreground'}`}>
+                      {details.title.length}/100
+                    </span>
+                  </div>
+                  <Input
+                    value={details.title}
+                    onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                    placeholder="Enter collection title..."
+                    maxLength={100}
+                    className="text-xs bg-background py-1.5 h-9 rounded-xl font-bold"
+                  />
+                </div>
+
+                {/* SUBTITLE */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Subtitle
+                    </label>
+                    <span className={`text-[10px] font-bold ${details.subtitle.length > 140 ? 'text-rose-500' : 'text-muted-foreground'}`}>
+                      {details.subtitle.length}/160
+                    </span>
+                  </div>
+                  <Input
+                    value={details.subtitle}
+                    onChange={(e) => setDetails({ ...details, subtitle: e.target.value })}
+                    placeholder="Brief description of your collection..."
+                    maxLength={160}
+                    className="text-xs bg-background py-1.5 h-9 rounded-xl"
+                  />
+                </div>
+
+                {/* DESCRIPTION */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Description
+                    </label>
+                    <span className={`text-[10px] font-bold ${details.description.length > 450 ? 'text-rose-500' : 'text-muted-foreground'}`}>
+                      {details.description.length}/500
+                    </span>
+                  </div>
+                  <textarea
+                    value={details.description}
+                    onChange={(e) => setDetails({ ...details, description: e.target.value })}
+                    placeholder="Describe what learners will gain from this collection..."
+                    maxLength={500}
+                    rows={3}
+                    className="w-full text-xs font-medium text-foreground bg-background border border-border rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* LEVEL */}
+                <div className="space-y-1 pt-2 border-t border-border">
                   <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                    {text.detailsSidebar.levelLabel}
+                    Difficulty Level
                   </label>
                   <select
                     value={details.level}
@@ -778,24 +858,48 @@ export const CertificationCollectionEditorContainer = () => {
                   </select>
                 </div>
 
+                {/* VISIBILITY */}
                 <div className="space-y-2 pt-2 border-t border-border">
                   <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                    {text.detailsSidebar.visibilityLabel}
+                    Visibility
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="settingsVisibility" value="Public" checked={details.visibility === 'Public'} onChange={() => setDetails({ ...details, visibility: 'Public' })} className="text-indigo-600 focus:ring-indigo-500" />
-                    <span className="font-bold text-foreground">{text.detailsSidebar.publicOption}</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="settingsVisibility" value="Private" checked={details.visibility === 'Private'} onChange={() => setDetails({ ...details, visibility: 'Private' })} className="text-indigo-600 focus:ring-indigo-500" />
-                    <span className="font-bold text-foreground">{text.detailsSidebar.privateOption}</span>
-                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="settingsVisibility"
+                        value="Public"
+                        checked={details.visibility === 'Public'}
+                        onChange={() => setDetails({ ...details, visibility: 'Public' })}
+                        className="text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <div>
+                        <span className="font-bold text-foreground">Public</span>
+                        <span className="text-[10px] text-muted-foreground block">Anyone can view</span>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="settingsVisibility"
+                        value="Private"
+                        checked={details.visibility === 'Private'}
+                        onChange={() => setDetails({ ...details, visibility: 'Private' })}
+                        className="text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <div>
+                        <span className="font-bold text-foreground">Private</span>
+                        <span className="text-[10px] text-muted-foreground block">Only you can view</span>
+                      </div>
+                    </label>
+                  </div>
                 </div>
 
+                {/* ALLOW DOWNLOADS */}
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div>
-                    <div className="font-extrabold text-foreground">{text.detailsSidebar.allowDownloads}</div>
-                    <div className="text-[10px] text-muted-foreground">{text.detailsSidebar.allowDownloadsDesc}</div>
+                    <div className="font-extrabold text-foreground">Allow Downloads</div>
+                    <div className="text-[10px] text-muted-foreground">Let learners download study materials</div>
                   </div>
                   <button
                     onClick={() => setDetails({ ...details, allowDownloads: !details.allowDownloads })}
@@ -805,9 +909,10 @@ export const CertificationCollectionEditorContainer = () => {
                   </button>
                 </div>
 
+                {/* TAGS */}
                 <div className="space-y-1.5 pt-2 border-t border-border">
                   <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                    {text.detailsSidebar.tagsLabel}
+                    Tags
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {details.tags.map((tag) => (
@@ -826,6 +931,30 @@ export const CertificationCollectionEditorContainer = () => {
                     placeholder="Type tag and press Enter..."
                     className="text-[11px] bg-background py-1 h-8 rounded-xl mt-1"
                   />
+                </div>
+
+                {/* SAVE / CANCEL BUTTONS */}
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+                  <Button
+                    onClick={handleResetSettings}
+                    disabled={!isDirty || isSaving}
+                    variant="outline"
+                    className="text-xs font-bold py-1.5 px-4 h-8 rounded-xl border-border hover:bg-secondary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveSettings}
+                    disabled={!isDirty || isSaving || !details.title.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-1.5 px-4 h-8 rounded-xl flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
+                  </Button>
                 </div>
               </div>
             </Card>
