@@ -1,85 +1,16 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useExamBuilderData, useUpdateExam } from '../../use-certification';
-import type { ExamBuilderResponse, ExamSection, ExamQuestion } from '../../../types';
+import { useBeforeUnload } from '@spark-nest-ed/frontend-shared-hooks';
+import { useExamBuilderData, useUpdateExam, useSaveExamSections, useSaveQuestion, useLinkQuestionToExam, useUnlinkQuestionFromExam, useSectionQuestions } from '../../use-certification';
+import type { ExamBuilderResponse } from '../../../types';
+import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '../../../utils/local-storage-draft.util';
+import type { BuilderSection, ExamSettingsForm, ExamBuilderDraft } from '../../../types/exam-builder.types';
+import { mapApiSection, mapSectionsToSavePayload, reconcileSavedSectionIds, computeBlueprint } from '../../../services/exam-builder-helpers.service';
+import { createQuestionHandlers } from '../../../services/exam-builder-question-handlers.service';
+import { createSectionHandlers } from '../../../services/exam-builder-section-handlers.service';
 
-// ===== Types =====
-
-export interface BuilderQuestion {
-  id: string;
-  number: number;
-  title: string;
-  partTag: string;
-  type: 'Single Choice' | 'Multiple Choice' | 'Fill in Blank' | 'Essay';
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  points: number;
-  imageUrl?: string | null;
-}
-
-export interface BuilderSection {
-  id: string;
-  number: number;
-  title: string;
-  subtitle: string;
-  questionCount: number;
-  durationMinutes: number;
-  isBreak: boolean;
-  questions: BuilderQuestion[];
-}
-
-export interface ExamSettingsForm {
-  title: string;
-  description: string;
-  level: string;
-  language: string;
-  passingScore: number;
-  maxScore: number;
-  createdDate: string;
-  lastUpdatedDate: string;
-}
-
-// ===== Mapping helpers =====
-
-function mapQuestionType(apiType?: string): BuilderQuestion['type'] {
-  switch (apiType) {
-    case 'MULTIPLE_CHOICE':
-      return 'Multiple Choice';
-    case 'SHORT_ANSWER':
-      return 'Fill in Blank';
-    case 'SINGLE_CHOICE':
-    default:
-      return 'Single Choice';
-  }
-}
-
-function mapExamQuestion(questionExam: ExamQuestion, index: number): BuilderQuestion {
-  return {
-    id: questionExam.id,
-    number: index + 1,
-    title: questionExam.questionText || questionExam.content || '',
-    partTag: '',
-    type: mapQuestionType(questionExam.questionType),
-    difficulty: 'Medium',
-    points: questionExam.points ?? 1,
-    imageUrl: null,
-  };
-}
-
-function mapApiSection(sectionExam: ExamSection, index: number): BuilderSection {
-  const questions = (sectionExam.questions || []).map(mapExamQuestion);
-  return {
-    id: sectionExam.id,
-    number: index + 1,
-    title: sectionExam.title,
-    subtitle: sectionExam.description || sectionExam.sectionType,
-    questionCount: questions.length || 0,
-    durationMinutes: sectionExam.durationMinutes || 0,
-    isBreak: sectionExam.sectionType === 'BREAK',
-    questions,
-  };
-}
-
-// ===== Hook =====
+export type { BuilderQuestion, BuilderSection, ExamSettingsForm, ExamBlueprint } from '../../../types/exam-builder.types';
+import { PAGE_SIZE, AUTO_SAVE_DEBOUNCE_MS, API_AUTO_SAVE_IDLE_MS, DRAFT_PREFIX } from '../../../constants/exam-builder.constants';
 
 export function useExamBuilderContainerLogic() {
   const navigate = useNavigate();
@@ -88,213 +19,217 @@ export function useExamBuilderContainerLogic() {
 
   const { data: apiData, isLoading: isApiLoading, isError, refetch } = useExamBuilderData(examId);
   const updateExamMutation = useUpdateExam();
+  const saveSectionsMutation = useSaveExamSections();
+  const saveQuestionMutation = useSaveQuestion();
+  const linkQuestionMutation = useLinkQuestionToExam();
+  const unlinkQuestionMutation = useUnlinkQuestionFromExam();
 
   const [activeTab, setActiveTab] = useState<'Build' | 'Settings' | 'Review & Publish'>('Build');
   const [activeSubTab, setActiveSubTab] = useState<'Questions' | 'Instructions' | 'Timing'>('Questions');
-  const [activeSectionId, setActiveSectionId] = useState<string>('');
+  const [activeSectionId, setActiveSectionId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [collectionId, setCollectionId] = useState('');
+  const [collectionTitle, setCollectionTitle] = useState('');
+
+  const { data: sectionQuestionsData, isLoading: isSectionQuestionsLoading } =
+    useSectionQuestions(examId, activeSectionId, currentPage, PAGE_SIZE, searchQuery);
 
   const [settings, setSettings] = useState<ExamSettingsForm>({
-    title: '',
-    description: '',
-    level: '',
-    language: 'English',
-    passingScore: 0,
-    maxScore: 0,
-    createdDate: '',
-    lastUpdatedDate: '',
+    title: '', description: '', level: '', language: 'English',
+    passingScore: 0, maxScore: 0, examType: 'FULL_MOCK',
+    certificationType: '', createdDate: '', lastUpdatedDate: '',
   });
-
   const [sections, setSections] = useState<BuilderSection[]>([]);
 
-  // Hydrate from API
+  const lastSyncedVersion = useRef(0);
+  const apiAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sectionsRef = useRef(sections);
+  const settingsRef = useRef(settings);
+  const isSavingRef = useRef(isSaving);
+  const isAddingQuestionRef = useRef(false);
+  sectionsRef.current = sections;
+  settingsRef.current = settings;
+  isSavingRef.current = isSaving;
+
+  useBeforeUnload(isDirty, examId);
+
+  // ── Effects ──────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    if (!apiData) return;
+    if (!apiData || !examId) return;
+    const responseData = apiData as unknown as ExamBuilderResponse;
+    const currentVersion = responseData.lastAutosaved ? new Date(responseData.lastAutosaved).getTime() : 0;
+    const isInitialLoad = lastSyncedVersion.current === 0;
+    const isCacheRefetch = currentVersion > lastSyncedVersion.current;
 
-    const record = apiData as unknown as ExamBuilderResponse;
-    if (record.settings) {
-      setSettings({
-        title: record.settings.title || record.title || '',
-        description: record.settings.description || record.description || '',
-        level: record.settings.difficulty || '',
-        language: 'English',
-        passingScore: record.settings.passingScore || record.passingScore || 0,
-        maxScore: record.passingScore || 0,
-        createdDate: '',
-        lastUpdatedDate: '',
-      });
-    }
-    if (record.sections && Array.isArray(record.sections)) {
-      const mapped = record.sections.map(mapApiSection);
-      setSections(mapped);
-      if (mapped.length > 0 && !activeSectionId) {
-        setActiveSectionId(mapped[0].id);
+    if (isInitialLoad) {
+      const draft = loadDraftFromStorage<ExamBuilderDraft>(examId, DRAFT_PREFIX);
+      setCollectionId(responseData.collectionId || '');
+      setCollectionTitle(responseData.collectionTitle || '');
+
+      if (draft) {
+        setSections(draft.sections);
+        setSettings(draft.settings);
+        if (draft.sections.length > 0) setActiveSectionId(draft.sections[0].id);
+        lastSyncedVersion.current = currentVersion || Date.now();
+        return;
       }
+      if (responseData.settings) {
+        setSettings({
+          title: responseData.settings.title || responseData.title || '',
+          description: responseData.settings.description || responseData.description || '',
+          level: responseData.settings.level || responseData.settings.difficulty || '',
+          language: responseData.settings.language || 'English',
+          passingScore: responseData.settings.passingScore || responseData.passingScore || 0,
+          maxScore: responseData.settings.maxScore || responseData.settings.passingScore || 0,
+          examType: responseData.examType || 'FULL_MOCK',
+          certificationType: responseData.certificationType || '',
+          createdDate: responseData.settings.createdDate || '',
+          lastUpdatedDate: responseData.settings.lastUpdatedDate || '',
+        });
+      }
+      if (responseData.sections && Array.isArray(responseData.sections)) {
+        const mappedSections = responseData.sections.map(mapApiSection);
+        setSections(mappedSections);
+        if (mappedSections.length > 0) setActiveSectionId(mappedSections[0].id);
+      }
+      lastSyncedVersion.current = currentVersion || Date.now();
+    } else if (isCacheRefetch && !isDirty) {
+      if (responseData.settings) {
+        setSettings((prev) => ({
+          ...prev,
+          title: responseData.settings?.title || responseData.title || prev.title,
+          description: responseData.settings?.description || responseData.description || prev.description,
+          level: responseData.settings?.level || responseData.settings?.difficulty || prev.level,
+          language: responseData.settings?.language || prev.language,
+          passingScore: responseData.settings?.passingScore || responseData.passingScore || prev.passingScore,
+          maxScore: responseData.settings?.maxScore || prev.maxScore,
+          examType: responseData.examType || prev.examType,
+          certificationType: responseData.certificationType || prev.certificationType,
+        }));
+      }
+      if (responseData.sections && Array.isArray(responseData.sections)) {
+        setSections(responseData.sections.map(mapApiSection));
+      }
+      lastSyncedVersion.current = currentVersion;
     }
-  }, [activeSectionId, apiData]);
+  }, [apiData, examId, isDirty]);
 
-  const activeSection = useMemo(() => {
-    return sections.find((sec) => sec.id === activeSectionId) || sections[0];
-  }, [sections, activeSectionId]);
+  const cancelAutoSave = useCallback(() => {
+    if (apiAutoSaveTimerRef.current) {
+      clearTimeout(apiAutoSaveTimerRef.current);
+      apiAutoSaveTimerRef.current = null;
+    }
+  }, []);
 
-  const filteredQuestions = useMemo(() => {
-    if (!activeSection) return [];
-    if (!searchQuery.trim()) return activeSection.questions;
-    const query = searchQuery.toLowerCase();
-    return activeSection.questions.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.partTag.toLowerCase().includes(query) ||
-        item.type.toLowerCase().includes(query)
-    );
-  }, [activeSection, searchQuery]);
+  useEffect(() => {
+    if (lastSyncedVersion.current === 0 || !isDirty || !examId) return;
+    const timer = setTimeout(() => {
+      saveDraftToStorage(examId, DRAFT_PREFIX, { sections: sectionsRef.current, settings: settingsRef.current });
+    }, AUTO_SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [isDirty, sections, settings, examId]);
 
-  const blueprint = useMemo(() => {
-    let totalQuestions = 0;
-    let totalTimeMinutes = 0;
-    let totalPoints = 0;
+  useEffect(() => {
+    if (lastSyncedVersion.current === 0 || !isDirty || !examId) return;
+    if (apiAutoSaveTimerRef.current) clearTimeout(apiAutoSaveTimerRef.current);
+    apiAutoSaveTimerRef.current = setTimeout(async () => {
+      if (!examId || isSavingRef.current || isAddingQuestionRef.current) return;
+      try {
+        const sectionResult = await saveSectionsMutation.mutateAsync({
+          examId, sections: mapSectionsToSavePayload(sectionsRef.current), silent: true,
+        });
+        if (Array.isArray(sectionResult) && sectionResult.length > 0) {
+          setSections((prev) => reconcileSavedSectionIds(prev, sectionResult.map((r: { id: string }) => r.id)));
+        }
+        await updateExamMutation.mutateAsync({
+          examId, collectionId: '', title: settingsRef.current.title,
+          description: settingsRef.current.description, passScore: settingsRef.current.passingScore,
+          maxScore: settingsRef.current.maxScore, examType: settingsRef.current.examType,
+          publishStatus: 'draft', silent: true,
+        });
+        clearDraftFromStorage(examId, DRAFT_PREFIX);
+        setIsDirty(false);
+      } catch { /* auto-save failed — will retry on next change */ }
+    }, API_AUTO_SAVE_IDLE_MS);
+    return () => { if (apiAutoSaveTimerRef.current) clearTimeout(apiAutoSaveTimerRef.current); };
+  }, [isDirty, examId, saveSectionsMutation, updateExamMutation]);
 
-    sections.forEach((sec) => {
-      totalQuestions += sec.questions.length > 0 ? sec.questions.length : sec.questionCount;
-      totalTimeMinutes += sec.durationMinutes;
-      sec.questions.forEach((item) => {
-        totalPoints += item.points;
-      });
-    });
+  // ── Derived state ────────────────────────────────────────────────────────
 
-    const hours = Math.floor(totalTimeMinutes / 60);
-    const mins = totalTimeMinutes % 60;
+  const activeSection = useMemo(
+    () => sections.find((section) => section.id === activeSectionId) || sections[0],
+    [sections, activeSectionId],
+  );
 
-    return {
-      totalQuestions,
-      totalTimeMinutes,
-      durationText: `${hours}h ${mins}m`,
-      totalPoints,
-    };
-  }, [sections]);
+  const filteredQuestions = (sectionQuestionsData?.questions || []) as BuilderSection['questions'];
+  const totalFilteredCount = sectionQuestionsData?.totalCount || activeSection?.questionCount || 0;
+  const totalFilteredPages = sectionQuestionsData?.totalPages || Math.max(1, Math.ceil(totalFilteredCount / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalFilteredPages);
+  const paginatedQuestions = filteredQuestions;
+  const blueprint = useMemo(() => computeBlueprint(sections), [sections]);
 
-  // ===== Section CRUD =====
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
-  const handleAddSection = () => {
-    const nextNum = sections.length + 1;
-    const newSec: BuilderSection = {
-      id: `sec-${Date.now()}`,
-      number: nextNum,
-      title: `Section ${nextNum}`,
-      subtitle: 'Custom Part',
-      questionCount: 0,
-      durationMinutes: 30,
-      isBreak: false,
-      questions: [],
-    };
-    setSections((prev) => [...prev, newSec]);
-    setActiveSectionId(newSec.id);
-  };
+  const { handleAddQuestionToSection, handleRemoveQuestionFromSection } = createQuestionHandlers({
+    examId, activeSectionId, sectionsRef, setSections, setActiveSectionId,
+    setIsDirty, isAddingQuestionRef, saveSectionsMutation, saveQuestionMutation,
+    linkQuestionMutation, unlinkQuestionMutation, refetch,
+  });
 
-  const handleUpdateActiveSectionTitle = (newTitle: string) => {
-    setSections((prev) =>
-      prev.map((sec) => (sec.id === activeSectionId ? { ...sec, title: newTitle } : sec))
-    );
-  };
+  const { handleAddSection, handleUpdateActiveSectionTitle, handleDeleteSection, handleSaveDraft, handlePublishExam } = createSectionHandlers({
+    examId, activeSectionId, sections, sectionsRef, settingsRef,
+    setSections, setActiveSectionId, setIsDirty, setIsSaving, isSavingRef,
+    cancelAutoSave, saveSectionsMutation, updateExamMutation,
+  });
 
-  // ===== Question CRUD =====
-
-  const handleAddQuestionToSection = () => {
-    if (!activeSection) return;
-    const nextQNum = activeSection.questions.length + 1;
-    const newQuestion: BuilderQuestion = {
-      id: `q-${Date.now()}`,
-      number: nextQNum,
-      title: `New Question ${nextQNum}`,
-      partTag: '',
-      type: 'Single Choice',
-      difficulty: 'Easy',
-      points: 1,
-      imageUrl: null,
-    };
-
-    setSections((prev) =>
-      prev.map((sec) =>
-        sec.id === activeSectionId
-          ? {
-              ...sec,
-              questions: [...sec.questions, newQuestion],
-              questionCount: sec.questions.length + 1,
-            }
-          : sec
-      )
-    );
-  };
-
-  const handleRemoveQuestionFromSection = (questionId: string) => {
-    setSections((prev) =>
-      prev.map((sec) =>
-        sec.id === activeSectionId
-          ? {
-              ...sec,
-              questions: sec.questions.filter((question) => question.id !== questionId),
-              questionCount: Math.max(0, sec.questions.length - 1),
-            }
-          : sec
-      )
-    );
-  };
-
-  // ===== Exam actions =====
-
-  const handleSaveDraft = () => {
-    if (!examId) return;
-    updateExamMutation.mutate({ examId, collectionId: '', publishStatus: 'draft', silent: true });
-  };
-
-  const handlePublishExam = () => {
-    if (!examId) return;
-    updateExamMutation.mutate({ examId, collectionId: '', publishStatus: 'published' });
-  };
-
-  const handlePreviewExam = () => {
+  const handlePreviewExam = useCallback(() => {
     navigate(`/certification/exams/${examId}`);
-  };
+  }, [navigate, examId]);
 
-  const handleEditQuestion = (questionId: string) => {
-    navigate(`/certification/exam-builder/${examId}/question-builder/${questionId}`);
-  };
+  const handleEditQuestion = useCallback((questionId: string) => {
+    const questionSection = sections.find((s) => s.questions.some((q) => q.id === questionId));
+    navigate(`/certification/exam-builder/${examId}/question-builder/${questionId}`, {
+      state: {
+        questionIds: sectionsRef.current.flatMap((s) => s.questions.map((q) => q.id)),
+        sectionId: questionSection?.id,
+      },
+    });
+  }, [navigate, examId, sections]);
 
-  const handleBackToExams = () => {
+  const handleBackToExams = useCallback(() => {
+    if (collectionId) {
+      navigate(`/certification/collection-editor/${collectionId}`);
+    } else {
+      navigate('/certification/creator-dashboard');
+    }
+  }, [navigate, collectionId]);
+
+  const navigateToCreatorDashboard = useCallback(() => {
     navigate('/certification/creator-dashboard');
-  };
+  }, [navigate]);
+
+  const navigateToCollectionEditor = useCallback((id: string) => {
+    navigate(`/certification/collection-editor/${id}`);
+  }, [navigate]);
 
   return {
-    isApiLoading,
-    isError,
-    refetch,
-    activeTab,
-    setActiveTab,
-    activeSubTab,
-    setActiveSubTab,
-    activeSectionId,
-    setActiveSectionId,
-    activeSection,
-    sections,
-    settings,
-    setSettings,
-    searchQuery,
-    setSearchQuery,
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    filteredQuestions,
+    isApiLoading, isError, refetch, isSectionQuestionsLoading,
+    collectionId, collectionTitle,
+    activeTab, setActiveTab, activeSubTab, setActiveSubTab,
+    activeSectionId, setActiveSectionId, activeSection, sections,
+    settings, setSettings,
+    searchQuery, setSearchQuery, currentPage: safeCurrentPage, setCurrentPage,
+    totalFilteredPages, pageSize: PAGE_SIZE, filteredQuestions: paginatedQuestions, totalFilteredCount,
     blueprint,
-    handleAddSection,
-    handleUpdateActiveSectionTitle,
-    handleAddQuestionToSection,
-    handleRemoveQuestionFromSection,
-    handleSaveDraft,
-    handlePublishExam,
-    handlePreviewExam,
-    handleEditQuestion,
-    handleBackToExams,
+    handleAddSection, handleUpdateActiveSectionTitle, handleDeleteSection,
+    handleAddQuestionToSection, handleRemoveQuestionFromSection,
+    handleSaveDraft, handlePublishExam,
+    handlePreviewExam, handleEditQuestion, handleBackToExams,
+    navigateToCreatorDashboard, navigateToCollectionEditor,
+    isSaving, isDirty,
   };
 }

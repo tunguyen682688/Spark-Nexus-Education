@@ -1,41 +1,50 @@
 import { useQuery } from '@tanstack/react-query';
 import { CertificationApi } from '../../api/certification-api';
-import { STALE_TIME_COLLECTIONS } from './use-query-constants';
+import { STALE_TIME_COLLECTIONS } from '../../constants/query-cache-times.constants';
 import type { ExamCollection } from '../../types';
 
-export const useFeaturedCollections = (exam?: string, search?: string) => {
+export const useFeaturedCollections = (
+  exam?: string,
+  search?: string,
+  page?: number,
+  limit?: number
+) => {
   const safeExam = exam ?? '';
   const safeSearch = search ?? '';
-  return useQuery<ExamCollection[]>({
-    queryKey: ['certification', 'featured', safeExam, safeSearch],
-    queryFn: () => CertificationApi.getFeaturedCollections(safeExam, safeSearch),
+  return useQuery({
+    queryKey: ['certification', 'featured', safeExam, safeSearch, page, limit],
+    queryFn: () => CertificationApi.getFeaturedCollections(safeExam, safeSearch, page, limit),
+    select: (r) => r.data,
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });
 };
 
-export const useTrendingCollections = () => {
-  return useQuery<ExamCollection[]>({
-    queryKey: ['certification', 'trending'],
-    queryFn: () => CertificationApi.getTrendingCollections(),
+export const useTrendingCollections = (page?: number, limit?: number) => {
+  return useQuery({
+    queryKey: ['certification', 'trending', page, limit],
+    queryFn: () => CertificationApi.getTrendingCollections(page, limit),
+    select: (r) => r.data,
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });
 };
 
-export const useOfficialCollections = () => {
-  return useQuery<ExamCollection[]>({
-    queryKey: ['certification', 'official'],
-    queryFn: () => CertificationApi.getOfficialCollections(),
+export const useOfficialCollections = (page?: number, limit?: number) => {
+  return useQuery({
+    queryKey: ['certification', 'official', page, limit],
+    queryFn: () => CertificationApi.getOfficialCollections(page, limit),
+    select: (r) => r.data,
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });
 };
 
-export const useCommunityCollections = () => {
-  return useQuery<ExamCollection[]>({
-    queryKey: ['certification', 'community'],
-    queryFn: () => CertificationApi.getCommunityCollections(),
+export const useCommunityCollections = (page?: number, limit?: number) => {
+  return useQuery({
+    queryKey: ['certification', 'community', page, limit],
+    queryFn: () => CertificationApi.getCommunityCollections(page, limit),
+    select: (r) => r.data,
     staleTime: STALE_TIME_COLLECTIONS,
     refetchOnWindowFocus: false,
   });

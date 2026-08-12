@@ -1,0 +1,45 @@
+export const CERTIFICATION_UI_TEXT = {
+  practiceHistory: {
+    breadcrumbParent: 'My Learning',
+    breadcrumbCurrent: 'Practice History',
+    title: 'Practice History',
+    subtitle: 'Track all your past exam sessions, review scorecards, and monitor performance progress over time.',
+    filterBtn: 'Filter',
+    sortOptions: {
+      all: 'All Practice Types',
+      fullMock: 'Full Mock Tests',
+      practicePart: 'Practice by Part',
+      quiz: 'Quick Quizzes',
+      ai: 'AI Practices',
+    },
+    searchPlaceholder: 'Search session title or code...',
+    metrics: {
+      totalSessions: 'Total Sessions',
+      avgBandScore: 'Avg. Band Score',
+      overallAccuracy: 'Overall Accuracy',
+      practiceTime: 'Practice Time',
+      bestSkill: 'Best Skill',
+    },
+    widgets: {
+      skillMasteryTitle: 'Skill Mastery',
+      recentScorecardsTitle: 'Recent Scorecards',
+      aiInsightTitle: 'AI Practice Insight',
+      aiInsightDesc: 'Your Reading score is consistently at Band 8.5! Focus on Writing Task 2 to bring your overall average up to Band 8.0.',
+      startBtn: 'Start Recommended Practice',
+    },
+    tableHeaders: {
+      session: 'Session',
+      type: 'Type',
+      examPart: 'Exam / Part',
+      score: 'Score',
+      time: 'Time',
+      date: 'Date',
+      actions: 'Actions',
+    },
+    emptyState: {
+      title: 'Chưa có lịch sử làm bài thi nào',
+      description: 'Bạn chưa bắt đầu phiên luyện tập hay bài thi nào. Bắt đầu ngay bài luyện tập đầu tiên để theo dõi tiến độ học tập!',
+      startBtn: 'Làm bài thi ngay',
+    },
+  },
+} as const;

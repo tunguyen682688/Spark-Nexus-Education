@@ -1,35 +1,23 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '@spark-nest-ed/frontend-shared-components';
-import { useQuestionBuilderData, useSaveQuestion, useDeleteQuestion } from '../../use-certification';
-import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
-import type { SaveQuestionDto, QuestionBuilderData } from '../../../types';
+import { useState, useEffect, useCallback, useRef, useReducer, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useBeforeUnload } from '@spark-nest-ed/frontend-shared-hooks';
+import { useQuestionBuilderData, useSaveQuestion, useDeleteQuestion, useLinkQuestionToExam } from '../../use-certification';
+import type { QuestionBuilderData } from '../../../types';
+import { saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '../../../utils/local-storage-draft.util';
+import { getQuestionTypesForCertification, getDefaultQuestionTypeForCertification, getQuestionTypesByCategory, getQuestionTypeConfig } from '../../../constants/question-type-config.constants';
+import { questionFormReducer, initialFormState } from '../../../services/question-form-reducer.service';
+import type { QuestionFormState } from '../../../types/question-builder.types';
+import { useOptionHandlers, useFieldHandlers } from './use-question-builder-handlers';
+import { mapApiDataToFormPayload, buildSavePayload } from '../../../services/question-data-mapper.service';
 
-// ===== Types =====
+export type { AnswerOptionItem, QuestionPropertiesForm } from '../../../types/question-builder.types';
+import { AUTO_SAVE_DEBOUNCE_MS } from '../../../constants/exam-builder.constants';
 
-export interface AnswerOptionItem {
-  id: string;
-  label: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-export interface QuestionPropertiesForm {
-  id: string;
-  points: number;
-  estimatedTime: string;
-  tags: string[];
-  skills: string[];
-  cognitiveLevel: string;
-  createdDate: string;
-  lastUpdatedDate: string;
-  createdBy: string;
-}
-
-// ===== Hook =====
+const DRAFT_PREFIX = 'sne-question-builder-draft';
 
 export function useQuestionBuilderContainerLogic() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id, examId: urlExamId, questionId: urlQuestionId } = useParams<{
     id: string;
     examId: string;
@@ -38,192 +26,151 @@ export function useQuestionBuilderContainerLogic() {
 
   const questionId = urlQuestionId || id || '';
   const examId = urlExamId || undefined;
+  const questionIds = useMemo(
+    () => (location.state as { questionIds?: string[] })?.questionIds || [],
+    [location.state],
+  );
+  const sectionIdFromNav = useMemo(
+    () => (location.state as { sectionId?: string })?.sectionId,
+    [location.state],
+  );
 
   const { data: apiData, isLoading: isApiLoading, isError, refetch } = useQuestionBuilderData(questionId);
   const saveQuestionMutation = useSaveQuestion();
   const deleteQuestionMutation = useDeleteQuestion();
+  const linkQuestionMutation = useLinkQuestionToExam();
 
+  const [certificationType, setCertificationType] = useState<string>('TOEIC');
   const [activeTab, setActiveTab] = useState<'Question' | 'Explanation' | 'Tags & Skills' | 'History'>('Question');
   const [textMediaMode, setTextMediaMode] = useState<'Text' | 'Media'>('Text');
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop');
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Question form — empty by default, hydrated from API
-  const [questionText, setQuestionText] = useState('');
-  const [questionType, setQuestionType] = useState('Multiple Choice (Single Answer)');
-  const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
-  const [shuffleOptions, setShuffleOptions] = useState(false);
-
-  const [options, setOptions] = useState<AnswerOptionItem[]>([]);
-  const [explanation, setExplanation] = useState('');
-
-  const [referenceType, setReferenceType] = useState<'Passage' | 'Image' | 'External Link'>('Passage');
-  const [passageSource, setPassageSource] = useState('');
-  const [highlight, setHighlight] = useState('');
-
-  const [properties, setProperties] = useState<QuestionPropertiesForm>({
-    id: '',
-    points: 1,
-    estimatedTime: '00:45',
-    tags: [],
-    skills: [],
-    cognitiveLevel: 'Understand',
-    createdDate: '',
-    lastUpdatedDate: '',
-    createdBy: '',
-  });
-
-  // Hydrate from API
-  useEffect(() => {
-    if (!apiData) return;
-
-    const record = apiData as QuestionBuilderData;
-    if (record.questionText) setQuestionText(record.questionText);
-    if (record.questionType) setQuestionType(record.questionType);
-    if (record.difficulty) setDifficulty(record.difficulty as 'Easy' | 'Medium' | 'Hard');
-    if (record.shuffleOptions !== undefined) setShuffleOptions(record.shuffleOptions);
-    if (record.options && Array.isArray(record.options)) {
-      setOptions(record.options);
-    }
-    if (record.explanation) setExplanation(record.explanation);
-    if (record.reference) {
-      if (record.reference.type) setReferenceType(record.reference.type as 'Passage' | 'Image' | 'External Link');
-      if (record.reference.passageSource) setPassageSource(record.reference.passageSource);
-      if (record.reference.highlight) setHighlight(record.reference.highlight);
-    }
-    if (record.properties) {
-      setProperties({
-        id: record.properties.id || record.id,
-        points: record.properties.points ?? 1,
-        estimatedTime: record.properties.estimatedTime || '00:45',
-        tags: record.properties.tags || [],
-        skills: record.properties.skills || [],
-        cognitiveLevel: record.properties.cognitiveLevel || 'Understand',
-        createdDate: record.properties.createdDate || '',
-        lastUpdatedDate: record.properties.lastUpdatedDate || '',
-        createdBy: record.properties.createdBy || '',
-      });
-    }
-  }, [apiData]);
-
-  // ===== Option handlers =====
-
-  const handleSelectCorrectOption = (optionId: string) => {
-    setOptions((prev) =>
-      prev.map((option) => ({
-        ...option,
-        isCorrect: option.id === optionId,
-      }))
-    );
-  };
-
-  const handleAddOption = () => {
-    const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-    const nextLabel = labels[options.length] || `Option ${options.length + 1}`;
-    const newOption: AnswerOptionItem = {
-      id: `opt-${Date.now()}`,
-      label: nextLabel,
-      text: '',
-      isCorrect: false,
-    };
-    setOptions((prev) => [...prev, newOption]);
-  };
-
-  const handleAddOtherOption = () => {
-    const newOption: AnswerOptionItem = {
-      id: `opt-other-${Date.now()}`,
-      label: 'Other',
-      text: 'Other (specify...)',
-      isCorrect: false,
-    };
-    setOptions((prev) => [...prev, newOption]);
-  };
-
-  const handleRemoveOption = (optionId: string) => {
-    setOptions((prev) => prev.filter((option) => option.id !== optionId));
-  };
-
-  const handleUpdateOptionText = (optionId: string, newText: string) => {
-    setOptions((prev) =>
-      prev.map((option) => (option.id === optionId ? { ...option, text: newText } : option))
-    );
-  };
-
-  // ===== Tag/Skill handlers =====
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setProperties((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((t) => t !== tagToRemove),
-    }));
-  };
-
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setProperties((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((s) => s !== skillToRemove),
-    }));
-  };
-
-  // ===== Save =====
-
-  const buildPayload = useMemo(
-    () =>
-      (target: 'exam' | 'bank'): SaveQuestionDto => ({
-        id: properties.id,
-        questionText,
-        questionType,
-        difficulty,
-        shuffleOptions,
-        options: options.map((option) => ({
-          id: option.id,
-          label: option.label,
-          text: option.text,
-          isCorrect: option.isCorrect,
-        })),
-        explanation,
-        points: properties.points,
-        estimatedTime: properties.estimatedTime,
-        tags: properties.tags,
-        skills: properties.skills,
-        cognitiveLevel: properties.cognitiveLevel,
-        target,
-      }),
-    [
-      properties.id,
-      properties.points,
-      properties.estimatedTime,
-      properties.tags,
-      properties.skills,
-      properties.cognitiveLevel,
-      questionText,
-      questionType,
-      difficulty,
-      shuffleOptions,
-      options,
-      explanation,
-    ]
+  const availableQuestionTypes = useMemo(
+    () => getQuestionTypesForCertification(certificationType),
+    [certificationType]
   );
+  const questionTypesByCategory = useMemo(
+    () => getQuestionTypesByCategory(certificationType),
+    [certificationType]
+  );
+  const defaultQuestionType = getDefaultQuestionTypeForCertification(certificationType);
 
-  const handleSaveQuestion = () => {
-    saveQuestionMutation.mutate(buildPayload('exam'));
-  };
+  const [qualityScore, setQualityScore] = useState<number>(0);
+  const [sectionLabel, setSectionLabel] = useState<string>('');
 
-  const handleSaveToBank = () => {
-    saveQuestionMutation.mutate(buildPayload('bank'));
-  };
+  const [form, dispatch] = useReducer(questionFormReducer, initialFormState);
+  const { questionText, questionType, difficulty, shuffleOptions, options, explanation, referenceType, passageSource, highlight, properties, audioUrl, imageUrl, passageId, passageText, modelAnswer, rubric, gridInAnswer, matchingPairs, wordRoot, keyWord, writingTaskType, speakingPrompt } = form;
 
-  // ===== Navigation =====
+  const currentQuestionTypeConfig = useMemo(() => getQuestionTypeConfig(certificationType, questionType), [certificationType, questionType]);
 
-  const { toast } = useToast();
+  const [isDirty, setIsDirty] = useState(false);
+  const [collectionId, setCollectionId] = useState<string | null>(null);
+  const [collectionTitle, setCollectionTitle] = useState<string | null>(null);
+  const [examTitle, setExamTitle] = useState('');
+  const hydratedRef = useRef(false);
 
-  const handlePreviewQuestion = () => {
-    toast(CERTIFICATION_UI_TEXT.toast.previewOpening);
-  };
+  const formStateRef = useRef(form);
+  formStateRef.current = form;
 
-  const handleDeleteQuestion = () => {
+  useBeforeUnload(isDirty, questionId);
+
+  // ── Effects ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (apiData) {
+      const record = apiData as QuestionBuilderData;
+      const certType = record.certificationType || record.examType || 'TOEIC';
+      setCertificationType(certType);
+      if (!questionType) {
+        dispatch({ type: 'SET_FIELD', field: 'questionType', value: getDefaultQuestionTypeForCertification(certType) });
+      }
+    }
+  }, [apiData, questionType]);
+
+  useEffect(() => {
     if (!questionId) return;
-    deleteQuestionMutation.mutate(questionId, {
+    const draft = loadDraftFromStorage<QuestionFormState>(questionId, DRAFT_PREFIX);
+    if (draft) {
+      dispatch({ type: 'HYDRATE', payload: draft });
+      hydratedRef.current = true;
+      return;
+    }
+
+    if (apiData) {
+      const { payload, metadata } = mapApiDataToFormPayload(apiData as QuestionBuilderData);
+      setCollectionId(metadata.collectionId);
+      setCollectionTitle(metadata.collectionTitle);
+      setExamTitle(metadata.examTitle);
+      setSectionLabel(metadata.sectionLabel);
+      setQualityScore(metadata.qualityScore);
+      setCertificationType(metadata.certificationType);
+      dispatch({ type: 'HYDRATE', payload });
+      hydratedRef.current = true;
+    }
+  }, [apiData, questionId]);
+
+  useEffect(() => {
+    if (!hydratedRef.current || !isDirty || !questionId) return;
+    const timer = setTimeout(() => {
+      saveDraftToStorage(questionId, DRAFT_PREFIX, formStateRef.current);
+    }, AUTO_SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [isDirty, questionId, questionText, questionType, difficulty, shuffleOptions, options, explanation, properties, passageId, passageText, modelAnswer, rubric, matchingPairs, wordRoot, keyWord]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  const optionHandlers = useOptionHandlers({ form, dispatch, setIsDirty });
+  const fieldHandlers = useFieldHandlers({ form, dispatch, setIsDirty });
+
+  const handleSaveQuestion = useCallback(() => {
+    saveQuestionMutation.mutate({
+      ...buildSavePayload(form, certificationType, 'exam'),
+      examId: examId || undefined,
+      sectionId: sectionIdFromNav || undefined,
+    }, {
+      onSuccess: (result) => {
+        clearDraftFromStorage(questionId, DRAFT_PREFIX);
+        setIsDirty(false);
+        if (examId && result?.id) {
+          linkQuestionMutation.mutate({
+            examId,
+            questionId: result.id,
+            sectionId: sectionIdFromNav,
+            audioUrl,
+            imageUrl,
+            writingTaskType,
+            speakingPrompt,
+            isGridIn: gridInAnswer ? true : undefined,
+          });
+        }
+      },
+    });
+  }, [saveQuestionMutation, form, certificationType, examId, questionId, linkQuestionMutation, sectionIdFromNav, audioUrl, imageUrl, writingTaskType, speakingPrompt, gridInAnswer]);
+
+  const handleSaveToBank = useCallback(() => {
+    saveQuestionMutation.mutate(buildSavePayload(form, certificationType, 'bank'), {
       onSuccess: () => {
+        clearDraftFromStorage(questionId, DRAFT_PREFIX);
+        setIsDirty(false);
+      },
+    });
+  }, [saveQuestionMutation, form, certificationType, questionId]);
+
+  const handlePreviewQuestion = useCallback(() => {
+    setShowPreview((previousValue) => !previousValue);
+  }, []);
+
+  const handleDeleteQuestion = useCallback(() => {
+    if (!questionId) return;
+    if (!window.confirm('Delete this question? This action cannot be undone.')) return;
+    deleteQuestionMutation.mutate({
+      id: questionId,
+      examId: examId || undefined,
+      sectionId: sectionIdFromNav || undefined,
+    }, {
+      onSuccess: () => {
+        clearDraftFromStorage(questionId, DRAFT_PREFIX);
         if (examId) {
           navigate(`/certification/exam-builder/${examId}`);
         } else {
@@ -231,75 +178,92 @@ export function useQuestionBuilderContainerLogic() {
         }
       },
     });
-  };
+  }, [questionId, deleteQuestionMutation, examId, sectionIdFromNav, navigate]);
 
-  const handlePreviousQuestion = () => {
-    if (examId) {
-      // TODO: Requires question list from exam-builder context for proper navigation
+  const currentQuestionIndex = questionIds.indexOf(questionId);
+
+  const handlePreviousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      const previousQuestionId = questionIds[currentQuestionIndex - 1];
+      navigate(`/certification/exam-builder/${examId}/question-builder/${previousQuestionId}`, {
+        state: { questionIds },
+      });
+    } else if (examId) {
       navigate(`/certification/exam-builder/${examId}`);
     }
-  };
+  }, [currentQuestionIndex, questionIds, examId, navigate]);
 
-  const handleNextQuestion = () => {
-    if (examId) {
-      // TODO: Requires question list from exam-builder context for proper navigation
+  const handleNextQuestion = useCallback(() => {
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < questionIds.length - 1) {
+      const nextQuestionId = questionIds[currentQuestionIndex + 1];
+      navigate(`/certification/exam-builder/${examId}/question-builder/${nextQuestionId}`, {
+        state: { questionIds },
+      });
+    } else if (examId) {
       navigate(`/certification/exam-builder/${examId}`);
     }
-  };
+  }, [currentQuestionIndex, questionIds, examId, navigate]);
 
-  const handleBackToExamBuilder = () => {
+  const handleBackToExamBuilder = useCallback(() => {
     if (examId) {
       navigate(`/certification/exam-builder/${examId}`);
     } else {
       navigate('/certification/creator-dashboard');
     }
-  };
+  }, [navigate, examId]);
+
+  const navigateToCreatorDashboard = useCallback(() => {
+    navigate('/certification/creator-dashboard');
+  }, [navigate]);
+
+  const navigateToCollectionEditor = useCallback((id: string) => {
+    navigate(`/certification/collection-editor/${id}`);
+  }, [navigate]);
+
+  const navigateToExamBuilder = useCallback((id: string) => {
+    navigate(`/certification/exam-builder/${id}`);
+  }, [navigate]);
 
   return {
-    isApiLoading,
-    isError,
-    refetch,
-    isSaving: saveQuestionMutation.isPending,
-    questionId,
-    examId,
-    activeTab,
-    setActiveTab,
-    textMediaMode,
-    setTextMediaMode,
-    previewViewport,
-    setPreviewViewport,
-    questionText,
-    setQuestionText,
-    questionType,
-    setQuestionType,
-    difficulty,
-    setDifficulty,
-    shuffleOptions,
-    setShuffleOptions,
-    options,
-    explanation,
-    setExplanation,
-    referenceType,
-    setReferenceType,
-    passageSource,
-    setPassageSource,
-    highlight,
-    setHighlight,
-    properties,
-    setProperties,
-    handleSelectCorrectOption,
-    handleAddOption,
-    handleAddOtherOption,
-    handleRemoveOption,
-    handleUpdateOptionText,
-    handleRemoveTag,
-    handleRemoveSkill,
-    handleSaveQuestion,
-    handleSaveToBank,
-    handlePreviewQuestion,
-    handleDeleteQuestion,
-    handlePreviousQuestion,
-    handleNextQuestion,
-    handleBackToExamBuilder,
+    isApiLoading, isError, refetch, isSaving: saveQuestionMutation.isPending,
+    questionId, examId, collectionId, collectionTitle, examTitle,
+    certificationType, setCertificationType, availableQuestionTypes, questionTypesByCategory,
+    defaultQuestionType, currentQuestionTypeConfig, qualityScore, sectionLabel,
+    hasPreviousQuestion: currentQuestionIndex > 0,
+    hasNextQuestion: currentQuestionIndex >= 0 && currentQuestionIndex < questionIds.length - 1,
+    questionNumber: currentQuestionIndex >= 0 ? currentQuestionIndex + 1 : 1,
+    activeTab, setActiveTab, textMediaMode, setTextMediaMode,
+    previewViewport, setPreviewViewport, showPreview, setShowPreview,
+    questionText, setQuestionText: fieldHandlers.handleSetQuestionText,
+    questionType, setQuestionType: fieldHandlers.handleSetQuestionType,
+    difficulty, setDifficulty: fieldHandlers.handleSetDifficulty,
+    shuffleOptions, setShuffleOptions: fieldHandlers.handleSetShuffleOptions,
+    options, explanation, setExplanation: fieldHandlers.handleSetExplanation,
+    referenceType, setReferenceType: fieldHandlers.handleSetReferenceType,
+    passageSource, setPassageSource: fieldHandlers.handleSetPassageSource,
+    highlight, setHighlight: fieldHandlers.handleSetHighlight,
+    properties, setProperties: fieldHandlers.handleSetProperties,
+    audioUrl, setAudioUrl: fieldHandlers.handleSetAudioUrl,
+    imageUrl, setImageUrl: fieldHandlers.handleSetImageUrl,
+    passageId, setPassageId: fieldHandlers.handleSetPassageId,
+    passageText, setPassageText: fieldHandlers.handleSetPassageText,
+    modelAnswer, setModelAnswer: fieldHandlers.handleSetModelAnswer,
+    rubric, setRubric: fieldHandlers.handleSetRubric,
+    gridInAnswer, setGridInAnswer: fieldHandlers.handleSetGridInAnswer,
+    matchingPairs, setMatchingPairs: fieldHandlers.handleSetMatchingPairs,
+    wordRoot, setWordRoot: fieldHandlers.handleSetWordRoot,
+    keyWord, setKeyWord: fieldHandlers.handleSetKeyWord,
+    writingTaskType, setWritingTaskType: fieldHandlers.handleSetWritingTaskType,
+    speakingPrompt, setSpeakingPrompt: fieldHandlers.handleSetSpeakingPrompt,
+    handleSelectCorrectOption: optionHandlers.handleSelectCorrectOption,
+    handleAddOption: optionHandlers.handleAddOption,
+    handleAddOtherOption: optionHandlers.handleAddOtherOption,
+    handleRemoveOption: optionHandlers.handleRemoveOption,
+    handleUpdateOptionText: optionHandlers.handleUpdateOptionText,
+    handleRemoveTag: fieldHandlers.handleRemoveTag,
+    handleRemoveSkill: fieldHandlers.handleRemoveSkill,
+    handleSaveQuestion, handleSaveToBank, handlePreviewQuestion,
+    handleDeleteQuestion, handlePreviousQuestion, handleNextQuestion, handleBackToExamBuilder,
+    navigateToCreatorDashboard, navigateToCollectionEditor, navigateToExamBuilder,
   };
 }

@@ -13,6 +13,7 @@ export class ExamEntity extends AggregateRoot<string> {
     private collectionId: string,
     private examType: string,
     private certificationType: string | null,
+    private level: string | null,
     private chapterId: string | null,
     private order: number,
     private createdBy: string | null,
@@ -37,6 +38,7 @@ export class ExamEntity extends AggregateRoot<string> {
     collectionId: string;
     examType?: string;
     certificationType?: string | null;
+    level?: string | null;
     chapterId?: string | null;
     order?: number;
     createdBy?: string | null;
@@ -59,6 +61,7 @@ export class ExamEntity extends AggregateRoot<string> {
       params.collectionId,
       params.examType ?? 'FULL_MOCK',
       params.certificationType ?? null,
+      params.level ?? null,
       params.chapterId ?? null,
       params.order ?? 0,
       params.createdBy ?? null,
@@ -110,6 +113,10 @@ export class ExamEntity extends AggregateRoot<string> {
     return this.certificationType;
   }
 
+  getLevel(): string | null {
+    return this.level;
+  }
+
   getChapterId(): string | null {
     return this.chapterId;
   }
@@ -141,6 +148,7 @@ export class ExamEntity extends AggregateRoot<string> {
     collectionId?: string;
     examType?: string;
     certificationType?: string | null;
+    level?: string | null;
     chapterId?: string | null;
     order?: number;
     updatedBy?: string | null;
@@ -155,6 +163,7 @@ export class ExamEntity extends AggregateRoot<string> {
     if (params.collectionId !== undefined) this.collectionId = params.collectionId;
     if (params.examType !== undefined) this.examType = params.examType;
     if (params.certificationType !== undefined) this.certificationType = params.certificationType;
+    if (params.level !== undefined) this.level = params.level;
     if (params.chapterId !== undefined) this.chapterId = params.chapterId;
     if (params.order !== undefined) this.order = params.order;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
@@ -180,6 +189,7 @@ export class ExamEntity extends AggregateRoot<string> {
       collectionId: this.collectionId,
       examType: this.examType,
       certificationType: this.certificationType,
+      level: this.level,
       chapterId: this.chapterId,
       order: this.order,
       createdBy: this.createdBy,

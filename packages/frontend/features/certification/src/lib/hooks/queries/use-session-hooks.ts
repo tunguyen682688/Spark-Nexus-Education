@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { CertificationApi } from '../../api/certification-api';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
-import { STALE_TIME_SESSION, STALE_TIME_COLLECTIONS } from './use-query-constants';
+import { STALE_TIME_SESSION, STALE_TIME_COLLECTIONS } from '../../constants/query-cache-times.constants';
 import type { ExamSession, ExamResult, SessionAnswer, SessionViolation, SaveSessionAnswerDto, RecordSessionViolationDto } from '../../types';
 
 // ===== Queries =====
@@ -57,7 +57,7 @@ export const useSaveSessionAnswer = () => {
         (oldSession) => {
           if (!oldSession) return oldSession;
           const existingAnswerIndex = oldSession.answers.findIndex(
-            (ans) => ans.questionId === variables.dto.questionId
+            (answer) => answer.questionId === variables.dto.questionId
           );
           let updatedAnswers: SessionAnswer[];
           if (existingAnswerIndex >= 0) {

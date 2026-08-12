@@ -8,6 +8,7 @@ export class SkillResultEntity extends Entity<string> {
     private score: number,
     private maxScore: number,
     private accuracyRate: number,
+    private feedback: string | null,
     createdAt: Date,
     updatedAt: Date
   ) {
@@ -21,6 +22,7 @@ export class SkillResultEntity extends Entity<string> {
     score: number;
     maxScore: number;
     accuracyRate: number;
+    feedback?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
   }): SkillResultEntity {
@@ -32,6 +34,7 @@ export class SkillResultEntity extends Entity<string> {
       params.score,
       params.maxScore,
       params.accuracyRate,
+      params.feedback ?? null,
       params.createdAt ?? now,
       params.updatedAt ?? now
     );
@@ -57,6 +60,10 @@ export class SkillResultEntity extends Entity<string> {
     return this.accuracyRate;
   }
 
+  getFeedback(): string | null {
+    return this.feedback;
+  }
+
   toPlainObject(): Record<string, unknown> {
     return {
       id: this.id,
@@ -65,6 +72,7 @@ export class SkillResultEntity extends Entity<string> {
       score: this.score,
       maxScore: this.maxScore,
       accuracyRate: this.accuracyRate,
+      feedback: this.feedback,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

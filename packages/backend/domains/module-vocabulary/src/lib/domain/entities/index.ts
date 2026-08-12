@@ -3,7 +3,6 @@ export * from './sense.entity';
 export * from './example.entity';
 export * from './vocabulary-set.entity';
 export * from './vocabulary-set-item.entity';
-export * from './vocabulary-set-history.entity';
 export * from './user-vocabulary-set-favorite.entity';
 export * from './user-vocabulary-progress.entity';
 export * from './expression.entity';

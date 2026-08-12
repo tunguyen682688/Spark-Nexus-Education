@@ -5,7 +5,7 @@ export const FEATURE_NAME = 'certification';
 
 export * from './pages';
 
-export * from './api/certification-api';
+export * from './api';
 export * from './hooks/use-certification';
 export * from './types';
 export * from './constants/certification.constants';

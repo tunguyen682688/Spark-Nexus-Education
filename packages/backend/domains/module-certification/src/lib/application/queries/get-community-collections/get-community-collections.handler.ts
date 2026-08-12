@@ -13,6 +13,7 @@ export class GetCommunityCollectionsQueryHandler implements IQueryHandler<GetCom
 
   async execute(query: GetCommunityCollectionsQuery) {
     const finalParams = query.queryParams ? { ...query.queryParams } : {};
+    delete (finalParams as Record<string, unknown>).sort;
     finalParams.sortBy = 'createdAt';
     finalParams.sortDirection = SortDirection.DESC;
     const result = await this.repository.findCollections(finalParams);

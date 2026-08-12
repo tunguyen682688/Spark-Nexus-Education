@@ -16,15 +16,11 @@ export class GetExamSessionQueryHandler implements IQueryHandler<GetExamSessionQ
       throw new NotFoundException(`Exam session with ID ${query.sessionId} not found`);
     }
 
-    const [answers, snapshots] = await Promise.all([
-      this.repository.findAnswersBySessionId(query.sessionId),
-      this.repository.findSnapshotsBySessionId(query.sessionId),
-    ]);
+    const answers = await this.repository.findAnswersBySessionId(query.sessionId);
 
     return {
       ...session.toPlainObject(),
       answers: answers.map((a) => a.toPlainObject()),
-      snapshots: snapshots.map((s) => s.toPlainObject()),
     };
   }
 }

@@ -53,12 +53,12 @@ export const CollectionContentTab = ({
                     </h4>
                   </div>
                   <div className="text-[10px] text-muted-foreground flex items-center gap-3">
-                    {item.duration && (
+                    {item.duration != null && item.duration > 0 && (
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {item.duration}
+                        <Clock className="w-3 h-3" /> {item.duration} min
                       </span>
                     )}
-                    {item.items && <span>&bull; {item.items}</span>}
+                    {item.totalQuestions != null && item.totalQuestions > 0 && <span>&bull; {item.totalQuestions} questions</span>}
                   </div>
                 </div>
                 <Button

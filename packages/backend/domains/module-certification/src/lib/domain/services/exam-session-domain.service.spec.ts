@@ -104,9 +104,6 @@ describe('ExamSessionDomainService', () => {
       findSectionsByExamId: jest.fn(),
       saveExamSection: jest.fn(),
       deleteExamSection: jest.fn(),
-      findRulesByExamId: jest.fn(),
-      saveExamRule: jest.fn(),
-      deleteExamRule: jest.fn(),
       findResultById: jest.fn(),
       findResultBySessionId: jest.fn(),
       saveResult: jest.fn(),
@@ -116,19 +113,11 @@ describe('ExamSessionDomainService', () => {
       deleteQuestion: jest.fn(),
       saveQuestionChoice: jest.fn(),
       deleteQuestionChoice: jest.fn(),
-      findHintsByQuestionId: jest.fn(),
-      saveQuestionHint: jest.fn(),
-      deleteQuestionHint: jest.fn(),
-      findMediaByQuestionId: jest.fn(),
-      saveQuestionMedia: jest.fn(),
-      deleteQuestionMedia: jest.fn(),
       findAnswersBySessionId: jest.fn(),
-      findQuestionsByExamId: jest.fn(),
+      findExamQuestionsByExamId: jest.fn(),
       findChoicesByQuestionId: jest.fn(),
       saveSessionAnswer: jest.fn(),
       saveViolation: jest.fn(),
-      findSnapshotsBySessionId: jest.fn(),
-      saveAutosaveSnapshot: jest.fn(),
       findSkillResultsByResultId: jest.fn(),
       saveSkillResult: jest.fn(),
       findQuestionResultsByResultId: jest.fn(),
@@ -146,7 +135,7 @@ describe('ExamSessionDomainService', () => {
     repository.findSessionById.mockResolvedValue(mockSession);
     repository.findExamById.mockResolvedValue(mockExam);
     repository.findAnswersBySessionId.mockResolvedValue(mockUserAnswers);
-    repository.findQuestionsByExamId.mockResolvedValue([mockExamQuestion1, mockExamQuestion2]);
+    repository.findExamQuestionsByExamId.mockResolvedValue([mockExamQuestion1, mockExamQuestion2]);
     repository.findChoicesByQuestionId.mockImplementation(async (qId) => {
       return qId === 'q-1' ? mockChoicesQ1 : mockChoicesQ2;
     });

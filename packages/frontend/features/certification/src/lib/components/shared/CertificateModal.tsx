@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Award, Download, Copy, Check, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   Dialog,
@@ -24,6 +23,8 @@ interface CertificateModalProps {
   onClose: () => void;
   certificate: CertificateData | null;
   onDownload?: (id: string) => void;
+  onCopyCode: (code: string) => void;
+  copied: boolean;
 }
 
 export const CertificateModal = ({
@@ -31,15 +32,13 @@ export const CertificateModal = ({
   onClose,
   certificate,
   onDownload,
+  onCopyCode,
+  copied,
 }: CertificateModalProps) => {
-  const [copied, setCopied] = useState(false);
-
   if (!certificate) return null;
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(certificate.credentialCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    onCopyCode(certificate.credentialCode);
   };
 
   return (

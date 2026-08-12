@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useSavedCollections,
@@ -9,10 +9,9 @@ import {
   useClonedCollections,
 } from '../../use-certification';
 import type { ExamCollection } from '../../../types';
+import type { LibraryTabType } from '../../../types/container-logic-library.types';
 
-// ===== Types =====
-
-export type LibraryTabType = 'saved' | 'in_progress' | 'history' | 'my_clones';
+export type { LibraryTabType } from '../../../types/container-logic-library.types';
 
 // ===== Hook =====
 
@@ -35,48 +34,57 @@ export function useLibraryContainerLogic() {
 
   // ===== Filtering & sorting helpers =====
 
-  const filterByExamAndSearch = (items: ExamCollection[]) => {
-    return items.filter((item) => {
-      const matchExam = selectedExamFilter === 'All' || item.exam?.toUpperCase() === selectedExamFilter.toUpperCase();
-      const matchSearch = !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchExam && matchSearch;
-    });
-  };
-
-  const sortCollections = (items: ExamCollection[]) => {
-    const sorted = [...items];
-    if (sortBy === 'title') {
-      sorted.sort((a, b) => a.title.localeCompare(b.title));
-    } else {
-      sorted.sort((a, b) => {
-        if (a.updatedAt && b.updatedAt) return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        return 0;
+  const filterByExamAndSearch = useCallback(
+    (items: ExamCollection[]) => {
+      return items.filter((item) => {
+        const matchExam = selectedExamFilter === 'All' || item.exam?.toUpperCase() === selectedExamFilter.toUpperCase();
+        const matchSearch = !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchExam && matchSearch;
       });
-    }
-    return sorted;
-  };
+    },
+    [selectedExamFilter, searchQuery],
+  );
+
+  const sortCollections = useCallback(
+    (items: ExamCollection[]) => {
+      const sorted = [...items];
+      if (sortBy === 'title') {
+        sorted.sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        sorted.sort((a, b) => {
+          if (a.updatedAt && b.updatedAt) return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+          return 0;
+        });
+      }
+      return sorted;
+    },
+    [sortBy],
+  );
 
   /** Filter items by exam type string match. */
-  const filterByExamType = <T extends { examType?: string; exam?: string }>(items: T[]): T[] => {
-    if (selectedExamFilter === 'All') return items;
-    return items.filter((item) => {
-      const examType = (item.examType || item.exam || '') as string;
-      return examType.toUpperCase() === selectedExamFilter.toUpperCase();
-    });
-  };
+  const filterByExamType = useCallback(
+    <T extends { examType?: string; exam?: string }>(items: T[]): T[] => {
+      if (selectedExamFilter === 'All') return items;
+      return items.filter((item) => {
+        const examType = (item.examType || item.exam || '') as string;
+        return examType.toUpperCase() === selectedExamFilter.toUpperCase();
+      });
+    },
+    [selectedExamFilter],
+  );
 
   // ===== Derived data =====
 
   const savedCollections = useMemo(() => {
     if (!savedCollectionsData) return [];
     return sortCollections(filterByExamAndSearch(savedCollectionsData));
-  }, [savedCollectionsData, selectedExamFilter, searchQuery, sortBy]);
+  }, [savedCollectionsData, filterByExamAndSearch, sortCollections]);
 
   const totalSavedCount = savedCollectionsData?.length ?? 0;
 
   const inProgressSessions = useMemo(() => {
     return filterByExamType(inProgressData?.items ?? []);
-  }, [inProgressData, selectedExamFilter]);
+  }, [inProgressData, filterByExamType]);
 
   const practiceHistoryItems = useMemo(() => {
     // PracticeHistoryResponse items don't have examType — return as-is
@@ -85,7 +93,7 @@ export function useLibraryContainerLogic() {
 
   const clonedCollections = useMemo(() => {
     return filterByExamType(clonedData?.items ?? []);
-  }, [clonedData, selectedExamFilter]);
+  }, [clonedData, filterByExamType]);
 
   // ===== Handlers =====
 

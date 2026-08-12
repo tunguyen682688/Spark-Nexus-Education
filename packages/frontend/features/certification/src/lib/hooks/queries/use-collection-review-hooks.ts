@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { CertificationApi } from '../../api/certification-api';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
-import { STALE_TIME_COLLECTIONS } from './use-query-constants';
+import { STALE_TIME_COLLECTIONS } from '../../constants/query-cache-times.constants';
 
 // ===== Queries =====
 

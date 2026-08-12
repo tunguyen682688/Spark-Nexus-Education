@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, X } from 'lucide-react';
 import { Badge } from '@spark-nest-ed/frontend-shared-components';
-import type { EditorExam } from '../../hooks/editor/collection-editor.types';
+import type { EditorExam } from '../../types/collection-editor.types';
 
 interface SortableExamRowProps {
   exam: EditorExam;

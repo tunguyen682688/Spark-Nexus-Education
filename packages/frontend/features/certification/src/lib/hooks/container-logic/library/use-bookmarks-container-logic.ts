@@ -5,39 +5,20 @@ import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { paginateItems } from '../../../services/certification-filter.service';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 import type { BookmarksResponse, BookmarkItem as ApiBookmarkItem } from '../../../types';
+import type { BookmarkFolderViewModel, BookmarkItemViewModel } from '../../../types/container-logic-library.types';
 
-export interface BookmarkFolder {
-  id: string;
-  name: string;
-  count: number;
-}
-
-export interface BookmarkItem {
-  id: string;
-  title: string;
-  type: 'Collection' | 'Test' | 'Question' | 'Vocabulary';
-  typeBadgeClass: string;
-  subtitle: string;
-  creatorName?: string;
-  progressPercent: number;
-  progressText: string;
-  progressBarClass: string;
-  bookmarkedOn: string;
-  folderName: string;
-  iconType: 'ielts_writing' | 'toeic_listening' | 'essay' | 'vocabulary' | 'speaking' | 'grammar';
-  bannerBgClass: string;
-}
+export type { BookmarkFolderViewModel, BookmarkItemViewModel } from '../../../types/container-logic-library.types';
 
 export function useBookmarksContainerLogic() {
   const navigate = useNavigate();
   const { data: apiData, isLoading: isApiLoading, isError, refetch } = useBookmarksData();
   const removeBookmarkMutation = useRemoveBookmark();
 
-  const [folders, setFolders] = useState<BookmarkFolder[]>([
+  const [folders, setFolders] = useState<BookmarkFolderViewModel[]>([
     { id: 'all', name: 'All Folders', count: 0 },
   ]);
   const [activeFolderId, setActiveFolderId] = useState<string>('all');
-  const [items, setItems] = useState<BookmarkItem[]>([]);
+  const [items, setItems] = useState<BookmarkItemViewModel[]>([]);
   const [activeTab, setActiveTab] = useState<
     'All' | 'Collections' | 'Tests' | 'Questions' | 'Vocabulary'
   >('All');
@@ -55,10 +36,10 @@ export function useBookmarksContainerLogic() {
   useEffect(() => {
     if (apiData) {
       const response = apiData as unknown as BookmarksResponse;
-      const fetchedItems: BookmarkItem[] = (response.items ?? []).map((item: ApiBookmarkItem) => ({
+      const fetchedItems: BookmarkItemViewModel[] = (response.items ?? []).map((item: ApiBookmarkItem) => ({
         id: item.itemId || item.id,
         title: item.title,
-        type: (item.itemType as BookmarkItem['type']) || 'Collection',
+        type: (item.itemType as BookmarkItemViewModel['type']) || 'Collection',
         typeBadgeClass: '',
         subtitle: '',
         progressPercent: 0,
@@ -81,7 +62,7 @@ export function useBookmarksContainerLogic() {
             folderCounts[it.folderName] = (folderCounts[it.folderName] || 0) + 1;
           }
         });
-        const derivedFolders: BookmarkFolder[] = [
+        const derivedFolders: BookmarkFolderViewModel[] = [
           { id: 'all', name: 'All Folders', count: fetchedItems.length },
           ...Object.entries(folderCounts).map(([name, count]) => ({
             id: name.toLowerCase().replace(/\s+/g, '-'),
@@ -125,7 +106,7 @@ export function useBookmarksContainerLogic() {
     e.preventDefault();
     if (!newFolderName.trim()) return;
 
-    const newFolder: BookmarkFolder = {
+    const newFolder: BookmarkFolderViewModel = {
       id: `folder-${Date.now()}`,
       name: newFolderName.trim(),
       count: 0,

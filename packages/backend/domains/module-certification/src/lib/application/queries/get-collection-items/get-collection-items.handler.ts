@@ -1,8 +1,13 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject, NotFoundException } from '@nestjs/common';
-import { ExamEntity } from '../../../domain/entities/exam.entity';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { GetCollectionItemsQuery } from './get-collection-items.query';
+
+const EXAM_TYPE_LABELS: Record<string, string> = {
+  FULL_MOCK: 'Full Mock Test',
+  MINI_TEST: 'Mini Test',
+  SECTION_PRACTICE: 'Section Practice',
+};
 
 @QueryHandler(GetCollectionItemsQuery)
 export class GetCollectionItemsQueryHandler
@@ -21,14 +26,16 @@ export class GetCollectionItemsQueryHandler
       );
     }
 
-    const exams = await this.repository.findExamsByCollectionId(query.collectionId);
+    const allExams = await this.repository.findExamsByCollectionId(query.collectionId);
+    const exams = allExams.filter((e) => e.getPublishStatus() === 'published');
 
-    const itemsList = exams.map((e: ExamEntity, index: number) => ({
+    const itemsList = exams.map((e) => ({
       id: e.id,
-      title: `${e.getTitle()} (Mock ${index + 1})`,
-      type: 'Full Mock Test',
-      duration: `${e.getDuration() || 60} mins`,
-      items: `${e.getTotalQuestions() || 40} Questions`,
+      title: e.getTitle(),
+      type: EXAM_TYPE_LABELS[e.getExamType()] || 'Full Mock Test',
+      duration: e.getDuration(),
+      totalQuestions: e.getTotalQuestions(),
+      certificationType: e.getCertificationType(),
     }));
 
     return {
@@ -36,7 +43,6 @@ export class GetCollectionItemsQueryHandler
       collectionId: query.collectionId,
       totalItems: exams.length,
       itemsList,
-      exams: exams.map((e: ExamEntity) => e.toPlainObject()),
     };
   }
 }

@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@spark-nest-ed/frontend-shared-components';
-import { useBookmarksContainerLogic, type BookmarkFolder, type BookmarkItem } from '../../hooks/container-logic/library/use-bookmarks-container-logic';
+import { useBookmarksContainerLogic, type BookmarkFolderViewModel as BookmarkFolder, type BookmarkItemViewModel as BookmarkItem } from '../../hooks/container-logic/library/use-bookmarks-container-logic';
 import { BookmarkCard } from '../../components/library/BookmarkCard';
 import { LoadingSkeleton } from '../../components/shared/LoadingSkeleton';
 import { ErrorState } from '../../components/shared/ErrorState';

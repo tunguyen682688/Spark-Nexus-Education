@@ -5,23 +5,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@spark-nest-ed/frontend-shared-components';
-import { useCollectionActivities } from '../../hooks/use-certification';
 import { RecentActivity } from '../../hooks/container-logic/collection/use-collection-detail-container-logic';
 import { ComingSoonSection } from '../shared/ComingSoonSection';
 
 interface CollectionActivityTabProps {
-  collectionId: string;
-  recentActivities?: RecentActivity[];
+  activities: RecentActivity[];
+  isLoading: boolean;
 }
 
 export const CollectionActivityTab = ({
-  collectionId,
-  recentActivities: fallbackActivities = [],
+  activities,
+  isLoading,
 }: CollectionActivityTabProps) => {
-  const { data: liveActivities = [], isLoading } = useCollectionActivities(collectionId);
-
-  const activities = liveActivities.length > 0 ? liveActivities : fallbackActivities;
-
   return (
     <Card className="border-border">
       <CardHeader>

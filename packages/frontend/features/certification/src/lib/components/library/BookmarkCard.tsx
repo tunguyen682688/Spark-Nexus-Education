@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bookmark, Eye, Trash2, MoreVertical, FileText, Headphones, Mic, PenTool, BookA, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardHeader, Badge } from '@spark-nest-ed/frontend-shared-components';
-import type { BookmarkItem } from '../../hooks/container-logic/library/use-bookmarks-container-logic';
+import type { BookmarkItemViewModel as BookmarkItem } from '../../hooks/container-logic/library/use-bookmarks-container-logic';
 
 interface BookmarkCardProps {
   item: BookmarkItem;

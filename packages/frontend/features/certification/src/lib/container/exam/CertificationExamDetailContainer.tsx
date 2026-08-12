@@ -1,5 +1,4 @@
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   Clock,
   HelpCircle,
@@ -18,10 +17,7 @@ import {
   Button,
   Badge,
 } from '@spark-nest-ed/frontend-shared-components';
-import {
-  useExamDetail,
-  useStartExamSession,
-} from '../../hooks/use-certification';
+import { useExamDetailContainerLogic } from '../../hooks/container-logic/exam/use-exam-detail-container-logic';
 import { CardSkeleton } from '../../components/shared/LoadingSkeleton';
 import { ErrorState } from '../../components/shared/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
@@ -34,34 +30,16 @@ interface CertificationExamDetailContainerProps {
 export const CertificationExamDetailContainer = ({ examId = 'default-exam', onSessionStarted }: 
   CertificationExamDetailContainerProps
 ) => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/certification');
-    }
-  };
-
   const {
-    data: exam,
+    exam,
     isLoading,
     isError,
     error,
     refetch,
-  } = useExamDetail(examId);
-  const { mutate: startExam, isPending: isStarting } = useStartExamSession();
-
-  const handleStartExam = () => {
-    startExam(examId, {
-      onSuccess: (session) => {
-        if (onSessionStarted) {
-          onSessionStarted(session.id);
-        }
-      },
-    });
-  };
+    isStarting,
+    handleBack,
+    handleStartExam,
+  } = useExamDetailContainerLogic(examId, onSessionStarted);
 
   if (isLoading) {
     return (

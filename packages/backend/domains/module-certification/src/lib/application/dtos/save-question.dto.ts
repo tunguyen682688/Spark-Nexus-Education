@@ -12,10 +12,10 @@ import {
 import { Type } from 'class-transformer';
 
 export class SaveQuestionOptionDto {
-  @ApiProperty({ description: 'Option identifier', example: 'opt-a' })
+  @ApiPropertyOptional({ description: 'Option identifier (omit for new options)', example: 'opt-a' })
   @IsString()
-  @IsNotEmpty()
-  id!: string;
+  @IsOptional()
+  id?: string;
 
   @ApiProperty({ description: 'Option label', example: 'A' })
   @IsString()
@@ -30,6 +30,11 @@ export class SaveQuestionOptionDto {
   isCorrect!: boolean;
 }
 
+/**
+ * DTO for saving a question to the Question Bank.
+ * Question-level content fields (passageId, modelAnswer, etc.) are stored here
+ * because they belong to the question itself, not to any specific exam.
+ */
 export class SaveQuestionDto {
   @ApiPropertyOptional({ description: 'Question identifier (omit to create a new question)', example: 'Q-000012' })
   @IsOptional()
@@ -49,6 +54,11 @@ export class SaveQuestionDto {
   @IsString()
   difficulty!: string;
 
+  @ApiPropertyOptional({ description: 'Question category (reading, listening, grammar, vocabulary, writing, speaking)', example: 'reading' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
   @ApiPropertyOptional({ description: 'Whether options should be shuffled', example: false })
   @IsOptional()
   @IsBoolean()
@@ -65,7 +75,7 @@ export class SaveQuestionDto {
   @IsString()
   explanation?: string;
 
-  @ApiPropertyOptional({ description: 'Points awarded for the question', example: 1 })
+  @ApiPropertyOptional({ description: 'Default points for this question in the bank (overridden per exam)', example: 1 })
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -97,4 +107,56 @@ export class SaveQuestionDto {
   @IsOptional()
   @IsString()
   target?: 'exam' | 'bank';
+
+  // Reference fields (bank metadata)
+  @ApiPropertyOptional({ description: 'Reference type (Passage, Image, External Link)' })
+  @IsOptional()
+  @IsString()
+  referenceType?: string;
+
+  @ApiPropertyOptional({ description: 'Passage or source reference' })
+  @IsOptional()
+  @IsString()
+  passageSource?: string;
+
+  @ApiPropertyOptional({ description: 'Highlight text for learners' })
+  @IsOptional()
+  @IsString()
+  highlight?: string;
+
+  // ── Question content fields (stored in QuestionMetadata) ──
+
+  @ApiPropertyOptional({ description: 'Passage ID for reading/listening questions' })
+  @IsOptional()
+  @IsString()
+  passageId?: string;
+
+  @ApiPropertyOptional({ description: 'Passage text (question-level, shared across exams)' })
+  @IsOptional()
+  @IsString()
+  passageText?: string;
+
+  @ApiPropertyOptional({ description: 'Model answer for speaking/writing' })
+  @IsOptional()
+  @IsString()
+  modelAnswer?: string;
+
+  @ApiPropertyOptional({ description: 'Rubric for scoring (JSON)' })
+  @IsOptional()
+  rubric?: unknown;
+
+  @ApiPropertyOptional({ description: 'Matching pairs for matching questions' })
+  @IsOptional()
+  @IsArray()
+  matchingPairs?: Array<{ left: string; right: string }>;
+
+  @ApiPropertyOptional({ description: 'Root word for Cambridge word formation' })
+  @IsOptional()
+  @IsString()
+  wordRoot?: string;
+
+  @ApiPropertyOptional({ description: 'Key word for Cambridge key word transformation' })
+  @IsOptional()
+  @IsString()
+  keyWord?: string;
 }

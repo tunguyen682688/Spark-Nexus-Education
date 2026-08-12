@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { X, FileText, Clock, HelpCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { X, FileText, Clock, HelpCircle, ChevronRight } from 'lucide-react';
 import { Button, Badge } from '@spark-nest-ed/frontend-shared-components';
 import {
   CERTIFICATE_TYPE_TEMPLATES,
   CERTIFICATE_TYPE_OPTIONS,
 } from '../../constants/certification.constants';
+import { AddExamForm } from './AddExamForm';
 
 interface AddExamModalProps {
   isOpen: boolean;
@@ -25,7 +26,6 @@ interface AddExamModalProps {
 
 export const AddExamModal = ({ isOpen, onClose, onConfirm, chapterTitle, existingExamCount = 0 }: AddExamModalProps) => {
   const [selectedCertType, setSelectedCertType] = useState<string | null>(null);
-  const [examTitle, setExamTitle] = useState('');
   const [step, setStep] = useState<'select' | 'confirm'>('select');
 
   const template = selectedCertType ? CERTIFICATE_TYPE_TEMPLATES[selectedCertType] : null;
@@ -34,37 +34,18 @@ export const AddExamModal = ({ isOpen, onClose, onConfirm, chapterTitle, existin
 
   const handleSelectCertType = (certType: string) => {
     setSelectedCertType(certType);
-    const tmpl = CERTIFICATE_TYPE_TEMPLATES[certType];
-    const num = existingExamCount + 1;
-    setExamTitle(`${tmpl.label} Practice Test ${num}`);
     setStep('confirm');
-  };
-
-  const handleConfirm = () => {
-    if (!template) return;
-    onConfirm({
-      title: examTitle || template.label + ' Practice Test',
-      certificationType: template.id,
-      examType: 'FULL_MOCK',
-      duration: template.defaultDuration,
-      totalQuestions: template.defaultTotalQuestions,
-      maxScore: template.defaultMaxScore,
-      passScore: template.defaultPassScore,
-      sections: template.sections.map((s) => ({
-        title: s.title,
-        sectionType: s.sectionType,
-        instruction: s.instruction,
-        durationMinutes: s.durationMinutes,
-      })),
-    });
-    handleClose();
   };
 
   const handleClose = () => {
     setSelectedCertType(null);
-    setExamTitle('');
     setStep('select');
     onClose();
+  };
+
+  const handleFormSubmit = (config: Parameters<typeof onConfirm>[0]) => {
+    onConfirm(config);
+    handleClose();
   };
 
   return (
@@ -132,78 +113,13 @@ export const AddExamModal = ({ isOpen, onClose, onConfirm, chapterTitle, existin
             </div>
           )}
 
-          {step === 'confirm' && template && (
-            <div className="space-y-4">
-              {/* Title input */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Tên bài kiểm tra
-                </label>
-                <input
-                  value={examTitle}
-                  onChange={(e) => setExamTitle(e.target.value)}
-                  className="w-full text-sm font-bold text-foreground bg-background border border-border rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder={template.label + ' Practice Test'}
-                />
-              </div>
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-2.5 bg-secondary/50 rounded-lg text-center">
-                  <Clock className="w-4 h-4 text-indigo-600 mx-auto mb-1" />
-                  <div className="text-xs font-extrabold text-foreground">{template.defaultDuration} min</div>
-                  <div className="text-[10px] text-muted-foreground">Thời gian</div>
-                </div>
-                <div className="p-2.5 bg-secondary/50 rounded-lg text-center">
-                  <HelpCircle className="w-4 h-4 text-blue-600 mx-auto mb-1" />
-                  <div className="text-xs font-extrabold text-foreground">{template.defaultTotalQuestions}</div>
-                  <div className="text-[10px] text-muted-foreground">Câu hỏi</div>
-                </div>
-                <div className="p-2.5 bg-secondary/50 rounded-lg text-center">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-                  <div className="text-xs font-extrabold text-foreground">{template.defaultPassScore}</div>
-                  <div className="text-[10px] text-muted-foreground">{template.passScoreLabel}</div>
-                </div>
-                <div className="p-2.5 bg-secondary/50 rounded-lg text-center">
-                  <FileText className="w-4 h-4 text-amber-600 mx-auto mb-1" />
-                  <div className="text-xs font-extrabold text-foreground">{template.sections.length} phần</div>
-                  <div className="text-[10px] text-muted-foreground">Sections</div>
-                </div>
-              </div>
-
-              {/* Sections preview */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Cấu trúc sections
-                </label>
-                {template.sections.map((sec, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl border border-border/50"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-black flex items-center justify-center flex-shrink-0">
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-foreground">{sec.title}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{sec.instruction}</div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-[10px] font-bold text-foreground">{sec.durationMinutes} min</div>
-                      <div className="text-[10px] text-muted-foreground">{sec.questionCount} câu</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Back button */}
-              <button
-                onClick={() => setStep('select')}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
-              >
-                ← Chọn loại chứng chỉ khác
-              </button>
-            </div>
+          {step === 'confirm' && selectedCertType && (
+            <AddExamForm
+              selectedCertType={selectedCertType}
+              existingExamCount={existingExamCount}
+              onSubmit={handleFormSubmit}
+              onBack={() => setStep('select')}
+            />
           )}
         </div>
 
@@ -216,15 +132,6 @@ export const AddExamModal = ({ isOpen, onClose, onConfirm, chapterTitle, existin
           >
             Hủy
           </Button>
-          {step === 'confirm' && (
-            <Button
-              onClick={handleConfirm}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-5 h-9 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Tạo bài kiểm tra
-            </Button>
-          )}
         </div>
       </div>
     </div>

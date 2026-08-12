@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
-import type { EditorChapter } from '../../hooks/editor/collection-editor.types';
+import type { EditorChapter } from '../../types/collection-editor.types';
 
 interface SortableChapterCardProps {
   chapter: EditorChapter;

@@ -13,17 +13,15 @@ export class RemoveBookmarkCommandHandler
   ) {}
 
   async execute(command: RemoveBookmarkCommand): Promise<{ removed: boolean }> {
-    const existing = await this.repository.findBookmarkByUserAndCollection(
-      command.userId,
-      command.collectionId
-    );
-    if (!existing) {
-      throw new NotFoundException(
-        `Bookmark not found for user ${command.userId} and collection ${command.collectionId}`
-      );
+    const bookmark = await this.repository.findBookmarkById(command.bookmarkId);
+    if (!bookmark) {
+      throw new NotFoundException(`Bookmark with ID ${command.bookmarkId} not found`);
+    }
+    if (bookmark.userId !== command.userId) {
+      throw new NotFoundException(`Bookmark with ID ${command.bookmarkId} not found`);
     }
 
-    await this.repository.deleteBookmark(command.userId, command.collectionId);
+    await this.repository.deleteBookmark(command.userId, bookmark.collectionId);
 
     return { removed: true };
   }

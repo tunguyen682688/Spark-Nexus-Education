@@ -23,8 +23,9 @@ export class DeleteExamCommandHandler implements ICommandHandler<DeleteExamComma
       throw new ForbiddenException('You can only delete exams in your own collections');
     }
 
+    const collectionId = existing.getCollectionId();
     await this.repository.deleteExam(examId);
 
-    return { deleted: true };
+    return { deleted: true, collectionId };
   }
 }

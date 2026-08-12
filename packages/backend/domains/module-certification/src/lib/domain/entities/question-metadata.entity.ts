@@ -16,6 +16,16 @@ export class QuestionMetadataEntity extends Entity<string> {
     private skills: string[],
     private qualityScore: number | null,
     private qualityRating: string | null,
+    // Question content fields (moved from ExamQuestion)
+    private passageId: string | null,
+    private passageText: string | null,
+    private modelAnswer: string | null,
+    private rubric: unknown | null,
+    private matchingPairs: unknown | null,
+    private wordRoot: string | null,
+    private keyWord: string | null,
+    private media: unknown | null,
+    private hints: unknown | null,
     createdAt: Date,
     updatedAt: Date
   ) {
@@ -37,6 +47,15 @@ export class QuestionMetadataEntity extends Entity<string> {
     skills?: string[];
     qualityScore?: number | null;
     qualityRating?: string | null;
+    passageId?: string | null;
+    passageText?: string | null;
+    modelAnswer?: string | null;
+    rubric?: unknown | null;
+    matchingPairs?: unknown | null;
+    wordRoot?: string | null;
+    keyWord?: string | null;
+    media?: unknown | null;
+    hints?: unknown | null;
     createdAt?: Date;
     updatedAt?: Date;
   }): QuestionMetadataEntity {
@@ -56,6 +75,15 @@ export class QuestionMetadataEntity extends Entity<string> {
       params.skills ?? [],
       params.qualityScore ?? null,
       params.qualityRating ?? null,
+      params.passageId ?? null,
+      params.passageText ?? null,
+      params.modelAnswer ?? null,
+      params.rubric ?? null,
+      params.matchingPairs ?? null,
+      params.wordRoot ?? null,
+      params.keyWord ?? null,
+      params.media ?? null,
+      params.hints ?? null,
       params.createdAt ?? now,
       params.updatedAt ?? now
     );
@@ -76,6 +104,15 @@ export class QuestionMetadataEntity extends Entity<string> {
     skills: string[];
     qualityScore: number | null;
     qualityRating: string | null;
+    passageId: string | null;
+    passageText: string | null;
+    modelAnswer: string | null;
+    rubric: unknown;
+    matchingPairs: unknown;
+    wordRoot: string | null;
+    keyWord: string | null;
+    media: unknown;
+    hints: unknown;
     createdAt: Date;
     updatedAt: Date;
   }): QuestionMetadataEntity {
@@ -94,6 +131,15 @@ export class QuestionMetadataEntity extends Entity<string> {
       data.skills,
       data.qualityScore,
       data.qualityRating,
+      data.passageId,
+      data.passageText,
+      data.modelAnswer,
+      data.rubric,
+      data.matchingPairs,
+      data.wordRoot,
+      data.keyWord,
+      data.media,
+      data.hints,
       data.createdAt,
       data.updatedAt
     );
@@ -151,6 +197,42 @@ export class QuestionMetadataEntity extends Entity<string> {
     return this.qualityRating;
   }
 
+  getPassageId(): string | null {
+    return this.passageId;
+  }
+
+  getPassageText(): string | null {
+    return this.passageText;
+  }
+
+  getModelAnswer(): string | null {
+    return this.modelAnswer;
+  }
+
+  getRubric(): unknown | null {
+    return this.rubric;
+  }
+
+  getMatchingPairs(): unknown | null {
+    return this.matchingPairs;
+  }
+
+  getWordRoot(): string | null {
+    return this.wordRoot;
+  }
+
+  getKeyWord(): string | null {
+    return this.keyWord;
+  }
+
+  getMedia(): unknown | null {
+    return this.media;
+  }
+
+  getHints(): unknown | null {
+    return this.hints;
+  }
+
   update(params: {
     explanation?: string | null;
     points?: number;
@@ -164,6 +246,15 @@ export class QuestionMetadataEntity extends Entity<string> {
     skills?: string[];
     qualityScore?: number | null;
     qualityRating?: string | null;
+    passageId?: string | null;
+    passageText?: string | null;
+    modelAnswer?: string | null;
+    rubric?: unknown | null;
+    matchingPairs?: unknown | null;
+    wordRoot?: string | null;
+    keyWord?: string | null;
+    media?: unknown | null;
+    hints?: unknown | null;
   }): void {
     if (params.explanation !== undefined) this.explanation = params.explanation;
     if (params.points !== undefined) this.points = params.points;
@@ -177,6 +268,15 @@ export class QuestionMetadataEntity extends Entity<string> {
     if (params.skills !== undefined) this.skills = params.skills;
     if (params.qualityScore !== undefined) this.qualityScore = params.qualityScore;
     if (params.qualityRating !== undefined) this.qualityRating = params.qualityRating;
+    if (params.passageId !== undefined) this.passageId = params.passageId;
+    if (params.passageText !== undefined) this.passageText = params.passageText;
+    if (params.modelAnswer !== undefined) this.modelAnswer = params.modelAnswer;
+    if (params.rubric !== undefined) this.rubric = params.rubric;
+    if (params.matchingPairs !== undefined) this.matchingPairs = params.matchingPairs;
+    if (params.wordRoot !== undefined) this.wordRoot = params.wordRoot;
+    if (params.keyWord !== undefined) this.keyWord = params.keyWord;
+    if (params.media !== undefined) this.media = params.media;
+    if (params.hints !== undefined) this.hints = params.hints;
     this.markAsUpdated();
   }
 
@@ -184,37 +284,31 @@ export class QuestionMetadataEntity extends Entity<string> {
     let score = 0;
     const checks: string[] = [];
 
-    // Clear question text (content exists and > 10 chars)
     if (this.explanation && this.explanation.length > 10) {
       score += 25;
       checks.push('Clear question text');
     }
 
-    // Has explanation
     if (this.explanation && this.explanation.length > 0) {
       score += 25;
       checks.push('Has explanation');
     }
 
-    // Has tags
     if (this.tags.length > 0) {
       score += 15;
       checks.push('Has tags');
     }
 
-    // Has skills
     if (this.skills.length > 0) {
       score += 15;
       checks.push('Has skills defined');
     }
 
-    // Appropriate difficulty
     if (this.cognitiveLevel) {
       score += 10;
       checks.push('Appropriate difficulty');
     }
 
-    // Has reference
     if (this.referenceType) {
       score += 10;
       checks.push('Has reference material');
@@ -247,6 +341,15 @@ export class QuestionMetadataEntity extends Entity<string> {
       skills: this.skills,
       qualityScore: this.qualityScore,
       qualityRating: this.qualityRating,
+      passageId: this.passageId,
+      passageText: this.passageText,
+      modelAnswer: this.modelAnswer,
+      rubric: this.rubric,
+      matchingPairs: this.matchingPairs,
+      wordRoot: this.wordRoot,
+      keyWord: this.keyWord,
+      media: this.media,
+      hints: this.hints,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

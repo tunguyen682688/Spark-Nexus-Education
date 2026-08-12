@@ -12,12 +12,16 @@ export class CreateExamCommand extends Command<{ id: string; title: string; coll
     public readonly passScore?: number,
     public readonly examType?: string,
     public readonly certificationType?: string,
+    public readonly level?: string | null,
     public readonly chapterId?: string | null,
     public readonly sections?: Array<{
       title: string;
+      subtitle?: string | null;
       sectionType: string;
       instruction?: string;
       durationMinutes?: number;
+      questionCount?: number;
+      isBreak?: boolean;
     }>
   ) {
     super();

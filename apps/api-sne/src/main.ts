@@ -7,6 +7,7 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { BigIntSerializerInterceptor } from './big-int-serializer.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -62,6 +63,10 @@ async function bootstrap() {
     })
   );
   logger.log('✅ Global validation pipe configured');
+
+  // Global BigInt serializer — converts all BigInt values to Number before JSON serialization
+  app.useGlobalInterceptors(new BigIntSerializerInterceptor());
+  logger.log('✅ Global BigInt serializer interceptor configured');
 
   // Swagger Documentation (Development only)
   if (isDevelopment) {

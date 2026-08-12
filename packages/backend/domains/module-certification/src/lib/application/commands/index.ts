@@ -22,3 +22,6 @@ export * from './save-report';
 export * from './add-collection-review';
 export * from './add-collection-discussion';
 export * from './sync-chapters';
+export * from './save-exam-sections';
+export * from './link-question-to-exam';
+export * from './unlink-question-from-exam';

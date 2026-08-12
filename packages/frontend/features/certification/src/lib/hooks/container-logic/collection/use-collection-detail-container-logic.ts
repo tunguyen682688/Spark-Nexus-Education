@@ -7,64 +7,21 @@ import {
   useSaveCollection,
   useCloneCollection,
   useReportCollection,
+  useFeaturedCollections,
 } from '../../use-certification';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@spark-nest-ed/frontend-core-auth';
+import type {
+  CollectionTabType,
+  CollectionViewModel,
+  ContentItem,
+  UserReview,
+  RecentActivity,
+} from '../../../types/container-logic-collection.types';
 
-// ===== Types =====
-
-export type CollectionTabType = 'overview' | 'content' | 'statistics' | 'reviews' | 'activity' | 'related';
-
-export interface CollectionViewModel {
-  id: string;
-  ownerId?: string;
-  title?: string;
-  subtitle?: string;
-  author?: string;
-  authorRole?: string;
-  authorAvatar?: string;
-  rating?: string;
-  reviewsCount?: string;
-  downloads?: string;
-  followers?: string;
-  clones?: string;
-  itemsCount: number;
-  exam?: string;
-  level?: string;
-  targetBand?: string;
-  cefrLevel?: string;
-  language?: string;
-  updatedDate?: string;
-  totalSize?: string;
-  tags: string[];
-}
-
-export interface ContentItem {
-  id: string;
-  title: string;
-  type: string;
-  duration?: string;
-  items?: string;
-}
-
-export interface UserReview {
-  id: string;
-  author: string;
-  avatar?: string;
-  rating: number;
-  date: string;
-  text: string;
-}
-
-export interface RecentActivity {
-  user: string;
-  action: string;
-  time: string;
-}
-
-export const formatField = (value: string | number | undefined, fallback = '\u2014'): string =>
-  value !== undefined && value !== null && value !== '' ? String(value) : fallback;
+export type { CollectionTabType, CollectionViewModel, ContentItem, UserReview, RecentActivity } from '../../../types/container-logic-collection.types';
+export { formatField } from '../../../services/collection-detail-helpers.service';
 
 // ===== Hook =====
 
@@ -96,6 +53,7 @@ export function useCollectionDetailContainerLogic(
   const { mutate: saveCollection, isPending: isSaving } = useSaveCollection();
   const { mutate: cloneCollection, isPending: isCloning } = useCloneCollection();
   const { mutate: reportCollection, isPending: isReporting } = useReportCollection();
+  const { data: relatedCollections = [], isLoading: isLoadingRelated } = useFeaturedCollections();
 
   // Sync bookmark/clone state from API response
   useEffect(() => {
@@ -190,6 +148,16 @@ export function useCollectionDetailContainerLogic(
     navigate(`/certification/collection-editor/${collectionViewModel.id}`);
   };
 
+  const handleBack = (onBack?: () => void) => {
+    if (onBack) {
+      onBack();
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/certification');
+    }
+  };
+
   return {
     activeTab, setActiveTab,
     isCollectionBookmarked, isCollectionCloned,
@@ -198,6 +166,7 @@ export function useCollectionDetailContainerLogic(
     collectionViewModel, contentItems, userReviews, recentActivities,
     handleToggleBookmark, handleToggleClone, handleReport,
     handleStartLearning, handleStartRelatedCollectionExam,
-    isOwner, handleEditCollection,
+    relatedCollections, isLoadingRelated,
+    isOwner, handleEditCollection, handleBack,
   };
 }

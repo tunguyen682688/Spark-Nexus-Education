@@ -3,21 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { usePurchasedCollectionsData } from '../../use-certification';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { PurchasedCollectionItem } from '../../../types/container-logic-library.types';
 
-export interface PurchasedCollectionItem {
-  id: string;
-  orderId: string;
-  title: string;
-  category: 'Official Bundles' | 'IELTS Pro' | 'TOEIC Master' | 'Lifetime Access';
-  examType: string;
-  coverGradient: string;
-  pricePaid: string;
-  purchaseDate: string;
-  accessType: 'Lifetime Access' | '1-Year License' | 'PRO Member Access';
-  completedTests: number;
-  totalTests: number;
-  progressPercent: number;
-}
+export type { PurchasedCollectionItem } from '../../../types/container-logic-library.types';
 
 export function usePurchasedCollectionsContainerLogic() {
   const navigate = useNavigate();

@@ -61,9 +61,9 @@ export const CollectionOverviewTab = ({
                         {item.type}
                       </Badge>
                     )}
-                    {item.duration && (
+                    {item.duration != null && item.duration > 0 && (
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {item.duration}
+                        <Clock className="w-3 h-3" /> {item.duration} min
                       </span>
                     )}
                   </div>

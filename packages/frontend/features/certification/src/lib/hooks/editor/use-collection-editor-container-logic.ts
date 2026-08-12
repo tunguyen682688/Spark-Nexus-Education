@@ -1,17 +1,19 @@
 /**
  * Collection Editor — orchestrator hook.
  *
- * Composes focused sub-hooks by domain. Each sub-hook handles a single concern:
- * - editor-network: online/offline, localStorage, beforeunload
- * - editor-chapters: chapter CRUD + reorder
- * - editor-exams: exam add/remove/reorder
- * - editor-settings: settings save/reset, tags
- * - editor-navigation: save/publish/leave/preview/edit
+ * Composes focused sub-hooks by domain:
+ * - use-hydration-handlers: auto-create, hydrate, refetchAndHydrate
+ * - use-network-state: online/offline, beforeunload
+ * - use-persist-handler: save/publish, isSaving, autosavedText
+ * - use-chapter-handlers: chapter CRUD + reorder
+ * - use-exam-handlers: exam add/remove/reorder
+ * - use-settings-handlers: settings save/reset, tags
+ * - use-navigation-handlers: confirm-leave, preview, edit, back
  *
- * Pure functions → collection-editor.helpers.ts
+ * Pure functions → collection-editor-helpers.service.ts
  * Types → collection-editor.types.ts
  */
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import {
@@ -22,20 +24,26 @@ import {
   useDeleteExam,
   useSyncChapters,
 } from '../use-certification';
-import type { EditorChapter, CollectionDetailsForm, SyncStatus } from './collection-editor.types';
-import { EMPTY_DETAILS } from './collection-editor.types';
-import { parseApiDataToState, computeDifficultyMix, buildChapterPayload, buildCollectionDetailsPayload, formatAutosaveText, withRetry } from './collection-editor.helpers';
+import type {
+  EditorChapter,
+  CollectionDetailsForm,
+  SyncStatus,
+} from '../../types/collection-editor.types';
+import { EMPTY_DETAILS } from '../../constants/collection-editor.constants';
+import {
+  takeSnapshot,
+  computeSummary,
+  formatAutosaveText,
+} from '../../services/collection-editor-helpers.service';
 
-import { useNetworkState } from './editor-network';
-import { useChapterHandlers } from './editor-chapters';
-import { useExamHandlers } from './editor-exams';
-import { useSettingsHandlers } from './editor-settings';
-import { useNavigationHandlers } from './editor-navigation';
+import { useNetworkState } from './use-network-state';
+import { useChapterHandlers } from './use-chapter-handlers';
+import { useExamHandlers } from './use-exam-handlers';
+import { useSettingsHandlers } from './use-settings-handlers';
+import { useNavigationHandlers } from './use-navigation-handlers';
+import { useAutoCreate, useHydrateEffect, useRefetchAndHydrate } from './use-hydration-handlers';
+import { usePersistHandler, computeIsSaving } from './use-persist-handler';
 
-const RETRY_COUNT = 2;
-const RETRY_DELAY_MS = 1000;
-
-/** Widen toast type so sub-hooks accept it without variant literal errors */
 type ShowToast = (msg: { title: string; description: string; variant: string }) => void;
 
 export function useCollectionEditorContainerLogic() {
@@ -55,10 +63,13 @@ export function useCollectionEditorContainerLogic() {
 
   // ===== UI state =====
   const [activeTab, setActiveTab] = useState<'Structure' | 'Settings' | 'Collaborators'>('Structure');
-  const [activeChapterId, setActiveChapterId] = useState<string>('');
+  const [activeChapterId, setActiveChapterId] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
   const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(false);
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
+  const [confirmDeleteChapterId, setConfirmDeleteChapterId] = useState<string | null>(null);
+  const [confirmDeleteExamId, setConfirmDeleteExamId] = useState<string | null>(null);
+  const [isReorderMode, setIsReorderMode] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [details, setDetails] = useState<CollectionDetailsForm>(EMPTY_DETAILS);
@@ -69,155 +80,110 @@ export function useCollectionEditorContainerLogic() {
   const createdCollectionIdRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
   const creationInitiatedRef = useRef(false);
-  const lastSyncedSnapshotRef = useRef<string>('');
+  const lastSyncedSnapshotRef = useRef('');
 
   // ===== Derived =====
   const activeCollectionId = id || createdCollectionIdRef.current;
-  const activeChapter = useMemo(() => chapters.find((ch) => ch.id === activeChapterId) || chapters[0], [chapters, activeChapterId]);
-
-  const summary = useMemo(() => {
-    let totalExams = 0, totalQuestions = 0, totalMinutes = 0;
-    chapters.forEach((ch) => { totalExams += ch.exams.length; ch.exams.forEach((ex) => { totalQuestions += ex.questionsCount; totalMinutes += ex.durationMinutes; }); });
-    const hours = Math.floor(totalMinutes / 60), mins = totalMinutes % 60;
-    return { totalChapters: chapters.length, totalExams, totalQuestions, estimatedDurationText: totalMinutes > 0 ? `${hours}h ${mins}m` : '0h 0m', difficultyMix: computeDifficultyMix(chapters) };
-  }, [chapters]);
-
-  const isSaving = createCollectionMutation.isPending || updateCollectionMutation.isPending || createExamMutation.isPending || deleteExamMutation.isPending || syncChaptersMutation.isPending || syncStatus === 'syncing' || syncStatus === 'retrying';
-  const autosavedText = formatAutosaveText(lastSavedAt, syncStatus);
-
-  // ===== Snapshot =====
-  const takeSnapshot = useCallback(
-    (d: CollectionDetailsForm, ch: EditorChapter[]) =>
-      JSON.stringify({
-        detailCollection: { title: d.title, subtitle: d.subtitle, description: d.description, level: d.level, tags: d.tags, visibility: d.visibility, allowDownloads: d.allowDownloads },
-        chapters: ch.map((c) => ({ id: c.id, title: c.title, description: c.description, exams: c.exams.map((e) => e.id) })),
-      }),
-    [],
-  );
-
-  // ===== Effect 1: Auto-create draft =====
-  useEffect(() => {
-    if (isEditMode || creationInitiatedRef.current) return;
-    creationInitiatedRef.current = true;
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await createCollectionMutation.mutateAsync({ title: 'Untitled Collection', description: null, silent: true });
-        if (cancelled) return;
-        createdCollectionIdRef.current = result.id;
-        await syncChaptersMutation.mutateAsync({ collectionId: result.id, chapters: [{ id: crypto.randomUUID(), title: 'Part 1: Getting Started', description: 'Build a strong foundation.', order: 1 }], silent: true });
-        if (cancelled) return;
-        navigate(`/certification/collection-editor/${result.id}`, { replace: true });
-      } catch { setSyncStatus('error'); }
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ===== Core: refetchAndHydrate =====
-  const refetchAndHydrate = useCallback(async () => {
-    const collectionId = isEditMode ? id : createdCollectionIdRef.current;
-    if (!collectionId) return;
-    setSyncStatus('syncing');
-    const timeoutId = setTimeout(() => setSyncStatus((prev) => (prev === 'syncing' ? 'error' : prev)), 30000);
-    try {
-      const freshData = await refetch();
-      clearTimeout(timeoutId);
-      if (freshData.data) {
-        const parsed = parseApiDataToState(freshData.data);
-        setDetails(parsed.details);
-        setChapters(parsed.chapters);
-        if (parsed.chapters.length > 0) {
-          if (!parsed.chapters.some((ch) => ch.id === activeChapterId)) setActiveChapterId(parsed.chapters[0].id);
-        }
-        lastSyncedSnapshotRef.current = takeSnapshot(parsed.details, parsed.chapters);
-        setIsDirty(false);
-        setSyncStatus('synced');
-      } else { setSyncStatus('idle'); }
-    } catch { clearTimeout(timeoutId); setSyncStatus('error'); }
-  }, [isEditMode, id, refetch, activeChapterId, takeSnapshot]);
+  const activeChapter = chapters.find((ch) => ch.id === activeChapterId) || chapters[0];
+  const summary = computeSummary(chapters);
 
   // ===== Core: syncChaptersToServer =====
-  const syncChaptersToServer = useCallback(async (collectionId: string, currentChapters: EditorChapter[]) => {
-    await syncChaptersMutation.mutateAsync({ collectionId, chapters: buildChapterPayload(currentChapters), silent: true });
-    await refetchAndHydrate();
-  }, [syncChaptersMutation, refetchAndHydrate]);
+  const refetchAndHydrate = useRefetchAndHydrate({
+    isEditMode, id, activeChapterId,
+    refs: { hydratedRef, lastSyncedSnapshotRef, creationInitiatedRef, createdCollectionIdRef },
+    setters: { setDetails, setChapters, setActiveChapterId, setSyncStatus, setIsDirty },
+    refetch,
+  });
 
-  // ===== Sub-hook: Network (must be before handlePersist) =====
+  const syncChaptersToServer = useCallback(
+    async (collectionId: string, currentChapters: EditorChapter[]) => {
+      await syncChaptersMutation.mutateAsync({
+        collectionId,
+        chapters: currentChapters.map((ch, i) => ({
+          id: ch.id, title: ch.title, description: ch.description || null, order: i + 1, examIds: ch.exams.map((e) => e.id),
+        })),
+        silent: true,
+      });
+      await refetchAndHydrate();
+    },
+    [syncChaptersMutation, refetchAndHydrate],
+  );
+
+  // ===== Sub-hook: Network =====
   const network = useNetworkState({ activeCollectionId, details, chapters, isDirty, hydratedRef, showToast });
-  const { isOnline, isOnlineRef, isDirtyRef, saveDraftToLocalStorage, loadDraftFromLocalStorage, clearDraftFromLocalStorage } = network;
+  const { isOnline, isOnlineRef, isDirtyRef } = network;
 
-  // ===== Core: handlePersist =====
-  const handlePersist = useCallback(async (publishStatus?: 'draft' | 'published'): Promise<boolean> => {
-    if (!activeCollectionId) { showToast({ title: 'Lỗi', description: 'Không tìm thấy bộ sưu tập.', variant: 'destructive' }); return false; }
-    if (!isOnlineRef.current) {
-      showToast({ title: 'Offline', description: 'Không thể lưu khi mất kết nối. Thay đổi đã được lưu tạm vào trình duyệt.', variant: 'destructive' });
-      saveDraftToLocalStorage();
-      return false;
-    }
-    setSyncStatus('retrying');
-    try {
-      await withRetry(() => updateCollectionMutation.mutateAsync({ collectionId: activeCollectionId, ...buildCollectionDetailsPayload(details), ...(publishStatus ? { publishStatus } : {}), silent: true }), RETRY_COUNT, RETRY_DELAY_MS);
-      await syncChaptersToServer(activeCollectionId, chapters);
-      setLastSavedAt(new Date());
-      clearDraftFromLocalStorage();
-      showToast(publishStatus === 'published' ? { title: 'Đã xuất bản', description: 'Bộ sưu tập đã được xuất bản.', variant: 'default' } : { title: 'Đã lưu', description: 'Bản nháp đã được lưu.', variant: 'default' });
-      return true;
-    } catch (err) {
-      console.error('[CollectionEditor] Persist failed:', err);
-      setSyncStatus('error');
-      showToast({ title: 'Thao tác thất bại', description: 'Có lỗi kết nối xảy ra. Vui lòng kiểm tra lại đường truyền mạng.', variant: 'destructive' });
-      saveDraftToLocalStorage();
-      return false;
-    }
-  }, [activeCollectionId, details, chapters, updateCollectionMutation, syncChaptersToServer, showToast, isOnlineRef, saveDraftToLocalStorage, clearDraftFromLocalStorage]);
+  // ===== Sub-hook: Persist =====
+  const { handlePersist } = usePersistHandler({
+    activeCollectionId, details, chapters,
+    mutations: { updateCollection: updateCollectionMutation, syncChapters: syncChaptersMutation },
+    syncChaptersToServer, setSyncStatus, setLastSavedAt, isOnlineRef, showToast,
+  });
+
+  const isSaving = computeIsSaving({
+    isCreatePending: createCollectionMutation.isPending,
+    isUpdatePending: updateCollectionMutation.isPending,
+    isCreateExamPending: createExamMutation.isPending,
+    isDeleteExamPending: deleteExamMutation.isPending,
+    isSyncPending: syncChaptersMutation.isPending,
+    syncStatus,
+  });
 
   // ===== Sub-hook: Chapters =====
-  const chapterHandlers = useChapterHandlers({ activeCollectionId, activeChapterId, chapters, setChapters, setActiveChapterId, setSyncStatus, syncChaptersToServer });
+  const chapterHandlers = useChapterHandlers({
+    activeCollectionId, activeChapterId, chapters,
+    setChapters, setActiveChapterId, setSyncStatus, syncChaptersToServer,
+  });
 
   // ===== Sub-hook: Exams =====
-  const examHandlers = useExamHandlers({ activeCollectionId, activeChapter, chapters, mutations: { createExam: createExamMutation, deleteExam: deleteExamMutation }, setChapters, setSyncStatus, setLastSavedAt, syncChaptersToServer, refetchAndHydrate, showToast });
+  const examHandlers = useExamHandlers({
+    activeCollectionId, activeChapter, chapters,
+    mutations: { createExam: createExamMutation, deleteExam: deleteExamMutation },
+    setChapters, setSyncStatus, setLastSavedAt,
+    syncChaptersToServer, refetchAndHydrate, showToast, navigate,
+  });
 
   // ===== Sub-hook: Settings =====
-  const settingsHandlers = useSettingsHandlers({ activeCollectionId, details, chapters, apiData, newTagInput, updateCollection: updateCollectionMutation, setDetails, setSyncStatus, setIsDirty, setLastSavedAt, refetchAndHydrate, takeSnapshot, lastSyncedSnapshotRef, showToast });
+  const settingsHandlers = useSettingsHandlers({
+    activeCollectionId, details, chapters, apiData, newTagInput,
+    updateCollection: updateCollectionMutation,
+    setDetails, setSyncStatus, setIsDirty, setLastSavedAt,
+    refetchAndHydrate, takeSnapshot: (d, ch) => takeSnapshot(d, ch),
+    lastSyncedSnapshotRef, showToast,
+  });
 
   // ===== Sub-hook: Navigation =====
   const navigationHandlers = useNavigationHandlers({ activeCollectionId, isDirtyRef, handlePersist, refetchAndHydrate });
 
-  // ===== Effect 2: Hydrate =====
-  useEffect(() => {
-    if (!isEditMode || hydratedRef.current || !apiData) return;
-    hydratedRef.current = true;
-    const parsed = parseApiDataToState(apiData);
-    const draft = id ? loadDraftFromLocalStorage(id) : null;
-    if (draft) {
-      setDetails(draft.details); setChapters(draft.chapters);
-      if (draft.chapters.length > 0) setActiveChapterId(draft.chapters[0].id);
-      lastSyncedSnapshotRef.current = takeSnapshot(draft.details, draft.chapters);
-      showToast({ title: 'Khôi phục bản nháp', description: 'Đã khôi phục thay đổi chưa lưu từ trình duyệt.', variant: 'default' });
-    } else {
-      setDetails(parsed.details); setChapters(parsed.chapters);
-      if (parsed.chapters.length > 0) setActiveChapterId(parsed.chapters[0].id);
-      lastSyncedSnapshotRef.current = takeSnapshot(parsed.details, parsed.chapters);
-    }
-    setSyncStatus('synced');
-  }, [apiData, isEditMode, id, takeSnapshot, loadDraftFromLocalStorage, showToast]);
+  // ===== Effects =====
+  useAutoCreate({
+    isEditMode, refs: { hydratedRef, lastSyncedSnapshotRef, creationInitiatedRef, createdCollectionIdRef },
+    createCollection: (dto) => createCollectionMutation.mutateAsync(dto),
+    syncChapters: (dto) => syncChaptersMutation.mutateAsync(dto),
+    setSyncStatus, navigate,
+  });
 
-  // ===== Effect 3: Dirty detection =====
+  useHydrateEffect({
+    isEditMode, id, apiData,
+    refs: { hydratedRef, lastSyncedSnapshotRef, creationInitiatedRef, createdCollectionIdRef },
+    setters: { setDetails, setChapters, setActiveChapterId, setSyncStatus, setIsDirty },
+    showToast,
+  });
+
+  // Dirty detection
   useEffect(() => {
     if (!hydratedRef.current || syncStatus === 'syncing') return;
     setIsDirty(takeSnapshot(details, chapters) !== lastSyncedSnapshotRef.current);
-  }, [details, chapters, syncStatus, takeSnapshot]);
+  }, [details, chapters, syncStatus]);
   isDirtyRef.current = isDirty;
 
   // ===== Return =====
   return {
     isApiLoading: (isEditMode ? isApiLoading : false) || createCollectionMutation.isPending,
-    isError, refetch,
-    isEditMode, activeCollectionId,
+    isError, refetch, isEditMode, activeCollectionId,
     activeTab, setActiveTab,
-    activeChapterId, setActiveChapterId, activeChapter, chapters,
-    details, setDetails, summary,
+    activeChapterId, setActiveChapterId, activeChapter,
+    chapters, details, setDetails, summary,
     newTagInput, setNewTagInput,
     isDetailsCollapsed, setIsDetailsCollapsed,
     ...chapterHandlers,
@@ -230,8 +196,11 @@ export function useCollectionEditorContainerLogic() {
     handlePreviewCollection: navigationHandlers.handlePreviewCollection,
     handleBackToDashboard: navigationHandlers.handleBackToDashboard,
     handleRetrySync: navigationHandlers.handleRetrySync,
-    isSaving, autosavedText,
+    isSaving, autosavedText: formatAutosaveText(lastSavedAt, syncStatus),
     isAddExamModalOpen, setIsAddExamModalOpen,
+    confirmDeleteChapterId, setConfirmDeleteChapterId,
+    confirmDeleteExamId, setConfirmDeleteExamId,
+    isReorderMode, setIsReorderMode,
     syncStatus, isDirty, isOnline,
   };
 }

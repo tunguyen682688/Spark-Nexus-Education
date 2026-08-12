@@ -50,3 +50,7 @@ export * from './learning/CompletedCollectionCard';
 export * from './learning/PracticeHistoryCard';
 export * from './learning/StudyPlanStatsGrid';
 export * from './learning/StudyPlanFocusCards';
+export * from './learning/CompletedCollectionsMetrics';
+export * from './learning/CompletedCollectionsTabs';
+export * from './learning/CompletedCollectionsGrid';
+export * from './learning/CompletedCollectionsSidebar';

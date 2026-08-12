@@ -13,17 +13,15 @@ export class RemoveFavoriteCommandHandler
   ) {}
 
   async execute(command: RemoveFavoriteCommand): Promise<{ removed: boolean }> {
-    const existing = await this.repository.findFavoriteByUserAndCollection(
-      command.userId,
-      command.collectionId
-    );
-    if (!existing) {
-      throw new NotFoundException(
-        `Favorite not found for user ${command.userId} and collection ${command.collectionId}`
-      );
+    const favorite = await this.repository.findFavoriteById(command.favoriteId);
+    if (!favorite) {
+      throw new NotFoundException(`Favorite with ID ${command.favoriteId} not found`);
+    }
+    if (favorite.userId !== command.userId) {
+      throw new NotFoundException(`Favorite with ID ${command.favoriteId} not found`);
     }
 
-    await this.repository.deleteFavorite(command.userId, command.collectionId);
+    await this.repository.deleteFavorite(command.userId, favorite.collectionId);
 
     return { removed: true };
   }

@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useFeaturedCollections } from '../../use-certification';
 import { paginateItems } from '../../../services/certification-filter.service';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { EditorialBadgeItem } from '../../../types/container-logic-browse.types';
 
-// ===== Types =====
-
-export interface EditorialBadgeItem {
-  title: string;
-  desc: string;
-  color: string;
-}
+export type { EditorialBadgeItem } from '../../../types/container-logic-browse.types';
 
 // ===== Constants =====
 

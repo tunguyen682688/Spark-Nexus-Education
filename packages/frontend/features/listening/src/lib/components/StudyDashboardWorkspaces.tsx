@@ -7,7 +7,7 @@ import {
   Award,
   Layers,
 } from 'lucide-react';
-import { LISTENING_DASHBOARD_TEXT, LISTENING_ROUTES } from '../constants/listening-constants';
+import { LISTENING_DASHBOARD_TEXT, LISTENING_ROUTES } from '../constants';
 
 export interface StudyDashboardWorkspacesProps {
   materialId: string;

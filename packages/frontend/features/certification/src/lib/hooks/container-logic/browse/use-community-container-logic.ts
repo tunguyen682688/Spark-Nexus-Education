@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Star, Download, Heart, LucideIcon } from 'lucide-react';
+import { Users, Star, Download, Heart } from 'lucide-react';
 import {
   useCommunityCollections,
   useTopContributors,
@@ -10,16 +10,9 @@ import {
   paginateItems,
 } from '../../../services/certification-filter.service';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { CommunityHighlightStat } from '../../../types/container-logic-browse.types';
 
-// ===== Types =====
-
-export interface CommunityHighlightStat {
-  label: string;
-  displayValue: string;
-  description: string;
-  Icon: LucideIcon;
-  color: string;
-}
+export type { CommunityHighlightStat } from '../../../types/container-logic-browse.types';
 
 // ===== Constants =====
 

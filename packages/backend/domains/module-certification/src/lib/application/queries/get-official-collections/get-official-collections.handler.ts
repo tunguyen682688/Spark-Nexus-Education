@@ -13,7 +13,8 @@ export class GetOfficialCollectionsQueryHandler implements IQueryHandler<GetOffi
 
   async execute(query: GetOfficialCollectionsQuery) {
     const finalParams = query.queryParams ? { ...query.queryParams } : {};
-    finalParams.sortBy = 'examCount';
+    delete (finalParams as Record<string, unknown>).sort;
+    finalParams.sortBy = 'updatedAt';
     finalParams.sortDirection = SortDirection.DESC;
     const result = await this.repository.findCollections(finalParams);
     return result;

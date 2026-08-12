@@ -1,9 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   useCollectionDetailContainerLogic,
   CollectionTabType,
 } from '../../hooks/container-logic/collection/use-collection-detail-container-logic';
+import { useAddCollectionReview } from '../../hooks/use-certification';
 import { CollectionDetailHero } from '../../components/collection/CollectionDetailHero';
 import { CollectionDetailSidebar } from '../../components/collection/CollectionDetailSidebar';
 import { CollectionOverviewTab } from '../../components/collection/CollectionOverviewTab';
@@ -25,18 +25,6 @@ interface CertificationCollectionDetailContainerProps {
 export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', onStartLearning, onBack }: 
   CertificationCollectionDetailContainerProps
 ) => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/certification');
-    }
-  };
-
   const {
     activeTab,
     setActiveTab,
@@ -59,15 +47,26 @@ export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', on
     handleReport,
     handleStartLearning,
     handleStartRelatedCollectionExam,
+    relatedCollections,
+    isLoadingRelated,
     isOwner,
     handleEditCollection,
+    handleBack,
   } = useCollectionDetailContainerLogic(collectionId, onStartLearning);
+
+  const { mutate: addReview, isPending: isSubmittingReview } = useAddCollectionReview();
+
+  const handleSubmitReview = (data: { rating: number; text: string }) => {
+    addReview(
+      { collectionId: collectionViewModel.id, rating: data.rating, text: data.text },
+    );
+  };
 
   if (isError) {
     return (
       <div className="w-full py-12 flex flex-col items-center gap-4">
         <button
-          onClick={handleBack}
+          onClick={() => handleBack(onBack)}
           className="self-start inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -91,7 +90,7 @@ export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', on
     return (
       <div className="w-full space-y-6 pb-12">
         <button
-          onClick={handleBack}
+          onClick={() => handleBack(onBack)}
           className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -123,7 +122,7 @@ export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', on
       {/* BACK BUTTON */}
       <div className="flex items-center justify-between">
         <button
-          onClick={handleBack}
+          onClick={() => handleBack(onBack)}
           className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer border border-border/50 shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -190,21 +189,24 @@ export const CertificationCollectionDetailContainer = ({ collectionId = 'c1', on
 
           {activeTab === 'reviews' && (
             <CollectionReviewsTab
-              collectionId={collectionViewModel.id}
               userReviews={userReviews}
               reviewsCount={collectionViewModel.reviewsCount}
+              onSubmitReview={handleSubmitReview}
+              isSubmittingReview={isSubmittingReview}
             />
           )}
 
           {activeTab === 'activity' && (
             <CollectionActivityTab
-              collectionId={collectionViewModel.id}
-              recentActivities={recentActivities}
+              activities={recentActivities}
+              isLoading={false}
             />
           )}
 
           {activeTab === 'related' && (
             <CollectionRelatedTab
+              relatedCollections={relatedCollections}
+              isLoadingRelated={isLoadingRelated}
               onStartRelatedCollectionExam={handleStartRelatedCollectionExam}
               isStartingExamSession={isStartingExamSession}
             />

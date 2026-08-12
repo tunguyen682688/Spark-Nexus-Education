@@ -1,440 +1,235 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useGrammarLesson } from './use-grammar-lessons';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useQuestionBank } from './quiz/use-question-bank';
+import { useQuizSession, useQuizAutosave } from './quiz/use-quiz-session';
+import { useQuizTimer } from './quiz/use-quiz-timer';
+import { useQuizHandlers } from './quiz/use-quiz-handlers';
 import { useSaveGrammarTrap } from './use-grammar-traps';
-import { useCrowdsourcedQuizzes } from './use-grammar-community';
 import { toast } from 'sonner';
-import type { ExamQuestion, GrammarBlock } from '../types';
-
-// Removed mock assessment questions
+import type { ExamQuestion } from '../types';
 
 interface UseGrammarAssessmentQuizProps {
   lessonId: string;
 }
 
-interface QuizRecoveryData {
-  currentIdx?: number;
-  score?: number;
-  wrongQuestionIds?: string[];
-  timeLeft?: number;
-  isAnswered?: boolean;
-  isCorrect?: boolean | null;
-  selectedOpt?: string | null;
-  selectedWords?: string[];
-  selectedErrorWord?: string | null;
-  correctedText?: string;
-  activeQuestionsIds?: string[];
-}
-
 export function useGrammarAssessmentQuiz({ lessonId }: UseGrammarAssessmentQuizProps) {
-  const { data: lesson, isLoading: isLessonLoading } = useGrammarLesson(lessonId);
-  const { data: crowdsourcedQuizzes, isLoading: isCrowdsourcedLoading } = useCrowdsourcedQuizzes(lessonId);
+  const { questions, isLoading } = useQuestionBank({ lessonId });
   const saveTrapMutation = useSaveGrammarTrap();
 
-  // Combine database questions and fallback to mock if none exist
-  const questions = useMemo(() => {
-    const list: ExamQuestion[] = [];
-
-    // 1. Map lesson blocks of type 'quiz'
-    if (lesson?.blocks && Array.isArray(lesson.blocks)) {
-      lesson.blocks.forEach((block: GrammarBlock) => {
-        if (block.type === 'quiz') {
-          list.push({
-            id: block.id,
-            text: block.question || '',
-            type: 'MULTIPLE_CHOICE',
-            options: block.options || [],
-            answer: block.answer || '',
-            explanation: block.explanation || 'Hãy chọn đáp án đúng nhất.',
-            category: 'syntax',
-          });
-        }
-      });
-    }
-
-    // 2. Map approved crowdsourced quizzes
-    if (crowdsourcedQuizzes && Array.isArray(crowdsourcedQuizzes)) {
-      crowdsourcedQuizzes
-        .filter((quiz) => quiz.status === 'APPROVED')
-        .forEach((quiz) => {
-          const type = quiz.questionType;
-          const data = quiz.questionData;
-          list.push({
-            id: quiz.id,
-            type: type,
-            text: type === 'MULTIPLE_CHOICE'
-              ? (data.text || data.question || 'Hãy chọn đáp án đúng nhất:')
-              : type === 'SENTENCE_BUILDER'
-              ? 'Hãy click chọn các từ để sắp xếp thành câu hoàn chỉnh:'
-              : 'Tìm từ viết sai ngữ pháp trong câu dưới đây (click chọn từ sai) và nhập từ sửa lại đúng:',
-            options: data.options || [],
-            answer: data.answer || '',
-            explanation: quiz.explanation || 'Đáp án do cộng đồng đóng góp.',
-            category: 'syntax',
-            words: data.words || [],
-            sentence: data.sentence || '',
-            incorrectWord: data.incorrectWord || '',
-            correctWord: data.correctWord || '',
-          });
-        });
-    }
-
-    return list;
-  }, [lesson, crowdsourcedQuizzes]);
-
-  // States
   const [activeQuestions, setActiveQuestions] = useState<ExamQuestion[]>([]);
-  const [hasInitializedQuestions, setHasInitializedQuestions] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [savedTrapIds, setSavedTrapIds] = useState<string[]>([]);
-
-  // Trắc nghiệm
-  const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
-
-  // Sentence Builder
-  const [selectedWords, setSelectedWords] = useState<string[]>([]);
-
-  // Error Spotlight
-  const [selectedErrorWord, setSelectedErrorWord] = useState<string | null>(null);
-  const [correctedText, setCorrectedText] = useState('');
-
-  // Trạng thái chung
-  const [isAnswered, setIsAnswered] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [wrongQuestionIds, setWrongQuestionIds] = useState<string[]>([]);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes standard
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [savedTrapIds, setSavedTrapIds] = useState<string[]>([]);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionKey = `sne_quiz_session_${lessonId}`;
-
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [recoveryData, setRecoveryData] = useState<QuizRecoveryData | null>(null);
-
-  // Initialize activeQuestions once questions load
   useEffect(() => {
-    if (questions.length > 0 && !hasInitializedQuestions) {
+    if (questions.length > 0 && !hasInitialized) {
       setActiveQuestions(questions);
-      setHasInitializedQuestions(true);
-      setTimeLeft(questions.length * 60); // 1 minute per question
+      setHasInitialized(true);
     }
-  }, [questions, hasInitializedQuestions]);
+  }, [questions, hasInitialized]);
 
-  // Check for saved session on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(sessionKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as QuizRecoveryData;
-        if (
-          parsed &&
-          parsed.timeLeft &&
-          parsed.timeLeft > 0 &&
-          ((parsed.currentIdx && parsed.currentIdx > 0) || (parsed.score && parsed.score > 0) || parsed.isAnswered)
-        ) {
-          setRecoveryData(parsed);
-          setShowRecoveryModal(true);
-        }
-      } catch (err) {
-        console.error('Lỗi phân tích cú pháp phiên lưu trữ:', err);
-      }
-    }
-  }, [sessionKey]);
-
-  // Recover session handler
-  const handleRecover = () => {
-    if (recoveryData) {
-      if (recoveryData.activeQuestionsIds && recoveryData.activeQuestionsIds.length > 0) {
-        const mapped = recoveryData.activeQuestionsIds
-          .map((id) => questions.find((q) => q.id === id))
-          .filter(Boolean) as ExamQuestion[];
-        if (mapped.length > 0) {
-          setActiveQuestions(mapped);
-        }
-      } else {
-        setActiveQuestions(questions);
-      }
-
-      setCurrentIdx(recoveryData.currentIdx ?? 0);
-      setScore(recoveryData.score ?? 0);
-      setWrongQuestionIds(recoveryData.wrongQuestionIds || []);
-      setTimeLeft(recoveryData.timeLeft ?? 300);
-      setIsAnswered(recoveryData.isAnswered ?? false);
-      setIsCorrect(recoveryData.isCorrect ?? null);
-      setSelectedOpt(recoveryData.selectedOpt ?? null);
-      setSelectedWords(recoveryData.selectedWords || []);
-      setSelectedErrorWord(recoveryData.selectedErrorWord ?? null);
-      setCorrectedText(recoveryData.correctedText ?? '');
-      toast.success('Đã khôi phục phiên làm bài quiz thành công!');
-    }
-    setShowRecoveryModal(false);
-  };
-
-  // Discard session handler
-  const handleDiscard = () => {
-    localStorage.removeItem(sessionKey);
-    setShowRecoveryModal(false);
-    setActiveQuestions(questions);
-    toast.info('Bắt đầu làm bài quiz mới!');
-  };
-
-  // Autosave current state to localStorage
-  useEffect(() => {
-    if (
-      !isCompleted &&
-      !showRecoveryModal &&
-      timeLeft > 0 &&
-      (currentIdx > 0 || isAnswered || score > 0) &&
-      activeQuestions.length > 0
-    ) {
-      localStorage.setItem(
-        sessionKey,
-        JSON.stringify({
-          currentIdx,
-          score,
-          wrongQuestionIds,
-          timeLeft,
-          isAnswered,
-          isCorrect,
-          selectedOpt,
-          selectedWords,
-          selectedErrorWord,
-          correctedText,
-          activeQuestionsIds: activeQuestions.map((q) => q.id),
-        })
-      );
-    }
-  }, [
-    currentIdx,
-    score,
-    wrongQuestionIds,
-    timeLeft,
-    isAnswered,
-    isCorrect,
-    selectedOpt,
-    selectedWords,
-    selectedErrorWord,
-    correctedText,
+  const session = useQuizSession({
+    lessonId,
     isCompleted,
-    showRecoveryModal,
-    sessionKey,
-    activeQuestions,
-  ]);
+    showRecoveryModal: false,
+    activeQuestionIds: activeQuestions.map((q) => q.id),
+    questions,
+  });
 
-  // Clean up session on quiz completion
-  useEffect(() => {
-    if (isCompleted) {
-      localStorage.removeItem(sessionKey);
-    }
-  }, [isCompleted, sessionKey]);
+  const handleComplete = useCallback(() => setIsCompleted(true), []);
 
-  // Timer loop
-  useEffect(() => {
-    if (isCompleted || showRecoveryModal || activeQuestions.length === 0) return;
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          setIsCompleted(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isCompleted, showRecoveryModal, activeQuestions]);
+  const { timeLeft, setTimeLeft } = useQuizTimer({
+    isCompleted,
+    isPaused: session.showRecoveryModal,
+    initialTime: activeQuestions.length * 60 || 300,
+    onComplete: handleComplete,
+  });
 
   const currentQuestion = activeQuestions[currentIdx] || questions[0];
 
-  // Multiple Choice Select Option
-  const handleSelectOption = (opt: string) => {
-    if (isAnswered || !currentQuestion) return;
-    setSelectedOpt(opt);
-    setIsAnswered(true);
+  const handlers = useQuizHandlers({
+    currentQuestion,
+    isAnswered,
+  });
 
-    const correct = opt === currentQuestion.answer;
-    setIsCorrect(correct);
+  useQuizAutosave({
+    lessonId,
+    isCompleted,
+    showRecoveryModal: session.showRecoveryModal,
+    state: {
+      currentIdx,
+      score,
+      wrongQuestionIds,
+      timeLeft,
+      isAnswered,
+      isCorrect: handlers.isCorrect,
+      selectedOpt: handlers.selectedOpt,
+      selectedWords: handlers.selectedWords,
+      selectedErrorWord: handlers.selectedErrorWord,
+      correctedText: handlers.correctedText,
+      activeQuestionsIds: activeQuestions.map((q) => q.id),
+    },
+  });
 
+  const updateScore = useCallback((correct: boolean) => {
     if (correct) {
       setScore((prev) => prev + 1);
-    } else {
-      setWrongQuestionIds((prev) => [...prev, currentQuestion.id]);
     }
-  };
+  }, []);
 
-  // Sentence Builder Click Word
-  const handleWordClick = (word: string) => {
-    if (isAnswered) return;
-    setSelectedWords((prev) => [...prev, word]);
-  };
+  const handleAnswerAndTrack = useCallback(
+    (correct: boolean, question: ExamQuestion) => {
+      updateScore(correct);
+      if (!correct) {
+        setWrongQuestionIds((prev) => [...prev, question.id]);
+      }
+      setIsAnswered(true);
+    },
+    [updateScore]
+  );
 
-  const handleRemoveWord = (wordIndex: number) => {
-    if (isAnswered) return;
-    setSelectedWords((prev) => prev.filter((_, idx) => idx !== wordIndex));
-  };
+  const handleSelectOption = useCallback(
+    (opt: string) => {
+      const correct = handlers.handleSelectOption(opt);
+      if (currentQuestion) {
+        handleAnswerAndTrack(correct, currentQuestion);
+      }
+    },
+    [handlers, currentQuestion, handleAnswerAndTrack]
+  );
 
-  const handleClearWords = () => {
-    if (isAnswered) return;
-    setSelectedWords([]);
-  };
-
-  const handleCheckSentenceBuilder = () => {
-    if (isAnswered || !currentQuestion) return;
-    setIsAnswered(true);
-
-    const rawAnswer = selectedWords.join(' ').replace(/\s+/g, ' ').trim();
-    const cleanAnswer = rawAnswer.replace(/\s+([.,!?;])/g, '$1');
-    const correct = cleanAnswer.toLowerCase() === currentQuestion.answer.toLowerCase();
-    setIsCorrect(correct);
-
-    if (correct) {
-      setScore((prev) => prev + 1);
-    } else {
-      setWrongQuestionIds((prev) => [...prev, currentQuestion.id]);
+  const handleCheckSentenceBuilder = useCallback(() => {
+    const correct = handlers.handleCheckSentenceBuilder();
+    if (currentQuestion) {
+      handleAnswerAndTrack(correct, currentQuestion);
     }
-  };
+  }, [handlers, currentQuestion, handleAnswerAndTrack]);
 
-  // Error Spotlight Click Word
-  const handleSelectErrorWord = (word: string) => {
-    if (isAnswered) return;
-    const cleanWord = word.replace(/[.,!?;]/g, '');
-    setSelectedErrorWord(cleanWord);
-  };
-
-  const handleCheckErrorSpotlight = () => {
-    if (isAnswered || !selectedErrorWord || !correctedText || !currentQuestion) return;
-    setIsAnswered(true);
-
-    const isTargetCorrect = selectedErrorWord.toLowerCase() === currentQuestion.incorrectWord?.toLowerCase();
-    const isCorrectionCorrect = correctedText.trim().toLowerCase() === currentQuestion.correctWord?.toLowerCase();
-
-    const correct = isTargetCorrect && isCorrectionCorrect;
-    setIsCorrect(correct);
-
-    if (correct) {
-      setScore((prev) => prev + 1);
-    } else {
-      setWrongQuestionIds((prev) => [...prev, currentQuestion.id]);
+  const handleCheckErrorSpotlight = useCallback(() => {
+    const correct = handlers.handleCheckErrorSpotlight();
+    if (currentQuestion) {
+      handleAnswerAndTrack(correct, currentQuestion);
     }
-  };
+  }, [handlers, currentQuestion, handleAnswerAndTrack]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIdx < activeQuestions.length - 1) {
       setCurrentIdx((prev) => prev + 1);
-
-      // Reset individual states
-      setSelectedOpt(null);
-      setSelectedWords([]);
-      setSelectedErrorWord(null);
-      setCorrectedText('');
       setIsAnswered(false);
-      setIsCorrect(null);
+      handlers.resetAnswer();
     } else {
       setIsCompleted(true);
     }
-  };
+  }, [currentIdx, activeQuestions.length, handlers]);
 
-  const resetQuiz = () => {
+  const resetQuiz = useCallback(() => {
     setActiveQuestions(questions);
     setCurrentIdx(0);
-
-    // Reset individual states
-    setSelectedOpt(null);
-    setSelectedWords([]);
-    setSelectedErrorWord(null);
-    setCorrectedText('');
-    setIsAnswered(false);
-    setIsCorrect(null);
-
     setScore(0);
     setIsCompleted(false);
     setWrongQuestionIds([]);
+    setIsAnswered(false);
     setTimeLeft(questions.length * 60);
-  };
+    handlers.resetAnswer();
+  }, [questions, handlers, setTimeLeft]);
 
-  const retryMistakes = () => {
+  const retryMistakes = useCallback(() => {
     const mistakes = questions.filter((q) => wrongQuestionIds.includes(q.id));
     setActiveQuestions(mistakes);
     setCurrentIdx(0);
-
-    // Reset individual states
-    setSelectedOpt(null);
-    setSelectedWords([]);
-    setSelectedErrorWord(null);
-    setCorrectedText('');
-    setIsAnswered(false);
-    setIsCorrect(null);
-
     setScore(0);
     setIsCompleted(false);
     setWrongQuestionIds([]);
+    setIsAnswered(false);
     setTimeLeft(mistakes.length * 60);
-  };
+    handlers.resetAnswer();
+  }, [questions, wrongQuestionIds, handlers, setTimeLeft]);
 
-  const handleSaveTrap = async (q: ExamQuestion) => {
-    try {
-      await saveTrapMutation.mutateAsync({
-        questionId: q.id,
-        questionText: q.type === 'ERROR_SPOTLIGHT' ? q.sentence || q.text : q.text,
-        questionType: q.type || 'MULTIPLE_CHOICE',
-        questionData: {
-          options: q.options || [],
-          words: q.words || [],
-          sentence: q.sentence || '',
-          incorrectWord: q.incorrectWord || '',
-          correctWord: q.correctWord || '',
-        },
-        category: q.category || 'syntax',
-        userAnswer:
-          q.type === 'ERROR_SPOTLIGHT'
-            ? `${q.incorrectWord} -> ${q.correctWord}`
-            : 'Đã trả lời chưa chính xác',
-        correctAnswer: q.answer,
-        explanation: q.explanation,
-      });
-      setSavedTrapIds((prev) => [...prev, q.id]);
-      toast.success('Đã lưu lỗi sai vào Sổ Tay Bẫy Ngữ Pháp của bạn!');
-    } catch {
-      toast.error('Có lỗi xảy ra khi lưu bẫy ngữ pháp.');
-    }
-  };
+  const handleSaveTrap = useCallback(
+    async (q: ExamQuestion) => {
+      try {
+        await saveTrapMutation.mutateAsync({
+          questionId: q.id,
+          questionText: q.type === 'ERROR_SPOTLIGHT' ? q.sentence || q.text : q.text,
+          questionType: q.type || 'MULTIPLE_CHOICE',
+          questionData: {
+            options: q.options || [],
+            words: q.words || [],
+            sentence: q.sentence || '',
+            incorrectWord: q.incorrectWord || '',
+            correctWord: q.correctWord || '',
+          },
+          category: q.category || 'syntax',
+          userAnswer:
+            q.type === 'ERROR_SPOTLIGHT'
+              ? `${q.incorrectWord} -> ${q.correctWord}`
+              : 'Đã trả lời chưa chính xác',
+          correctAnswer: q.answer,
+          explanation: q.explanation,
+        });
+        setSavedTrapIds((prev) => [...prev, q.id]);
+        toast.success('Đã lưu lỗi sai vào Sổ Tay Bẫy Ngữ Pháp của bạn!');
+      } catch {
+        toast.error('Có lỗi xảy ra khi lưu bẫy ngữ pháp.');
+      }
+    },
+    [saveTrapMutation]
+  );
 
   return {
-    isLoading: isLessonLoading || isCrowdsourcedLoading,
+    isLoading,
     questions,
     activeQuestions,
     currentIdx,
     currentQuestion,
-    selectedOpt,
-    selectedWords,
-    selectedErrorWord,
-    correctedText,
+    selectedOpt: handlers.selectedOpt,
+    selectedWords: handlers.selectedWords,
+    selectedErrorWord: handlers.selectedErrorWord,
+    correctedText: handlers.correctedText,
     isAnswered,
-    isCorrect,
+    isCorrect: handlers.isCorrect,
     score,
     isCompleted,
     wrongQuestionIds,
     timeLeft,
-    showRecoveryModal,
-    recoveryData,
+    showRecoveryModal: session.showRecoveryModal,
+    recoveryData: session.recoveryData,
     savedTrapIds,
-    setCorrectedText,
+    setCorrectedText: handlers.setCorrectedText,
     handleSelectOption,
-    handleWordClick,
-    handleRemoveWord,
-    handleClearWords,
+    handleWordClick: handlers.handleWordClick,
+    handleRemoveWord: handlers.handleRemoveWord,
+    handleClearWords: handlers.handleClearWords,
     handleCheckSentenceBuilder,
-    handleSelectErrorWord,
+    handleSelectErrorWord: handlers.handleSelectErrorWord,
     handleCheckErrorSpotlight,
     handleNext,
     resetQuiz,
     retryMistakes,
     handleSaveTrap,
-    handleRecover,
-    handleDiscard,
+    handleRecover: () =>
+      session.handleRecover(() => {
+        if (recoveryData?.activeQuestionsIds && Array.isArray(recoveryData.activeQuestionsIds)) {
+          const mapped = recoveryData.activeQuestionsIds
+            .map((id) => questions.find((q) => q.id === id))
+            .filter(Boolean) as ExamQuestion[];
+          if (mapped.length > 0) setActiveQuestions(mapped);
+        } else {
+          setActiveQuestions(questions);
+        }
+        setCurrentIdx(recoveryData?.currentIdx ?? 0);
+        setScore(recoveryData?.score ?? 0);
+        setWrongQuestionIds(recoveryData?.wrongQuestionIds || []);
+        setTimeLeft(recoveryData?.timeLeft ?? 300);
+        setIsAnswered(recoveryData?.isAnswered ?? false);
+      }),
+    handleDiscard: () =>
+      session.handleDiscard(() => {
+        setActiveQuestions(questions);
+        toast.info('Bắt đầu làm bài quiz mới!');
+      }),
   };
 }

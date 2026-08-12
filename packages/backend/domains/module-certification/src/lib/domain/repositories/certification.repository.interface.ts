@@ -8,12 +8,8 @@ import { QuestionChoiceEntity } from '../entities/question-choice.entity';
 import { SessionAnswerEntity } from '../entities/session-answer.entity';
 import { SessionViolationEntity } from '../entities/session-violation.entity';
 import { ExamSectionEntity } from '../entities/exam-section.entity';
-import { ExamRuleEntity } from '../entities/exam-rule.entity';
 import { QuestionEntity } from '../entities/question.entity';
 import { QuestionMetadataEntity } from '../entities/question-metadata.entity';
-import { QuestionHintEntity } from '../entities/question-hint.entity';
-import { QuestionMediaEntity } from '../entities/question-media.entity';
-import { AutosaveSnapshotEntity } from '../entities/autosave-snapshot.entity';
 import { SkillResultEntity } from '../entities/skill-result.entity';
 import { QuestionResultEntity } from '../entities/question-result.entity';
 import { AiEvaluationEntity } from '../entities/ai-evaluation.entity';
@@ -74,13 +70,10 @@ export interface ICertificationRepository {
 
   // Exam Section Operations
   findSectionsByExamId(examId: string): Promise<ExamSectionEntity[]>;
+  findSectionById(id: string): Promise<ExamSectionEntity | null>;
   saveExamSection(section: ExamSectionEntity): Promise<ExamSectionEntity>;
   deleteExamSection(id: string): Promise<void>;
-
-  // Exam Rule Operations
-  findRulesByExamId(examId: string): Promise<ExamRuleEntity[]>;
-  saveExamRule(rule: ExamRuleEntity): Promise<ExamRuleEntity>;
-  deleteExamRule(id: string): Promise<void>;
+  deleteAllSectionsByExamId(examId: string): Promise<void>;
 
   // Exam Session Operations
   findSessionById(id: string): Promise<ExamSessionEntity | null>;
@@ -116,6 +109,7 @@ export interface ICertificationRepository {
 
   // Question Operations
   findQuestionById(id: string): Promise<QuestionEntity | null>;
+  findQuestionsByIds(ids: string[]): Promise<QuestionEntity[]>;
   findQuestionVersionsByQuestionId(questionId: string): Promise<Array<{
     id: string;
     questionId: string;
@@ -132,6 +126,7 @@ export interface ICertificationRepository {
     question: QuestionEntity;
     choices: QuestionChoiceEntity[];
     metadata: QuestionMetadataEntity | null;
+    examQuestions: ExamQuestionEntity[];
   } | null>;
   saveQuestionWithChoices(
     question: QuestionEntity,
@@ -148,27 +143,48 @@ export interface ICertificationRepository {
   saveQuestionChoice(choice: QuestionChoiceEntity): Promise<QuestionChoiceEntity>;
   deleteQuestionChoice(id: string): Promise<void>;
 
-  // Question Hint Operations
-  findHintsByQuestionId(questionId: string): Promise<QuestionHintEntity[]>;
-  saveQuestionHint(hint: QuestionHintEntity): Promise<QuestionHintEntity>;
-  deleteQuestionHint(id: string): Promise<void>;
-
-  // Question Media Operations
-  findMediaByQuestionId(questionId: string): Promise<QuestionMediaEntity[]>;
-  saveQuestionMedia(media: QuestionMediaEntity): Promise<QuestionMediaEntity>;
-  deleteQuestionMedia(id: string): Promise<void>;
-
   // Answers, Questions, Choices, Violations
   findAnswersBySessionId(sessionId: string): Promise<SessionAnswerEntity[]>;
-  findQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]>;
+  findExamQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]>;
+  findExamQuestionsByExamIdAndSectionId(examId: string, sectionId: string): Promise<ExamQuestionEntity[]>;
+  findSectionQuestionsPaginated(params: {
+    examId: string;
+    sectionId: string;
+    page: number;
+    pageSize: number;
+    search?: string;
+  }): Promise<{
+    questions: Array<{
+      examQuestionId: string;
+      id: string;
+      number: number;
+      title: string;
+      partTag: string;
+      type: string;
+      difficulty: string;
+      points: number;
+      imageUrl: string | null;
+      audioUrl: string | null;
+      partNumber: number | null;
+      // From QuestionMetadata (question-level)
+      passageId: string | null;
+      modelAnswer: string | null;
+      formatMetadata: unknown | null;
+    }>;
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }>;
   findExamQuestionsByQuestionId(questionId: string): Promise<ExamQuestionEntity[]>;
+  findExamQuestionByExamAndQuestion(examId: string, questionId: string): Promise<ExamQuestionEntity | null>;
+  saveExamQuestion(entity: ExamQuestionEntity): Promise<ExamQuestionEntity>;
+  deleteExamQuestion(examId: string, questionId: string): Promise<boolean>;
+  countExamQuestionsByExamId(examId: string): Promise<number>;
+  countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number>;
   findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]>;
   saveSessionAnswer(answer: SessionAnswerEntity): Promise<SessionAnswerEntity>;
   saveViolation(violation: SessionViolationEntity): Promise<SessionViolationEntity>;
-
-  // Autosave Snapshot Operations
-  findSnapshotsBySessionId(sessionId: string): Promise<AutosaveSnapshotEntity[]>;
-  saveAutosaveSnapshot(snapshot: AutosaveSnapshotEntity): Promise<AutosaveSnapshotEntity>;
 
   // Skill Result Operations
   findSkillResultsByResultId(resultId: string): Promise<SkillResultEntity[]>;

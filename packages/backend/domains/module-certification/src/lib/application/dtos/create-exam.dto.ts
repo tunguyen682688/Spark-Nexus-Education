@@ -57,6 +57,15 @@ export class CreateExamDto {
   certificationType?: string;
 
   @ApiPropertyOptional({
+    description: 'Exam level (beginner, intermediate, advanced)',
+    example: 'intermediate',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  level?: string;
+
+  @ApiPropertyOptional({
     description: 'Chapter ID to assign this exam to',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
@@ -71,8 +80,11 @@ export class CreateExamDto {
   @IsOptional()
   sections?: Array<{
     title: string;
+    subtitle?: string | null;
     sectionType: string;
     instruction?: string;
     durationMinutes?: number;
+    questionCount?: number;
+    isBreak?: boolean;
   }>;
 }

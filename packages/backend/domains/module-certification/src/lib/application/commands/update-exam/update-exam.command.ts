@@ -1,6 +1,6 @@
 import { Command } from '@nestjs/cqrs';
 
-export class UpdateExamCommand extends Command<{ id: string }> {
+export class UpdateExamCommand extends Command<{ id: string; collectionId: string }> {
   constructor(
     public readonly examId: string,
     public readonly userId: string,
@@ -9,7 +9,10 @@ export class UpdateExamCommand extends Command<{ id: string }> {
     public readonly duration?: number,
     public readonly totalQuestions?: number,
     public readonly maxScore?: number,
-    public readonly passScore?: number
+    public readonly passScore?: number,
+    public readonly examType?: string,
+    public readonly publishStatus?: string,
+    public readonly certificationType?: string
   ) {
     super();
   }

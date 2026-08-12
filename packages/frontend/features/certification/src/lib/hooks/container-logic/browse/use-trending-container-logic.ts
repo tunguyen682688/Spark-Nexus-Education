@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTrendingCollections } from '../../use-certification';
 import { paginateItems } from '../../../services/certification-filter.service';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { WhyTrendingReason } from '../../../types/container-logic-browse.types';
 
-// ===== Types =====
-
-export interface WhyTrendingReason {
-  title: string;
-  desc: string;
-  color: string;
-}
+export type { WhyTrendingReason } from '../../../types/container-logic-browse.types';
 
 // ===== Constants =====
 

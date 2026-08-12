@@ -4,24 +4,9 @@ import { usePracticeHistoryData } from '../../use-certification';
 import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 import type { PracticeHistoryResponse } from '../../../types';
+import type { PracticeHistorySessionItem } from '../../../types/container-logic-learning.types';
 
-// ===== Types =====
-
-export interface PracticeHistorySessionItem {
-  id: string;
-  code: string;
-  title: string;
-  type: 'Mock Test' | 'Practice by Part' | 'AI Practice' | 'Quiz';
-  typeBadgeClass: string;
-  iconBgClass: string;
-  iconType: 'document' | 'headphones' | 'edit' | 'quiz' | 'mic';
-  examPart: string;
-  scoreDisplay: string;
-  scoreSub: string;
-  scoreColor: string;
-  timeSpent: string;
-  dateDisplay: string;
-}
+export type { PracticeHistorySessionItem } from '../../../types/container-logic-learning.types';
 
 // ===== Hook =====
 

@@ -7,6 +7,7 @@ export class QuestionEntity extends AggregateRoot<string> {
     private content: string,
     private type: string,
     private difficulty: string,
+    private category: string | null,
     private status: string,
     private createdBy: string | null,
     private updatedBy: string | null,
@@ -24,6 +25,7 @@ export class QuestionEntity extends AggregateRoot<string> {
     content: string;
     type: string;
     difficulty: string;
+    category?: string | null;
     status?: string;
     createdBy?: string | null;
     updatedBy?: string | null;
@@ -39,6 +41,7 @@ export class QuestionEntity extends AggregateRoot<string> {
       params.content,
       params.type,
       params.difficulty,
+      params.category ?? null,
       params.status ?? 'draft',
       params.createdBy ?? null,
       params.updatedBy ?? null,
@@ -65,6 +68,10 @@ export class QuestionEntity extends AggregateRoot<string> {
     return this.difficulty;
   }
 
+  getCategory(): string | null {
+    return this.category;
+  }
+
   getStatus(): string {
     return this.status;
   }
@@ -86,6 +93,7 @@ export class QuestionEntity extends AggregateRoot<string> {
     content?: string;
     type?: string;
     difficulty?: string;
+    category?: string | null;
     status?: string;
     updatedBy?: string | null;
   }): void {
@@ -93,6 +101,7 @@ export class QuestionEntity extends AggregateRoot<string> {
     if (params.content !== undefined) this.content = params.content;
     if (params.type !== undefined) this.type = params.type;
     if (params.difficulty !== undefined) this.difficulty = params.difficulty;
+    if (params.category !== undefined) this.category = params.category;
     if (params.status !== undefined) this.status = params.status;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
     this.markAsUpdated();
@@ -111,6 +120,7 @@ export class QuestionEntity extends AggregateRoot<string> {
       content: this.content,
       type: this.type,
       difficulty: this.difficulty,
+      category: this.category,
       status: this.status,
       createdBy: this.createdBy,
       updatedBy: this.updatedBy,

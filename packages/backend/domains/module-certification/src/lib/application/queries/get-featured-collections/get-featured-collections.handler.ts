@@ -15,10 +15,11 @@ export class GetFeaturedCollectionsQueryHandler implements IQueryHandler<GetFeat
     const { exam, search, queryParams } = query;
 
     const finalParams = queryParams ? { ...queryParams } : {};
+    delete (finalParams as Record<string, unknown>).sort;
     if (search || (exam && exam !== 'All')) {
       finalParams.search = search || (exam && exam !== 'All' ? exam : undefined);
     }
-    finalParams.sortBy = 'examCount';
+    finalParams.sortBy = 'updatedAt';
     finalParams.sortDirection = SortDirection.DESC;
 
     const result = await this.repository.findCollections(finalParams);

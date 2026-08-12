@@ -5,19 +5,9 @@ import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { paginateItems } from '../../../services/certification-filter.service';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 import type { DownloadsResponse } from '../../../types';
+import type { DownloadFileItem } from '../../../types/container-logic-library.types';
 
-export interface DownloadFileItem {
-  id: string;
-  name: string;
-  subtitle: string;
-  fileFormat: 'PDF' | 'DOCX' | 'XLSX' | 'ZIP' | 'MP3';
-  fileFormatBadgeClass: string;
-  fileIconBgClass: string;
-  downloadedOn: string;
-  size: string;
-  expiresOn: string;
-  category: 'Tests' | 'Collections' | 'Vocabulary' | 'Reports';
-}
+export type { DownloadFileItem } from '../../../types/container-logic-library.types';
 
 export function useDownloadsContainerLogic() {
   const navigate = useNavigate();

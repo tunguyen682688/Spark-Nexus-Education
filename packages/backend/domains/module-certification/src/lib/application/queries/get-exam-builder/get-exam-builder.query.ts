@@ -4,6 +4,10 @@ export interface ExamBuilderResult {
   id: string;
   status: string;
   lastAutosaved: string;
+  examType: string;
+  certificationType: string | null;
+  collectionId: string;
+  collectionTitle: string;
   settings: {
     title: string;
     description: string;
@@ -19,6 +23,7 @@ export interface ExamBuilderResult {
     number: number;
     title: string;
     subtitle: string;
+    sectionType: string;
     questionCount: number;
     durationMinutes: number;
     isBreak: boolean;

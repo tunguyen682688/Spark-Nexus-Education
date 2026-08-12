@@ -7,7 +7,7 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import { Button } from '@spark-nest-ed/frontend-shared-components';
-import { LISTENING_DASHBOARD_TEXT } from '../constants/listening-constants';
+import { LISTENING_DASHBOARD_TEXT } from '../constants';
 
 export interface StudyDashboardMaterialInfoProps {
   material: any;

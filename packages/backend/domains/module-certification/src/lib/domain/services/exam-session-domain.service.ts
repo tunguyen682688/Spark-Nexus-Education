@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import * as certificationRepoInterface from '../repositories/certification.repository.interface';
 import { ExamResultEntity } from '../entities/exam-result.entity';
 import { SessionAnswerEntity } from '../entities/session-answer.entity';
@@ -32,7 +33,7 @@ export class ExamSessionDomainService {
     }
 
     // 3. Fetch Questions and User Answers
-    const examQuestions = await this.certificationRepo.findQuestionsByExamId(exam.id);
+    const examQuestions = await this.certificationRepo.findExamQuestionsByExamId(exam.id);
     const userAnswers = await this.certificationRepo.findAnswersBySessionId(session.id);
 
     let totalScore = 0;
@@ -88,7 +89,7 @@ export class ExamSessionDomainService {
     // 6. Create and save the Exam Result
     const passed = totalScore >= exam.getPassScore();
     const result = ExamResultEntity.create({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       sessionId: session.id,
       examId: exam.id,
       userId: session.getUserId(),

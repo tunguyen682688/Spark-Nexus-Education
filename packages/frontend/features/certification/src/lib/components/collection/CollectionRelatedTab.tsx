@@ -1,19 +1,21 @@
-import { useFeaturedCollections } from '../../hooks/use-certification';
 import { FeaturedCollectionCard } from '../exam/FeaturedCollectionCard';
 import { CardSkeleton } from '../shared/LoadingSkeleton';
 import { ComingSoonSection } from '../shared/ComingSoonSection';
+import type { ExamCollection } from '../../types';
 
 interface CollectionRelatedTabProps {
+  relatedCollections: ExamCollection[];
+  isLoadingRelated: boolean;
   onStartRelatedCollectionExam: (relatedCollectionId: string) => void;
   isStartingExamSession: boolean;
 }
 
 export const CollectionRelatedTab = ({
+  relatedCollections = [],
+  isLoadingRelated,
   onStartRelatedCollectionExam,
   isStartingExamSession,
 }: CollectionRelatedTabProps) => {
-  const { data: relatedCollections = [], isLoading: isLoadingRelated } =
-    useFeaturedCollections();
 
   return (
     <div className="space-y-4">

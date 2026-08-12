@@ -35,6 +35,10 @@ import {
   GetSavedCollectionsQueryHandler,
   GetCollectionReviewsQueryHandler,
   GetCollectionDiscussionsQueryHandler,
+  GetSectionQuestionsQueryHandler,
+  GetClonedCollectionsQueryHandler,
+  GetCollectionActivitiesQueryHandler,
+  GetInProgressSessionsQueryHandler,
 } from './application/queries';
 
 // Command Handlers
@@ -63,6 +67,9 @@ import {
   AddCollectionReviewCommandHandler,
   AddCollectionDiscussionCommandHandler,
   SyncChaptersCommandHandler,
+  SaveExamSectionsCommandHandler,
+  LinkQuestionToExamCommandHandler,
+  UnlinkQuestionFromExamCommandHandler,
 } from './application/commands';
 
 // Repository Implementations
@@ -106,6 +113,10 @@ const QueryHandlers = [
   GetSavedCollectionsQueryHandler,
   GetCollectionReviewsQueryHandler,
   GetCollectionDiscussionsQueryHandler,
+  GetSectionQuestionsQueryHandler,
+  GetClonedCollectionsQueryHandler,
+  GetCollectionActivitiesQueryHandler,
+  GetInProgressSessionsQueryHandler,
 ];
 
 const CommandHandlers = [
@@ -133,6 +144,9 @@ const CommandHandlers = [
   AddCollectionReviewCommandHandler,
   AddCollectionDiscussionCommandHandler,
   SyncChaptersCommandHandler,
+  SaveExamSectionsCommandHandler,
+  LinkQuestionToExamCommandHandler,
+  UnlinkQuestionFromExamCommandHandler,
 ];
 
 @Module({

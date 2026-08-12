@@ -3,24 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useFavoritesData, useAddFavorite, useRemoveFavorite } from '../../use-certification';
 import { paginateItems } from '../../../services/certification-filter.service';
 import type { FavoritesResponse } from '../../../types';
+import type { FavoriteItem } from '../../../types/container-logic-library.types';
 
-export interface FavoriteItem {
-  id: string;
-  title: string;
-  type: 'Collection' | 'Test' | 'Question Set' | 'Vocabulary Set';
-  itemCountText: string;
-  progressPercent: number;
-  progressText: string;
-  progressBarClass: string;
-  stat1Label: string;
-  stat1Value: string;
-  stat2Label: string;
-  stat2Value: string;
-  addedDate: string;
-  iconType: 'ielts' | 'toeic' | 'listening' | 'reading' | 'vocabulary' | 'speaking' | 'grammar';
-  bannerBgClass: string;
-  isFavorited: boolean;
-}
+export type { FavoriteItem } from '../../../types/container-logic-library.types';
 
 export function useFavoritesContainerLogic() {
   const navigate = useNavigate();

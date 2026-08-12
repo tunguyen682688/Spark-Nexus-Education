@@ -1,0 +1,90 @@
+export const CERTIFICATION_UI_TEXT = {
+  editor: {
+    draftRestored: 'Khôi phục bản nháp',
+    draftRestoredDesc: 'Bản nháp trước đó đã được khôi phục thành công.',
+    unsavedChanges: 'Bạn có thay đổi chưa lưu. Bạn có muốn lưu trước khi rời đi?',
+    offlineSaveError: 'Không thể lưu khi mất kết nối. Thay đổi đã được lưu tạm vào trình duyệt.',
+  },
+  explanationTab: {
+    explanationLabel: 'Explanation',
+    explanationPlaceholder: 'Enter explanation for this question...',
+    referenceLabel: 'Reference',
+    typeLabel: 'Type:',
+    passageSourceLabel: 'Passage Source:',
+    highlightLabel: 'Highlight:',
+  },
+  tagsSkillsTab: {
+    tagsLabel: 'Tags',
+    addTagPlaceholder: 'Add tag (press Enter)',
+    skillsLabel: 'Skills',
+    addSkillPlaceholder: 'Add skill (press Enter)',
+    cognitiveLevelLabel: 'Cognitive Level',
+    cognitiveLevels: ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'],
+  },
+  historyTab: {
+    loadingText: 'Loading history...',
+    emptyState: 'No version history available yet.',
+    versionPrefix: 'Version',
+    currentLabel: '(Current)',
+    byPrefix: 'By:',
+  },
+  placeholderPages: {
+    createExam: {
+      title: 'Create Exam',
+      description: 'This feature is under development. You will be able to create new exams with AI assistance soon.',
+      backBtn: 'Back to Creator Dashboard',
+    },
+    aiGenerator: {
+      title: 'AI Question Generator',
+      description: 'Generate questions automatically using AI. This feature is under development.',
+      backBtn: 'Back to Creator Dashboard',
+    },
+    importQuestions: {
+      title: 'Import Questions',
+      description: 'Import questions from Excel, CSV, or other formats. This feature is under development.',
+      backBtn: 'Back to Creator Dashboard',
+    },
+    createCollection: {
+      title: 'Create Collection',
+      description: 'Create a new collection of exams and practice materials. This feature is under development.',
+      backBtn: 'Back to Creator Dashboard',
+    },
+    analytics: {
+      title: 'Analytics Dashboard',
+      description: 'View detailed analytics and performance metrics for your exams. This feature is under development.',
+      backBtn: 'Back to Creator Dashboard',
+    },
+  },
+  chartTabs: {
+    attempts: 'Attempts',
+    averageScore: 'Average Score',
+    likes: 'Likes',
+    revenue: 'Revenue',
+  },
+  timeframeOptions: {
+    last7Days: 'Last 7 Days',
+    last30Days: 'Last 30 Days',
+    thisMonth: 'This Month',
+    lastMonth: 'Last Month',
+    thisYear: 'This Year',
+  },
+  dropdownItems: {
+    newExam: 'New Exam',
+    aiQuestionGenerator: 'AI Question Generator',
+    importQuestions: 'Import Questions',
+    newCollection: 'New Collection',
+  },
+  examBuilderTabs: {
+    questions: 'Questions',
+    instructions: 'Instructions',
+    timing: 'Timing',
+  },
+  collectionEditorTabs: {
+    structure: 'Structure',
+    settings: 'Settings',
+    collaborators: 'Collaborators',
+  },
+  examBuilderLevels: ['Intermediate', 'Beginner', 'Advanced'],
+  examBuilderLanguages: ['English', 'Vietnamese'],
+  collectionEditorLevels: ['Beginner', 'Beginner to Advanced', 'Intermediate', 'Advanced'],
+} as const;

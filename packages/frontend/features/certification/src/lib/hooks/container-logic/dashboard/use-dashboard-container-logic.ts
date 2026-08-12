@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Award, Trophy, Target, ShieldCheck, LucideIcon } from 'lucide-react';
+import { Clock, Award, Trophy, Target, ShieldCheck } from 'lucide-react';
 import {
   useCertificationDashboard,
   useFeaturedCollections,
@@ -8,16 +8,9 @@ import {
   useTopContributors,
 } from '../../use-certification';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { DashboardStatCard } from '../../../types/container-logic-dashboard.types';
 
-export interface DashboardStatCard {
-  title: string;
-  value: string;
-  subtitle: string;
-  change: string;
-  trend: 'up' | 'neutral' | 'down';
-  icon: LucideIcon;
-  color: string;
-}
+export type { DashboardStatCard } from '../../../types/container-logic-dashboard.types';
 
 export function useDashboardContainerLogic() {
   const navigate = useNavigate();

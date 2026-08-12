@@ -46,6 +46,26 @@ export interface QuestionBuilderResponseDto {
   usedIn: {
     examTitle: string;
     sectionInfo: string;
+    collectionId: string | null;
+    collectionTitle: string | null;
+  } | null;
+  // Exam-specific format fields (from ExamQuestion)
+  examFormatFields: {
+    audioUrl: string | null;
+    imageUrl: string | null;
+    passageId: string | null;
+    passageText: string | null;
+    partNumber: number | null;
+    gapNumber: number | null;
+    wordRoot: string | null;
+    keyWord: string | null;
+    writingTaskType: string | null;
+    speakingPrompt: string | null;
+    modelAnswer: string | null;
+    rubric: unknown | null;
+    matchingPairs: unknown | null;
+    isGridIn: boolean;
+    formatMetadata: unknown | null;
   } | null;
 }
 
@@ -65,7 +85,7 @@ export class GetQuestionBuilderQueryHandler
       throw new NotFoundException(`Question ${query.questionId} not found`);
     }
 
-    const { question, choices, metadata } = data;
+    const { question, choices, metadata, examQuestions } = data;
 
     // Map choices to response format with labels
     const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
@@ -83,16 +103,53 @@ export class GetQuestionBuilderQueryHandler
       checks: [],
     };
 
-    // Get exam context
+    // Get exam context + format fields from first ExamQuestion link
     let usedIn: QuestionBuilderResponseDto['usedIn'] = null;
-    const examQuestions = await this.repo.findExamQuestionsByQuestionId(query.questionId);
+    let examFormatFields: QuestionBuilderResponseDto['examFormatFields'] = null;
+
     if (examQuestions.length > 0) {
-      const examId = examQuestions[0].getExamId();
+      const eq = examQuestions[0];
+      const examId = eq.getExamId();
       const exam = await this.repo.findExamById(examId);
+
       if (exam) {
+        const collectionId = exam.getCollectionId();
+        const collection = await this.repo.findCollectionById(collectionId);
+
+        // Resolve section title from DB
+        let sectionTitle = 'Unassigned';
+        const sectionId = eq.getSectionId();
+        if (sectionId) {
+          const section = await this.repo.findSectionById(sectionId);
+          if (section) {
+            sectionTitle = section.getTitle();
+          }
+        }
+
         usedIn = {
           examTitle: exam.getTitle(),
-          sectionInfo: 'Main Section',
+          sectionInfo: sectionTitle,
+          collectionId: collectionId || null,
+          collectionTitle: collection?.getTitle() || null,
+        };
+
+        // Populate format fields from ExamQuestion
+        examFormatFields = {
+          audioUrl: eq.getAudioUrl(),
+          imageUrl: eq.getImageUrl(),
+          partNumber: eq.getPartNumber(),
+          gapNumber: eq.getGapNumber(),
+          writingTaskType: eq.getWritingTaskType(),
+          speakingPrompt: eq.getSpeakingPrompt(),
+          isGridIn: eq.getIsGridIn(),
+          formatMetadata: eq.getFormatMetadata(),
+          passageId: metadata?.getPassageId() || null,
+          passageText: metadata?.getPassageText() || null,
+          modelAnswer: metadata?.getModelAnswer() || null,
+          rubric: metadata?.getRubric() || null,
+          matchingPairs: metadata?.getMatchingPairs() || null,
+          wordRoot: metadata?.getWordRoot() || null,
+          keyWord: metadata?.getKeyWord() || null,
         };
       }
     }
@@ -149,6 +206,7 @@ export class GetQuestionBuilderQueryHandler
         checks: quality.checks,
       },
       usedIn,
+      examFormatFields,
     };
   }
 

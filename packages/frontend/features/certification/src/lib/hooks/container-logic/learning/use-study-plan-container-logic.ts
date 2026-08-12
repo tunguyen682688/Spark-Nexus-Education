@@ -4,7 +4,6 @@ import {
   BookOpen,
   Headphones,
   GraduationCap,
-  LucideIcon,
 } from 'lucide-react';
 import {
   useStudyPlan,
@@ -12,23 +11,9 @@ import {
   useCertificationDashboard,
 } from '../../use-certification';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
+import type { StudyPlanTopStat, StudyPlanFocusCard } from '../../../types/container-logic-learning.types';
 
-export interface StudyPlanTopStat {
-  label: string;
-  val: string;
-  sub: string;
-  color: string;
-}
-
-export interface StudyPlanFocusCard {
-  label: string;
-  title: string;
-  desc: string;
-  val: string;
-  color: string;
-  icon: LucideIcon;
-  iconBg: string;
-}
+export type { StudyPlanTopStat, StudyPlanFocusCard } from '../../../types/container-logic-learning.types';
 
 export function useStudyPlanContainerLogic(
   onStartExam?: (examId: string) => void

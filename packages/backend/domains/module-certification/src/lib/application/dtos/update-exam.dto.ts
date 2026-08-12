@@ -43,4 +43,15 @@ export class UpdateExamDto {
   @IsIn(['draft', 'published', 'archived'])
   @IsOptional()
   publishStatus?: string;
+
+  @ApiPropertyOptional({ description: 'Exam type', enum: ['FULL_MOCK', 'MINI_TEST', 'SECTION_PRACTICE'] })
+  @IsString()
+  @IsIn(['FULL_MOCK', 'MINI_TEST', 'SECTION_PRACTICE'])
+  @IsOptional()
+  examType?: string;
+
+  @ApiPropertyOptional({ description: 'Certification type', example: 'TOEIC' })
+  @IsString()
+  @IsOptional()
+  certificationType?: string;
 }

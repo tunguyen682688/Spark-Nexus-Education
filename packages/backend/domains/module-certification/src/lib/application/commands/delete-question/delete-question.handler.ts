@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { DeleteQuestionCommand } from './delete-question.command';
 import type {
   ICertificationRepository,
@@ -31,6 +31,26 @@ export class DeleteQuestionHandler
     const existing = await this.repo.findQuestionById(questionId);
     if (!existing) {
       throw new NotFoundException(`Question ${questionId} not found`);
+    }
+
+    // Ownership check: question creator OR owner of any exam linked to this question
+    const examQuestions = await this.repo.findExamQuestionsByQuestionId(questionId);
+    if (examQuestions.length > 0) {
+      // Question is linked to at least one exam — user must own at least one of those exams
+      let ownsAtLeastOne = false;
+      for (const eq of examQuestions) {
+        const exam = await this.repo.findExamById(eq.getExamId());
+        if (exam) {
+          const collection = await this.repo.findCollectionById(exam.getCollectionId());
+          if (collection && collection.getOwnerId() === userId) {
+            ownsAtLeastOne = true;
+            break;
+          }
+        }
+      }
+      if (!ownsAtLeastOne) {
+        throw new ForbiddenException('You can only delete questions in your own exams');
+      }
     }
 
     // Cascade delete: choices, hints, media, metadata, versions, then question

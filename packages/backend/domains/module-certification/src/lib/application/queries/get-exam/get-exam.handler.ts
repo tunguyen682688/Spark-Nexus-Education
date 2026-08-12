@@ -18,18 +18,20 @@ export class GetExamQueryHandler implements IQueryHandler<GetExamQuery> {
 
     const [sections, examQuestions] = await Promise.all([
       this.repository.findSectionsByExamId(query.id),
-      this.repository.findQuestionsByExamId(query.id),
+      this.repository.findExamQuestionsByExamId(query.id),
     ]);
 
     const questionsWithDetails = await Promise.all(
       examQuestions.map(async (examQuestion) => {
         const questionId = examQuestion.getQuestionId();
-        const [question, choices, hints, media] = await Promise.all([
+        const [question, choices, metadata] = await Promise.all([
           this.repository.findQuestionById(questionId),
           this.repository.findChoicesByQuestionId(questionId),
-          this.repository.findHintsByQuestionId(questionId),
-          this.repository.findMediaByQuestionId(questionId),
+          this.repository.findMetadataByQuestionId(questionId),
         ]);
+
+        const hints = (metadata?.getHints() as Array<{ content: string; order: number }> | null) ?? [];
+        const media = (metadata?.getMedia() as Array<{ url: string; type: string }> | null) ?? [];
 
         return {
           id: examQuestion.id,
@@ -45,14 +47,12 @@ export class GetExamQueryHandler implements IQueryHandler<GetExamQuery> {
             order: choice.getOrder(),
           })),
           hints: hints.map((hint) => ({
-            id: hint.id,
-            content: hint.getContent(),
-            order: hint.getOrder(),
+            content: hint.content,
+            order: hint.order,
           })),
           media: media.map((mediaItem) => ({
-            id: mediaItem.id,
-            mediaType: mediaItem.getMediaType(),
-            url: mediaItem.getMediaUrl(),
+            mediaType: mediaItem.type,
+            url: mediaItem.url,
           })),
         };
       })

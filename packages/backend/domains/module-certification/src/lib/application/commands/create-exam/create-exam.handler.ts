@@ -14,7 +14,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
   ) {}
 
   async execute(command: CreateExamCommand) {
-    const { userId, collectionId, title, description, duration, totalQuestions, maxScore, passScore, examType, certificationType, chapterId, sections } = command;
+    const { userId, collectionId, title, description, duration, totalQuestions, maxScore, passScore, examType, certificationType, level, chapterId, sections } = command;
 
     const collection = await this.repository.findCollectionById(collectionId);
     if (!collection) {
@@ -42,6 +42,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
       collectionId,
       examType: examType ?? 'FULL_MOCK',
       certificationType: certificationType ?? null,
+      level: level ?? null,
       chapterId: validChapterId,
       createdBy: userId,
       updatedBy: userId,
@@ -57,10 +58,13 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
           id: crypto.randomUUID(),
           examId: saved.id,
           title: sec.title,
+          subtitle: sec.subtitle ?? null,
           sectionType: sec.sectionType,
           instruction: sec.instruction ?? null,
           order: i + 1,
           durationMinutes: sec.durationMinutes ?? 0,
+          questionCount: sec.questionCount ?? 0,
+          isBreak: sec.isBreak ?? false,
         });
         await this.repository.saveExamSection(sectionEntity);
       }
@@ -72,6 +76,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
       collectionId: saved.getCollectionId(),
       examType: saved.getExamType(),
       certificationType: saved.getCertificationType(),
+      level: saved.getLevel(),
     };
   }
 }

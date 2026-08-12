@@ -9,6 +9,7 @@ export class SessionAnswerEntity extends Entity<string> {
     private choiceIds: string[],
     private isCorrect: boolean | null,
     private points: number | null,
+    private savedAt: Date,
     private createdBy: string | null,
     private updatedBy: string | null,
     createdAt: Date,
@@ -25,6 +26,7 @@ export class SessionAnswerEntity extends Entity<string> {
     choiceIds?: string[];
     isCorrect?: boolean | null;
     points?: number | null;
+    savedAt?: Date;
     createdBy?: string | null;
     updatedBy?: string | null;
     createdAt?: Date;
@@ -39,6 +41,7 @@ export class SessionAnswerEntity extends Entity<string> {
       params.choiceIds ?? [],
       params.isCorrect ?? null,
       params.points ?? null,
+      params.savedAt ?? now,
       params.createdBy ?? null,
       params.updatedBy ?? null,
       params.createdAt ?? now,
@@ -70,6 +73,10 @@ export class SessionAnswerEntity extends Entity<string> {
     return this.points;
   }
 
+  getSavedAt(): Date {
+    return this.savedAt;
+  }
+
   getCreatedBy(): string | null {
     return this.createdBy;
   }
@@ -87,6 +94,7 @@ export class SessionAnswerEntity extends Entity<string> {
       choiceIds: this.choiceIds,
       isCorrect: this.isCorrect,
       points: this.points,
+      savedAt: this.savedAt,
       createdBy: this.createdBy,
       updatedBy: this.updatedBy,
       createdAt: this.createdAt,

@@ -184,12 +184,8 @@ model VocabularySet {
 
   // Relations
   items              VocabularySetItem[]
-  history            VocabularySetHistory[]
   favorites          UserVocabularySetFavorite[]
   QuizSession        QuizSession[]
-  ManualQuestion     ManualQuestion[]
-  QuizChallenge      QuizChallenge[]
-  PackageReport      PackageReport[]
   articles           Article[]
   listeningMaterials ListeningMaterial[]
 
@@ -278,27 +274,7 @@ model Entry {
   @@map("entries")
 }
 
-// Vocabulary Set History - Track study sessions
-model VocabularySetHistory {
-  id                   String    @id @default(uuid())
-  vocabularySetId      String    @map("vocabulary_set_id")
-  completedItems       Int?      @default(0) @map("completed_items")
-  completionPercentage Float?    @default(0) @map("completion_percentage") @db.DoublePrecision
-  correctAnswers       Int?      @default(0) @map("correct_answers")
-  lastStudied          DateTime? @map("last_studied")
-  totalItems           Int?      @default(0) @map("total_items")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-  deleted              Boolean   @default(false)
 
-  // Relations
-  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
-
-  @@index([vocabularySetId])
-  @@index([vocabularySetId, lastStudied(sort: Desc)])
-  @@index([lastStudied])
-  @@map("vocabulary_set_history")
-}
 
 // User Vocabulary Set Favorites - Junction table for favorites
 model UserVocabularySetFavorite {
@@ -379,10 +355,9 @@ model Sense {
   version       BigInt   @default(1)
 
   // Relations
-  entry          Entry            @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  examples       Example[]
-  QuizQuestion   QuizQuestion[]
-  ManualQuestion ManualQuestion[]
+  entry    Entry            @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  examples Example[]
+  QuizQuestion QuizQuestion[]
 
   @@index([entryId])
   @@index([entryId, language])
@@ -623,10 +598,8 @@ model QuizSession {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  vocabularySet      VocabularySet?  @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
-  questions          QuizQuestion[]
-  challenges         QuizChallenge[] @relation("ChallengerSession")
-  opponentChallenges QuizChallenge[] @relation("OpponentSession")
+  vocabularySet VocabularySet?  @relation(fields: [vocabularySetId], references: [id], onDelete: SetNull)
+  questions     QuizQuestion[]
 
   @@index([userId])
   @@index([userId, status])
@@ -660,93 +633,13 @@ model QuizQuestion {
   @@map("quiz_questions")
 }
 
-// ManualQuestion - Câu hỏi thủ công
-model ManualQuestion {
-  id              String   @id @default(uuid())
-  vocabularySetId String   @map("vocabulary_set_id")
-  senseId         String?  @map("sense_id")
-  questionText    String   @map("question_text") @db.Text
-  options         Json // Array of options
-  correctAnswer   String   @map("correct_answer") @db.VarChar(10) // A, B, C, D
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  deleted         Boolean  @default(false)
 
-  // Relations
-  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
-  sense         Sense?        @relation(fields: [senseId], references: [id], onDelete: SetNull)
-
-  @@index([vocabularySetId])
-  @@index([vocabularySetId, deleted])
-  @@index([senseId])
-  @@index([deleted])
-  @@map("manual_questions")
-}
-
-// QuizChallenge - Thách đấu quiz
-model QuizChallenge {
-  id                  String   @id @default(uuid())
-  vocabularySetId     String   @map("vocabulary_set_id")
-  challengerId        String   @map("challenger_id")
-  opponentId          String   @map("opponent_id")
-  status              String   @db.VarChar(50) // PENDING, ACCEPTED, COMPLETED, DECLINED
-  challengerSessionId String?  @map("challenger_session_id")
-  opponentSessionId   String?  @map("opponent_session_id")
-  challengerScore     Float?   @map("challenger_score") @db.DoublePrecision
-  opponentScore       Float?   @map("opponent_score") @db.DoublePrecision
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  vocabularySet     VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
-  challengerSession QuizSession?  @relation("ChallengerSession", fields: [challengerSessionId], references: [id], onDelete: SetNull)
-  opponentSession   QuizSession?  @relation("OpponentSession", fields: [opponentSessionId], references: [id], onDelete: SetNull)
-
-  @@index([challengerId])
-  @@index([opponentId])
-  @@index([status])
-  @@index([vocabularySetId])
-  @@index([challengerId, status])
-  @@index([opponentId, status])
-  @@map("quiz_challenges")
-}
 
 // ============================================
 // SOCIAL & COMMUNITY
 // ============================================
 
-// UserFollow - Follow creators
-model UserFollow {
-  followerId  String   @map("follower_id")
-  followingId String   @map("following_id")
-  createdAt   DateTime @default(now()) @map("created_at")
 
-  @@id([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
-  @@map("user_follows")
-}
-
-// PackageReport - Báo cáo gói từ vựng
-model PackageReport {
-  id              String   @id @default(uuid())
-  vocabularySetId String   @map("vocabulary_set_id")
-  reporterId      String   @map("reporter_id")
-  reason          String   @db.VarChar(100) // SPAM, INACCURATE, COPYRIGHT, OTHER
-  description     String?  @db.Text
-  status          String   @default("PENDING") @db.VarChar(50) // PENDING, REVIEWED, RESOLVED
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  vocabularySet VocabularySet @relation(fields: [vocabularySetId], references: [id], onDelete: Cascade)
-
-  @@index([vocabularySetId])
-  @@index([reporterId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("package_reports")
-}
 
 // ============================================
 // USER DOMAIN (Phase 2)
@@ -1234,7 +1127,6 @@ model Collection {
 
   // Relations
   items         CollectionItem[]
-  collaborators CollectionCollaborator[]
   favorites     CollectionFavorite[]
   bookmarks     CollectionBookmark[]
   chapters      Chapter[]
@@ -1261,9 +1153,10 @@ model Chapter {
 
   // Relations
   collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  exams      Exam[]
+  exams       Exam[]
 
   @@index([collectionId])
+  @@index([collectionId, order])
   @@map("chapters")
 }
 
@@ -1278,25 +1171,14 @@ model CollectionItem {
 
   // Relations
   collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  exam       Exam?      @relation(fields: [examId], references: [id], onDelete: SetNull)
 
+  @@index([collectionId])
+  @@index([examId])
   @@map("collection_items")
 }
 
-model CollectionCollaborator {
-  id           String   @id @default(uuid())
-  collectionId String   @map("collection_id")
-  userId       String   @map("user_id")
-  role         String   @default("viewer") @db.VarChar(50)
-  createdAt    DateTime @default(now()) @map("created_at")
-  createdBy    String?  @map("created_by")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  updatedBy    String?  @map("updated_by")
 
-  // Relations
-  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-
-  @@map("collection_collaborators")
-}
 
 model CollectionFavorite {
   id           String   @id @default(uuid())
@@ -1337,6 +1219,7 @@ model Exam {
   publishStatus     String    @default("draft") @map("publish_status") @db.VarChar(50)
   examType          String    @default("FULL_MOCK") @map("exam_type") @db.VarChar(50)
   certificationType String?   @map("certification_type") @db.VarChar(50)
+  level             String?   @db.VarChar(50) @default("intermediate")
   order             Int       @default(0)
   createdAt         DateTime  @default(now()) @map("created_at")
   createdBy         String?   @map("created_by")
@@ -1353,9 +1236,9 @@ model Exam {
   collection    Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   chapter       Chapter?       @relation(fields: [chapterId], references: [id], onDelete: SetNull)
   sections      ExamSection[]
-  rules         ExamRule[]
   examQuestions ExamQuestion[]
   sessions      ExamSession[]
+  items         CollectionItem[]
 
   @@index([collectionId])
   @@index([chapterId])
@@ -1368,10 +1251,13 @@ model ExamSection {
   id              String   @id @default(uuid())
   examId          String   @map("exam_id")
   title           String   @db.VarChar(255)
+  subtitle        String?  @db.VarChar(255)
   sectionType     String   @default("general") @map("section_type") @db.VarChar(50)
   instruction     String?  @db.Text
   order           Int
   durationMinutes Int      @default(0) @map("duration_minutes")
+  questionCount   Int      @default(0) @map("question_count")
+  isBreak         Boolean  @default(false) @map("is_break")
   createdAt       DateTime @default(now()) @map("created_at")
   createdBy       String?  @map("created_by")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -1379,7 +1265,10 @@ model ExamSection {
 
   // Relations
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questions ExamQuestion[]
 
+  @@index([examId])
+  @@index([examId, order])
   @@map("exam_sections")
 }
 
@@ -1387,6 +1276,7 @@ model ExamQuestion {
   id         String   @id @default(uuid())
   examId     String   @map("exam_id")
   questionId String   @map("question_id")
+  sectionId  String?  @map("section_id")
   order      Int
   points     Float    @default(1.0)
   createdAt  DateTime @default(now()) @map("created_at")
@@ -1394,27 +1284,36 @@ model ExamQuestion {
   updatedAt  DateTime @updatedAt @map("updated_at")
   updatedBy  String?  @map("updated_by")
 
+  // Per-exam media overrides (same question can have different audio/image per exam)
+  audioUrl       String? @map("audio_url") @db.VarChar(500)
+  imageUrl       String? @map("image_url") @db.VarChar(500)
+
+  // Per-exam positioning
+  partNumber     Int?    @map("part_number")
+  gapNumber      Int?    @map("gap_number")
+
+  // Per-exam writing/speaking config
+  writingTaskType String? @map("writing_task_type") @db.VarChar(100)
+  speakingPrompt  String? @map("speaking_prompt") @db.Text
+
+  // SAT specific
+  isGridIn        Boolean @default(false) @map("is_grid_in")
+
+  // Format metadata (flexible JSON for per-exam extra data)
+  formatMetadata  Json?   @map("format_metadata")
+
   // Relations
   exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  section  ExamSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
+  @@index([examId])
+  @@index([questionId])
+  @@index([sectionId])
+  @@index([examId, sectionId])
+  @@index([examId, order])
+  @@unique([examId, questionId])
   @@map("exam_questions")
-}
-
-model ExamRule {
-  id        String   @id @default(uuid())
-  examId    String   @map("exam_id")
-  ruleType  String   @map("rule_type") @db.VarChar(100)
-  ruleValue String   @map("rule_value") @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  createdBy String?  @map("created_by")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  updatedBy String?  @map("updated_by")
-
-  // Relations
-  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
-
-  @@map("exam_rules")
 }
 
 // ============================================
@@ -1427,6 +1326,7 @@ model Question {
   content    String    @db.Text
   type       String    @db.VarChar(50) // multiple_choice, essay, fill_in_blank, etc.
   difficulty String    @db.VarChar(50) // easy, medium, hard
+  category   String?   @db.VarChar(100) // reading, listening, grammar, vocabulary, writing, speaking
   status     String    @default("draft") @db.VarChar(50)
   createdAt  DateTime  @default(now()) @map("created_at")
   createdBy  String?   @map("created_by")
@@ -1437,13 +1337,15 @@ model Question {
 
   // Relations
   choices       QuestionChoice[]
-  hints         QuestionHint[]
-  media         QuestionMedia[]
   versions      QuestionVersion[]
   examQuestions ExamQuestion[]
   metadata      QuestionMetadata?
 
   @@index([status])
+  @@index([type])
+  @@index([difficulty])
+  @@index([category])
+  @@index([createdBy])
   @@map("questions")
 }
 
@@ -1461,39 +1363,9 @@ model QuestionChoice {
   // Relations
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
+  @@index([questionId])
+  @@index([questionId, order])
   @@map("question_choices")
-}
-
-model QuestionHint {
-  id         String   @id @default(uuid())
-  questionId String   @map("question_id")
-  content    String   @db.Text
-  order      Int
-  createdAt  DateTime @default(now()) @map("created_at")
-  createdBy  String?  @map("created_by")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  updatedBy  String?  @map("updated_by")
-
-  // Relations
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("question_hints")
-}
-
-model QuestionMedia {
-  id         String   @id @default(uuid())
-  questionId String   @map("question_id")
-  mediaUrl   String   @map("media_url") @db.VarChar(500)
-  mediaType  String   @map("media_type") @db.VarChar(50) // image, audio, video
-  createdAt  DateTime @default(now()) @map("created_at")
-  createdBy  String?  @map("created_by")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  updatedBy  String?  @map("updated_by")
-
-  // Relations
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("question_media")
 }
 
 model QuestionVersion {
@@ -1507,26 +1379,42 @@ model QuestionVersion {
   // Relations
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
+  @@index([questionId])
+  @@index([questionId, version])
   @@map("question_versions")
 }
 
 model QuestionMetadata {
-  id             String   @id @default(uuid())
-  questionId     String   @unique @map("question_id")
-  explanation    String?  @db.Text
-  points         Int      @default(1)
-  estimatedTime  String?  @map("estimated_time") @db.VarChar(10)
-  shuffleOptions Boolean  @default(false) @map("shuffle_options")
-  referenceType  String?  @map("reference_type") @db.VarChar(50) // passage, image, external_link
-  passageSource  String?  @map("passage_source") @db.VarChar(255)
-  highlight      String?  @db.VarChar(500)
-  cognitiveLevel String?  @map("cognitive_level") @db.VarChar(50) // remember, understand, apply, analyze, evaluate, create
-  tags           String[] @default([])
-  skills         String[] @default([])
-  qualityScore   Int?     @map("quality_score")
-  qualityRating  String?  @map("quality_rating") @db.VarChar(50)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  questionId       String   @unique @map("question_id")
+  explanation      String?  @db.Text
+  points           Int      @default(1)
+  estimatedTime    String?  @map("estimated_time") @db.VarChar(10)
+  shuffleOptions   Boolean  @default(false) @map("shuffle_options")
+  referenceType    String?  @map("reference_type") @db.VarChar(50)
+  passageSource    String?  @map("passage_source") @db.VarChar(255)
+  highlight        String?  @db.VarChar(500)
+  cognitiveLevel   String?  @map("cognitive_level") @db.VarChar(50)
+  tags             String[] @default([])
+  skills           String[] @default([])
+  qualityScore     Int?     @map("quality_score")
+  qualityRating    String?  @map("quality_rating") @db.VarChar(50)
+
+  // Question content fields (moved from ExamQuestion — these are question-level, not per-exam)
+  passageId        String?  @map("passage_id") @db.VarChar(100)
+  passageText      String?  @map("passage_text") @db.Text
+  modelAnswer      String?  @map("model_answer") @db.Text
+  rubric           Json?    @map("rubric")
+  matchingPairs    Json?    @map("matching_pairs")
+  wordRoot         String?  @map("word_root") @db.VarChar(255)
+  keyWord          String?  @map("key_word") @db.VarChar(255)
+
+  // Merged from deleted tables (QuestionMedia, QuestionHint)
+  media            Json?    @map("media") // [{ url: string, type: 'image'|'audio'|'video' }]
+  hints            Json?    @map("hints") // [{ content: string, order: number }]
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -1555,10 +1443,11 @@ model ExamSession {
   exam       Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
   answers    SessionAnswer[]
   violations SessionViolation[]
-  snapshots  AutosaveSnapshot[]
   result     ExamResult?
 
   @@index([userId])
+  @@index([examId])
+  @@index([examId, userId])
   @@index([status])
   @@map("exam_sessions")
 }
@@ -1571,6 +1460,7 @@ model SessionAnswer {
   choiceIds  String[] @map("choice_ids")
   isCorrect  Boolean? @map("is_correct")
   points     Float?
+  savedAt    DateTime @default(now()) @map("saved_at")
   createdAt  DateTime @default(now()) @map("created_at")
   createdBy  String?  @map("created_by")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -1579,6 +1469,9 @@ model SessionAnswer {
   // Relations
   session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
+  @@index([sessionId, questionId])
+  @@index([questionId])
   @@map("session_answers")
 }
 
@@ -1593,19 +1486,8 @@ model SessionViolation {
   // Relations
   session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
   @@map("session_violations")
-}
-
-model AutosaveSnapshot {
-  id           String   @id @default(uuid())
-  sessionId    String   @map("session_id")
-  snapshotData Json     @map("snapshot_data")
-  savedAt      DateTime @default(now()) @map("saved_at")
-
-  // Relations
-  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@map("autosave_snapshots")
 }
 
 // ============================================
@@ -1613,16 +1495,20 @@ model AutosaveSnapshot {
 // ============================================
 
 model ExamResult {
-  id         String   @id @default(uuid())
-  sessionId  String   @unique @map("session_id")
-  userId     String   @map("user_id")
-  examId     String   @map("exam_id")
-  totalScore Float    @map("total_score")
-  passed     Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
-  createdBy  String?  @map("created_by")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  updatedBy  String?  @map("updated_by")
+  id               String   @id @default(uuid())
+  sessionId        String   @unique @map("session_id")
+  userId           String   @map("user_id")
+  examId           String   @map("exam_id")
+  totalScore       Float    @map("total_score")
+  maxScore         Float    @default(100.0) @map("max_score")
+  accuracyRate     Float    @default(0.0) @map("accuracy_rate")
+  timeSpentMinutes Int      @default(0) @map("time_spent_minutes")
+  passed           Boolean  @default(false)
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  createdBy        String?  @map("created_by")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  updatedBy        String?  @map("updated_by")
 
   // Relations
   session    ExamSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -1632,6 +1518,9 @@ model ExamResult {
 
   @@index([userId])
   @@index([examId])
+  @@index([examId, userId])
+  @@index([sessionId])
+  @@index([passed])
   @@map("exam_results")
 }
 
@@ -1642,26 +1531,35 @@ model SkillResult {
   score        Float
   maxScore     Float    @map("max_score")
   accuracyRate Float    @map("accuracy_rate")
+  feedback     String?  @db.Text
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
   result ExamResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
+  @@index([resultId])
   @@map("skill_results")
 }
 
 model QuestionResult {
-  id           String   @id @default(uuid())
-  resultId     String   @map("result_id")
-  questionId   String   @map("question_id")
-  isCorrect    Boolean  @map("is_correct")
-  scoreAwarded Float    @map("score_awarded")
-  timeSpent    Int      @map("time_spent")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  resultId      String   @map("result_id")
+  questionId    String   @map("question_id")
+  questionText  String?  @map("question_text") @db.Text
+  isCorrect     Boolean  @map("is_correct")
+  scoreAwarded  Float    @map("score_awarded")
+  userAnswer    String?  @map("user_answer") @db.Text
+  correctAnswer String?  @map("correct_answer") @db.Text
+  explanation   String?  @db.Text
+  timeSpent     Int      @map("time_spent")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   // Relations
   result ExamResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
+  @@index([resultId])
+  @@index([questionId])
+  @@index([resultId, questionId])
   @@map("question_results")
 }
 
@@ -1678,65 +1576,7 @@ model AiEvaluation {
   @@map("ai_evaluations")
 }
 
-// ============================================
-// EXAM PLATFORM - RECOMMENDATION SCHEMA
-// ============================================
 
-model RecommendationProfile {
-  id        String   @id @default(uuid()) @map("recommendation_id")
-  userId    String   @unique @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  items   RecommendationItem[]
-  rules   RecommendationRule[]
-  history RecommendationHistory[]
-
-  @@map("recommendation_profiles")
-}
-
-model RecommendationItem {
-  id        String   @id @default(uuid())
-  profileId String   @map("profile_id")
-  itemId    String   @map("item_id")
-  itemType  String   @map("item_type") @db.VarChar(50)
-  score     Float    @default(0.0)
-  reason    String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  profile RecommendationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@map("recommendation_items")
-}
-
-model RecommendationRule {
-  id        String   @id @default(uuid())
-  profileId String   @map("profile_id")
-  ruleType  String   @map("rule_type") @db.VarChar(100)
-  ruleValue String   @map("rule_value") @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  profile RecommendationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@map("recommendation_rules")
-}
-
-model RecommendationHistory {
-  id        String   @id @default(uuid())
-  profileId String   @map("profile_id")
-  itemId    String   @map("item_id")
-  itemType  String   @map("item_type") @db.VarChar(50)
-  action    String   @db.VarChar(50)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  profile RecommendationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@map("recommendation_history")
-}
 
 // ============================================
 // EXAM PLATFORM - CREATOR PROFILE SCHEMA
@@ -1751,298 +1591,16 @@ model CreatorProfile {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  badges     CreatorBadge[]
-  statistics CreatorStatistics?
-  revenue    CreatorRevenue?
-  portfolios CreatorPortfolio[]
-
   @@map("creator_profiles")
 }
 
-model CreatorBadge {
-  id        String   @id @default(uuid())
-  creatorId String   @map("creator_id")
-  badgeName String   @map("badge_name") @db.VarChar(100)
-  issuedAt  DateTime @default(now()) @map("issued_at")
 
-  // Relations
-  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
-  @@map("creator_badges")
-}
 
-model CreatorStatistics {
-  id               String   @id @default(uuid())
-  creatorId        String   @unique @map("creator_id")
-  totalExams       Int      @default(0) @map("total_exams")
-  totalCollections Int      @default(0) @map("total_collections")
-  totalLearners    Int      @default(0) @map("total_learners")
-  averageRating    Float    @default(0.0) @map("average_rating")
-  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
-  @@map("creator_statistics")
-}
 
-model CreatorRevenue {
-  id            String   @id @default(uuid())
-  creatorId     String   @unique @map("creator_id")
-  totalEarnings Float    @default(0.0) @map("total_earnings")
-  pendingPayout Float    @default(0.0) @map("pending_payout")
-  currency      String   @default("USD") @db.VarChar(10)
-  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-
-  @@map("creator_revenue")
-}
-
-model CreatorPortfolio {
-  id          String   @id @default(uuid())
-  creatorId   String   @map("creator_id")
-  title       String   @db.VarChar(255)
-  link        String   @db.VarChar(500)
-  description String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-
-  @@map("creator_portfolios")
-}
-
-// ============================================
-// EXAM PLATFORM - EDITORIAL SCHEMA
-// ============================================
-
-model ReviewRequest {
-  id          String   @id @default(uuid()) @map("review_id")
-  targetId    String   @map("target_id")
-  targetType  String   @map("target_type") @db.VarChar(50)
-  submitterId String   @map("submitter_id")
-  reviewerId  String?  @map("reviewer_id")
-  status      String   @default("pending") @db.VarChar(50)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  comments   ReviewComment[]
-  decision   ApprovalDecision?
-  checklists ReviewChecklist[]
-
-  @@index([status])
-  @@map("review_requests")
-}
-
-model ReviewComment {
-  id          String   @id @default(uuid())
-  reviewId    String   @map("review_id")
-  userId      String   @map("user_id")
-  commentText String   @map("comment_text") @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  review ReviewRequest @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  @@map("review_comments")
-}
-
-model ApprovalDecision {
-  id         String   @id @default(uuid())
-  reviewId   String   @unique @map("review_id")
-  reviewerId String   @map("reviewer_id")
-  decision   String   @db.VarChar(50)
-  remarks    String?  @db.Text
-  decidedAt  DateTime @default(now()) @map("decided_at")
-
-  // Relations
-  review ReviewRequest @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  @@map("approval_decisions")
-}
-
-model ReviewChecklist {
-  id        String    @id @default(uuid())
-  reviewId  String    @map("review_id")
-  itemKey   String    @map("item_key") @db.VarChar(100)
-  isChecked Boolean   @default(false) @map("is_checked")
-  checkedBy String?   @map("checked_by")
-  checkedAt DateTime? @map("checked_at")
-
-  // Relations
-  review ReviewRequest @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  @@map("review_checklists")
-}
-
-// ============================================
-// EXAM PLATFORM - ANALYTICS SCHEMA
-// ============================================
-
-model AnalyticsSnapshot {
-  id           String   @id @default(uuid()) @map("snapshot_id")
-  snapshotDate DateTime @map("snapshot_date")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  dailyMetrics    DailyMetric[]
-  userMetrics     UserMetric[]
-  examMetrics     ExamMetric[]
-  questionMetrics QuestionMetric[]
-
-  @@map("analytics_snapshots")
-}
-
-model DailyMetric {
-  id          String   @id @default(uuid())
-  snapshotId  String   @map("snapshot_id")
-  metricName  String   @map("metric_name") @db.VarChar(100)
-  metricValue Float    @map("metric_value")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  snapshot AnalyticsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-
-  @@map("daily_metrics")
-}
-
-model UserMetric {
-  id          String   @id @default(uuid())
-  snapshotId  String   @map("snapshot_id")
-  userId      String   @map("user_id")
-  metricName  String   @map("metric_name") @db.VarChar(100)
-  metricValue Float    @map("metric_value")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  snapshot AnalyticsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-
-  @@map("user_metrics")
-}
-
-model ExamMetric {
-  id          String   @id @default(uuid())
-  snapshotId  String   @map("snapshot_id")
-  examId      String   @map("exam_id")
-  metricName  String   @map("metric_name") @db.VarChar(100)
-  metricValue Float    @map("metric_value")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  snapshot AnalyticsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-
-  @@map("exam_metrics")
-}
-
-model QuestionMetric {
-  id          String   @id @default(uuid())
-  snapshotId  String   @map("snapshot_id")
-  questionId  String   @map("question_id")
-  metricName  String   @map("metric_name") @db.VarChar(100)
-  metricValue Float    @map("metric_value")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  snapshot AnalyticsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-
-  @@map("question_metrics")
-}
-
-// ============================================
-// EXAM PLATFORM - ADMINISTRATION SCHEMA
-// ============================================
-
-model SystemConfiguration {
-  id          String   @id @default(uuid()) @map("configuration_id")
-  configKey   String   @unique @map("config_key") @db.VarChar(255)
-  configValue String   @map("config_value") @db.Text
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("system_configurations")
-}
-
-model FeatureFlag {
-  id          String   @id @default(uuid())
-  flagKey     String   @unique @map("flag_key") @db.VarChar(255)
-  isEnabled   Boolean  @default(false) @map("is_enabled")
-  description String?  @db.Text
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("feature_flags")
-}
-
-model Role {
-  id          String   @id @default(uuid())
-  roleName    String   @unique @map("role_name") @db.VarChar(100)
-  description String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relations
-  permissions RolePermission[]
-
-  @@map("roles")
-}
-
-model Permission {
-  id             String   @id @default(uuid())
-  permissionName String   @unique @map("permission_name") @db.VarChar(150)
-  description    String?  @db.Text
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  // Relations
-  roles RolePermission[]
-
-  @@map("permissions")
-}
-
-model RolePermission {
-  roleId       String @map("role_id")
-  permissionId String @map("permission_id")
-
-  // Relations
-  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@id([roleId, permissionId])
-  @@map("role_permissions")
-}
-
-model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  action     String   @db.VarChar(255)
-  targetId   String?  @map("target_id")
-  targetType String?  @map("target_type") @db.VarChar(100)
-  ipAddress  String?  @map("ip_address") @db.VarChar(45)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@map("audit_logs")
-}
-
-model IntegrationConfiguration {
-  id          String   @id @default(uuid())
-  serviceName String   @map("service_name") @db.VarChar(100)
-  isEnabled   Boolean  @default(false) @map("is_enabled")
-  credentials Json
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("integration_configurations")
-}
-
-model BackupPolicy {
-  id            String   @id @default(uuid())
-  policyName    String   @map("policy_name") @db.VarChar(150)
-  frequency     String   @db.VarChar(50)
-  retentionDays Int      @map("retention_days")
-  isEnabled     Boolean  @default(true) @map("is_enabled")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  @@map("backup_policies")
-}
 
 // ============================================
 // CERTIFICATION PLATFORM - USER DATA SCHEMA
@@ -2059,6 +1617,8 @@ model UserDownload {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([itemType, itemId])
   @@map("user_downloads")
 }
 
@@ -2072,6 +1632,8 @@ model CollectionPurchase {
   paymentStatus String   @default("completed") @db.VarChar(50) @map("payment_status")
 
   @@unique([userId, collectionId])
+  @@index([userId])
+  @@index([collectionId])
   @@map("collection_purchases")
 }
 
@@ -2083,6 +1645,9 @@ model CollectionReport {
   status       String   @default("pending") @db.VarChar(50)
   createdAt    DateTime @default(now()) @map("created_at")
 
+  @@index([collectionId])
+  @@index([userId])
+  @@index([status])
   @@map("collection_reports")
 }
 
@@ -2099,6 +1664,7 @@ model CollectionReview {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([collectionId])
+  @@index([collectionId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("collection_reviews")
 }
@@ -2116,6 +1682,7 @@ model CollectionDiscussion {
   replies    DiscussionReply[]
 
   @@index([collectionId])
+  @@index([collectionId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("collection_discussions")
 }
@@ -2130,5 +1697,7 @@ model DiscussionReply {
   discussion CollectionDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
 
   @@index([discussionId])
+  @@index([discussionId, createdAt])
+  @@index([userId])
   @@map("discussion_replies")
 }

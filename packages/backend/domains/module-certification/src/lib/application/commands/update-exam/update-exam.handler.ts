@@ -11,7 +11,7 @@ export class UpdateExamCommandHandler implements ICommandHandler<UpdateExamComma
   ) {}
 
   async execute(command: UpdateExamCommand) {
-    const { examId, userId, title, description, duration, totalQuestions, maxScore, passScore } = command;
+    const { examId, userId, title, description, duration, totalQuestions, maxScore, passScore, examType, publishStatus, certificationType } = command;
 
     const existing = await this.repository.findExamById(examId);
     if (!existing) {
@@ -30,11 +30,14 @@ export class UpdateExamCommandHandler implements ICommandHandler<UpdateExamComma
       totalQuestions,
       maxScore,
       passScore,
+      examType,
+      publishStatus,
+      certificationType,
       updatedBy: userId,
     });
 
     await this.repository.saveExam(existing);
 
-    return { id: examId };
+    return { id: examId, collectionId: existing.getCollectionId() };
   }
 }

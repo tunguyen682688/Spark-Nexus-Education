@@ -8,19 +8,9 @@ import {
 import { paginateItems } from '../../../services/certification-filter.service';
 import type { CertificateData } from '../../../components/shared/CertificateModal';
 import type { CompletedCollectionsResponse } from '../../../types';
+import type { CompletedCollectionCardItem } from '../../../types/container-logic-learning.types';
 
-export interface CompletedCollectionCardItem {
-  id: string;
-  title: string;
-  category: 'Vocabulary' | 'IELTS' | 'TOEIC' | 'Listening' | 'Reading' | 'Writing' | 'Speaking';
-  coverTitle: string;
-  coverSubtitle: string;
-  gradientClass: string;
-  medalColor: string;
-  score: string;
-  timeSpent: string;
-  completedDate: string;
-}
+export type { CompletedCollectionCardItem } from '../../../types/container-logic-learning.types';
 
 export function useCompletedCollectionsContainerLogic() {
   const navigate = useNavigate();

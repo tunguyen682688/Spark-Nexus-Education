@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CertificationApi } from '../../api/certification-api';
-import { STALE_TIME_DASHBOARD, STALE_TIME_COLLECTIONS } from './use-query-constants';
+import { STALE_TIME_DASHBOARD, STALE_TIME_COLLECTIONS } from '../../constants/query-cache-times.constants';
 import type { DashboardStats, StudyPlanDay, Contributor, CreatorDashboardResponse } from '../../types';
 
 export const useCertificationDashboard = () => {

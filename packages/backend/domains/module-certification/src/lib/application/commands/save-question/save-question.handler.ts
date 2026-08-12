@@ -60,6 +60,7 @@ export class SaveQuestionHandler
       content: dto.questionText,
       type: dto.questionType,
       difficulty: dto.difficulty,
+      category: dto.category || null,
       status: 'draft',
       createdBy: userId,
       updatedBy: userId,
@@ -86,18 +87,25 @@ export class SaveQuestionHandler
       points: dto.points || 1,
       estimatedTime: dto.estimatedTime || null,
       shuffleOptions: dto.shuffleOptions || false,
-      referenceType: null,
-      passageSource: null,
-      highlight: null,
+      referenceType: dto.referenceType || null,
+      passageSource: dto.passageSource || null,
+      highlight: dto.highlight || null,
       cognitiveLevel: dto.cognitiveLevel || null,
       tags: dto.tags || [],
       skills: dto.skills || [],
+      passageId: dto.passageId || null,
+      passageText: dto.passageText || null,
+      modelAnswer: dto.modelAnswer || null,
+      rubric: dto.rubric || null,
+      matchingPairs: dto.matchingPairs || null,
+      wordRoot: dto.wordRoot || null,
+      keyWord: dto.keyWord || null,
     });
 
     // Calculate quality score
     metadata.calculateQualityScore();
 
-    // 4. Save to database
+    // 4. Save to database (format fields go to ExamQuestion when linked)
     await this.repo.saveQuestionWithChoices(question, choices, metadata);
 
     this.logger.log(`Question ${questionId} saved successfully`);

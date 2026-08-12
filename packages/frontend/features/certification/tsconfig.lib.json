@@ -45,6 +45,9 @@
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "references": [
     {
+      "path": "../../shared/hooks/tsconfig.lib.json"
+    },
+    {
       "path": "../../core/auth/tsconfig.lib.json"
     },
     {

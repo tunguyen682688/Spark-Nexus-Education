@@ -19,7 +19,7 @@ export class GetCollectionEditorQueryHandler implements IQueryHandler<GetCollect
     const exams = await this.repository.findExamsByCollectionId(query.collectionId);
     const persistedChapters = await this.repository.findChaptersByCollectionId(query.collectionId);
 
-    let chapters: Array<{
+    const chapters: Array<{
       id: string;
       number: number;
       title: string;

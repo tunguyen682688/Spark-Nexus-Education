@@ -14,3 +14,4 @@ export * from './use-grammar-lesson-editor';
 export * from './use-grammar-level-graduation';
 export * from './use-grammar-user-profile';
 export * from './use-grammar-trap-diary';
+export * from './quiz';

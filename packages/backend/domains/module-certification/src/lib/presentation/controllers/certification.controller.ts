@@ -9,8 +9,6 @@ import {
   Query,
   Req,
   UseGuards,
-  Inject,
-  NotFoundException,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
@@ -55,6 +53,10 @@ import {
   GetSavedCollectionsQuery,
   GetCollectionReviewsQuery,
   GetCollectionDiscussionsQuery,
+  GetSectionQuestionsQuery,
+  GetClonedCollectionsQuery,
+  GetCollectionActivitiesQuery,
+  GetInProgressSessionsQuery,
 } from '../../application/queries';
 
 import { StartExamSessionDto } from '../../application/dtos/start-exam-session.dto';
@@ -68,8 +70,12 @@ import { CreateCollectionDto } from '../../application/dtos/create-collection.dt
 import { UpdateCollectionDto } from '../../application/dtos/update-collection.dto';
 import { CreateExamDto } from '../../application/dtos/create-exam.dto';
 import { UpdateExamDto } from '../../application/dtos/update-exam.dto';
-import { FeaturedCollectionsQueryDto } from '../../application/dtos/certification-query-params.dto';
+import { SaveExamSectionsDto } from '../../application/dtos/save-exam-sections.dto';
+import { LinkQuestionToExamDto } from '../../application/dtos/link-question-to-exam.dto';
+import { FeaturedCollectionsQueryDto, SectionQuestionsQueryDto } from '../../application/dtos/certification-query-params.dto';
 import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
+import { SyncChaptersDto } from '../../application/dtos/sync-chapters.dto';
+import { AddBookmarkDto } from '../../application/dtos/add-bookmark.dto';
 
 import {
   StartExamSessionCommand,
@@ -96,11 +102,13 @@ import {
   AddCollectionReviewCommand,
   AddCollectionDiscussionCommand,
   SyncChaptersCommand,
+  SaveExamSectionsCommand,
+  LinkQuestionToExamCommand,
+  UnlinkQuestionFromExamCommand,
 } from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
 import { CollectionEntity } from '../../domain/entities/collection.entity';
-import * as certificationRepoInterface from '../../domain/repositories/certification.repository.interface';
 
 @ApiTags('Certification')
 @Controller('certification')
@@ -109,8 +117,6 @@ export class CertificationController {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
     private readonly cacheService: CertificationCacheService,
-    @Inject(certificationRepoInterface.CERTIFICATION_REPOSITORY)
-    private readonly repository: certificationRepoInterface.ICertificationRepository
   ) {}
 
   /**
@@ -318,6 +324,57 @@ export class CertificationController {
     });
   }
 
+  @Get('exams/:examId/sections/:sectionId/questions')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Get questions for a specific section with pagination',
+    description:
+      'Retrieves questions linked to a section with pagination support. Used for lazy loading in exam builder.',
+  })
+  @ApiJsonApiPaginatedResponse({
+    description: 'Section questions retrieved successfully',
+    resourceType: 'section-question',
+  })
+  async getSectionQuestions(
+    @Param('examId') examId: string,
+    @Param('sectionId') sectionId: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request,
+    @Query() queryParams: SectionQuestionsQueryDto
+  ) {
+    const page = queryParams.page || 1;
+    const pageSize = queryParams.pageSize || 10;
+
+    const data = await this.queryBus.execute(
+      new GetSectionQuestionsQuery(
+        examId,
+        sectionId,
+        user.id,
+        page,
+        pageSize,
+        queryParams.search
+      )
+    );
+
+    return createJsonApiPaginatedResponse(
+      data.questions,
+      data.totalCount,
+      'section-question',
+      getBaseUrlFromRequest(req),
+      {
+        page: data.page,
+        limit: data.pageSize,
+        total: data.totalCount,
+        totalPages: data.totalPages,
+      },
+      {
+        version: '1.0.0',
+        message: 'Section questions retrieved successfully',
+      }
+    );
+  }
+
   @Get('questions/:id/builder')
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
@@ -427,11 +484,15 @@ export class CertificationController {
       new GetQuestionHistoryQuery(id)
     );
 
-    return convertEntityToJsonApi(versions, 'question-history', {
-      selfLink: getSelfLinkFromRequest(req, `questions/${id}/history`),
-      message: 'Question history retrieved successfully',
-      version: '1.0.0',
-    });
+    return convertEntityToJsonApi(
+      { id: `${id}-history`, versions },
+      'question-history',
+      {
+        selfLink: getSelfLinkFromRequest(req, `questions/${id}/history`),
+        message: 'Question history retrieved successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Get('collections/featured')
@@ -817,21 +878,12 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
-    const result = await this.repository.findClonedCollectionsByUserId(user.id);
-
-    const items = (result || []).map((col) => ({
-      id: col.id,
-      title: col.title,
-      description: col.description || '',
-      ownerId: col.ownerId,
-      publishStatus: col.publishStatus,
-      createdAt: col.createdAt,
-      examCount: col.examCount,
-      itemCount: col.itemCount,
-    }));
+    const data = await this.queryBus.execute(
+      new GetClonedCollectionsQuery(user.id)
+    ) as { items: Array<Record<string, unknown>> };
 
     const response = convertEntityToJsonApi(
-      { id: `cloned-${user.id}`, userId: user.id, totalCloned: items.length, items },
+      { id: `cloned-${user.id}`, userId: user.id, totalCloned: data.items.length, items: data.items },
       'certification-collections-cloned',
       {
         selfLink: getSelfLinkFromRequest(req, 'collections/cloned'),
@@ -1221,9 +1273,8 @@ export class CertificationController {
       return cached;
     }
 
-    const activities = await this.repository.findActivitiesByCollectionId(
-      id,
-      10
+    const activities = await this.queryBus.execute(
+      new GetCollectionActivitiesQuery(id, 10)
     );
 
     const response = convertEntityToJsonApi(
@@ -1293,7 +1344,7 @@ export class CertificationController {
   @ApiJsonApiErrorResponse({ status: 403, description: 'Not the collection owner' })
   async syncChapters(
     @Param('id') id: string,
-    @Body() dto: { chapters: Array<{ id?: string; title: string; description?: string | null; order: number }> },
+    @Body() dto: SyncChaptersDto,
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
@@ -1301,7 +1352,15 @@ export class CertificationController {
       new SyncChaptersCommand(id, user.id, dto.chapters || [])
     );
     await this.cacheService.delete(`certification:editor:${id}`);
-    return { data: result };
+    return convertEntityToJsonApi(
+      { id, chapters: result },
+      'certification-chapter',
+      {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/chapters`),
+        message: 'Chapters synced successfully',
+        version: '1.0.0',
+      }
+    );
   }
 
   @Delete('collections/:id')
@@ -1340,7 +1399,7 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const result = await this.commandBus.execute(
-      new CreateExamCommand(user.id, collectionId, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore, dto.examType, dto.certificationType, dto.chapterId, dto.sections)
+      new CreateExamCommand(user.id, collectionId, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore, dto.examType, dto.certificationType, dto.level, dto.chapterId, dto.sections)
     );
     await this.cacheService.delete(`certification:editor:${collectionId}`);
     return convertEntityToJsonApi(result, 'certification-exam', {
@@ -1364,11 +1423,10 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const result = await this.commandBus.execute(
-      new UpdateExamCommand(examId, user.id, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore)
+      new UpdateExamCommand(examId, user.id, dto.title, dto.description, dto.duration, dto.totalQuestions, dto.maxScore, dto.passScore, dto.examType, dto.publishStatus, dto.certificationType)
     );
-    const exam = await this.repository.findExamById(examId);
-    if (exam) {
-      await this.cacheService.delete(`certification:editor:${exam.getCollectionId()}`);
+    if (result.collectionId) {
+      await this.cacheService.delete(`certification:editor:${result.collectionId}`);
     }
     return convertEntityToJsonApi(result, 'certification-exam', {
       selfLink: getSelfLinkFromRequest(req, `exams/${examId}`),
@@ -1389,16 +1447,97 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const exam = await this.repository.findExamById(examId);
     const result = await this.commandBus.execute(
       new DeleteExamCommand(examId, user.id)
     );
-    if (exam) {
-      await this.cacheService.delete(`certification:editor:${exam.getCollectionId()}`);
+    if (result.collectionId) {
+      await this.cacheService.delete(`certification:editor:${result.collectionId}`);
     }
     return convertEntityToJsonApi({ id: examId, ...result }, 'certification-exam', {
       selfLink: getSelfLinkFromRequest(req, `exams/${examId}`),
       message: 'Exam deleted successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Put('exams/:id/sections')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Save exam sections', description: 'Replace all sections for an exam with the provided list.' })
+  @ApiJsonApiSuccessResponse({ description: 'Sections saved successfully', resourceType: 'exam-sections' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam not found' })
+  async saveExamSections(
+    @Param('id') examId: string,
+    @Body() dto: SaveExamSectionsDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new SaveExamSectionsCommand(examId, user.id, dto.sections)
+    );
+    return convertEntityToJsonApi({ id: examId, sections: result }, 'exam-sections', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}/sections`),
+      message: 'Sections saved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('exams/link-question')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Link a question to an exam', description: 'Creates an ExamQuestion record linking a question to an exam.' })
+  @ApiJsonApiCreatedResponse({ description: 'Question linked successfully', resourceType: 'exam-question' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam or question not found' })
+  async linkQuestionToExam(
+    @Body() dto: LinkQuestionToExamDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new LinkQuestionToExamCommand(
+        dto.examId,
+        dto.questionId,
+        user.id,
+        dto.order,
+        dto.points,
+        dto.sectionId,
+        {
+          audioUrl: dto.audioUrl,
+          imageUrl: dto.imageUrl,
+          partNumber: dto.partNumber,
+          gapNumber: dto.gapNumber,
+          writingTaskType: dto.writingTaskType,
+          speakingPrompt: dto.speakingPrompt,
+          isGridIn: dto.isGridIn,
+          formatMetadata: dto.formatMetadata,
+        }
+      )
+    );
+    return convertEntityToJsonApi({ id: result.examQuestionId, ...result }, 'exam-question', {
+      selfLink: getSelfLinkFromRequest(req, `exams/link-question`),
+      message: 'Question linked to exam successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Delete('exams/:examId/questions/:questionId')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Unlink a question from an exam', description: 'Removes the ExamQuestion record linking a question to an exam.' })
+  @ApiJsonApiSuccessResponse({ description: 'Question unlinked successfully', resourceType: 'exam-question' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam or link not found' })
+  async unlinkQuestionFromExam(
+    @Param('examId') examId: string,
+    @Param('questionId') questionId: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    await this.commandBus.execute(
+      new UnlinkQuestionFromExamCommand(examId, questionId, user.id)
+    );
+    return convertEntityToJsonApi({ id: `${examId}-${questionId}` }, 'exam-question', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}/questions/${questionId}`),
+      message: 'Question unlinked from exam successfully',
       version: '1.0.0',
     });
   }
@@ -1589,7 +1728,15 @@ export class CertificationController {
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
     if (cached) return cached;
 
-    const sessions = await this.repository.findInProgressSessionsByUserId(user.id);
+    const sessions = await this.queryBus.execute(
+      new GetInProgressSessionsQuery(user.id)
+    ) as Array<{
+      id: string;
+      examId: string;
+      status: string;
+      startedAt: Date;
+      exam: { title: string; totalQuestions: number } | null;
+    }>;
 
     const items = (sessions || []).map((session) => {
       const exam = session.exam;
@@ -2007,7 +2154,7 @@ export class CertificationController {
     summary: 'Add a bookmark for a collection',
   })
   async addBookmark(
-    @Body() body: { itemId: string; itemType?: string; title?: string; folderName?: string },
+    @Body() body: AddBookmarkDto,
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
@@ -2119,12 +2266,8 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const bookmark = await this.repository.findBookmarkById(id);
-    if (!bookmark) {
-      throw new NotFoundException(`Bookmark with ID ${id} not found`);
-    }
     await this.commandBus.execute(
-      new RemoveBookmarkCommand(user.id, bookmark.collectionId)
+      new RemoveBookmarkCommand(user.id, id)
     );
     await this.cacheService.delete(`certification:bookmarks:${user.id}`);
     return convertEntityToJsonApi(
@@ -2172,12 +2315,8 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const favorite = await this.repository.findFavoriteById(id);
-    if (!favorite) {
-      throw new NotFoundException(`Favorite with ID ${id} not found`);
-    }
     await this.commandBus.execute(
-      new RemoveFavoriteCommand(user.id, favorite.collectionId)
+      new RemoveFavoriteCommand(user.id, id)
     );
     await this.cacheService.delete(`certification:favorites:${user.id}`);
     return convertEntityToJsonApi(

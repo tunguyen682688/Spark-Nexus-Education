@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CertificationApi } from '../../api/certification-api';
-import { STALE_TIME_COLLECTIONS } from './use-query-constants';
+import { STALE_TIME_COLLECTIONS } from '../../constants/query-cache-times.constants';
 import type {
   PracticeHistoryResponse,
   CompletedCollectionsResponse,
@@ -9,6 +9,8 @@ import type {
   DownloadsResponse,
   PurchasedCollectionsResponse,
   CertificateItem,
+  InProgressSessionItem,
+  ClonedCollectionItem,
 } from '../../types';
 
 export const usePracticeHistoryData = () => {
@@ -46,34 +48,6 @@ export const useBookmarksData = () => {
     refetchOnWindowFocus: false,
   });
 };
-
-/** In-progress session item shape. */
-export interface InProgressSessionItem {
-  id: string;
-  examId: string;
-  title: string;
-  status: string;
-  startedAt: string;
-  timeAgo: string;
-  examTitle: string;
-  totalQuestions: number;
-  examType?: string;
-  exam?: string;
-}
-
-/** Cloned collection item shape. */
-export interface ClonedCollectionItem {
-  id: string;
-  title: string;
-  description: string;
-  ownerId: string;
-  publishStatus: string;
-  createdAt: string;
-  examCount: number;
-  itemCount: number;
-  examType?: string;
-  exam?: string;
-}
 
 export const useInProgressSessions = () => {
   return useQuery<{ id: string; userId: string; totalInProgress: number; items: InProgressSessionItem[] }>({

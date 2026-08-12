@@ -1,6 +1,6 @@
 import React from 'react';
 import { Progress } from '@spark-nest-ed/frontend-shared-components';
-import { LISTENING_DASHBOARD_TEXT } from '../constants/listening-constants';
+import { LISTENING_DASHBOARD_TEXT } from '../constants';
 
 export interface StudyDashboardProgressProps {
   progressPercent: number;

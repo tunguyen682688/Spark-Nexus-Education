@@ -4,69 +4,14 @@ import { useToast } from '@spark-nest-ed/frontend-shared-components';
 import { useCreatorDashboardData, useCreateCollection } from '../../use-certification';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 import type { CreatorDashboardResponse } from '../../../types';
+import type {
+  CreatorActivityItem,
+  CreatorTopExamItem,
+  DailyRevenueItem,
+} from '../../../types/container-logic-dashboard.types';
+import { ICON_BG_CLASSES, getCategoryBadge } from '../../../services/creator-dashboard-helpers.service';
 
-// ===== View types =====
-
-export interface CreatorMetricCard {
-  title: string;
-  value: string | number;
-  change: string;
-  isPositive: boolean;
-  iconType: 'exam' | 'question' | 'attempt' | 'score' | 'like';
-}
-
-export interface CreatorActivityItem {
-  id: string;
-  type: string;
-  title: string;
-  timestamp: string;
-  iconType: 'check' | 'document' | 'star' | 'comment' | 'heart';
-  iconBgClass: string;
-}
-
-export interface CreatorTopExamItem {
-  rank: number;
-  id: string;
-  title: string;
-  category: string;
-  categoryBadge: string;
-  categoryBadgeClass: string;
-  attempts: number;
-  avgScore: string;
-  likes: number;
-}
-
-export interface DailyRevenueItem {
-  day: string;
-  amount: number;
-}
-
-// ===== Constants =====
-
-const ICON_BG_CLASSES = [
-  'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-  'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400',
-  'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-  'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
-  'bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400',
-];
-
-/** Maps exam title keywords to display category + badge metadata. */
-const CATEGORY_BADGE_MAP: Array<{ keywords: string[]; category: string; badge: string; badgeClass: string }> = [
-  { keywords: ['TOEIC'], category: 'Full Test', badge: 'TOEIC', badgeClass: 'bg-blue-600 text-white' },
-  { keywords: ['IELTS'], category: 'Full Test', badge: 'IELTS', badgeClass: 'bg-indigo-600 text-white' },
-  { keywords: ['READING', 'READ'], category: 'Reading', badge: 'READING', badgeClass: 'bg-teal-600 text-white' },
-  { keywords: ['LISTENING', 'LISTEN'], category: 'Listening', badge: 'LISTENING', badgeClass: 'bg-indigo-600 text-white' },
-  { keywords: ['GRAMMAR'], category: 'Grammar', badge: 'GRAMMAR', badgeClass: 'bg-emerald-600 text-white' },
-  { keywords: ['VOCAB'], category: 'Vocabulary', badge: 'VOCAB', badgeClass: 'bg-rose-600 text-white' },
-];
-
-const FALLBACK_BADGE = { category: 'General', badge: 'OTHER', badgeClass: 'bg-gray-600 text-white' };
-
-function getCategoryBadge(title: string) {
-  const upper = title.toUpperCase();
-  return CATEGORY_BADGE_MAP.find((entry) => entry.keywords.some((kw) => upper.includes(kw))) ?? FALLBACK_BADGE;
-}
+export type { CreatorMetricCard, CreatorActivityItem, CreatorTopExamItem, DailyRevenueItem } from '../../../types/container-logic-dashboard.types';
 
 // ===== Hook =====
 

@@ -5,11 +5,9 @@ import {
   useRecordSessionViolation,
   useSubmitExamSession,
 } from '../../use-certification';
+import type { UseExamSessionContainerLogicProps } from '../../../types/exam-builder.types';
 
-interface UseExamSessionContainerLogicProps {
-  sessionId: string;
-  onSubmitted?: (resultId: string) => void;
-}
+export type { UseExamSessionContainerLogicProps } from '../../../types/exam-builder.types';
 
 export function useExamSessionContainerLogic({
   sessionId,

@@ -1,0 +1,51 @@
+import type { CertificateTypeTemplate } from './certificate-templates.types';
+
+export const SAT_TEMPLATE: CertificateTypeTemplate = {
+  id: 'SAT',
+  label: 'SAT',
+  labelVi: 'Sat',
+  description: 'Kỳ thi tuyển sinh đại học Mỹ — Evidence-Based Reading & Writing + Math',
+  defaultDuration: 134,
+  defaultTotalQuestions: 98,
+  defaultMaxScore: 1600,
+  defaultPassScore: 1050,
+  passScoreLabel: 'Score cần đạt',
+  sections: [
+    {
+      title: 'Reading & Writing — Module 1',
+      sectionType: 'reading',
+      instruction: 'Adaptive module: 32 questions, 32 minutes. Reading comprehension + grammar.',
+      durationMinutes: 32,
+      questionCount: 32,
+      partNumber: 1,
+      questionType: 'Multiple Choice',
+    },
+    {
+      title: 'Reading & Writing — Module 2',
+      sectionType: 'reading',
+      instruction: 'Adaptive module: 32 questions, 32 minutes. Difficulty adapts to Module 1 performance.',
+      durationMinutes: 32,
+      questionCount: 32,
+      partNumber: 2,
+      questionType: 'Multiple Choice',
+    },
+    {
+      title: 'Math — Module 1',
+      sectionType: 'math',
+      instruction: 'Adaptive module: 22 questions, 35 minutes. Algebra, problem-solving, data analysis.',
+      durationMinutes: 35,
+      questionCount: 22,
+      partNumber: 1,
+      questionType: 'Multiple Choice',
+    },
+    {
+      title: 'Math — Module 2',
+      sectionType: 'math',
+      instruction: 'Adaptive module: 22 questions, 35 minutes. Advanced math, geometry, trigonometry.',
+      durationMinutes: 35,
+      questionCount: 22,
+      partNumber: 2,
+      questionType: 'Multiple Choice',
+    },
+  ],
+};
