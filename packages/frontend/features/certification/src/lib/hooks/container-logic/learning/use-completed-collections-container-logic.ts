@@ -167,6 +167,10 @@ export function useCompletedCollectionsContainerLogic() {
     setSelectedCertificate(null);
   };
 
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+  };
+
   const handleViewAnalytics = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/certification/result/${id}`);
@@ -206,6 +210,7 @@ export function useCompletedCollectionsContainerLogic() {
     handleViewCertificate,
     handleDownloadCertificate,
     handleCloseCertificateModal,
+    handleCopyCode,
     handleViewAnalytics,
     handleBackToLearning,
     handleExploreMoreExams,

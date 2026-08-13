@@ -137,12 +137,12 @@ export const CertificationCreatorDashboardContainer = () => {
       <CreatorPerformanceChart
         performanceChart={performanceChart}
         activeChartTab={activeChartTab}
-        setActiveChartTab={setActiveChartTab}
+        setActiveChartTab={setActiveChartTab as (tab: string) => void}
         chartTimeframe={chartTimeframe}
-        setChartTimeframe={setChartTimeframe}
+        setChartTimeframe={setChartTimeframe as (tf: string) => void}
         currentChartSeries={currentChartSeries}
         recentActivity={recentActivity}
-        text={text.performanceOverview}
+        text={{ ...text.performanceOverview, viewAll: text.performanceOverview.viewAll ?? 'View All' }}
       />
 
       {/* 4. BOTTOM SECTION: TOP PERFORMING EXAMS & REVENUE OVERVIEW */}
@@ -156,7 +156,7 @@ export const CertificationCreatorDashboardContainer = () => {
         <CreatorRevenueSection
           revenue={revenue}
           revenueTimeframe={revenueTimeframe}
-          setRevenueTimeframe={setRevenueTimeframe}
+          setRevenueTimeframe={setRevenueTimeframe as (tf: string) => void}
           handleWithdraw={handleWithdraw}
           handleViewAnalytics={handleViewAnalytics}
           text={text.revenueOverview}

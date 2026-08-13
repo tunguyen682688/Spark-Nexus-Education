@@ -1,4 +1,4 @@
-import type { CertificateTypeTemplate } from './certificate-templates.types';
+import type { CertificateTypeTemplate } from './certificate-templates-types.constants';
 
 export const IELTS_TEMPLATE: CertificateTypeTemplate = {
   id: 'IELTS',

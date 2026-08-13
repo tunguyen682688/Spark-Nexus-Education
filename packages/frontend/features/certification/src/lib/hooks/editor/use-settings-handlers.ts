@@ -3,7 +3,6 @@
  */
 import { useCallback } from 'react';
 import { withRetry, parseApiDataToState, buildCollectionDetailsPayload } from '../../services/collection-editor-helpers.service';
-import type { EditorChapter, CollectionDetailsForm } from '../../types/collection-editor.types';
 import type { SettingsDeps } from '../../types/editor-hook.types';
 import { RETRY_COUNT, RETRY_DELAY_MS } from '../../constants/editor.constants';
 

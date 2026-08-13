@@ -126,7 +126,7 @@ export const CertificationPracticeHistoryContainer = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeCategoryTab={activeCategoryTab}
-        setActiveCategoryTab={setActiveCategoryTab}
+        setActiveCategoryTab={(tab: string) => setActiveCategoryTab(tab as any)}
         viewMode={viewMode}
         setViewMode={setViewMode}
         sessionsCount={sessions.length}
@@ -138,7 +138,7 @@ export const CertificationPracticeHistoryContainer = () => {
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         handleViewScorecard={handleViewScorecard}
-        handleRetakeTest={handleRetakeTest}
+        handleRetakeTest={(id: string) => handleRetakeTest(id, {} as React.MouseEvent)}
         handleBackToLearning={handleBackToLearning}
         text={text}
       />

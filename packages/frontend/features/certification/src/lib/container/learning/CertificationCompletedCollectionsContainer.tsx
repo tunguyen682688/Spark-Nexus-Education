@@ -2,18 +2,8 @@ import {
   CheckCircle2,
   Filter,
   ChevronDown,
-  ArrowRight,
-  ShieldCheck,
-  Star,
-  Award,
-  Clock,
-  BookOpen,
 } from 'lucide-react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Button,
   Badge,
 } from '@spark-nest-ed/frontend-shared-components';
@@ -53,6 +43,7 @@ export const CertificationCompletedCollectionsContainer = () => {
     handleViewCertificate,
     handleDownloadCertificate,
     handleCloseCertificateModal,
+    handleCopyCode,
     handleViewAnalytics,
     handleBackToLearning,
     handleExploreMoreExams,
@@ -75,7 +66,7 @@ export const CertificationCompletedCollectionsContainer = () => {
           <button onClick={handleBackToLearning} className="hover:text-foreground transition-colors cursor-pointer">
             {text.breadcrumbParent}
           </button>
-          <span>></span>
+          <span>{'>'}</span>
           <span className="text-foreground font-bold">{text.breadcrumbCurrent}</span>
         </div>
 
@@ -126,23 +117,23 @@ export const CertificationCompletedCollectionsContainer = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <CompletedCollectionsTabs
-            totalCount={totalCount}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            text={text}
-          />
+<CompletedCollectionsTabs
+          totalCount={totalCount}
+          activeTab={activeTab}
+          setActiveTab={(tab: string) => setActiveTab(tab as any)}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          text={text}
+        />
 
           <CompletedCollectionsGrid
             collections={collections}
             viewMode={viewMode}
             onOpenCollection={handleOpenCollection}
             onViewCertificate={handleViewCertificate}
-            onViewAnalytics={handleViewAnalytics}
+            onViewAnalytics={(id, e) => handleViewAnalytics(id, e)}
             onBackToLearning={handleBackToLearning}
             text={text}
           />
@@ -169,6 +160,7 @@ export const CertificationCompletedCollectionsContainer = () => {
         onClose={handleCloseCertificateModal}
         certificate={selectedCertificate}
         onDownload={handleDownloadCertificate}
+        onCopyCode={(code) => handleCopyCode(code)}
         copied={false}
       />
     </div>

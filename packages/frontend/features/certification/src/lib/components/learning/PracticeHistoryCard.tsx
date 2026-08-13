@@ -1,4 +1,3 @@
-import React from 'react';
 import { Eye, RotateCcw, MoreVertical, FileText, Headphones, Mic, PenTool, Sparkles, Brain } from 'lucide-react';
 import { Badge } from '@spark-nest-ed/frontend-shared-components';
 import type { PracticeHistorySessionItem } from '../../hooks/container-logic/learning/use-practice-history-container-logic';
@@ -6,7 +5,7 @@ import type { PracticeHistorySessionItem } from '../../hooks/container-logic/lea
 interface PracticeHistoryCardProps {
   item: PracticeHistorySessionItem;
   onViewScorecard: (id: string) => void;
-  onRetakeTest: (id: string, e: React.MouseEvent) => void;
+  onRetakeTest: (id: string) => void;
 }
 
 export const PracticeHistoryCard = ({
@@ -103,7 +102,10 @@ export const PracticeHistoryCard = ({
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={(e) => onRetakeTest(item.id, e)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRetakeTest(item.id);
+            }}
             className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-indigo-600 transition-colors cursor-pointer"
             title="Retake Session"
           >

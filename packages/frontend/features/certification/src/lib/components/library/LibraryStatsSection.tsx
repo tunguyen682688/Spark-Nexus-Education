@@ -1,38 +1,13 @@
 import {
   Bookmark,
-  BookOpen,
-  Clock,
-  CheckCircle2,
-  Search,
-  Filter,
-  ArrowLeft,
-  Play,
-  Trash2,
-  Sparkles,
-  Trophy,
-  History,
-  FolderHeart,
-  ArrowUpDown,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Button,
-  Badge,
-  Input,
-} from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
+
+import type { DashboardStats } from '../../types/dashboard.types';
 
 interface LibraryStatsSectionProps {
   totalSavedCount: number;
-  dashboardStats?: {
-    completedMocks: number | string;
-    accuracy: string;
-    targetScore: string;
-  };
+  dashboardStats?: DashboardStats;
   libText: typeof CERTIFICATION_UI_TEXT.library;
 }
 

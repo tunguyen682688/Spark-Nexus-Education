@@ -1,6 +1,6 @@
 import { CheckCircle2, Save, Eye, Bookmark, RefreshCw, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, Badge } from '@spark-nest-ed/frontend-shared-components';
-import type { CertificationUIText } from '../../constants/certification.constants';
+import type { CertificationUIText } from '../../../constants/certification.constants';
 
 interface QuestionBuilderHeaderProps {
   questionBuilderText: CertificationUIText['questionBuilder'];

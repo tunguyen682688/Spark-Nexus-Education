@@ -1,6 +1,4 @@
 import {
-  Filter,
-  ChevronDown,
   Search,
   Grid,
   List,

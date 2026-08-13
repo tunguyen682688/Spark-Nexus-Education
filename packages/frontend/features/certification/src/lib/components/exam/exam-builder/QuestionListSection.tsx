@@ -7,8 +7,6 @@ import {
   Filter,
   Search,
   Pencil,
-  FileCode,
-  Grid,
 } from 'lucide-react';
 import {
   Card,
@@ -17,7 +15,6 @@ import {
 } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 import type { BuilderSection } from '../../../hooks/container-logic/exam/use-exam-builder-container-logic';
-import { SectionListItem } from './SectionListItem';
 import { Pagination } from './Pagination';
 
 const examBuilderText = CERTIFICATION_UI_TEXT.examBuilder;

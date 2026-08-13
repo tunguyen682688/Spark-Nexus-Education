@@ -1,6 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
-import type { CertificationUIText } from '../../constants/certification.constants';
+import type { CertificationUIText } from '../../../constants/certification.constants';
 
 interface QuestionBuilderTabNavProps {
   activeTab: string;
@@ -9,10 +7,17 @@ interface QuestionBuilderTabNavProps {
 }
 
 export const QuestionBuilderTabNav = ({ activeTab, setActiveTab, questionBuilderText }: QuestionBuilderTabNavProps) => {
+  const tabs = [
+    questionBuilderText.tabs.question,
+    questionBuilderText.tabs.explanation,
+    questionBuilderText.tabs.tagsSkills,
+    questionBuilderText.tabs.history,
+  ] as const;
+
   return (
     <div className="border-b border-border">
       <div className="flex items-center gap-6 overflow-x-auto">
-        {([questionBuilderText.tabs.question, questionBuilderText.tabs.explanation, questionBuilderText.tabs.tagsSkills, questionBuilderText.tabs.history] as const).map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

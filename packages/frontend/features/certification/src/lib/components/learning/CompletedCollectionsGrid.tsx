@@ -1,19 +1,15 @@
-import { CheckCircle2, Grid, List } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Card, Button } from '@spark-nest-ed/frontend-shared-components';
 import type { CertificationUIText } from '../../constants/certification.constants';
+import type { CompletedCollectionCardItem } from '../../hooks/container-logic/learning/use-completed-collections-container-logic';
+import { CompletedCollectionCard } from './CompletedCollectionCard';
 
 interface CompletedCollectionsGridProps {
-  collections: Array<{
-    id: string;
-    title: string;
-    exam: string;
-    score: number;
-    completedDate: string;
-  }>;
+  collections: CompletedCollectionCardItem[];
   viewMode: 'grid' | 'list';
   onOpenCollection: (id: string) => void;
   onViewCertificate: (id: string, e: React.MouseEvent) => void;
-  onViewAnalytics: (id: string) => void;
+  onViewAnalytics: (id: string, e: React.MouseEvent) => void;
   onBackToLearning: () => void;
   text: CertificationUIText['completedCollections'];
 }

@@ -2,7 +2,7 @@
  * Persist — save/publish collection, isSaving, autosavedText.
  */
 import { useCallback } from 'react';
-import type { EditorChapter, CollectionDetailsForm, SyncStatus } from '../../types/collection-editor.types';
+import type { SyncStatus } from '../../types/collection-editor.types';
 import type { PersistDeps } from '../../types/editor-hook.types';
 import {
   buildCollectionDetailsPayload,

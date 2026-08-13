@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { withRetry } from '../../services/collection-editor-helpers.service';
-import type { EditorChapter, AddExamConfig } from '../../types/collection-editor.types';
+import type { AddExamConfig } from '../../types/collection-editor.types';
 import type { ExamDeps } from '../../types/editor-hook.types';
 import { RETRY_COUNT, RETRY_DELAY_MS } from '../../constants/editor.constants';
 

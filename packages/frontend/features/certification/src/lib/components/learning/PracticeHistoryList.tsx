@@ -17,16 +17,10 @@ import {
 import { PracticeHistoryCard } from '../../components/learning/PracticeHistoryCard';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
 
+import type { PracticeHistorySessionItem } from '../../hooks/container-logic/learning/use-practice-history-container-logic';
+
 interface PracticeHistoryListProps {
-  sessions: Array<{
-    id: string;
-    title: string;
-    type: string;
-    examPart: string;
-    score: string;
-    time: string;
-    date: string;
-  }>;
+  sessions: PracticeHistorySessionItem[];
   currentPage: number;
   setCurrentPage: (page: number) => void;
   handleViewScorecard: (id: string) => void;
@@ -86,7 +80,7 @@ export const PracticeHistoryList = ({
                       key={item.id}
                       item={item}
                       onViewScorecard={handleViewScorecard}
-                      onRetakeTest={handleRetakeTest}
+                      onRetakeTest={(id) => handleRetakeTest(id)}
                     />
                   ))}
                 </tbody>
@@ -101,7 +95,7 @@ export const PracticeHistoryList = ({
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               className="p-1.5 rounded-lg border border-border hover:bg-secondary disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -120,7 +114,7 @@ export const PracticeHistoryList = ({
               </button>
             ))}
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(5, prev + 1))}
+              onClick={() => setCurrentPage(Math.min(5, currentPage + 1))}
               className="p-1.5 rounded-lg border border-border hover:bg-secondary cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />

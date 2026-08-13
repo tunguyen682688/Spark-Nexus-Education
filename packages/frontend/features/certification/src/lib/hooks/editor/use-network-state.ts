@@ -2,8 +2,7 @@
  * Network & persistence — online/offline, localStorage draft, beforeunload.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { EditorChapter, CollectionDetailsForm } from '../../types/collection-editor.types';
-import type { ToastVariant, NetworkDeps } from '../../types/editor-hook.types';
+import type { NetworkDeps } from '../../types/editor-hook.types';
 import {
   saveDraftToStorage,
   loadDraftFromStorage,

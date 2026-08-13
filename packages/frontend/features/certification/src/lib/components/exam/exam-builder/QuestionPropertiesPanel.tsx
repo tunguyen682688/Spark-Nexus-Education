@@ -1,16 +1,11 @@
-import {
-  PropertiesSidebar,
-  QualityCard,
-  UsedInCard,
-} from '../../components/exam/exam-builder';
+import { PropertiesSidebar } from './PropertiesSidebar';
+import { QualityCard } from './QualityCard';
+import { UsedInCard } from './UsedInCard';
+import type { QuestionPropertiesForm } from '../../../types/question-builder.types';
 
 interface QuestionPropertiesPanelProps {
-  properties: {
-    tags: string[];
-    skills: string[];
-    cognitiveLevel: string;
-  };
-  setProperties: (p: { tags: string[]; skills: string[]; cognitiveLevel: string }) => void;
+  properties: QuestionPropertiesForm;
+  setProperties: (value: QuestionPropertiesForm | ((prev: QuestionPropertiesForm) => QuestionPropertiesForm)) => void;
   handleRemoveTag: (tag: string) => void;
   handleRemoveSkill: (skill: string) => void;
   qualityScore: number;

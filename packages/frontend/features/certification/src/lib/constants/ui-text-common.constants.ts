@@ -1,3 +1,7 @@
+import { DASHBOARD_UI_TEXT } from './ui-text-dashboard.constants';
+import { STUDY_PLAN_UI_TEXT } from './ui-text-study-plan.constants';
+import { TOAST_UI_TEXT } from './ui-text-toast.constants';
+
 export { DASHBOARD_UI_TEXT } from './ui-text-dashboard.constants';
 export { STUDY_PLAN_UI_TEXT } from './ui-text-study-plan.constants';
 export { TOAST_UI_TEXT } from './ui-text-toast.constants';

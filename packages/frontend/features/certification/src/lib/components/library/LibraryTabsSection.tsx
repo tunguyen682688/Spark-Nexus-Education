@@ -6,9 +6,11 @@ import {
 } from 'lucide-react';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
 
+import type { LibraryTabType } from '../../types/container-logic-library.types';
+
 interface LibraryTabsSectionProps {
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: LibraryTabType) => void;
   totalSavedCount: number;
   libText: typeof CERTIFICATION_UI_TEXT.library;
 }

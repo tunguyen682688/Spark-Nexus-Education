@@ -50,7 +50,7 @@ export const PurchasedStatsRow = ({
             {text.metrics.totalValue}
           </span>
           <div className="text-xl font-black text-foreground">
-            ${items.reduce((acc, item) => acc + (parseFloat(item.pricePaid?.replace('$', '')) || 0), 0)}
+            ${items.reduce((acc, item) => acc + (parseFloat((item.pricePaid ?? '').replace('$', '')) || 0), 0)}
           </div>
           <span className="text-[10px] text-emerald-600 font-bold flex items-center">
             Active subscriptions

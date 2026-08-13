@@ -13,20 +13,13 @@ import {
   CardHeader,
   CardTitle,
   Button,
-  Badge,
 } from '@spark-nest-ed/frontend-shared-components';
 import { PurchasedCollectionCard } from '../../components/library/PurchasedCollectionCard';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
+import type { PurchasedCollectionItem } from '../../hooks/container-logic/library/use-purchased-collections-container-logic';
 
 interface PurchasedGridProps {
-  items: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    pricePaid?: string;
-    progressPercent?: number;
-    totalTests?: number;
-  }>;
+  items: PurchasedCollectionItem[];
   currentPage: number;
   setCurrentPage: (page: number) => void;
   handleOpenCollection: (id: string) => void;
@@ -84,7 +77,7 @@ export const PurchasedGrid = ({
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               className="p-1.5 rounded-lg border border-border hover:bg-secondary disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -110,7 +103,7 @@ export const PurchasedGrid = ({
               2
             </button>
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(2, prev + 1))}
+              onClick={() => setCurrentPage(Math.min(2, currentPage + 1))}
               className="p-1.5 rounded-lg border border-border hover:bg-secondary cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />

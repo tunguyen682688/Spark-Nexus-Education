@@ -1,5 +1,6 @@
 import type { BuilderSection } from '../types/exam-builder.types';
 import type { SaveQuestionDto } from '../types';
+import { createNewQuestion, mapSectionsToSavePayload, reconcileSavedSectionIds } from './exam-builder-helpers.service';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface QuestionHandlerDeps {
@@ -39,7 +40,6 @@ export function createQuestionHandlers(deps: QuestionHandlerDeps) {
     let resolvedSectionId = activeSectionId;
     try {
       if (isTemporarySectionId(activeSectionId)) {
-        const { mapSectionsToSavePayload, reconcileSavedSectionIds } = await import('./exam-builder-helpers.service');
         const sectionResult = await saveSectionsMutation.mutateAsync({
           examId,
           sections: mapSectionsToSavePayload(sectionsRef.current),
@@ -60,7 +60,6 @@ export function createQuestionHandlers(deps: QuestionHandlerDeps) {
       return;
     }
 
-    const { createNewQuestion } = await import('./exam-builder-helpers.service');
     const optimisticQuestion = createNewQuestion(currentSection.questions.length + 1);
     const tempId = optimisticQuestion.id;
 

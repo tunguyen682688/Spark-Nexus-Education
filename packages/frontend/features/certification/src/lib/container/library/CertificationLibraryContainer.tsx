@@ -6,8 +6,6 @@ import {
   Badge,
 } from '@spark-nest-ed/frontend-shared-components';
 import { useLibraryContainerLogic } from '../../hooks/container-logic/library/use-library-container-logic';
-import { LoadingSkeleton } from '../../components/shared/LoadingSkeleton';
-import { ErrorState } from '../../components/shared/ErrorState';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
 import { LibraryStatsSection } from '../../components/library/LibraryStatsSection';
 import { LibraryTabsSection } from '../../components/library/LibraryTabsSection';

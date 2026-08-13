@@ -1,5 +1,4 @@
 import { Grid, List } from 'lucide-react';
-import { Button } from '@spark-nest-ed/frontend-shared-components';
 import type { CertificationUIText } from '../../constants/certification.constants';
 
 interface CompletedCollectionsTabsProps {

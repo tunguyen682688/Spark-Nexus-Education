@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
-import { Button, Badge } from '@spark-nest-ed/frontend-shared-components';
-import type { CertificationUIText } from '../../constants/certification.constants';
+import { Button } from '@spark-nest-ed/frontend-shared-components';
+import type { CertificationUIText } from '../../../constants/certification.constants';
 
 interface QuestionBuilderBottomNavProps {
   questionBuilderText: CertificationUIText['questionBuilder'];

@@ -140,7 +140,7 @@ export const CertificationQuestionBuilderContainer = () => {
 
       <QuestionBuilderTabNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab: string) => setActiveTab(tab as any)}
         questionBuilderText={questionBuilderText}
       />
 

@@ -112,7 +112,7 @@ export const CertificationPurchasedCollectionsContainer = () => {
       {/* 3. MAIN LAYOUT GRID (2 COLUMNS) */}
       <PurchasedFilterBar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab: string) => setActiveTab(tab as any)}
         sortBy={sortBy}
         setSortBy={setSortBy}
         searchQuery={searchQuery}
@@ -128,7 +128,7 @@ export const CertificationPurchasedCollectionsContainer = () => {
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         handleOpenCollection={handleOpenCollection}
-        handleViewReceipt={handleViewReceipt}
+        handleViewReceipt={(id) => handleViewReceipt(id, {} as React.MouseEvent)}
         handleBackToLearning={handleBackToLearning}
         text={text}
       />

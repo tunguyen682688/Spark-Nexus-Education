@@ -1,27 +1,9 @@
 import {
-  Clock,
-  Filter,
-  ChevronDown,
   List,
   Grid,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-  Brain,
-  Award,
-  CheckCircle2,
-  Calendar,
-  Sparkles,
-  ArrowRight,
   Search,
 } from 'lucide-react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
   Input,
 } from '@spark-nest-ed/frontend-shared-components';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';

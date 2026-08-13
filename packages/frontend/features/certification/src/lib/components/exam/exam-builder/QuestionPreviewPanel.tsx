@@ -5,13 +5,13 @@ import {
 import {
   Card,
 } from '@spark-nest-ed/frontend-shared-components';
-import { PreviewAdMock } from '../../components/exam/exam-builder';
-import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
+import { PreviewAdMock } from './PreviewAdMock';
+import { CERTIFICATION_UI_TEXT } from '../../../constants/certification.constants';
 
 interface QuestionPreviewPanelProps {
   questionText: string;
   questionNumber: number;
-  options: Array<{ id: string; text: string; isCorrect: boolean }>;
+  options: Array<{ id: string; label: string; text: string; isCorrect: boolean }>;
   previewViewport: 'desktop' | 'mobile';
   setPreviewViewport: (v: 'desktop' | 'mobile') => void;
 }

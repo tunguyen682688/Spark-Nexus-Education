@@ -12,6 +12,7 @@ export const CERTIFICATION_UI_TEXT = {
     },
     performanceOverview: {
       title: 'Performance Overview',
+      viewAll: 'View All',
       tabs: {
         attempts: 'Attempts',
         avgScore: 'Average Score',

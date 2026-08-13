@@ -1,4 +1,4 @@
-import type { CertificateTypeTemplate } from './certificate-templates.types';
+import type { CertificateTypeTemplate } from './certificate-templates-types.constants';
 
 export const VSTEP_TEMPLATE: CertificateTypeTemplate = {
   id: 'VSTEP',
