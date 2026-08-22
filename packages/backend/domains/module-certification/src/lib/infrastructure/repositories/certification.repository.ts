@@ -1190,7 +1190,11 @@ export class CertificationRepository implements ICertificationRepository {
               metadata: {
                 select: {
                   passageId: true,
+                  passageText: true,
                   modelAnswer: true,
+                  estimatedTime: true,
+                  explanation: true,
+                  points: true,
                 },
               },
             },
@@ -1221,7 +1225,17 @@ export class CertificationRepository implements ICertificationRepository {
         partNumber: eq.partNumber ?? null,
         // From QuestionMetadata (question-level, shared across exams)
         passageId: eq.question?.metadata?.passageId ?? null,
+        passageText: eq.question?.metadata?.passageText ?? null,
         modelAnswer: eq.question?.metadata?.modelAnswer ?? null,
+        explanation: eq.question?.metadata?.explanation ?? null,
+        estimatedTime: eq.question?.metadata?.estimatedTime ? Number(eq.question.metadata.estimatedTime) : null,
+        metadataPoints: eq.question?.metadata?.points ?? null,
+        // From ExamQuestion (per-exam overrides)
+        passageGroupId: eq.passageGroupId ?? null,
+        passageType: eq.passageType ?? null,
+        passageTitle: eq.passageTitle ?? null,
+        blankNumber: eq.blankNumber ?? null,
+        subQuestionNumber: eq.subQuestionNumber ?? null,
         formatMetadata: eq.formatMetadata ?? null,
       })),
       totalCount: total,
@@ -1279,6 +1293,10 @@ export class CertificationRepository implements ICertificationRepository {
       where: { examId, questionId },
     });
     return result.count > 0;
+  }
+
+  async deleteAllExamQuestionsByExamId(examId: string): Promise<void> {
+    await this.prisma.examQuestion.deleteMany({ where: { examId } });
   }
 
   async countExamQuestionsByExamId(examId: string): Promise<number> {

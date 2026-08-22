@@ -71,6 +71,7 @@ import { UpdateCollectionDto } from '../../application/dtos/update-collection.dt
 import { CreateExamDto } from '../../application/dtos/create-exam.dto';
 import { UpdateExamDto } from '../../application/dtos/update-exam.dto';
 import { SaveExamSectionsDto } from '../../application/dtos/save-exam-sections.dto';
+import { SaveExamContentDto } from '../../application/dtos/save-exam-content.dto';
 import { LinkQuestionToExamDto } from '../../application/dtos/link-question-to-exam.dto';
 import { FeaturedCollectionsQueryDto, SectionQuestionsQueryDto } from '../../application/dtos/certification-query-params.dto';
 import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
@@ -103,6 +104,7 @@ import {
   AddCollectionDiscussionCommand,
   SyncChaptersCommand,
   SaveExamSectionsCommand,
+  SaveExamContentCommand,
   LinkQuestionToExamCommand,
   UnlinkQuestionFromExamCommand,
 } from '../../application/commands';
@@ -1482,6 +1484,28 @@ export class CertificationController {
     });
   }
 
+  @Put('exams/:id/content')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Save exam content', description: 'Atomically saves the entire exam structure (metadata + sections + embedded questions).' })
+  @ApiJsonApiSuccessResponse({ description: 'Exam content saved successfully', resourceType: 'exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam not found' })
+  async saveExamContent(
+    @Param('id') examId: string,
+    @Body() dto: SaveExamContentDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new SaveExamContentCommand(examId, user.id, dto)
+    );
+    return convertEntityToJsonApi({ id: examId, ...result }, 'exam', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}/content`),
+      message: 'Exam content saved successfully',
+      version: '1.0.0',
+    });
+  }
+
   @Post('exams/link-question')
   @UseGuards(auth.JwtAuthGuard)
   @ApiBearerAuth('JWT')
@@ -1510,6 +1534,11 @@ export class CertificationController {
           speakingPrompt: dto.speakingPrompt,
           isGridIn: dto.isGridIn,
           formatMetadata: dto.formatMetadata,
+          passageGroupId: dto.passageGroupId,
+          blankNumber: dto.blankNumber,
+          subQuestionNumber: dto.subQuestionNumber,
+          passageTitle: dto.passageTitle,
+          passageType: dto.passageType,
         }
       )
     );

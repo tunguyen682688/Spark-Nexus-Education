@@ -82,3 +82,8 @@ export interface RecordSessionViolationDto {
   violationType: 'TAB_SWITCH' | 'FULLSCREEN_EXIT' | 'TIMEOUT';
   description?: string;
 }
+
+export interface UseExamSessionContainerLogicProps {
+  sessionId: string;
+  onSubmitted?: (resultId: string) => void;
+}

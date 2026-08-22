@@ -10,7 +10,15 @@ export const CertificationExamDetailPage = ({ examId, onSessionStarted }:
   CertificationExamDetailPageProps
 ) => {
   const params = useParams<{ id: string }>();
-  const activeId = examId || params.id || 'e1';
+  const activeId = examId || params.id;
+
+  if (!activeId) {
+    return (
+      <div className="w-full py-12 flex justify-center max-w-xl mx-auto">
+        <p className="text-sm text-muted-foreground">No exam ID provided.</p>
+      </div>
+    );
+  }
 
   return (
     <CertificationExamDetailContainer

@@ -19,26 +19,6 @@ export const TOAST_UI_TEXT = {
     title: 'Thao tác thất bại',
     description: 'Có lỗi kết nối xảy ra. Vui lòng kiểm tra lại đường truyền mạng.',
   },
-  saveQuestionToBankSuccess: {
-    title: 'Đã lưu vào ngân hàng câu hỏi',
-    description: 'Câu hỏi đã được lưu thành công vào ngân hàng câu hỏi.',
-  },
-  saveQuestionSuccess: {
-    title: 'Đã lưu câu hỏi',
-    description: 'Câu hỏi đã được lưu thành công.',
-  },
-  saveQuestionError: {
-    title: 'Lưu câu hỏi thất bại',
-    description: 'Không thể lưu câu hỏi. Vui lòng thử lại.',
-  },
-  deleteQuestionSuccess: {
-    title: 'Đã xóa câu hỏi',
-    description: 'Câu hỏi đã được xóa thành công.',
-  },
-  deleteQuestionError: {
-    title: 'Xóa câu hỏi thất bại',
-    description: 'Không thể xóa câu hỏi. Vui lòng thử lại.',
-  },
   addReviewSuccess: {
     title: 'Đã gửi đánh giá',
     description: 'Đánh giá của bạn đã được gửi thành công.',

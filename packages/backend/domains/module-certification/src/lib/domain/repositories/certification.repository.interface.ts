@@ -168,7 +168,17 @@ export interface ICertificationRepository {
       partNumber: number | null;
       // From QuestionMetadata (question-level)
       passageId: string | null;
+      passageText: string | null;
       modelAnswer: string | null;
+      explanation: string | null;
+      estimatedTime: number | null;
+      metadataPoints: number | null;
+      // From ExamQuestion (per-exam)
+      passageGroupId: string | null;
+      passageType: string | null;
+      passageTitle: string | null;
+      blankNumber: number | null;
+      subQuestionNumber: number | null;
       formatMetadata: unknown | null;
     }>;
     totalCount: number;
@@ -180,6 +190,7 @@ export interface ICertificationRepository {
   findExamQuestionByExamAndQuestion(examId: string, questionId: string): Promise<ExamQuestionEntity | null>;
   saveExamQuestion(entity: ExamQuestionEntity): Promise<ExamQuestionEntity>;
   deleteExamQuestion(examId: string, questionId: string): Promise<boolean>;
+  deleteAllExamQuestionsByExamId(examId: string): Promise<void>;
   countExamQuestionsByExamId(examId: string): Promise<number>;
   countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number>;
   findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]>;

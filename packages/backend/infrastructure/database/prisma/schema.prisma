@@ -1302,6 +1302,13 @@ model ExamQuestion {
   // Format metadata (flexible JSON for per-exam extra data)
   formatMetadata  Json?   @map("format_metadata")
 
+  // Passage grouping for multi-question types (TOEIC Part 6/7)
+  passageGroupId     String? @map("passage_group_id") @db.VarChar(100)
+  blankNumber        Int?    @map("blank_number")
+  subQuestionNumber  Int?    @map("sub_question_number")
+  passageTitle       String? @map("passage_title") @db.VarChar(255)
+  passageType        String? @map("passage_type") @db.VarChar(50)
+
   // Relations
   exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)

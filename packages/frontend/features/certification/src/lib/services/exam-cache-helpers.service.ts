@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { CollectionEditorResponse, ExamBuilderResponse } from '../types';
+import type { CollectionEditorResponse } from '../types';
 
 // ─── Shared cache helpers ────────────────────────────────────────────────────
 
@@ -13,17 +13,6 @@ export function updateEditorCache(
 ) {
   queryClient.setQueryData<CollectionEditorResponse>(
     ['certification', 'collection-editor', collectionId],
-    (old) => (old ? updater(old) : old),
-  );
-}
-
-export function updateExamBuilderCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  examId: string,
-  updater: (data: ExamBuilderResponse) => ExamBuilderResponse,
-) {
-  queryClient.setQueryData<ExamBuilderResponse>(
-    ['certification', 'exam-builder', examId],
     (old) => (old ? updater(old) : old),
   );
 }

@@ -6,8 +6,6 @@ export { CertificationExamsContainer } from './exam/CertificationExamsContainer'
 export { CertificationExamDetailContainer } from './exam/CertificationExamDetailContainer';
 export { CertificationExamSessionContainer } from './exam/CertificationExamSessionContainer';
 export { CertificationExamResultContainer } from './exam/CertificationExamResultContainer';
-export { CertificationExamBuilderContainer } from './exam/CertificationExamBuilderContainer';
-export { CertificationQuestionBuilderContainer } from './exam/CertificationQuestionBuilderContainer';
 export { CertificationLibraryContainer } from './library/CertificationLibraryContainer';
 export { CertificationBookmarksContainer } from './library/CertificationBookmarksContainer';
 export { CertificationFavoritesContainer } from './library/CertificationFavoritesContainer';

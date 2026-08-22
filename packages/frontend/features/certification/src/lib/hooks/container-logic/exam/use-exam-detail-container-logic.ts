@@ -20,6 +20,8 @@ export function useExamDetailContainerLogic(examId: string, onSessionStarted?: (
       onSuccess: (session) => {
         if (onSessionStarted) {
           onSessionStarted(session.id);
+        } else {
+          navigate(`/certification/session/${session.id}`);
         }
       },
     });

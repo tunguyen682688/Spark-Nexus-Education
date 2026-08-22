@@ -23,5 +23,6 @@ export * from './add-collection-review';
 export * from './add-collection-discussion';
 export * from './sync-chapters';
 export * from './save-exam-sections';
+export * from './save-exam-content';
 export * from './link-question-to-exam';
 export * from './unlink-question-from-exam';

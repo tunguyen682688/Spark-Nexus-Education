@@ -73,9 +73,6 @@ export const ROUTES = {
     // Creator / Builder routes
     CREATOR_DASHBOARD: '/certification/creator-dashboard',
     COLLECTION_EDITOR: '/certification/collection-editor/:id?',
-    EXAM_BUILDER: '/certification/exam-builder/:id',
-    QUESTION_BUILDER: '/certification/question-builder/:id',
-    QUESTION_BUILDER_IN_EXAM: '/certification/exam-builder/:examId/question-builder/:questionId',
     // Detail / Session routes
     COLLECTION_DETAIL: '/certification/collections/:id',
     EXAM_DETAIL: '/certification/exams/:id',

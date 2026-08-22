@@ -13,7 +13,7 @@ interface AddExamFormProps {
     totalQuestions: number;
     maxScore: number;
     passScore: number;
-    sections: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number }>;
+    sections: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number; questionCount?: number }>;
   }) => void;
   onBack: () => void;
 }
@@ -45,6 +45,7 @@ export const AddExamForm = ({ selectedCertType, existingExamCount, onSubmit, onB
         sectionType: s.sectionType,
         instruction: s.instruction,
         durationMinutes: s.durationMinutes,
+        questionCount: s.questionCount,
       })),
     });
     isConfirmingRef.current = false;

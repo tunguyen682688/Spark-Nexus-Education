@@ -2,6 +2,11 @@ import { Query } from '@nestjs/cqrs';
 
 export interface ExamBuilderResult {
   id: string;
+  title: string;
+  description: string;
+  totalQuestions: number;
+  durationMinutes: number;
+  passingScore: number;
   status: string;
   lastAutosaved: string;
   examType: string;
@@ -11,10 +16,13 @@ export interface ExamBuilderResult {
   settings: {
     title: string;
     description: string;
-    level: string;
-    language: string;
+    duration: number;
     passingScore: number;
     maxScore: number;
+    difficulty: string;
+    level: string;
+    language: string;
+    instructions: string;
     createdDate: string;
     lastUpdatedDate: string;
   };

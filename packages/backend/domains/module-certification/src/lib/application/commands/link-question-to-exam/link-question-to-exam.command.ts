@@ -9,6 +9,11 @@ export interface ExamFormatFields {
   speakingPrompt?: string | null;
   isGridIn?: boolean;
   formatMetadata?: unknown | null;
+  passageGroupId?: string | null;
+  blankNumber?: number | null;
+  subQuestionNumber?: number | null;
+  passageTitle?: string | null;
+  passageType?: string | null;
 }
 
 export class LinkQuestionToExamCommand extends Command<{ examQuestionId: string }> {

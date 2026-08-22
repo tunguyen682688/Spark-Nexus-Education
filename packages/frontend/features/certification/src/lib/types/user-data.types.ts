@@ -13,21 +13,6 @@ export interface CertificateItem {
   credentialCode: string;
 }
 
-export interface QuestionBuilderResponse {
-  id: string;
-  questionText: string;
-  questionType: string;
-  difficulty: string;
-  options: AnswerOptionItem[];
-  explanation: string;
-  properties: Record<string, unknown>;
-  metadata: {
-    id: string;
-    lastUpdatedDate: string;
-    createdBy: string;
-  };
-}
-
 export interface BookmarkFolder {
   id: string;
   name: string;

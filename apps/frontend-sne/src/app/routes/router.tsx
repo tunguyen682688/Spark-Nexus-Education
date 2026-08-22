@@ -1544,17 +1544,6 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'certification/saved-collections',
-          lazy: async () => {
-            const { CertificationLibraryPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationLibraryPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
           path: 'certification/completed',
           lazy: async () => {
             const { CertificationCompletedCollectionsPage } = await import(
@@ -1666,17 +1655,6 @@ export const createRouter = () =>
               '@spark-nest-ed/feature-certification'
             );
             return { Component: CertificationEditorialPicksPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
-          path: 'certification/ai-recommendations',
-          lazy: async () => {
-            const { CertificationAIGeneratorPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationAIGeneratorPage };
           },
           hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
@@ -1815,36 +1793,13 @@ export const createRouter = () =>
           errorElement: <RouteErrorBoundary />,
         },
         {
-          path: 'certification/exam-builder/:id?',
+          path: 'certification/exam-content-editor/:examId',
           lazy: async () => {
-            const { CertificationExamBuilderPage } = await import(
+            const { CertificationExamContentEditorPage } = await import(
               '@spark-nest-ed/feature-certification'
             );
-            return { Component: CertificationExamBuilderPage };
+            return { Component: CertificationExamContentEditorPage };
           },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
-          path: 'certification/exam-builder/:examId/question-builder/:questionId',
-          lazy: async () => {
-            const { CertificationQuestionBuilderPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationQuestionBuilderPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
-          errorElement: <RouteErrorBoundary />,
-        },
-        {
-          path: 'certification/question-builder/:id?',
-          lazy: async () => {
-            const { CertificationQuestionBuilderPage } = await import(
-              '@spark-nest-ed/feature-certification'
-            );
-            return { Component: CertificationQuestionBuilderPage };
-          },
-          hydrateFallbackElement: <LoadingFallback />,
           errorElement: <RouteErrorBoundary />,
         },
       ],

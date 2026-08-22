@@ -6,9 +6,7 @@ export { CertificationExamsPage } from './exam/CertificationExamsPage';
 export { CertificationExamDetailPage } from './exam/CertificationExamDetailPage';
 export { CertificationExamSessionPage } from './exam/CertificationExamSessionPage';
 export { CertificationExamResultPage } from './exam/CertificationExamResultPage';
-export { CertificationExamBuilderPage } from './exam/CertificationExamBuilderPage';
-export { CertificationQuestionBuilderPage } from './exam/CertificationQuestionBuilderPage';
-export { CertificationCreateExamPage } from './exam/CertificationCreateExamPage';
+export { CertificationExamContentEditorPage } from './exam/CertificationExamContentEditorPage';
 export { CertificationImportQuestionsPage } from './exam/CertificationImportQuestionsPage';
 export { CertificationLibraryPage } from './library/CertificationLibraryPage';
 export { CertificationBookmarksPage } from './library/CertificationBookmarksPage';
@@ -25,4 +23,3 @@ export { CertificationCompletedCollectionsPage } from './learning/CertificationC
 export { CertificationSearchPage } from './search/CertificationSearchPage';
 export { CertificationAIGeneratorPage } from './shared/CertificationAIGeneratorPage';
 export { CertificationAnalyticsPage } from './shared/CertificationAnalyticsPage';
-export { CertificationCreateCollectionPage } from './shared/CertificationCreateCollectionPage';

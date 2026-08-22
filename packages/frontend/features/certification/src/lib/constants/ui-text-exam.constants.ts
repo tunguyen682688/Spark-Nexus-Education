@@ -80,8 +80,6 @@ export const CERTIFICATION_UI_TEXT = {
     badgeMultipleChoice: 'Multiple Choice',
     savedStatus: 'All changes saved',
     previewBtn: 'Preview Question',
-    saveToBankBtn: 'Save to Bank',
-    saveQuestionBtn: 'Save Question',
     tabs: {
       question: 'Question',
       explanation: 'Explanation',
@@ -143,9 +141,9 @@ export const CERTIFICATION_UI_TEXT = {
     difficultyOptions: ['Medium', 'Easy', 'Hard'],
     referenceTypes: ['Passage', 'Image', 'External Link'] as const,
     passageOptions: ['Passage 2', 'Passage 1'],
-    pointsOptions: [1, 2],
+    pointsOptions: [1, 2, 3, 4, 5],
     timeFormatHint: '(mm:ss)',
-    cognitiveLevels: ['Understand', 'Apply', 'Analyze'],
+    cognitiveLevels: ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'],
     qualityChecklist: [
       '✓ Clear question text',
       '✓ Plausible distractors',

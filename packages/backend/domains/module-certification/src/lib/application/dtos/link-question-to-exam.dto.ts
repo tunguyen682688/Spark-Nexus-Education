@@ -80,4 +80,29 @@ export class LinkQuestionToExamDto {
   @ApiPropertyOptional({ description: 'Flexible format metadata (JSON)' })
   @IsOptional()
   formatMetadata?: unknown;
+
+  @ApiPropertyOptional({ description: 'Passage group ID for multi-question types (TOEIC Part 6/7)' })
+  @IsOptional()
+  @IsString()
+  passageGroupId?: string;
+
+  @ApiPropertyOptional({ description: 'Blank number within a passage (TOEIC Part 6)' })
+  @IsOptional()
+  @IsNumber()
+  blankNumber?: number;
+
+  @ApiPropertyOptional({ description: 'Sub-question number within a passage (TOEIC Part 7)' })
+  @IsOptional()
+  @IsNumber()
+  subQuestionNumber?: number;
+
+  @ApiPropertyOptional({ description: 'Passage title for multi-question types' })
+  @IsOptional()
+  @IsString()
+  passageTitle?: string;
+
+  @ApiPropertyOptional({ description: 'Passage type (single, double, triple)' })
+  @IsOptional()
+  @IsString()
+  passageType?: string;
 }

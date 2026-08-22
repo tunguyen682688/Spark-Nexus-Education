@@ -27,7 +27,7 @@ export const TagsSkillsTab = ({
     <div className="space-y-6">
       {/* Tags Section */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           {text.tagsLabel}
         </label>
         <TagInput
@@ -40,7 +40,7 @@ export const TagsSkillsTab = ({
 
       {/* Skills Section */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           {text.skillsLabel}
         </label>
         <SkillInput
@@ -53,13 +53,13 @@ export const TagsSkillsTab = ({
 
       {/* Cognitive Level */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           {text.cognitiveLevelLabel}
         </label>
         <select
           value={cognitiveLevel}
           onChange={(e) => onCognitiveLevelChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-background text-foreground"
         >
           {COGNITIVE_LEVELS.map((level) => (
             <option key={level} value={level}>

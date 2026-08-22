@@ -1,8 +1,24 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Siderbar';
 
+const FULLSCREEN_ROUTES = [
+  '/certification/exam-content-editor/',
+  '/certification/session/',
+];
+
 export const MainLayout = () => {
+  const location = useLocation();
+  const isFullscreen = FULLSCREEN_ROUTES.some((route) => location.pathname.startsWith(route));
+
+  if (isFullscreen) {
+    return (
+      <div className="h-screen flex flex-col overflow-hidden bg-background">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <Header />

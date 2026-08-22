@@ -15,7 +15,7 @@ export const HistoryTab = ({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-32">
-        <div className="text-sm text-gray-500">{text.loadingText}</div>
+        <div className="text-sm text-muted-foreground">{text.loadingText}</div>
       </div>
     );
   }
@@ -23,7 +23,7 @@ export const HistoryTab = ({
   if (versions.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {text.emptyState}
         </p>
       </div>
@@ -37,22 +37,22 @@ export const HistoryTab = ({
           key={version.id}
           className={`p-4 rounded-lg border ${
             index === 0
-              ? 'border-blue-200 bg-blue-50'
-              : 'border-gray-200 bg-white'
+              ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-950/30'
+              : 'border-border bg-card'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 index === 0
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
+                  : 'bg-secondary text-muted-foreground'
               }`}
             >
               {text.versionPrefix} {version.version}
               {index === 0 && ` ${text.currentLabel}`}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               {new Date(version.createdAt).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -62,11 +62,11 @@ export const HistoryTab = ({
               })}
             </span>
           </div>
-          <p className="text-sm text-gray-700 line-clamp-3">
+          <p className="text-sm text-foreground line-clamp-3">
             {version.content}
           </p>
           {version.createdBy && (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {text.byPrefix} {version.createdBy}
             </p>
           )}

@@ -79,6 +79,11 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
 
     return {
       id: exam.id,
+      title: exam.getTitle(),
+      description: exam.getDescription() || '',
+      totalQuestions,
+      durationMinutes: sectionData.reduce((sum, s) => sum + s.durationMinutes, 0),
+      passingScore: exam.getPassScore(),
       status: exam.getPublishStatus() === 'published' ? 'Published' : 'Draft',
       lastAutosaved: 'All changes saved',
       examType: exam.getExamType(),
@@ -88,10 +93,13 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
       settings: {
         title: exam.getTitle(),
         description: exam.getDescription() || '',
-        level: examLevel,
-        language: 'English',
+        duration: exam.getDuration(),
         passingScore: exam.getPassScore(),
         maxScore: exam.getMaxScore(),
+        difficulty: exam.getLevel() || 'Intermediate',
+        level: examLevel,
+        language: 'English',
+        instructions: '',
         createdDate: exam.createdAt.toLocaleString(),
         lastUpdatedDate: exam.updatedAt.toLocaleString(),
       },

@@ -22,7 +22,7 @@ export const useCreateExam = () => {
     examType?: string;
     certificationType?: string;
     chapterId?: string;
-    sections?: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number }>;
+    sections?: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number; questionCount?: number }>;
     silent?: boolean;
   };
 
@@ -103,89 +103,6 @@ export const useCreateExam = () => {
         );
       }
       if (!variables.silent) toast({ ...CERTIFICATION_UI_TEXT.toast.createExamError, variant: 'destructive' });
-    },
-  });
-};
-
-// ─── Update Exam ─────────────────────────────────────────────────────────────
-
-export const useUpdateExam = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  type UpdateVariables = {
-    examId: string;
-    collectionId: string;
-    title?: string;
-    description?: string | null;
-    duration?: number;
-    totalQuestions?: number;
-    maxScore?: number;
-    passScore?: number;
-    publishStatus?: string;
-    examType?: string;
-    certificationType?: string;
-    silent?: boolean;
-  };
-
-  return useMutation<
-    { id: string },
-    Error,
-    UpdateVariables,
-    { previousData: CollectionEditorResponse | undefined }
-  >({
-    mutationFn: ({ examId, collectionId: _cid, silent: _silent, ...dto }) =>
-      CertificationApi.updateExam(examId, dto),
-
-    onMutate: async (variables) => {
-      if (!variables.collectionId) return { previousData: undefined };
-
-      const queryKey = ['certification', 'collection-editor', variables.collectionId];
-      await queryClient.cancelQueries({ queryKey });
-      const previousData = queryClient.getQueryData<CollectionEditorResponse>(queryKey);
-
-      updateEditorCache(queryClient, variables.collectionId, (old) => ({
-        ...old,
-        chapters: old.chapters.map((chapter) => ({
-          ...chapter,
-          exams: chapter.exams.map((exam) =>
-            exam.id === variables.examId
-              ? {
-                  ...exam,
-                  title: variables.title ?? exam.title,
-                  subTitle: variables.description !== undefined ? (variables.description || '') : exam.subTitle,
-                  durationMinutes: variables.duration ?? exam.durationMinutes,
-                  questionsCount: variables.totalQuestions ?? exam.questionsCount,
-                  status: variables.publishStatus === 'published'
-                    ? ('Published' as const)
-                    : variables.publishStatus === 'draft'
-                      ? ('Draft' as const)
-                      : exam.status,
-                }
-              : exam,
-          ),
-        })),
-      }));
-
-      return { previousData };
-    },
-
-    onSuccess: (_data, variables) => {
-      if (variables.collectionId) {
-        queryClient.invalidateQueries({ queryKey: ['certification', 'collection-editor', variables.collectionId] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['certification', 'exam-builder', variables.examId] });
-      if (!variables.silent) toast(CERTIFICATION_UI_TEXT.toast.updateExamSuccess);
-    },
-
-    onError: (_err, variables, context) => {
-      if (context?.previousData && variables.collectionId) {
-        queryClient.setQueryData(
-          ['certification', 'collection-editor', variables.collectionId],
-          context.previousData,
-        );
-      }
-      if (!variables.silent) toast({ ...CERTIFICATION_UI_TEXT.toast.updateExamError, variant: 'destructive' });
     },
   });
 };

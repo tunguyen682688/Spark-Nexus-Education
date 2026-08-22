@@ -1,13 +1,5 @@
 import { LucideIcon } from 'lucide-react';
 
-export interface CreatorMetricCard {
-  title: string;
-  value: string | number;
-  change: string;
-  isPositive: boolean;
-  iconType: 'exam' | 'question' | 'attempt' | 'score' | 'like';
-}
-
 export interface CreatorActivityItem {
   id: string;
   type: string;

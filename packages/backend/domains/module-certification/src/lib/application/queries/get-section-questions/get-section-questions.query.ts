@@ -13,8 +13,17 @@ export interface SectionQuestionsResult {
     imageUrl: string | null;
     audioUrl: string | null;
     passageId: string | null;
+    passageText: string | null;
     modelAnswer: string | null;
+    explanation: string | null;
+    estimatedTime: number | null;
+    metadataPoints: number | null;
     partNumber: number | null;
+    passageGroupId: string | null;
+    passageType: string | null;
+    passageTitle: string | null;
+    blankNumber: number | null;
+    subQuestionNumber: number | null;
     formatMetadata: unknown | null;
   }>;
   totalCount: number;

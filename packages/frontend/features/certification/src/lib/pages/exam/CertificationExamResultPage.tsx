@@ -1,23 +1,30 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CertificationExamResultContainer } from '../../container/exam/CertificationExamResultContainer';
 
 interface CertificationExamResultPageProps {
   resultId?: string;
-  onRetake?: () => void;
-  onBackToDashboard?: () => void;
 }
 
-export const CertificationExamResultPage = ({ resultId, onRetake, onBackToDashboard }: 
+export const CertificationExamResultPage = ({ resultId }: 
   CertificationExamResultPageProps
 ) => {
   const params = useParams<{ id: string }>();
-  const activeId = resultId || params.id || 'r1';
+  const navigate = useNavigate();
+  const activeId = resultId || params.id;
+
+  if (!activeId) {
+    return (
+      <div className="w-full py-12 flex justify-center max-w-xl mx-auto">
+        <p className="text-sm text-muted-foreground">No result ID provided.</p>
+      </div>
+    );
+  }
 
   return (
     <CertificationExamResultContainer
       resultId={activeId}
-      onRetake={onRetake}
-      onBackToDashboard={onBackToDashboard}
+      onRetake={() => navigate('/certification/exams')}
+      onBackToDashboard={() => navigate('/certification')}
     />
   );
 };

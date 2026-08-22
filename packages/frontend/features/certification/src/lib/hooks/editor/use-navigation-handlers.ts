@@ -34,7 +34,7 @@ export function useNavigationHandlers(deps: NavigationDeps) {
   }, [confirmLeave, activeCollectionId, navigate]);
 
   const handleEditExam = useCallback(async (examId: string) => {
-    if (await confirmLeave()) navigate(`/certification/exam-builder/${examId}`);
+    if (await confirmLeave()) navigate(`/certification/exam-content-editor/${examId}`);
   }, [confirmLeave, navigate]);
 
   const handleBackToDashboard = useCallback(async () => {

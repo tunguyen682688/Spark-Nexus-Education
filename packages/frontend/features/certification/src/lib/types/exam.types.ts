@@ -12,6 +12,15 @@ export interface ExamQuestion {
   orderIndex?: number;
   points?: number;
   explanation?: string;
+  estimatedTime?: number;
+  imageUrl?: string;
+  audioUrl?: string;
+  passageGroupId?: string;
+  passageText?: string;
+  passageType?: string;
+  passageTitle?: string;
+  blankNumber?: number;
+  subQuestionNumber?: number;
   choices?: ExamQuestionChoice[];
 }
 

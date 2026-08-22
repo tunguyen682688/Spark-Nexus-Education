@@ -36,7 +36,7 @@ export function useExamHandlers(deps: ExamDeps) {
         await refetchAndHydrate();
         setLastSavedAt(new Date());
         if (result?.id) {
-          navigate(`/certification/exam-builder/${result.id}`);
+          navigate(`/certification/exam-content-editor/${result.id}`);
         }
       } catch {
         setSyncStatus('error');

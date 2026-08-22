@@ -11,7 +11,7 @@ export const CertificationExamSessionPage = ({ sessionId, onSubmitted, onExit }:
   CertificationExamSessionPageProps
 ) => {
   const params = useParams<{ id: string }>();
-  const activeId = sessionId || params.id || 's1';
+  const activeId = sessionId || params.id;
 
   return (
     <CertificationExamSessionContainer

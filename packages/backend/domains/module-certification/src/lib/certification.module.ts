@@ -68,6 +68,7 @@ import {
   AddCollectionDiscussionCommandHandler,
   SyncChaptersCommandHandler,
   SaveExamSectionsCommandHandler,
+  SaveExamContentHandler,
   LinkQuestionToExamCommandHandler,
   UnlinkQuestionFromExamCommandHandler,
 } from './application/commands';
@@ -145,6 +146,7 @@ const CommandHandlers = [
   AddCollectionDiscussionCommandHandler,
   SyncChaptersCommandHandler,
   SaveExamSectionsCommandHandler,
+  SaveExamContentHandler,
   LinkQuestionToExamCommandHandler,
   UnlinkQuestionFromExamCommandHandler,
 ];

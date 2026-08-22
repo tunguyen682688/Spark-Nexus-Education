@@ -66,6 +66,11 @@ export interface QuestionBuilderResponseDto {
     matchingPairs: unknown | null;
     isGridIn: boolean;
     formatMetadata: unknown | null;
+    passageGroupId: string | null;
+    blankNumber: number | null;
+    subQuestionNumber: number | null;
+    passageTitle: string | null;
+    passageType: string | null;
   } | null;
 }
 
@@ -143,6 +148,11 @@ export class GetQuestionBuilderQueryHandler
           speakingPrompt: eq.getSpeakingPrompt(),
           isGridIn: eq.getIsGridIn(),
           formatMetadata: eq.getFormatMetadata(),
+          passageGroupId: eq.getPassageGroupId(),
+          blankNumber: eq.getBlankNumber(),
+          subQuestionNumber: eq.getSubQuestionNumber(),
+          passageTitle: eq.getPassageTitle(),
+          passageType: eq.getPassageType(),
           passageId: metadata?.getPassageId() || null,
           passageText: metadata?.getPassageText() || null,
           modelAnswer: metadata?.getModelAnswer() || null,

@@ -24,7 +24,13 @@ export class ExamQuestionEntity extends Entity<string> {
     // SAT
     private isGridIn: boolean,
     // Flexible per-exam data
-    private formatMetadata: unknown | null
+    private formatMetadata: unknown | null,
+    // Passage grouping for multi-question types (TOEIC Part 6/7)
+    private passageGroupId: string | null,
+    private blankNumber: number | null,
+    private subQuestionNumber: number | null,
+    private passageTitle: string | null,
+    private passageType: string | null,
   ) {
     super(id, createdAt, updatedAt);
   }
@@ -48,6 +54,11 @@ export class ExamQuestionEntity extends Entity<string> {
     speakingPrompt?: string | null;
     isGridIn?: boolean;
     formatMetadata?: unknown | null;
+    passageGroupId?: string | null;
+    blankNumber?: number | null;
+    subQuestionNumber?: number | null;
+    passageTitle?: string | null;
+    passageType?: string | null;
   }): ExamQuestionEntity {
     const now = new Date();
     return new ExamQuestionEntity(
@@ -68,7 +79,12 @@ export class ExamQuestionEntity extends Entity<string> {
       params.writingTaskType ?? null,
       params.speakingPrompt ?? null,
       params.isGridIn ?? false,
-      params.formatMetadata ?? null
+      params.formatMetadata ?? null,
+      params.passageGroupId ?? null,
+      params.blankNumber ?? null,
+      params.subQuestionNumber ?? null,
+      params.passageTitle ?? null,
+      params.passageType ?? null,
     );
   }
 
@@ -132,6 +148,26 @@ export class ExamQuestionEntity extends Entity<string> {
     return this.formatMetadata;
   }
 
+  getPassageGroupId(): string | null {
+    return this.passageGroupId;
+  }
+
+  getBlankNumber(): number | null {
+    return this.blankNumber;
+  }
+
+  getSubQuestionNumber(): number | null {
+    return this.subQuestionNumber;
+  }
+
+  getPassageTitle(): string | null {
+    return this.passageTitle;
+  }
+
+  getPassageType(): string | null {
+    return this.passageType;
+  }
+
   update(params: {
     sectionId?: string | null;
     order?: number;
@@ -145,6 +181,11 @@ export class ExamQuestionEntity extends Entity<string> {
     speakingPrompt?: string | null;
     isGridIn?: boolean;
     formatMetadata?: unknown | null;
+    passageGroupId?: string | null;
+    blankNumber?: number | null;
+    subQuestionNumber?: number | null;
+    passageTitle?: string | null;
+    passageType?: string | null;
   }): void {
     if (params.sectionId !== undefined) this.sectionId = params.sectionId;
     if (params.order !== undefined) this.order = params.order;
@@ -158,6 +199,11 @@ export class ExamQuestionEntity extends Entity<string> {
     if (params.speakingPrompt !== undefined) this.speakingPrompt = params.speakingPrompt;
     if (params.isGridIn !== undefined) this.isGridIn = params.isGridIn;
     if (params.formatMetadata !== undefined) this.formatMetadata = params.formatMetadata;
+    if (params.passageGroupId !== undefined) this.passageGroupId = params.passageGroupId;
+    if (params.blankNumber !== undefined) this.blankNumber = params.blankNumber;
+    if (params.subQuestionNumber !== undefined) this.subQuestionNumber = params.subQuestionNumber;
+    if (params.passageTitle !== undefined) this.passageTitle = params.passageTitle;
+    if (params.passageType !== undefined) this.passageType = params.passageType;
   }
 
   toPlainObject(): Record<string, unknown> {
@@ -180,6 +226,11 @@ export class ExamQuestionEntity extends Entity<string> {
       speakingPrompt: this.speakingPrompt,
       isGridIn: this.isGridIn,
       formatMetadata: this.formatMetadata,
+      passageGroupId: this.passageGroupId,
+      blankNumber: this.blankNumber,
+      subQuestionNumber: this.subQuestionNumber,
+      passageTitle: this.passageTitle,
+      passageType: this.passageType,
     };
   }
 }

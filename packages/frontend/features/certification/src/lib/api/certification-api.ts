@@ -42,17 +42,10 @@ export class CertificationApi {
   // Exam
   static getExam = ExamApi.getExam;
   static getExamBuilderData = ExamApi.getExamBuilderData;
-  static getSectionQuestions = ExamApi.getSectionQuestions;
-  static getQuestionBuilderData = ExamApi.getQuestionBuilderData;
-  static saveQuestion = ExamApi.saveQuestion;
-  static deleteQuestion = ExamApi.deleteQuestion;
-  static getQuestionHistory = ExamApi.getQuestionHistory;
   static createExam = ExamApi.createExam;
   static updateExam = ExamApi.updateExam;
   static deleteExam = ExamApi.deleteExam;
-  static saveExamSections = ExamApi.saveExamSections;
-  static linkQuestionToExam = ExamApi.linkQuestionToExam;
-  static unlinkQuestionFromExam = ExamApi.unlinkQuestionFromExam;
+  static saveExamContent = ExamApi.saveExamContent;
 
   // Session
   static startExamSession = SessionApi.startExamSession;

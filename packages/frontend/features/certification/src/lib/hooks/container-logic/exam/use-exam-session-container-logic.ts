@@ -1,21 +1,26 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   useExamSession,
   useSaveSessionAnswer,
   useRecordSessionViolation,
   useSubmitExamSession,
 } from '../../use-certification';
-import type { UseExamSessionContainerLogicProps } from '../../../types/exam-builder.types';
+import type { UseExamSessionContainerLogicProps } from '../../../types/session.types';
 
-export type { UseExamSessionContainerLogicProps } from '../../../types/exam-builder.types';
+export type { UseExamSessionContainerLogicProps } from '../../../types/session.types';
 
 export function useExamSessionContainerLogic({
   sessionId,
   onSubmitted,
 }: UseExamSessionContainerLogicProps) {
+  const navigate = useNavigate();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [tabViolations, setTabViolations] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittedRef = useRef(false);
 
   const {
     data: session,
@@ -29,7 +34,77 @@ export function useExamSessionContainerLogic({
   const { mutate: submitSession, isPending: isSubmitting } =
     useSubmitExamSession();
 
+  const handleSubmit = useCallback(() => {
+    if (submittedRef.current) return;
+    if (!window.confirm('Are you sure you want to submit the exam? This action cannot be undone.')) return;
+    submittedRef.current = true;
+    submitSession(sessionId, {
+      onSuccess: (res) => {
+        if (onSubmitted) {
+          onSubmitted(res.id || '');
+        } else {
+          navigate(`/certification/result/${res.id || ''}`);
+        }
+      },
+    });
+  }, [sessionId, submitSession, onSubmitted, navigate]);
+
+  // Hydrate answers from session on load (page refresh recovery)
   useEffect(() => {
+    if (session?.answers && session.answers.length > 0) {
+      const hydrated: Record<string, string> = {};
+      session.answers.forEach((a) => {
+        if (a.questionId && a.answerText) {
+          hydrated[a.questionId] = a.answerText;
+        }
+      });
+      setUserAnswers((prev) => ({ ...prev, ...hydrated }));
+    }
+  }, [session?.answers]);
+
+  // Initialize timer from session remaining seconds
+  useEffect(() => {
+    if (session?.remainingSeconds != null && session.status === 'in_progress') {
+      setRemainingSeconds(session.remainingSeconds);
+    }
+  }, [session?.remainingSeconds, session?.status]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (remainingSeconds <= 0 || session?.status !== 'in_progress') return;
+
+    timerRef.current = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          // Auto-submit when time expires
+          if (!submittedRef.current) {
+            submittedRef.current = true;
+            submitSession(sessionId, {
+              onSuccess: (res) => {
+                if (onSubmitted) {
+                  onSubmitted(res.id || '');
+                } else {
+                  navigate(`/certification/result/${res.id || ''}`);
+                }
+              },
+            });
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [remainingSeconds > 0, session?.status, sessionId, submitSession, onSubmitted, navigate]);
+
+  // Tab violation tracking (only after session is loaded and in progress)
+  useEffect(() => {
+    if (!session || session.status !== 'in_progress') return;
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabViolations((prev) => {
@@ -48,7 +123,7 @@ export function useExamSessionContainerLogic({
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [sessionId, recordViolation]);
+  }, [sessionId, recordViolation, session?.status]);
 
   const questions = useMemo(
     () => session?.questions || [],
@@ -72,14 +147,6 @@ export function useExamSessionContainerLogic({
     [currentQ, sessionId, saveAnswer]
   );
 
-  const handleSubmit = useCallback(() => {
-    submitSession(sessionId, {
-      onSuccess: (res) => {
-        if (onSubmitted) onSubmitted(res.id || '');
-      },
-    });
-  }, [sessionId, submitSession, onSubmitted]);
-
   const goToPrevious = useCallback(() => {
     setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
   }, []);
@@ -102,6 +169,7 @@ export function useExamSessionContainerLogic({
     tabViolations,
     questions,
     currentQ,
+    remainingSeconds,
     handleSelectChoice,
     handleSubmit,
     goToPrevious,

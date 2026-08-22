@@ -11,7 +11,7 @@ import type {
 } from '../../../types/container-logic-dashboard.types';
 import { ICON_BG_CLASSES, getCategoryBadge } from '../../../services/creator-dashboard-helpers.service';
 
-export type { CreatorMetricCard, CreatorActivityItem, CreatorTopExamItem, DailyRevenueItem } from '../../../types/container-logic-dashboard.types';
+export type { CreatorActivityItem, CreatorTopExamItem, DailyRevenueItem } from '../../../types/container-logic-dashboard.types';
 
 // ===== Hook =====
 

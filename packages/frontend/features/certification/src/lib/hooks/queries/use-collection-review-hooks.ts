@@ -16,16 +16,6 @@ export const useCollectionReviews = (collectionId: string) => {
   });
 };
 
-export const useCollectionDiscussions = (collectionId: string) => {
-  return useQuery({
-    queryKey: ['certification', 'collection-discussions', collectionId],
-    queryFn: () => CertificationApi.getCollectionDiscussions(collectionId),
-    enabled: Boolean(collectionId),
-    staleTime: STALE_TIME_COLLECTIONS,
-    refetchOnWindowFocus: false,
-  });
-};
-
 export const useCollectionActivities = (collectionId: string) => {
   return useQuery({
     queryKey: ['certification', 'collection-activities', collectionId],
@@ -84,23 +74,6 @@ export const useAddCollectionReview = () => {
       queryClient.invalidateQueries({ queryKey: ['certification', 'collection-reviews', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['certification', 'collection', variables.collectionId] });
       toast(CERTIFICATION_UI_TEXT.toast.addReviewSuccess);
-    },
-  });
-};
-
-export const useAddCollectionDiscussion = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: ({ collectionId, title, content }: { collectionId: string; title: string; content: string }) =>
-      CertificationApi.addCollectionDiscussion(collectionId, { title, content }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['certification', 'collection-discussions', variables.collectionId] });
-      toast(CERTIFICATION_UI_TEXT.toast.addDiscussionSuccess);
-    },
-    onError: () => {
-      toast({ ...CERTIFICATION_UI_TEXT.toast.addDiscussionError, variant: 'destructive' });
     },
   });
 };
