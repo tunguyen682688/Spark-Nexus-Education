@@ -14,7 +14,7 @@ export function ExamContentEditorContainer({
 }: ExamContentEditorContainerProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { state, navigation, handlers, isLoading, isError } =
+  const { state, navigation, handlers, isLoading, isLoadingQuestions, isError } =
     useExamContentEditorLogic({ examId, toast });
 
   const handleBack = useCallback(() => {
@@ -128,7 +128,14 @@ export function ExamContentEditorContainer({
 
         {/* Center: Question Editor */}
         <div className="flex-1 min-w-0">
-          {navigation.selectedSection && navigation.selectedQuestion ? (
+          {isLoadingQuestions ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                <span className="text-xs text-muted-foreground">Đang tải...</span>
+              </div>
+            </div>
+          ) : navigation.selectedSection && navigation.selectedQuestion ? (
             <QuestionTypeAdapter
               section={navigation.selectedSection}
               question={navigation.selectedQuestion}

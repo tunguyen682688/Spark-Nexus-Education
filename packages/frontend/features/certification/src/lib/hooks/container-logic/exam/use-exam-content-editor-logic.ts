@@ -67,6 +67,7 @@ export interface UseExamContentEditorLogicReturn {
     handleNavigateNext: () => void;
   };
   isLoading: boolean;
+  isLoadingQuestions: boolean;
   hasExamData: boolean;
   isError: boolean;
 }
@@ -301,6 +302,7 @@ function mapSectionQuestionsToState(
     blankNumber: number | null;
     subQuestionNumber: number | null;
     formatMetadata: unknown | null;
+    choices?: Array<{ id: string; content: string; isCorrect: boolean; order: number }> | null;
   }>,
   sectionTitle = ''
 ): ExamSectionQuestion[] {
@@ -311,19 +313,31 @@ function mapSectionQuestionsToState(
       questionType: 'mc',
       optionsCount: 4,
     };
-    // Try to extract options from formatMetadata
-    const meta = q.formatMetadata as Record<string, unknown> | null;
-    const choices = meta?.choices as
-      | Array<{ content: string; isCorrect?: boolean; correct?: boolean }>
-      | undefined;
-    const options = choices
-      ? choices.map((c, i) => ({
-          id: `opt-${q.examQuestionId}-${i}`,
-          label: String.fromCharCode(65 + i),
-          text: c.content,
-          isCorrect: c.isCorrect ?? c.correct ?? false,
-        }))
-      : createDefaultOptions(partDefaults.optionsCount);
+
+    // Prefer choices from QuestionChoice table (from API), fallback to formatMetadata.choices
+    let options: ExamSectionQuestion['options'];
+    if (q.choices && q.choices.length > 0) {
+      options = q.choices.map((c, i) => ({
+        id: c.id || `opt-${q.examQuestionId}-${i}`,
+        label: String.fromCharCode(65 + i),
+        text: c.content,
+        isCorrect: c.isCorrect,
+      }));
+    } else {
+      const meta = q.formatMetadata as Record<string, unknown> | null;
+      const metaChoices = meta?.choices as
+        | Array<{ content: string; isCorrect?: boolean; correct?: boolean }>
+        | undefined;
+      options = metaChoices
+        ? metaChoices.map((c, i) => ({
+            id: `opt-${q.examQuestionId}-${i}`,
+            label: String.fromCharCode(65 + i),
+            text: c.content,
+            isCorrect: c.isCorrect ?? c.correct ?? false,
+          }))
+        : createDefaultOptions(partDefaults.optionsCount);
+    }
+
     return {
       id: q.examQuestionId,
       order: q.number,
@@ -521,21 +535,6 @@ export function useExamContentEditorLogic({
       }
     }
   }, [effectiveSectionId, selectedQuestionId]);
-
-  // Compute validation issues (debounced via useMemo — only recalculates when sections reference changes)
-  const validationIssues = useMemo(
-    () => validateSections(state.sections),
-    [state.sections]
-  );
-
-  // Sync validation issues to state only when they actually change
-  useEffect(() => {
-    const prevIssues = state.validationIssues || [];
-    // Simple reference check - useMemo already ensures new array only when sections change
-    if (validationIssues !== prevIssues) {
-      setState((prev) => ({ ...prev, validationIssues }));
-    }
-  }, [state.validationIssues, validationIssues]);
 
   // ─── Mutations ───────────────────────────────────────────────────────────
 
@@ -1101,7 +1100,8 @@ export function useExamContentEditorLogic({
       totalQuestions,
     },
     handlers,
-    isLoading: (isFetching && !initialized) || isLoadingQuestions,
+    isLoading: isFetching && !initialized,
+    isLoadingQuestions,
     hasExamData,
     isError: isQueryError,
   };

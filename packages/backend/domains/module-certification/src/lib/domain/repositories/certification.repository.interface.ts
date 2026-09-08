@@ -296,6 +296,13 @@ export interface ICertificationRepository {
       blankNumber: number | null;
       subQuestionNumber: number | null;
       formatMetadata: unknown | null;
+      // From QuestionChoice table (actual answer options)
+      choices: Array<{
+        id: string;
+        content: string;
+        isCorrect: boolean;
+        order: number;
+      }> | null;
     }>;
     totalCount: number;
     page: number;

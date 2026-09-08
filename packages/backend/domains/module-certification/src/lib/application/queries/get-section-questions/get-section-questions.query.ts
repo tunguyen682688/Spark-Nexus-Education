@@ -25,6 +25,12 @@ export interface SectionQuestionsResult {
     blankNumber: number | null;
     subQuestionNumber: number | null;
     formatMetadata: unknown | null;
+    choices: Array<{
+      id: string;
+      content: string;
+      isCorrect: boolean;
+      order: number;
+    }> | null;
   }>;
   totalCount: number;
   page: number;

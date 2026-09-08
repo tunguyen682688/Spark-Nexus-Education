@@ -56,6 +56,10 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
       sections = savedSections;
     }
 
+    // Get real-time question counts from ExamQuestion table (don't trust stale DB column)
+    const sectionIds = sections.map((s) => s.id);
+    const realTimeCounts = await this.repository.batchCountQuestionsBySectionIds(query.examId, sectionIds);
+
     // Build sections response from DB entities
     const sectionData = sections.map((section) => ({
       id: section.id,
@@ -64,7 +68,7 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
       subtitle: section.getSubtitle() || section.getInstruction() || section.getSectionType(),
       sectionType: section.getSectionType(),
       instruction: section.getInstruction(),
-      questionCount: section.getQuestionCount(),
+      questionCount: realTimeCounts.get(section.id) ?? section.getQuestionCount(),
       durationMinutes: section.getDurationMinutes(),
       isBreak: section.getIsBreak(),
       audioUrl: section.getAudioUrl(),

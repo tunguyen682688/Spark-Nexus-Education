@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, FileText, Users } from 'lucide-react';
 import type { ExamSectionContent } from '../../../types/exam-content-editor.types';
 import { PART_TITLES } from '../../../constants/part-titles.constants';
@@ -53,7 +53,7 @@ function groupQuestions(questions: ExamSectionContent['questions']): QuestionGro
   });
 }
 
-export function QuestionNavPanel({
+export const QuestionNavPanel = memo(function QuestionNavPanel({
   sections,
   examTitle,
   selectedSectionId,
@@ -85,7 +85,7 @@ export function QuestionNavPanel({
     });
   }, []);
 
-  const totalQuestions = sections.reduce((sum, s) => sum + s.questions.length, 0);
+  const totalQuestions = sections.reduce((sum, s) => sum + (s.questionCount || s.questions.length), 0);
   const totalMinutes = sections.reduce((sum, s) => sum + s.durationMinutes, 0);
   const totalPoints = sections.reduce(
     (sum, s) => sum + s.questions.reduce((qs, q) => qs + q.points, 0), 0,
@@ -129,7 +129,7 @@ export function QuestionNavPanel({
           const isExpanded = expandedParts.has(section.id);
           const isSelected = selectedSectionId === section.id;
           const partTitle = PART_TITLES[section.order] || section.title;
-          const total = section.questions.length;
+          const total = section.questionCount || section.questions.length;
           const sectionHasGroups = hasGroups(section);
           const groups = sectionHasGroups ? groupQuestions(section.questions) : [];
 
@@ -349,4 +349,4 @@ export function QuestionNavPanel({
       </div>
     </div>
   );
-}
+});

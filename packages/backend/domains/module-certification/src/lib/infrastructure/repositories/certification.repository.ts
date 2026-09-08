@@ -1289,6 +1289,15 @@ export class CertificationRepository implements ICertificationRepository {
                   points: true,
                 },
               },
+              choices: {
+                orderBy: { order: 'asc' },
+                select: {
+                  id: true,
+                  content: true,
+                  isCorrect: true,
+                  order: true,
+                },
+              },
             },
           },
         },
@@ -1329,6 +1338,13 @@ export class CertificationRepository implements ICertificationRepository {
         blankNumber: eq.blankNumber ?? null,
         subQuestionNumber: eq.subQuestionNumber ?? null,
         formatMetadata: eq.formatMetadata ?? null,
+        // From QuestionChoice table (actual answer options)
+        choices: (eq.question as any)?.choices?.map((c: any) => ({
+          id: c.id,
+          content: c.content,
+          isCorrect: c.isCorrect,
+          order: c.order,
+        })) ?? null,
       })),
       totalCount: total,
       page: safePage,

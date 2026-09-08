@@ -2,7 +2,7 @@ import type {
   Exam,
   ExamBuilderResponse,
 } from '../types';
-import { getAxiosInstance, unwrapJsonApiResponse } from './api-helpers';
+import { getAxiosInstance, unwrapJsonApiResponse, unwrapPaginatedJsonApiResponse } from './api-helpers';
 
 export class ExamApi {
   static async getExam(id: string): Promise<Exam | null> {
@@ -91,6 +91,7 @@ export class ExamApi {
       blankNumber: number | null;
       subQuestionNumber: number | null;
       formatMetadata: unknown | null;
+      choices: Array<{ id: string; content: string; isCorrect: boolean; order: number }> | null;
     }>;
     totalCount: number;
     page: number;
@@ -102,37 +103,39 @@ export class ExamApi {
       `/certification/exams/${examId}/sections/${sectionId}/questions`,
       { params },
     );
-    return unwrapJsonApiResponse<{
-      questions: Array<{
-        id: string;
-        examQuestionId: string;
-        number: number;
-        title: string;
-        partTag: string;
-        type: string;
-        difficulty: string;
-        points: number;
-        imageUrl: string | null;
-        audioUrl: string | null;
-        passageId: string | null;
-        passageText: string | null;
-        modelAnswer: string | null;
-        explanation: string | null;
-        estimatedTime: number | null;
-        metadataPoints: number | null;
-        partNumber: number | null;
-        passageGroupId: string | null;
-        passageType: string | null;
-        passageTitle: string | null;
-        blankNumber: number | null;
-        subQuestionNumber: number | null;
-        formatMetadata: unknown | null;
-      }>;
-      totalCount: number;
-      page: number;
-      pageSize: number;
-      totalPages: number;
+    const paginated = unwrapPaginatedJsonApiResponse<{
+      id: string;
+      examQuestionId: string;
+      number: number;
+      title: string;
+      partTag: string;
+      type: string;
+      difficulty: string;
+      points: number;
+      imageUrl: string | null;
+      audioUrl: string | null;
+      passageId: string | null;
+      passageText: string | null;
+      modelAnswer: string | null;
+      explanation: string | null;
+      estimatedTime: number | null;
+      metadataPoints: number | null;
+      partNumber: number | null;
+      passageGroupId: string | null;
+      passageType: string | null;
+      passageTitle: string | null;
+      blankNumber: number | null;
+      subQuestionNumber: number | null;
+      formatMetadata: unknown | null;
+      choices: Array<{ id: string; content: string; isCorrect: boolean; order: number }> | null;
     }>(response.data);
+    return {
+      questions: paginated.data,
+      totalCount: paginated.meta.total,
+      page: paginated.meta.page,
+      pageSize: paginated.meta.limit,
+      totalPages: paginated.meta.totalPages,
+    };
   }
 
   static async saveExamContent(examId: string, dto: {

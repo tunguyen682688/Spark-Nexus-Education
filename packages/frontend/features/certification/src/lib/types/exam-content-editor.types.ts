@@ -94,7 +94,6 @@ export interface ExamContentState {
   isDirty: boolean;
   isSaving: boolean;
   lastSavedAt?: Date;
-  validationIssues?: SectionValidationIssue[];
   /** When true, sections are predefined (TOEIC fixed structure) */
   isFixedStructure?: boolean;
   /** Exam publish status from API */
