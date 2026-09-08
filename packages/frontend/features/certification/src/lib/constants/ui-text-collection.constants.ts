@@ -266,6 +266,7 @@ export const CERTIFICATION_UI_TEXT = {
       inProgress: 'Phiên thi đang làm',
       history: 'Lịch sử thi',
       myClones: 'Bộ đề đã tạo bản sao',
+      myCollections: 'Bộ sưu tập của tôi',
     },
     emptySaved: {
       title: 'Chưa có bộ sưu tập nào được lưu',
@@ -289,6 +290,12 @@ export const CERTIFICATION_UI_TEXT = {
       description: 'Các bộ sưu tập đã nhân bản vào thư viện cá nhân để tự do chỉnh sửa và tùy biến.',
       emptyTitle: 'Bạn chưa tạo bản sao bộ đề thi nào.',
       emptyDesc: 'Khi bạn nhấn "Tạo bản sao" trên một bộ đề cộng đồng, bản sao cá nhân sẽ xuất hiện tại đây.',
+    },
+    myCollectionsTab: {
+      title: 'Bộ sưu tập của tôi',
+      description: 'Các bộ sưu tập và đề thi bạn đã tạo. Quản lý, chỉnh sửa và xuất bản nội dung của bạn.',
+      emptyTitle: 'Bạn chưa tạo bộ sưu tập nào.',
+      emptyDesc: 'Bắt đầu tạo bộ sưu tập đầu tiên từ trang tổng quan hoặc trình tạo đề thi.',
     },
     card: {
       practiceBtn: 'Luyện tập ngay',

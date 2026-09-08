@@ -28,10 +28,32 @@ export class ExamApi {
     return unwrapJsonApiResponse<{ id: string; title: string; collectionId: string }>(response.data);
   }
 
-  static async updateExam(examId: string, dto: { title?: string; description?: string | null; duration?: number; totalQuestions?: number; maxScore?: number; passScore?: number; publishStatus?: string; examType?: string; certificationType?: string }): Promise<{ id: string }> {
+  static async initializeExamQuestions(examId: string, certificationType: string): Promise<{ examId: string; sectionsCreated: number; questionsCreated: number }> {
     const client = await getAxiosInstance();
-    const response = await client.put(`/certification/exams/${examId}`, dto);
-    return unwrapJsonApiResponse<{ id: string }>(response.data);
+    const response = await client.post(`/certification/exams/${examId}/initialize-questions`, { certificationType });
+    return unwrapJsonApiResponse<{ examId: string; sectionsCreated: number; questionsCreated: number }>(response.data);
+  }
+
+  static async getExamInitializationStatus(examId: string): Promise<{
+    id: string;
+    initializationStatus: string;
+    progress: {
+      questionsCreated: number;
+      totalQuestions: number;
+      percentage: number;
+      currentSection: string;
+      status: string;
+    } | null;
+  }> {
+    const client = await getAxiosInstance();
+    const response = await client.get(`/certification/exams/${examId}/initialization-status`);
+    return unwrapJsonApiResponse(response.data);
+  }
+
+  static async retryExamInitialization(examId: string): Promise<{ id: string; status: string; message: string }> {
+    const client = await getAxiosInstance();
+    const response = await client.post(`/certification/exams/${examId}/retry-initialization`);
+    return unwrapJsonApiResponse<{ id: string; status: string; message: string }>(response.data);
   }
 
   static async deleteExam(examId: string): Promise<{ deleted: boolean }> {
@@ -118,6 +140,11 @@ export class ExamApi {
     description?: string;
     level?: string;
     duration?: number;
+    passScore?: number;
+    maxScore?: number;
+    examType?: string;
+    certificationType?: string;
+    publishStatus?: string;
     sections: Array<{
       id?: string;
       title: string;
@@ -151,11 +178,74 @@ export class ExamApi {
         passageTitle?: string;
         blankNumber?: number;
         subQuestionNumber?: number;
+        formatMetadata?: Record<string, unknown>;
       }>;
     }>;
   }): Promise<{ examId: string; sectionsCreated: number; questionsCreated: number }> {
     const client = await getAxiosInstance();
     const response = await client.put(`/certification/exams/${examId}/content`, dto);
     return unwrapJsonApiResponse<{ examId: string; sectionsCreated: number; questionsCreated: number }>(response.data);
+  }
+
+  static async patchExamContent(examId: string, dto: {
+    examSettings?: {
+      title?: string;
+      description?: string;
+      level?: string;
+      duration?: number;
+      passScore?: number;
+      maxScore?: number;
+      examType?: string;
+      certificationType?: string;
+    };
+    sections?: Array<{
+      id?: string;
+      title?: string;
+      subtitle?: string;
+      sectionType?: string;
+      instruction?: string;
+      order?: number;
+      durationMinutes?: number;
+      isBreak?: boolean;
+      audioUrl?: string;
+      scriptText?: string;
+      passageText?: string;
+      passageTitle?: string;
+      passageType?: string;
+      questions: Array<{
+        id?: string;
+        questionType: string;
+        questionText: string;
+        difficulty: string;
+        options: Array<{ id?: string; label: string; text: string; isCorrect: boolean }>;
+        modelAnswer?: string;
+        rubric?: unknown;
+        explanation?: string;
+        points: number;
+        estimatedTime?: number;
+        audioUrl?: string;
+        imageUrl?: string;
+        passageGroupId?: string;
+        passageText?: string;
+        passageType?: string;
+        passageTitle?: string;
+        blankNumber?: number;
+        subQuestionNumber?: number;
+        formatMetadata?: Record<string, unknown>;
+      }>;
+    }>;
+    removedQuestionIds?: string[];
+    sectionMetadata?: Array<{
+      id: string;
+      title?: string;
+      subtitle?: string;
+      instruction?: string;
+      order?: number;
+      durationMinutes?: number;
+    }>;
+  }): Promise<{ examId: string; sectionsUpdated: number; questionsUpdated: number; tempIdMap?: Record<string, string> }> {
+    const client = await getAxiosInstance();
+    const response = await client.patch(`/certification/exams/${examId}/content`, dto);
+    return unwrapJsonApiResponse<{ examId: string; sectionsUpdated: number; questionsUpdated: number; tempIdMap?: Record<string, string> }>(response.data);
   }
 }

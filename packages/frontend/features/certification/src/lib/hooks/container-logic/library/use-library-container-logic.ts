@@ -7,6 +7,7 @@ import {
   usePracticeHistoryData,
   useInProgressSessions,
   useClonedCollections,
+  useMyCollections,
 } from '../../use-certification';
 import type { ExamCollection } from '../../../types';
 import type { LibraryTabType } from '../../../types/container-logic-library.types';
@@ -31,6 +32,7 @@ export function useLibraryContainerLogic() {
   const { data: practiceHistoryData, isLoading: isLoadingHistory, isError: isErrorHistory, refetch: refetchHistory } = usePracticeHistoryData();
   const { data: inProgressData, isLoading: isLoadingInProgress, isError: isErrorInProgress, refetch: refetchInProgress } = useInProgressSessions();
   const { data: clonedData, isLoading: isLoadingCloned, isError: isErrorCloned, refetch: refetchCloned } = useClonedCollections();
+  const { data: myCollectionsData, isLoading: isLoadingMyCollections, isError: isErrorMyCollections, refetch: refetchMyCollections } = useMyCollections();
 
   // ===== Filtering & sorting helpers =====
 
@@ -95,6 +97,10 @@ export function useLibraryContainerLogic() {
     return filterByExamType(clonedData?.items ?? []);
   }, [clonedData, filterByExamType]);
 
+  const myCollections = useMemo(() => {
+    return sortCollections(filterByExamAndSearch(myCollectionsData ?? []));
+  }, [myCollectionsData, filterByExamAndSearch, sortCollections]);
+
   // ===== Handlers =====
 
   const handleUnbookmark = (collectionId: string, e: React.MouseEvent) => {
@@ -124,6 +130,7 @@ export function useLibraryContainerLogic() {
     inProgressSessions, isLoadingInProgress, isErrorInProgress, refetchInProgress,
     practiceHistoryItems, isLoadingHistory, isErrorHistory, refetchHistory,
     clonedCollections, isLoadingCloned, isErrorCloned, refetchCloned,
+    myCollections, isLoadingMyCollections, isErrorMyCollections, refetchMyCollections,
     handleUnbookmark, handleOpenCollection, handleStartExam, handleBackToDashboard,
   };
 }

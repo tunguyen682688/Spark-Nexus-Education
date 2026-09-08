@@ -63,9 +63,15 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
       title: section.getTitle(),
       subtitle: section.getSubtitle() || section.getInstruction() || section.getSectionType(),
       sectionType: section.getSectionType(),
+      instruction: section.getInstruction(),
       questionCount: section.getQuestionCount(),
       durationMinutes: section.getDurationMinutes(),
       isBreak: section.getIsBreak(),
+      audioUrl: section.getAudioUrl(),
+      scriptText: section.getScriptText(),
+      passageText: section.getPassageText(),
+      passageTitle: section.getPassageTitle(),
+      passageType: section.getPassageType(),
       questions: [], // Empty - loaded on-demand per section
     }));
 

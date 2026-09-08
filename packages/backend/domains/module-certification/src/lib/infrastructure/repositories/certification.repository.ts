@@ -292,7 +292,7 @@ export class CertificationRepository implements ICertificationRepository {
 
   async findClonedCollectionsByUserId(userId: string) {
     const collections = await this.prisma.collection.findMany({
-      where: { ownerId: userId, deletedAt: null, publishStatus: 'draft' },
+      where: { ownerId: userId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -322,6 +322,44 @@ export class CertificationRepository implements ICertificationRepository {
       ownerId: c.ownerId,
       publishStatus: c.publishStatus,
       createdAt: c.createdAt,
+      examCount: examCountMap.get(c.id) ?? 0,
+      itemCount: itemCountMap.get(c.id) ?? 0,
+    }));
+  }
+
+  async findCollectionsByOwnerId(userId: string) {
+    const collections = await this.prisma.collection.findMany({
+      where: { ownerId: userId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const collectionIds = collections.map((c) => c.id);
+    const examCounts = collectionIds.length > 0
+      ? await this.prisma.exam.groupBy({
+          by: ['collectionId'],
+          where: { collectionId: { in: collectionIds }, deletedAt: null },
+          _count: { id: true },
+        })
+      : [];
+    const examCountMap = new Map(examCounts.map((e) => [e.collectionId, e._count.id]));
+
+    const itemCounts = collectionIds.length > 0
+      ? await this.prisma.collectionItem.groupBy({
+          by: ['collectionId'],
+          where: { collectionId: { in: collectionIds } },
+          _count: { id: true },
+        })
+      : [];
+    const itemCountMap = new Map(itemCounts.map((i) => [i.collectionId, i._count.id]));
+
+    return collections.map((c) => ({
+      id: c.id,
+      ownerId: c.ownerId,
+      title: c.title,
+      description: c.description,
+      publishStatus: c.publishStatus,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
       examCount: examCountMap.get(c.id) ?? 0,
       itemCount: itemCountMap.get(c.id) ?? 0,
     }));
@@ -554,6 +592,13 @@ export class CertificationRepository implements ICertificationRepository {
     });
   }
 
+  async updateExamInitializationStatus(examId: string, status: string): Promise<void> {
+    await this.prisma.exam.updateMany({
+      where: { id: examId },
+      data: { initializationStatus: status },
+    });
+  }
+
   // ============================================
   // CHAPTER OPERATIONS
   // ============================================
@@ -630,6 +675,11 @@ export class CertificationRepository implements ICertificationRepository {
       durationMinutes: section.getDurationMinutes(),
       questionCount: section.getQuestionCount(),
       isBreak: section.getIsBreak(),
+      audioUrl: section.getAudioUrl(),
+      scriptText: section.getScriptText(),
+      passageText: section.getPassageText(),
+      passageTitle: section.getPassageTitle(),
+      passageType: section.getPassageType(),
     };
 
     const saved = await this.prisma.examSection.upsert({
@@ -646,6 +696,30 @@ export class CertificationRepository implements ICertificationRepository {
 
   async deleteExamSection(id: string): Promise<void> {
     await this.prisma.examSection.delete({ where: { id } });
+  }
+
+  async updateSectionMetadata(sectionId: string, data: {
+    title?: string;
+    subtitle?: string | null;
+    instruction?: string | null;
+    order?: number;
+    durationMinutes?: number;
+    questionCount?: number;
+  }): Promise<void> {
+    const updateData: Prisma.ExamSectionUpdateInput = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
+    if (data.instruction !== undefined) updateData.instruction = data.instruction;
+    if (data.order !== undefined) updateData.order = data.order;
+    if (data.durationMinutes !== undefined) updateData.durationMinutes = data.durationMinutes;
+    if (data.questionCount !== undefined) updateData.questionCount = data.questionCount;
+
+    if (Object.keys(updateData).length > 0) {
+      await this.prisma.examSection.update({
+        where: { id: sectionId },
+        data: updateData,
+      });
+    }
   }
 
   async deleteAllSectionsByExamId(examId: string): Promise<void> {
@@ -1151,6 +1225,24 @@ export class CertificationRepository implements ICertificationRepository {
     return eq.map((item) => this.mapExamQuestionToEntity(item));
   }
 
+  async deleteExamQuestionsByIds(examId: string, questionIds: string[]): Promise<void> {
+    if (questionIds.length === 0) return;
+    await this.prisma.examQuestion.deleteMany({
+      where: { examId, questionId: { in: questionIds } },
+    });
+  }
+
+  async deleteQuestionsByIds(questionIds: string[]): Promise<void> {
+    if (questionIds.length === 0) return;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.questionChoice.deleteMany({ where: { questionId: { in: questionIds } } });
+      await tx.questionMetadata.deleteMany({ where: { questionId: { in: questionIds } } });
+      await tx.questionVersion.deleteMany({ where: { questionId: { in: questionIds } } });
+      await tx.examQuestion.deleteMany({ where: { questionId: { in: questionIds } } });
+      await tx.question.deleteMany({ where: { id: { in: questionIds } } });
+    });
+  }
+
   async findSectionQuestionsPaginated(params: {
     examId: string;
     sectionId: string;
@@ -1277,6 +1369,11 @@ export class CertificationRepository implements ICertificationRepository {
       speakingPrompt: entity.getSpeakingPrompt(),
       isGridIn: entity.getIsGridIn(),
       formatMetadata: entity.getFormatMetadata() as Prisma.InputJsonValue ?? null,
+      passageGroupId: entity.getPassageGroupId(),
+      blankNumber: entity.getBlankNumber(),
+      subQuestionNumber: entity.getSubQuestionNumber(),
+      passageTitle: entity.getPassageTitle(),
+      passageType: entity.getPassageType(),
     };
 
     const saved = await this.prisma.examQuestion.upsert({
@@ -1305,6 +1402,26 @@ export class CertificationRepository implements ICertificationRepository {
 
   async countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number> {
     return this.prisma.examQuestion.count({ where: { examId, sectionId } });
+  }
+
+  async batchCountQuestionsBySectionIds(examId: string, sectionIds: string[]): Promise<Map<string, number>> {
+    if (sectionIds.length === 0) return new Map();
+    const rows = await this.prisma.examQuestion.groupBy({
+      by: ['sectionId'],
+      where: { examId, sectionId: { in: sectionIds } },
+      _count: { id: true },
+    });
+    const map = new Map<string, number>();
+    for (const row of rows) {
+      if (row.sectionId) {
+        map.set(row.sectionId, row._count.id);
+      }
+    }
+    // Ensure all requested IDs are present (0 for missing)
+    for (const sid of sectionIds) {
+      if (!map.has(sid)) map.set(sid, 0);
+    }
+    return map;
   }
 
   async findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]> {
@@ -1870,6 +1987,379 @@ export class CertificationRepository implements ICertificationRepository {
     });
   }
 
+  async withTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    return this.prisma.$transaction(fn, { maxWait: 60000, timeout: 120000 });
+  }
+
+  /**
+   * Batch upsert questions for PATCH — single transaction, no version snapshots.
+   * Skips questions where contentHash matches (no DB writes for unchanged data).
+   */
+  async batchUpsertQuestionsForPatch(params: {
+    examId: string;
+    userId: string;
+    questions: Array<{
+      questionId: string;
+      questionText: string;
+      questionType: string;
+      difficulty: string;
+      points: number;
+      options: Array<{ id?: string; text: string; isCorrect: boolean; label: string }>;
+      explanation?: string;
+      modelAnswer?: string;
+      rubric?: string;
+      estimatedTime?: number;
+      audioUrl?: string;
+      imageUrl?: string;
+      passageGroupId?: string;
+      passageText?: string;
+      passageType?: string;
+      passageTitle?: string;
+      blankNumber?: number;
+      subQuestionNumber?: number;
+      formatMetadata?: Record<string, unknown>;
+      sectionId: string;
+      sectionOrder: number;
+      order: number;
+      linkId?: string;
+    }>;
+  }): Promise<number> {
+    const { examId, userId, questions } = params;
+    if (questions.length === 0) return 0;
+
+    // Pre-compute hashes
+    const questionsWithHash = questions.map(q => ({
+      ...q,
+      _hash: this.computeQuestionHash(q),
+    }));
+
+    const allQuestionIds = questionsWithHash.map(q => q.questionId);
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Fetch existing links + metadata in parallel
+      const [existingLinks, existingMetadata] = await Promise.all([
+        tx.examQuestion.findMany({
+          where: { examId, questionId: { in: allQuestionIds } },
+        }),
+        tx.questionMetadata.findMany({
+          where: { questionId: { in: allQuestionIds } },
+        }),
+      ]);
+      const existingLinkMap = new Map(existingLinks.map(l => [l.questionId, l]));
+      const existingMetadataSet = new Set(existingMetadata.map(m => m.questionId));
+
+      // 2. Batch upsert Questions (parallel)
+      await Promise.all(questionsWithHash.map(q =>
+        tx.question.upsert({
+          where: { id: q.questionId },
+          create: {
+            id: q.questionId,
+            title: q.questionText,
+            content: q.questionText,
+            type: q.questionType,
+            difficulty: q.difficulty,
+            status: 'draft',
+            createdBy: userId,
+            updatedBy: userId,
+          },
+          update: {
+            title: q.questionText,
+            content: q.questionText,
+            type: q.questionType,
+            difficulty: q.difficulty,
+            updatedBy: userId,
+          },
+        })
+      ));
+
+      // 3. Batch delete ALL old choices in ONE query, then create ALL new choices
+      await tx.questionChoice.deleteMany({
+        where: { questionId: { in: allQuestionIds } },
+      });
+      const allChoices = questionsWithHash.flatMap(q =>
+        q.options.map((opt, idx) => ({
+          id: opt.id || crypto.randomUUID(),
+          questionId: q.questionId,
+          content: opt.text,
+          isCorrect: opt.isCorrect,
+          order: idx,
+          createdBy: userId,
+          updatedBy: userId,
+        }))
+      );
+      if (allChoices.length > 0) {
+        await tx.questionChoice.createMany({ data: allChoices });
+      }
+
+      // 4. Batch upsert Metadata (parallel — separate new vs existing)
+      await Promise.all(questionsWithHash.map(q => {
+        const isNew = !existingMetadataSet.has(q.questionId);
+        if (isNew) {
+          return tx.questionMetadata.create({
+            data: {
+              id: crypto.randomUUID(),
+              questionId: q.questionId,
+              explanation: q.explanation || null,
+              points: q.points,
+              estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
+              shuffleOptions: false,
+              modelAnswer: q.modelAnswer || null,
+              rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
+              passageText: q.passageText || null,
+            },
+          });
+        }
+        return tx.questionMetadata.update({
+          where: { questionId: q.questionId },
+          data: {
+            explanation: q.explanation || null,
+            points: q.points,
+            estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
+            modelAnswer: q.modelAnswer || null,
+            rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
+            passageText: q.passageText || null,
+          },
+        });
+      }));
+
+      // 5. Batch upsert ExamQuestion links (parallel)
+      await Promise.all(questionsWithHash.map(q => {
+        const existing = existingLinkMap.get(q.questionId);
+        const linkId = existing?.id || q.linkId || crypto.randomUUID();
+        const data = {
+          examId,
+          questionId: q.questionId,
+          sectionId: q.sectionId,
+          order: q.order,
+          points: q.points,
+          audioUrl: q.audioUrl ?? null,
+          imageUrl: q.imageUrl ?? null,
+          partNumber: q.sectionOrder,
+          formatMetadata: (q.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
+          passageGroupId: q.passageGroupId ?? null,
+          passageType: q.passageType ?? null,
+          passageTitle: q.passageTitle ?? null,
+          blankNumber: q.blankNumber ?? null,
+          subQuestionNumber: q.subQuestionNumber ?? null,
+          contentHash: q._hash,
+        };
+        if (existing) {
+          return tx.examQuestion.update({
+            where: { id: linkId },
+            data: { ...data, updatedBy: userId },
+          });
+        }
+        return tx.examQuestion.create({
+          data: { ...data, id: linkId, createdBy: userId, updatedBy: userId },
+        });
+      }));
+
+      return questionsWithHash.length;
+    }, { maxWait: 30000, timeout: 60000 });
+  }
+
+  async batchInitializeExamQuestions(params: {
+    examId: string;
+    userId: string;
+    questions: Array<{
+      question: {
+        id: string;
+        content: string;
+        type: string;
+        difficulty: string;
+        category: string | null;
+        status: string;
+        createdBy: string;
+        updatedBy: string;
+      };
+      choices: Array<{
+        id: string;
+        questionId: string;
+        content: string;
+        isCorrect: boolean;
+        order: number;
+        createdBy: string;
+        updatedBy: string;
+      }>;
+      metadata: {
+        id: string;
+        questionId: string;
+        explanation: string | null;
+        points: number;
+        estimatedTime: string | null;
+        shuffleOptions: boolean;
+        modelAnswer: string | null;
+        rubric: unknown | null;
+        passageText: string | null;
+        qualityScore: number | null;
+      };
+      examQuestion: {
+        id: string;
+        examId: string;
+        questionId: string;
+        sectionId: string;
+        order: number;
+        points: number;
+        createdBy: string;
+        updatedBy: string;
+        audioUrl: string | null;
+        imageUrl: string | null;
+        partNumber: number;
+        formatMetadata: unknown | null;
+        passageGroupId: string | null;
+        passageType: string | null;
+        passageTitle: string | null;
+        blankNumber: number | null;
+        subQuestionNumber: number | null;
+      };
+    }>;
+  }): Promise<number> {
+    if (params.questions.length === 0) return 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Create ALL questions in one query
+      await tx.question.createMany({
+        data: params.questions.map(q => ({
+          id: q.question.id,
+          title: q.question.content,
+          content: q.question.content,
+          type: q.question.type,
+          difficulty: q.question.difficulty,
+          category: q.question.category,
+          status: q.question.status,
+          createdBy: q.question.createdBy,
+          updatedBy: q.question.updatedBy,
+        })),
+      });
+
+      // 2. Create ALL choices in one query (no deleteMany needed — fresh init)
+      const allChoices = params.questions.flatMap(q =>
+        q.choices.map(c => ({
+          id: c.id,
+          questionId: c.questionId,
+          content: c.content,
+          isCorrect: c.isCorrect,
+          order: c.order,
+          createdBy: c.createdBy,
+          updatedBy: c.updatedBy,
+        }))
+      );
+      if (allChoices.length > 0) {
+        await tx.questionChoice.createMany({ data: allChoices });
+      }
+
+      // 3. Create ALL metadata in one query (all version 1 on init)
+      await tx.questionMetadata.createMany({
+        data: params.questions.map(q => ({
+          id: q.metadata.id,
+          questionId: q.metadata.questionId,
+          explanation: q.metadata.explanation,
+          points: q.metadata.points,
+          estimatedTime: q.metadata.estimatedTime,
+          shuffleOptions: q.metadata.shuffleOptions,
+          modelAnswer: q.metadata.modelAnswer,
+          rubric: (q.metadata.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
+          passageText: q.metadata.passageText,
+          qualityScore: q.metadata.qualityScore,
+        })),
+      });
+
+      // 4. Create ALL version snapshots in one query (all version 1 on init)
+      await tx.questionVersion.createMany({
+        data: params.questions.map(q => ({
+          questionId: q.question.id,
+          version: 1,
+          content: JSON.stringify({
+            title: q.question.content,
+            content: q.question.content,
+            type: q.question.type,
+            difficulty: q.question.difficulty,
+            choices: q.choices.map(c => ({
+              id: c.id,
+              content: c.content,
+              isCorrect: c.isCorrect,
+              order: c.order,
+            })),
+            metadata: q.metadata,
+          }),
+          createdBy: q.question.updatedBy || q.question.createdBy,
+        })),
+      });
+
+      // 5. Create ALL exam-question links in one query
+      await tx.examQuestion.createMany({
+        data: params.questions.map(q => ({
+          id: q.examQuestion.id,
+          examId: q.examQuestion.examId,
+          questionId: q.examQuestion.questionId,
+          sectionId: q.examQuestion.sectionId,
+          order: q.examQuestion.order,
+          points: q.examQuestion.points,
+          createdBy: q.examQuestion.createdBy,
+          updatedBy: q.examQuestion.updatedBy,
+          audioUrl: q.examQuestion.audioUrl,
+          imageUrl: q.examQuestion.imageUrl,
+          partNumber: q.examQuestion.partNumber,
+          formatMetadata: (q.examQuestion.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
+          passageGroupId: q.examQuestion.passageGroupId,
+          passageType: q.examQuestion.passageType,
+          passageTitle: q.examQuestion.passageTitle,
+          blankNumber: q.examQuestion.blankNumber,
+          subQuestionNumber: q.examQuestion.subQuestionNumber,
+        })),
+      });
+    }, { maxWait: 60000, timeout: 120000 });
+
+    return params.questions.length;
+  }
+
+  /**
+   * Compute deterministic hash of question data for change detection.
+   * Used by batchUpsertQuestionsForPatch to skip unchanged questions.
+   */
+  private computeQuestionHash(q: {
+    questionText: string;
+    questionType: string;
+    difficulty: string;
+    points: number;
+    options: Array<{ text: string; isCorrect: boolean }>;
+    explanation?: string;
+    modelAnswer?: string;
+    rubric?: string;
+    estimatedTime?: number;
+    audioUrl?: string;
+    imageUrl?: string;
+    passageGroupId?: string;
+    passageText?: string;
+    passageType?: string;
+    passageTitle?: string;
+    blankNumber?: number;
+    subQuestionNumber?: number;
+    formatMetadata?: Record<string, unknown>;
+  }): string {
+    const data = JSON.stringify({
+      t: q.questionType,
+      txt: q.questionText,
+      d: q.difficulty,
+      p: q.points,
+      o: q.options.map(o => ({ t: o.text, c: o.isCorrect })),
+      e: q.explanation,
+      m: q.modelAnswer,
+      r: q.rubric,
+      et: q.estimatedTime,
+      au: q.audioUrl,
+      im: q.imageUrl,
+      pg: q.passageGroupId,
+      pt: q.passageText,
+      pp: q.passageType,
+      ppo: q.passageTitle,
+      bn: q.blankNumber,
+      sq: q.subQuestionNumber,
+      fm: q.formatMetadata,
+    });
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+
   private mapExamToEntity(dbObj: Exam): ExamEntity {
     return ExamEntity.create({
       id: dbObj.id,
@@ -1886,6 +2376,7 @@ export class CertificationRepository implements ICertificationRepository {
       examType: dbObj.examType ?? 'FULL_MOCK',
       certificationType: dbObj.certificationType ?? null,
       level: dbObj.level ?? null,
+      initializationStatus: (dbObj as Record<string, unknown>).initializationStatus as string ?? 'none',
       createdBy: dbObj.createdBy,
       updatedBy: dbObj.updatedBy,
       createdAt: dbObj.createdAt,
@@ -1923,6 +2414,11 @@ export class CertificationRepository implements ICertificationRepository {
       durationMinutes: dbObj.durationMinutes ?? 0,
       questionCount: dbObj.questionCount ?? 0,
       isBreak: dbObj.isBreak ?? false,
+      audioUrl: dbObj.audioUrl ?? undefined,
+      scriptText: dbObj.scriptText ?? undefined,
+      passageText: dbObj.passageText ?? undefined,
+      passageTitle: dbObj.passageTitle ?? undefined,
+      passageType: dbObj.passageType ?? undefined,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
     });
@@ -2014,6 +2510,11 @@ export class CertificationRepository implements ICertificationRepository {
       speakingPrompt: dbObj.speakingPrompt,
       isGridIn: dbObj.isGridIn,
       formatMetadata: dbObj.formatMetadata,
+      passageGroupId: dbObj.passageGroupId,
+      blankNumber: dbObj.blankNumber,
+      subQuestionNumber: dbObj.subQuestionNumber,
+      passageTitle: dbObj.passageTitle,
+      passageType: dbObj.passageType,
     });
   }
 

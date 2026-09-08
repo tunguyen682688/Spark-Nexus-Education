@@ -32,9 +32,15 @@ export interface ExamBuilderResult {
     title: string;
     subtitle: string;
     sectionType: string;
+    instruction: string | null;
     questionCount: number;
     durationMinutes: number;
     isBreak: boolean;
+    audioUrl: string | null;
+    scriptText: string | null;
+    passageText: string | null;
+    passageTitle: string | null;
+    passageType: string | null;
     questions: Array<{
       id: string;
       number: number;

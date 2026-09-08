@@ -43,6 +43,7 @@ export const useCreateExam = () => {
       const optimisticExam: EditorExam = {
         id: `optimistic-${Date.now()}`,
         number: 0,
+        order: 0,
         title: variables.title,
         subTitle: variables.description || '',
         questionsCount: variables.totalQuestions || 0,
@@ -61,17 +62,17 @@ export const useCreateExam = () => {
 
         if (targetIdx >= 0) {
           const target = chapters[targetIdx];
+          const newExams = [...target.exams, { ...optimisticExam, number: target.exams.length + 1, order: target.exams.length }];
           chapters[targetIdx] = {
             ...target,
-            examCount: target.examCount + 1,
-            exams: [...target.exams, { ...optimisticExam, number: target.exams.length + 1 }],
+            exams: newExams,
           };
         } else if (chapters.length > 0) {
           const first = chapters[0];
+          const newExams = [...first.exams, { ...optimisticExam, number: first.exams.length + 1, order: first.exams.length }];
           chapters[0] = {
             ...first,
-            examCount: first.examCount + 1,
-            exams: [...first.exams, { ...optimisticExam, number: first.exams.length + 1 }],
+            exams: newExams,
           };
         } else {
           chapters.push({
@@ -80,7 +81,7 @@ export const useCreateExam = () => {
             title: 'Unsorted Exams',
             description: 'Exams not yet assigned to a chapter.',
             examCount: 1,
-            exams: [{ ...optimisticExam, number: 1 }],
+            exams: [{ ...optimisticExam, number: 1, order: 0 }],
           } as EditorChapter);
         }
 
@@ -131,7 +132,7 @@ export const useDeleteExam = () => {
         chapters: old.chapters
           .map((ch) => {
             const remaining = ch.exams.filter((ex) => ex.id !== variables.examId);
-            return { ...ch, exams: remaining, examCount: remaining.length };
+            return { ...ch, exams: remaining };
           })
           .filter((ch) => ch.exams.length > 0 || ch.id.startsWith('orphans-')),
       }));

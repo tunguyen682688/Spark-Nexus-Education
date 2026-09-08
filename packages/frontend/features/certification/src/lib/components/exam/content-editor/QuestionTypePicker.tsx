@@ -13,7 +13,7 @@ const ALL_QUESTION_TYPES = [
   'matching', 'matching_headings', 'sentence_completion',
   'note_completion', 'form_completion', 'short_answer', 'map_labeling',
   'incomplete_sentence', 'text_completion',
-  'reading_comprehension_single', 'reading_comprehension_double',
+  'reading_comprehension_single', 'reading_comprehension_double', 'reading_comprehension_triple',
   'photograph_choice', 'question_response', 'conversation_mc', 'short_talk_mc',
   'writing_task_1_academic', 'writing_task_2', 'email_writing', 'essay_writing_vstep', 'essay_writing', 'long_writing',
   'speaking_part_1', 'speaking_part_2', 'speaking_part_3',

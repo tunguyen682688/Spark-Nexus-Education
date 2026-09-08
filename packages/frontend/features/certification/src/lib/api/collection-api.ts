@@ -137,6 +137,16 @@ export class CollectionApi {
     return [];
   }
 
+  static async getMyCollections(): Promise<ExamCollection[]> {
+    const client = await getAxiosInstance();
+    const response = await client.get('/certification/collections/my');
+    const data = unwrapJsonApiResponse<{ items?: ExamCollection[] }>(response.data);
+    if (data && Array.isArray(data.items)) {
+      return data.items;
+    }
+    return [];
+  }
+
   static async cloneCollection(collectionId: string): Promise<{ cloned: boolean; newCollectionId: string }> {
     const client = await getAxiosInstance();
     const response = await client.post(`/certification/collections/${collectionId}/clone`);

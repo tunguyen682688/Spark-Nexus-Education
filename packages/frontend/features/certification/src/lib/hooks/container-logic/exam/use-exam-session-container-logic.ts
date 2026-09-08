@@ -99,7 +99,7 @@ export function useExamSessionContainerLogic({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [remainingSeconds > 0, session?.status, sessionId, submitSession, onSubmitted, navigate]);
+  }, [session?.status, sessionId, submitSession, onSubmitted, navigate, remainingSeconds]);
 
   // Tab violation tracking (only after session is loaded and in progress)
   useEffect(() => {
@@ -123,7 +123,7 @@ export function useExamSessionContainerLogic({
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [sessionId, recordViolation, session?.status]);
+  }, [sessionId, recordViolation, session]);
 
   const questions = useMemo(
     () => session?.questions || [],

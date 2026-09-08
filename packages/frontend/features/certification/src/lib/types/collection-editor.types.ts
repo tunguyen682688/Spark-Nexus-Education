@@ -45,7 +45,7 @@ export interface AddExamConfig {
   totalQuestions: number;
   maxScore: number;
   passScore: number;
-  sections: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number }>;
+  sections: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number; questionCount?: number }>;
 }
 
 // ===== Summary types =====

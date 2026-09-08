@@ -27,6 +27,7 @@ export const certificationKeys = {
     items: (id: string) => [...BASE, 'collection-items', id] as const,
     editor: (id: string) => [...BASE, 'collection-editor', id] as const,
     saved: () => [...BASE, 'saved-collections'] as const,
+    myCollections: () => [...BASE, 'my-collections'] as const,
   },
 
   // Exams

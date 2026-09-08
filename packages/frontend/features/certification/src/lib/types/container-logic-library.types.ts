@@ -51,7 +51,7 @@ export interface FavoriteItem {
   isFavorited: boolean;
 }
 
-export type LibraryTabType = 'saved' | 'in_progress' | 'history' | 'my_clones';
+export type LibraryTabType = 'saved' | 'in_progress' | 'history' | 'my_clones' | 'my_collections';
 
 export interface PurchasedCollectionItem {
   id: string;

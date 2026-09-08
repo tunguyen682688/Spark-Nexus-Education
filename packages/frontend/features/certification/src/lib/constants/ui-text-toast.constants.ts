@@ -171,14 +171,6 @@ export const TOAST_UI_TEXT = {
     title: 'Tạo đề thi thất bại',
     description: 'Không thể tạo đề thi. Vui lòng thử lại.',
   },
-  updateExamSuccess: {
-    title: 'Đã cập nhật đề thi',
-    description: 'Đề thi đã được cập nhật thành công.',
-  },
-  updateExamError: {
-    title: 'Cập nhật đề thi thất bại',
-    description: 'Không thể cập nhật đề thi. Vui lòng thử lại.',
-  },
   deleteExamSuccess: {
     title: 'Đã xóa đề thi',
     description: 'Đề thi đã được xóa khỏi bộ sưu tập.',

@@ -31,6 +31,7 @@ export class CertificationApi {
   static getCollectionActivities = CollectionApi.getCollectionActivities;
   static saveCollection = CollectionApi.saveCollection;
   static getSavedCollections = CollectionApi.getSavedCollections;
+  static getMyCollections = CollectionApi.getMyCollections;
   static cloneCollection = CollectionApi.cloneCollection;
   static reportCollection = CollectionApi.reportCollection;
   static createCollection = CollectionApi.createCollection;
@@ -43,9 +44,10 @@ export class CertificationApi {
   static getExam = ExamApi.getExam;
   static getExamBuilderData = ExamApi.getExamBuilderData;
   static createExam = ExamApi.createExam;
-  static updateExam = ExamApi.updateExam;
   static deleteExam = ExamApi.deleteExam;
   static saveExamContent = ExamApi.saveExamContent;
+  static getExamInitializationStatus = ExamApi.getExamInitializationStatus;
+  static retryExamInitialization = ExamApi.retryExamInitialization;
 
   // Session
   static startExamSession = SessionApi.startExamSession;

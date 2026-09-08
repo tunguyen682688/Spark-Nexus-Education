@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { ExamSectionContent, ExamSectionQuestion } from '../../../types/exam-content-editor.types';
 import { QuestionTypePicker } from './QuestionTypePicker';
-import { PART_TITLES } from './part-titles.constants';
+import { PART_TITLES } from '../../../constants/part-titles.constants';
 import { MediaUpload } from './MediaUpload';
 
 interface TOEICQuestionEditorProps {
@@ -17,10 +17,6 @@ interface TOEICQuestionEditorProps {
   onUpdateGroupPassage: (passageText: string) => void;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
-}
-
-function generateTempId(): string {
-  return `opt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // ─── Part-specific configuration ─────────────────────────────────────────────

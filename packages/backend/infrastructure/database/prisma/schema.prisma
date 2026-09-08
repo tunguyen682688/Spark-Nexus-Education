@@ -1211,26 +1211,27 @@ model CollectionBookmark {
 // ============================================
 
 model Exam {
-  id                String    @id @default(uuid())
-  collectionId      String    @map("collection_id")
-  chapterId         String?   @map("chapter_id")
-  title             String    @db.VarChar(255)
-  description       String?   @db.Text
-  publishStatus     String    @default("draft") @map("publish_status") @db.VarChar(50)
-  examType          String    @default("FULL_MOCK") @map("exam_type") @db.VarChar(50)
-  certificationType String?   @map("certification_type") @db.VarChar(50)
-  level             String?   @db.VarChar(50) @default("intermediate")
-  order             Int       @default(0)
-  createdAt         DateTime  @default(now()) @map("created_at")
-  createdBy         String?   @map("created_by")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
-  updatedBy         String?   @map("updated_by")
-  deletedAt         DateTime? @map("deleted_at")
-  version           BigInt    @default(1)
-  duration          Int       @default(0)
-  totalQuestions    Int       @default(0) @map("total_questions")
-  maxScore          Float     @default(100.0) @map("max_score")
-  passScore         Float     @default(50.0) @map("pass_score")
+  id                    String    @id @default(uuid())
+  collectionId          String    @map("collection_id")
+  chapterId             String?   @map("chapter_id")
+  title                 String    @db.VarChar(255)
+  description           String?   @db.Text
+  publishStatus         String    @default("draft") @map("publish_status") @db.VarChar(50)
+  examType              String    @default("FULL_MOCK") @map("exam_type") @db.VarChar(50)
+  certificationType     String?   @map("certification_type") @db.VarChar(50)
+  level                 String?   @db.VarChar(50) @default("intermediate")
+  order                 Int       @default(0)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  createdBy             String?   @map("created_by")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  updatedBy             String?   @map("updated_by")
+  deletedAt             DateTime? @map("deleted_at")
+  version               BigInt    @default(1)
+  duration              Int       @default(0)
+  totalQuestions        Int       @default(0) @map("total_questions")
+  maxScore              Float     @default(100.0) @map("max_score")
+  passScore             Float     @default(50.0) @map("pass_score")
+  initializationStatus  String    @default("none") @map("initialization_status") @db.VarChar(50)
 
   // Relations
   collection    Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
@@ -1258,6 +1259,14 @@ model ExamSection {
   durationMinutes Int      @default(0) @map("duration_minutes")
   questionCount   Int      @default(0) @map("question_count")
   isBreak         Boolean  @default(false) @map("is_break")
+
+  // Section-level media and content (TOEIC Parts 3, 4 share audio at section level)
+  audioUrl        String?  @map("audio_url") @db.VarChar(500)
+  scriptText      String?  @map("script_text") @db.Text
+  passageText     String?  @map("passage_text") @db.Text
+  passageTitle    String?  @map("passage_title") @db.VarChar(255)
+  passageType     String?  @map("passage_type") @db.VarChar(50)
+
   createdAt       DateTime @default(now()) @map("created_at")
   createdBy       String?  @map("created_by")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -1283,6 +1292,9 @@ model ExamQuestion {
   createdBy  String?  @map("created_by")
   updatedAt  DateTime @updatedAt @map("updated_at")
   updatedBy  String?  @map("updated_by")
+
+  // Content hash for server-side skip-unchanged optimization
+  contentHash String? @map("content_hash") @db.VarChar(64)
 
   // Per-exam media overrides (same question can have different audio/image per exam)
   audioUrl       String? @map("audio_url") @db.VarChar(500)

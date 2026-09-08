@@ -61,6 +61,7 @@ export interface ICertificationRepository {
   deleteExam(id: string): Promise<void>;
   updateExamChapterId(examId: string, chapterId: string | null): Promise<void>;
   updateExamOrder(examId: string, order: number): Promise<void>;
+  updateExamInitializationStatus(examId: string, status: string): Promise<void>;
 
   // Chapter Operations
   findChapterById(id: string): Promise<ChapterEntity | null>;
@@ -72,6 +73,14 @@ export interface ICertificationRepository {
   findSectionsByExamId(examId: string): Promise<ExamSectionEntity[]>;
   findSectionById(id: string): Promise<ExamSectionEntity | null>;
   saveExamSection(section: ExamSectionEntity): Promise<ExamSectionEntity>;
+  updateSectionMetadata(sectionId: string, data: {
+    title?: string;
+    subtitle?: string | null;
+    instruction?: string | null;
+    order?: number;
+    durationMinutes?: number;
+    questionCount?: number;
+  }): Promise<void>;
   deleteExamSection(id: string): Promise<void>;
   deleteAllSectionsByExamId(examId: string): Promise<void>;
 
@@ -107,6 +116,19 @@ export interface ICertificationRepository {
     itemCount: number;
   }>>;
 
+  // My Collections (owned by user)
+  findCollectionsByOwnerId(userId: string): Promise<Array<{
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    publishStatus: string;
+    createdAt: Date;
+    updatedAt: Date;
+    examCount: number;
+    itemCount: number;
+  }>>;
+
   // Question Operations
   findQuestionById(id: string): Promise<QuestionEntity | null>;
   findQuestionsByIds(ids: string[]): Promise<QuestionEntity[]>;
@@ -135,6 +157,98 @@ export interface ICertificationRepository {
   ): Promise<void>;
   deleteQuestionCascade(id: string): Promise<void>;
 
+  // Transaction Support
+  withTransaction<T>(fn: () => Promise<T>): Promise<T>;
+
+  // Batch Question Operations (for PATCH — no version snapshots)
+  batchUpsertQuestionsForPatch(params: {
+    examId: string;
+    userId: string;
+    questions: Array<{
+      questionId: string;
+      questionText: string;
+      questionType: string;
+      difficulty: string;
+      points: number;
+      options: Array<{ id?: string; text: string; isCorrect: boolean; label: string }>;
+      explanation?: string;
+      modelAnswer?: string;
+      rubric?: string;
+      estimatedTime?: number;
+      audioUrl?: string;
+      imageUrl?: string;
+      passageGroupId?: string;
+      passageText?: string;
+      passageType?: string;
+      passageTitle?: string;
+      blankNumber?: number;
+      subQuestionNumber?: number;
+      formatMetadata?: Record<string, unknown>;
+      sectionId: string;
+      sectionOrder: number;
+      order: number;
+      linkId?: string;
+    }>;
+  }): Promise<number>;
+
+  // Batch Initialize Exam Questions (for async init — single transaction)
+  batchInitializeExamQuestions(params: {
+    examId: string;
+    userId: string;
+    questions: Array<{
+      question: {
+        id: string;
+        content: string;
+        type: string;
+        difficulty: string;
+        category: string | null;
+        status: string;
+        createdBy: string;
+        updatedBy: string;
+      };
+      choices: Array<{
+        id: string;
+        questionId: string;
+        content: string;
+        isCorrect: boolean;
+        order: number;
+        createdBy: string;
+        updatedBy: string;
+      }>;
+      metadata: {
+        id: string;
+        questionId: string;
+        explanation: string | null;
+        points: number;
+        estimatedTime: string | null;
+        shuffleOptions: boolean;
+        modelAnswer: string | null;
+        rubric: unknown | null;
+        passageText: string | null;
+        qualityScore: number | null;
+      };
+      examQuestion: {
+        id: string;
+        examId: string;
+        questionId: string;
+        sectionId: string;
+        order: number;
+        points: number;
+        createdBy: string;
+        updatedBy: string;
+        audioUrl: string | null;
+        imageUrl: string | null;
+        partNumber: number;
+        formatMetadata: unknown | null;
+        passageGroupId: string | null;
+        passageType: string | null;
+        passageTitle: string | null;
+        blankNumber: number | null;
+        subQuestionNumber: number | null;
+      };
+    }>;
+  }): Promise<number>;
+
   // Question Metadata Operations
   findMetadataByQuestionId(questionId: string): Promise<QuestionMetadataEntity | null>;
   saveQuestionMetadata(metadata: QuestionMetadataEntity): Promise<QuestionMetadataEntity>;
@@ -147,6 +261,8 @@ export interface ICertificationRepository {
   findAnswersBySessionId(sessionId: string): Promise<SessionAnswerEntity[]>;
   findExamQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]>;
   findExamQuestionsByExamIdAndSectionId(examId: string, sectionId: string): Promise<ExamQuestionEntity[]>;
+  deleteExamQuestionsByIds(examId: string, questionIds: string[]): Promise<void>;
+  deleteQuestionsByIds(questionIds: string[]): Promise<void>;
   findSectionQuestionsPaginated(params: {
     examId: string;
     sectionId: string;
@@ -193,6 +309,7 @@ export interface ICertificationRepository {
   deleteAllExamQuestionsByExamId(examId: string): Promise<void>;
   countExamQuestionsByExamId(examId: string): Promise<number>;
   countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number>;
+  batchCountQuestionsBySectionIds(examId: string, sectionIds: string[]): Promise<Map<string, number>>;
   findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]>;
   saveSessionAnswer(answer: SessionAnswerEntity): Promise<SessionAnswerEntity>;
   saveViolation(violation: SessionViolationEntity): Promise<SessionViolationEntity>;

@@ -256,6 +256,16 @@ export const useAuth = () => {
       if (error instanceof Error) {
         const errorMessage = error.message || '';
 
+        // Handle consent_required — trigger login with consent prompt
+        if (
+          errorMessage.includes('consent_required') ||
+          (error as unknown as Record<string, unknown>)?.error === 'consent_required'
+        ) {
+          console.warn('Consent required, triggering login with consent prompt');
+          loginWithConsent();
+          return null;
+        }
+
         // Handle token expired errors
         if (
           errorMessage.includes('expired') ||
@@ -398,6 +408,19 @@ export const useAuth = () => {
     },
     [loginWithRedirect]
   );
+
+  /**
+   * Login with explicit consent prompt (for consent_required errors)
+   */
+  const loginWithConsent = useCallback(() => {
+    loginWithRedirect({
+      authorizationParams: {
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        redirect_uri: window.location.origin,
+        prompt: 'consent',
+      },
+    });
+  }, [loginWithRedirect]);
 
   return {
     isAuthenticated,

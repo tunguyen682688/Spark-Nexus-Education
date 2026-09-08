@@ -1,5 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject, Logger, NotFoundException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import * as crypto from 'crypto';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { ExamEntity } from '../../../domain/entities/exam.entity';
@@ -8,9 +10,13 @@ import { CreateExamCommand } from './create-exam.command';
 
 @CommandHandler(CreateExamCommand)
 export class CreateExamCommandHandler implements ICommandHandler<CreateExamCommand> {
+  private readonly logger = new Logger(CreateExamCommandHandler.name);
+
   constructor(
     @Inject(certificationRepoInterface.CERTIFICATION_REPOSITORY)
-    private readonly repository: certificationRepoInterface.ICertificationRepository
+    private readonly repository: certificationRepoInterface.ICertificationRepository,
+    @InjectQueue('certification-init')
+    private readonly initQueue: Queue,
   ) {}
 
   async execute(command: CreateExamCommand) {
@@ -21,7 +27,6 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
       throw new NotFoundException(`Collection ${collectionId} not found`);
     }
 
-    // Validate chapterId exists if provided, otherwise null it out
     let validChapterId = chapterId ?? null;
     if (validChapterId) {
       const chapter = await this.repository.findChapterById(validChapterId);
@@ -51,6 +56,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
     const saved = await this.repository.saveExam(exam);
 
     // Auto-create sections if provided
+    const savedSections: ExamSectionEntity[] = [];
     if (sections && sections.length > 0) {
       for (let i = 0; i < sections.length; i++) {
         const sec = sections[i];
@@ -66,8 +72,29 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
           questionCount: sec.questionCount ?? 0,
           isBreak: sec.isBreak ?? false,
         });
-        await this.repository.saveExamSection(sectionEntity);
+        const savedSection = await this.repository.saveExamSection(sectionEntity);
+        savedSections.push(savedSection);
       }
+    }
+
+    // Queue async question initialization for certification exams
+    if (certificationType) {
+      await this.repository.updateExamInitializationStatus(saved.id, 'pending');
+      await this.initQueue.add(
+        'initialize-exam-questions',
+        {
+          examId: saved.id,
+          userId,
+          certificationType,
+          sectionIds: savedSections.map((s) => ({ id: s.id, order: s.getOrder() })),
+        },
+        {
+          attempts: 1,
+          removeOnComplete: { age: 3600 },
+          removeOnFail: { age: 86400 },
+        },
+      );
+      this.logger.log(`Queued initialize-exam-questions for exam ${saved.id}`);
     }
 
     return {
@@ -77,6 +104,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
       examType: saved.getExamType(),
       certificationType: saved.getCertificationType(),
       level: saved.getLevel(),
+      initializationStatus: certificationType ? 'pending' : 'none',
     };
   }
 }

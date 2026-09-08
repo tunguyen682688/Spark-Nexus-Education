@@ -39,6 +39,10 @@ export const CertificationLibraryContainer = () => {
     refetchInProgress,
     refetchHistory,
     refetchCloned,
+    myCollections,
+    isLoadingMyCollections,
+    isErrorMyCollections,
+    refetchMyCollections,
     handleUnbookmark,
     handleOpenCollection,
     handleStartExam,
@@ -107,6 +111,10 @@ export const CertificationLibraryContainer = () => {
         isLoadingCloned={isLoadingCloned}
         isErrorCloned={isErrorCloned}
         refetchCloned={refetchCloned}
+        myCollections={myCollections}
+        isLoadingMyCollections={isLoadingMyCollections}
+        isErrorMyCollections={isErrorMyCollections}
+        refetchMyCollections={refetchMyCollections}
         handleUnbookmark={handleUnbookmark}
         handleOpenCollection={handleOpenCollection}
         handleStartExam={handleStartExam}

@@ -81,10 +81,14 @@ export class CertificationCacheService implements OnModuleInit, OnModuleDestroy 
   async clearPattern(pattern: string): Promise<void> {
     if (!this.redis) return;
     try {
-      const keys = await this.redis.keys(pattern);
-      if (keys.length > 0) {
-        await this.redis.del(...keys);
-      }
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        if (keys.length > 0) {
+          await this.redis.del(...keys);
+        }
+      } while (cursor !== '0');
     } catch (err) {
       this.logger.warn(`Failed to clear cache pattern ${pattern}: ${(err as Error).message}`);
     }

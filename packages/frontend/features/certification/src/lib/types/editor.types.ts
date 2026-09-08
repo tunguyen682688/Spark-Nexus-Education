@@ -23,6 +23,7 @@ export interface CollectionEditorResponse {
     exams: Array<{
       id: string;
       number: number;
+      order: number;
       title: string;
       subTitle: string;
       questionsCount: number;

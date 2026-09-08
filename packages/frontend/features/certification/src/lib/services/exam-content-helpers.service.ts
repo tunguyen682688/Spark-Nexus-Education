@@ -6,8 +6,32 @@ import type {
 } from '../types/exam-content-editor.types';
 import type { AnswerOptionItem } from '../types/question.types';
 
-function isTempId(id: string): boolean {
+export function isTempId(id: string): boolean {
   return id.startsWith('temp-') || id.startsWith('tmpl-');
+}
+
+/** Simple hash of question data for change detection — must match backend hash fields */
+export function hashQuestion(q: ExamSectionQuestion): string {
+  return JSON.stringify({
+    t: q.questionType,
+    txt: q.questionText,
+    d: q.difficulty,
+    o: q.options.map((o) => ({ l: o.label, t: o.text, c: o.isCorrect })),
+    m: q.modelAnswer,
+    e: q.explanation,
+    de: q.detailedExplanation,
+    r: q.rubric,
+    p: q.points,
+    et: q.estimatedTime,
+    au: q.audioUrl,
+    im: q.imageUrl,
+    pg: q.passageGroupId,
+    pt: q.passageText,
+    pp: q.passageType,
+    ppo: q.passageTitle,
+    bi: q.blankIndex,
+    sq: q.subQuestionNumber,
+  });
 }
 
 const MC_TYPES = new Set(['mc', 'photograph_choice', 'question_response', 'conversation_mc', 'short_talk_mc', 'incomplete_sentence', 'text_completion', 'reading_comprehension_single', 'reading_comprehension_double', 'reading_comprehension_triple', 'short_conv_mc', 'long_conv_mc', 'factual_reading_mc', 'listening_mc', 'multiple_choice_cloze', 'multiple_choice_reading']);
@@ -15,7 +39,7 @@ const FIXED_ANSWER_TYPES = new Set(['true_false_not_given', 'yes_no_not_given', 
 
 // Part-specific validation rules
 const PART_REQUIRES_IMAGE = new Set([1]);        // Part 1: moi cau hoi can imageUrl
-const PART_REQUIRES_AUDIO = new Set([2]);        // Part 2: moi cau hoi can audioUrl (独立音频)
+const PART_REQUIRES_AUDIO = new Set([1, 2]);     // Part 1 & 2: moi cau hoi can audioUrl
 
 export function validateSections(sections: ExamSectionContent[]): SectionValidationIssue[] {
   const issues: SectionValidationIssue[] = [];
@@ -131,6 +155,10 @@ export function mapStateToSavePayload(
   description: string;
   level: string;
   duration: number;
+  passScore: number;
+  maxScore: number;
+  examType: string;
+  certificationType: string;
   sections: Array<{
     id?: string;
     title: string;
@@ -164,53 +192,250 @@ export function mapStateToSavePayload(
       passageTitle?: string;
       blankNumber?: number;
       subQuestionNumber?: number;
+      formatMetadata?: Record<string, unknown>;
     }>;
   }>;
+  sectionMetadata?: Array<{
+    id: string;
+    title?: string;
+    subtitle?: string;
+    instruction?: string;
+    order?: number;
+    durationMinutes?: number;
+  }>;
+  removedQuestionIds: string[];
 } {
   return {
     title: state.exam.title,
     description: state.exam.description,
     level: state.exam.level,
     duration: state.exam.duration,
-    sections: state.sections.map((s: ExamSectionContent) => ({
-      id: isTempId(s.id) ? undefined : s.id,
+    passScore: state.exam.passingScore,
+    maxScore: state.exam.maxScore,
+    examType: state.exam.examType,
+    certificationType: state.exam.certificationType,
+    sections: state.sections.map((s: ExamSectionContent) => {
+      return {
+        id: s.id,  // Send temp ID so backend can handle it
+        title: s.title,
+        subtitle: s.subtitle ?? undefined,
+        sectionType: s.sectionType,
+        instruction: s.instruction ?? undefined,
+        order: s.order,
+        durationMinutes: s.durationMinutes,
+        isBreak: s.isBreak,
+        audioUrl: s.audioUrl ?? undefined,
+        scriptText: s.scriptText ?? undefined,
+        passageText: s.passageText ?? undefined,
+        passageTitle: s.passageTitle ?? undefined,
+        passageType: s.passageType ?? undefined,
+        questions: s.questions.map((q: ExamSectionQuestion) => {
+          // Build formatMetadata with choices for option text round-trip
+          const formatMetadata: Record<string, unknown> = {
+            choices: q.options.map((o: AnswerOptionItem) => ({
+              content: o.text,
+              isCorrect: o.isCorrect,
+            })),
+          };
+
+          return {
+            id: q.id,  // Send temp ID so backend can handle it
+            questionType: q.questionType,
+            questionText: q.questionText,
+            difficulty: q.difficulty,
+            options: q.options.map((o: AnswerOptionItem) => ({
+              id: o.id,  // Send temp ID so backend can handle it
+              label: o.label,
+              text: o.text,
+              isCorrect: o.isCorrect,
+            })),
+            modelAnswer: q.modelAnswer ?? undefined,
+            rubric: q.rubric ?? undefined,
+            explanation: (q.detailedExplanation || q.explanation) ?? undefined,
+            points: q.points,
+            estimatedTime: q.estimatedTime ?? undefined,
+            audioUrl: q.audioUrl ?? undefined,
+            imageUrl: q.imageUrl ?? undefined,
+            passageGroupId: q.passageGroupId ?? undefined,
+            passageText: q.passageText ?? undefined,
+            passageType: q.passageType ?? undefined,
+            passageTitle: q.passageTitle ?? undefined,
+            blankNumber: q.blankIndex ?? undefined,
+            subQuestionNumber: q.subQuestionNumber ?? undefined,
+            formatMetadata,
+          };
+        }),
+      };
+    }),
+    removedQuestionIds: [],
+  };
+}
+
+/** Build granular PATCH payload: only dirty questions grouped by section.
+ *  @param snapshot - Map of questionId → hash of last-saved state. If provided, questions with matching hash are skipped. */
+export function mapDirtyQuestionsToPayload(
+  state: ExamContentState,
+  snapshot?: Map<string, string>
+): {
+  examSettings?: {
+    title: string;
+    description: string;
+    level: string;
+    duration: number;
+    passScore: number;
+    maxScore: number;
+    examType: string;
+    certificationType: string;
+  };
+  sections: Array<{
+    id: string;
+    questions: Array<{
+      id?: string;
+      questionType: string;
+      questionText: string;
+      difficulty: string;
+      options: Array<{ id?: string; label: string; text: string; isCorrect: boolean }>;
+      modelAnswer?: string;
+      rubric?: unknown;
+      explanation?: string;
+      points: number;
+      estimatedTime?: number;
+      audioUrl?: string;
+      imageUrl?: string;
+      passageGroupId?: string;
+      passageText?: string;
+      passageType?: string;
+      passageTitle?: string;
+      blankNumber?: number;
+      subQuestionNumber?: number;
+      formatMetadata?: Record<string, unknown>;
+    }>;
+  }>;
+  sectionMetadata?: Array<{
+    id: string;
+    title?: string;
+    subtitle?: string;
+    instruction?: string;
+    order?: number;
+    durationMinutes?: number;
+  }>;
+  removedQuestionIds: string[];
+} {
+  const dirtyQuestionIds = state.dirtyQuestionIds || new Set();
+  const examSettings = state.dirtyExamSettings
+    ? {
+        title: state.exam.title,
+        description: state.exam.description,
+        level: state.exam.level,
+        duration: state.exam.duration,
+        passScore: state.exam.passingScore,
+        maxScore: state.exam.maxScore,
+        examType: state.exam.examType,
+        certificationType: state.exam.certificationType,
+      }
+    : undefined;
+
+  // Filter: only questions that are dirty AND actually changed (hash mismatch with snapshot)
+  const actuallyChangedIds = new Set<string>();
+  for (const qId of dirtyQuestionIds) {
+    const section = state.sections.find((s) => s.questions.some((q) => q.id === qId));
+    const question = section?.questions.find((q) => q.id === qId);
+    if (!question) {
+      console.warn(`[PATCH] Question ${qId} NOT found in any section - SKIPPED`);
+      continue;
+    }
+    const currentHash = hashQuestion(question);
+    const lastHash = snapshot?.get(qId);
+    if (!lastHash || lastHash !== currentHash) {
+      actuallyChangedIds.add(qId);
+    } else {
+      console.warn(`[PATCH] Question ${qId} hash MATCHES snapshot - excluded from payload`);
+    }
+  }
+  console.log(`[PATCH] dirtyQuestionIds: ${dirtyQuestionIds.size}, actuallyChangedIds: ${actuallyChangedIds.size}, snapshot size: ${snapshot?.size ?? 0}`);
+
+  const sections = state.sections
+    .filter((s) => s.questions.some((q) => actuallyChangedIds.has(q.id)))
+    .map((s) => ({
+      id: s.id,
+      questions: s.questions
+        .filter((q) => actuallyChangedIds.has(q.id))
+        .map((q) => ({
+          id: q.id,  // Send temp ID so backend can map it back
+          questionType: q.questionType,
+          questionText: q.questionText,
+          difficulty: q.difficulty,
+          options: q.options.map((o: AnswerOptionItem) => ({
+            id: o.id,  // Send temp ID so backend can handle it
+            label: o.label,
+            text: o.text,
+            isCorrect: o.isCorrect,
+          })),
+          modelAnswer: q.modelAnswer ?? undefined,
+          rubric: q.rubric ?? undefined,
+          explanation: (q.detailedExplanation || q.explanation) ?? undefined,
+          points: q.points,
+          estimatedTime: q.estimatedTime ?? undefined,
+          audioUrl: q.audioUrl ?? undefined,
+          imageUrl: q.imageUrl ?? undefined,
+          passageGroupId: q.passageGroupId ?? undefined,
+          passageText: q.passageText ?? undefined,
+          passageType: q.passageType ?? undefined,
+          passageTitle: q.passageTitle ?? undefined,
+          blankNumber: q.blankIndex ?? undefined,
+          subQuestionNumber: q.subQuestionNumber ?? undefined,
+          formatMetadata: {
+            choices: q.options.map((o: AnswerOptionItem) => ({
+              content: o.text,
+              isCorrect: o.isCorrect,
+            })),
+          },
+        })),
+    }));
+
+  // Build sectionMetadata for dirty sections
+  const dirtySectionIds = state.dirtySectionIds || new Set();
+  const sectionMetadata = dirtySectionIds.size > 0
+    ? state.sections
+        .filter((s) => dirtySectionIds.has(s.id))
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          subtitle: s.subtitle,
+          instruction: s.instruction,
+          order: s.order,
+          durationMinutes: s.durationMinutes,
+        }))
+    : undefined;
+
+  return { examSettings, sections, sectionMetadata, removedQuestionIds: Array.from(state.deletedQuestionIds || []) };
+}
+
+/** Build selective PATCH payload: only section metadata for dirty sections (no questions) */
+export function mapDirtySectionsToPayload(
+  state: ExamContentState
+): {
+  sectionMetadata?: Array<{
+    id: string;
+    title?: string;
+    subtitle?: string;
+    instruction?: string;
+    order?: number;
+    durationMinutes?: number;
+  }>;
+} {
+  const dirtySectionIds = state.dirtySectionIds || new Set();
+
+  const sectionMetadata = state.sections
+    .filter((s) => dirtySectionIds.has(s.id) && !isTempId(s.id))
+    .map((s) => ({
+      id: s.id,
       title: s.title,
-      subtitle: s.subtitle,
-      sectionType: s.sectionType,
-      instruction: s.instruction,
+      subtitle: s.subtitle ?? undefined,
+      instruction: s.instruction ?? undefined,
       order: s.order,
       durationMinutes: s.durationMinutes,
-      isBreak: s.isBreak,
-      audioUrl: s.audioUrl,
-      scriptText: s.scriptText,
-      passageText: s.passageText,
-      passageTitle: s.passageTitle,
-      passageType: s.passageType,
-      questions: s.questions.map((q: ExamSectionQuestion) => ({
-        id: isTempId(q.id) ? undefined : q.id,
-        questionType: q.questionType,
-        questionText: q.questionText,
-        difficulty: q.difficulty,
-        options: q.options.map((o: AnswerOptionItem) => ({
-          id: isTempId(o.id) ? undefined : o.id,
-          label: o.label,
-          text: o.text,
-          isCorrect: o.isCorrect,
-        })),
-        modelAnswer: q.modelAnswer,
-        rubric: q.rubric,
-        explanation: q.detailedExplanation || q.explanation,
-        points: q.points,
-        estimatedTime: q.estimatedTime,
-        audioUrl: q.audioUrl,
-        imageUrl: q.imageUrl,
-        passageGroupId: q.passageGroupId,
-        passageText: q.passageText,
-        passageType: q.passageType,
-        passageTitle: q.passageTitle,
-        blankNumber: q.blankIndex,
-        subQuestionNumber: q.subQuestionNumber,
-      })),
-    })),
-  };
+    }));
+
+  return { sectionMetadata: sectionMetadata.length > 0 ? sectionMetadata : undefined };
 }

@@ -163,7 +163,9 @@ export function ExamContentEditorContainer({
             question={navigation.selectedQuestion}
             questionIndex={navigation.selectedQuestionIndex}
             totalQuestions={navigation.totalQuestions}
+            examSettings={state.exam}
             onUpdateSection={handlers.handleUpdateSection}
+            onUpdateSettings={handlers.handleUpdateSettings}
           />
         )}
       </div>

@@ -12,6 +12,11 @@ export class ExamSectionEntity extends Entity<string> {
     private durationMinutes: number,
     private questionCount: number,
     private isBreak: boolean,
+    private audioUrl: string | null,
+    private scriptText: string | null,
+    private passageText: string | null,
+    private passageTitle: string | null,
+    private passageType: string | null,
     createdAt: Date,
     updatedAt: Date
   ) {
@@ -29,6 +34,11 @@ export class ExamSectionEntity extends Entity<string> {
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
+    audioUrl?: string | null;
+    scriptText?: string | null;
+    passageText?: string | null;
+    passageTitle?: string | null;
+    passageType?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
   }): ExamSectionEntity {
@@ -44,6 +54,11 @@ export class ExamSectionEntity extends Entity<string> {
       params.durationMinutes ?? 0,
       params.questionCount ?? 0,
       params.isBreak ?? false,
+      params.audioUrl ?? null,
+      params.scriptText ?? null,
+      params.passageText ?? null,
+      params.passageTitle ?? null,
+      params.passageType ?? null,
       params.createdAt ?? now,
       params.updatedAt ?? now
     );
@@ -85,6 +100,26 @@ export class ExamSectionEntity extends Entity<string> {
     return this.isBreak;
   }
 
+  getAudioUrl(): string | null {
+    return this.audioUrl;
+  }
+
+  getScriptText(): string | null {
+    return this.scriptText;
+  }
+
+  getPassageText(): string | null {
+    return this.passageText;
+  }
+
+  getPassageTitle(): string | null {
+    return this.passageTitle;
+  }
+
+  getPassageType(): string | null {
+    return this.passageType;
+  }
+
   update(params: {
     title?: string;
     subtitle?: string | null;
@@ -94,6 +129,11 @@ export class ExamSectionEntity extends Entity<string> {
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
+    audioUrl?: string | null;
+    scriptText?: string | null;
+    passageText?: string | null;
+    passageTitle?: string | null;
+    passageType?: string | null;
   }): void {
     if (params.title !== undefined) this.title = params.title;
     if (params.subtitle !== undefined) this.subtitle = params.subtitle;
@@ -103,6 +143,11 @@ export class ExamSectionEntity extends Entity<string> {
     if (params.durationMinutes !== undefined) this.durationMinutes = params.durationMinutes;
     if (params.questionCount !== undefined) this.questionCount = params.questionCount;
     if (params.isBreak !== undefined) this.isBreak = params.isBreak;
+    if (params.audioUrl !== undefined) this.audioUrl = params.audioUrl;
+    if (params.scriptText !== undefined) this.scriptText = params.scriptText;
+    if (params.passageText !== undefined) this.passageText = params.passageText;
+    if (params.passageTitle !== undefined) this.passageTitle = params.passageTitle;
+    if (params.passageType !== undefined) this.passageType = params.passageType;
     this.markAsUpdated();
   }
 
@@ -118,6 +163,11 @@ export class ExamSectionEntity extends Entity<string> {
       durationMinutes: this.durationMinutes,
       questionCount: this.questionCount,
       isBreak: this.isBreak,
+      audioUrl: this.audioUrl,
+      scriptText: this.scriptText,
+      passageText: this.passageText,
+      passageTitle: this.passageTitle,
+      passageType: this.passageType,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

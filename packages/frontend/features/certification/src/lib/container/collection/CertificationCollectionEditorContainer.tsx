@@ -25,6 +25,13 @@ export const CertificationCollectionEditorContainer = () => {
     isAddExamModalOpen,
     setIsAddExamModalOpen,
     handleAddExamConfirm,
+    handleNavigateToExam,
+    handleResetCreationStatus,
+    handleRetryInitialization,
+    examCreationStatus,
+    createdExamId,
+    failedExamId,
+    initProgress,
     activeChapter,
     confirmDeleteChapterId,
     setConfirmDeleteChapterId,
@@ -120,6 +127,13 @@ export const CertificationCollectionEditorContainer = () => {
         isOpen={isAddExamModalOpen}
         onClose={() => setIsAddExamModalOpen(false)}
         onConfirm={handleAddExamConfirm}
+        onNavigateToExam={handleNavigateToExam}
+        onResetStatus={handleResetCreationStatus}
+        onRetryInitialization={handleRetryInitialization}
+        creationStatus={examCreationStatus}
+        createdExamId={createdExamId}
+        failedExamId={failedExamId}
+        initProgress={initProgress}
         chapterTitle={activeChapter?.title}
         existingExamCount={activeChapter?.exams?.length ?? 0}
       />

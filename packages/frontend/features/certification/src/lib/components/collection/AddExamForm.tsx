@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Clock, HelpCircle, CheckCircle2, FileText } from 'lucide-react';
+import { Clock, HelpCircle, CheckCircle2, FileText, Loader2 } from 'lucide-react';
 import { CERTIFICATE_TYPE_TEMPLATES } from '../../constants/certification.constants';
 
 interface AddExamFormProps {
@@ -16,9 +16,10 @@ interface AddExamFormProps {
     sections: Array<{ title: string; sectionType: string; instruction?: string; durationMinutes?: number; questionCount?: number }>;
   }) => void;
   onBack: () => void;
+  isSubmitting?: boolean;
 }
 
-export const AddExamForm = ({ selectedCertType, existingExamCount, onSubmit, onBack }: AddExamFormProps) => {
+export const AddExamForm = ({ selectedCertType, existingExamCount, onSubmit, onBack, isSubmitting = false }: AddExamFormProps) => {
   const template = CERTIFICATE_TYPE_TEMPLATES[selectedCertType];
   const [examTitle, setExamTitle] = useState(() => {
     const tmpl = CERTIFICATE_TYPE_TEMPLATES[selectedCertType];
@@ -122,10 +123,15 @@ export const AddExamForm = ({ selectedCertType, existingExamCount, onSubmit, onB
       <div className="flex justify-end">
         <button
           onClick={handleConfirm}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-5 h-9 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm"
+          disabled={isSubmitting}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-5 h-9 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <CheckCircle2 className="w-4 h-4" />
-          Tạo bài kiểm tra
+          {isSubmitting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4" />
+          )}
+          {isSubmitting ? 'Đang tạo...' : 'Tạo bài kiểm tra'}
         </button>
       </div>
     </div>

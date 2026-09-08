@@ -16,6 +16,7 @@ export class ExamEntity extends AggregateRoot<string> {
     private level: string | null,
     private chapterId: string | null,
     private order: number,
+    private initializationStatus: string,
     private createdBy: string | null,
     private updatedBy: string | null,
     private deletedAt: Date | null,
@@ -41,6 +42,7 @@ export class ExamEntity extends AggregateRoot<string> {
     level?: string | null;
     chapterId?: string | null;
     order?: number;
+    initializationStatus?: string;
     createdBy?: string | null;
     updatedBy?: string | null;
     deletedAt?: Date | null;
@@ -64,6 +66,7 @@ export class ExamEntity extends AggregateRoot<string> {
       params.level ?? null,
       params.chapterId ?? null,
       params.order ?? 0,
+      params.initializationStatus ?? 'none',
       params.createdBy ?? null,
       params.updatedBy ?? null,
       params.deletedAt ?? null,
@@ -125,6 +128,10 @@ export class ExamEntity extends AggregateRoot<string> {
     return this.order;
   }
 
+  getInitializationStatus(): string {
+    return this.initializationStatus;
+  }
+
   getCreatedBy(): string | null {
     return this.createdBy;
   }
@@ -151,6 +158,7 @@ export class ExamEntity extends AggregateRoot<string> {
     level?: string | null;
     chapterId?: string | null;
     order?: number;
+    initializationStatus?: string;
     updatedBy?: string | null;
   }): void {
     if (params.title !== undefined) this.title = params.title;
@@ -166,6 +174,7 @@ export class ExamEntity extends AggregateRoot<string> {
     if (params.level !== undefined) this.level = params.level;
     if (params.chapterId !== undefined) this.chapterId = params.chapterId;
     if (params.order !== undefined) this.order = params.order;
+    if (params.initializationStatus !== undefined) this.initializationStatus = params.initializationStatus;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
     this.markAsUpdated();
   }
@@ -192,6 +201,7 @@ export class ExamEntity extends AggregateRoot<string> {
       level: this.level,
       chapterId: this.chapterId,
       order: this.order,
+      initializationStatus: this.initializationStatus,
       createdBy: this.createdBy,
       updatedBy: this.updatedBy,
       deletedAt: this.deletedAt,

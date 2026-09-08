@@ -12,8 +12,10 @@ export class CertificationSaga {
   private readonly logger = new Logger(CertificationSaga.name);
 
   constructor(
-    @InjectQueue('certification-tasks')
-    private readonly certificationQueue: Queue,
+    @InjectQueue('certification-scoring')
+    private readonly scoringQueue: Queue,
+    @InjectQueue('certification-analytics')
+    private readonly analyticsQueue: Queue,
     private readonly cacheService: CertificationCacheService
   ) {}
 
@@ -63,8 +65,18 @@ export class CertificationSaga {
         
         this.logger.log(`Saga: Invalidated cache keys: ${dashboardCacheKey}, ${studyPlanCacheKey}`);
 
-        // 2. Queue background analytics/processing
-        await this.certificationQueue.add(
+        // 2. Queue scoring job (heavy — goes to scoring queue)
+        await this.scoringQueue.add(
+          'calculate-exam-score',
+          {
+            sessionId: event.sessionId,
+            examId: event.examId,
+            userId: event.userId,
+          },
+        );
+
+        // 3. Queue analytics job (light — goes to analytics queue)
+        await this.analyticsQueue.add(
           'process-exam-analytics',
           {
             sessionId: event.sessionId,
@@ -74,13 +86,6 @@ export class CertificationSaga {
             passed: event.passed,
             submittedAt: event.submittedAt,
           },
-          {
-            attempts: 3,
-            backoff: {
-              type: 'exponential',
-              delay: 2000,
-            },
-          }
         );
       }),
       map(() => undefined),

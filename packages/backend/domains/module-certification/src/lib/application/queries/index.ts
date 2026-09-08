@@ -27,5 +27,6 @@ export * from './get-collection-reviews';
 export * from './get-collection-discussions';
 export * from './get-section-questions';
 export * from './get-cloned-collections';
+export * from './get-my-collections';
 export * from './get-collection-activities';
 export * from './get-in-progress-sessions';

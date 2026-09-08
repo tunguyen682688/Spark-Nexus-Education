@@ -99,6 +99,14 @@ export interface ExamContentState {
   isFixedStructure?: boolean;
   /** Exam publish status from API */
   publishStatus?: 'draft' | 'published';
+  /** IDs of questions modified since last save (for differential PATCH) */
+  dirtyQuestionIds?: Set<string>;
+  /** IDs of sections that contain dirty questions (for differential PATCH) */
+  dirtySectionIds?: Set<string>;
+  /** True when exam-level settings changed (title, description, etc.) */
+  dirtyExamSettings?: boolean;
+  /** IDs of questions deleted since last save (for differential PATCH) */
+  deletedQuestionIds?: Set<string>;
 }
 
 /** Validation issue for a section */

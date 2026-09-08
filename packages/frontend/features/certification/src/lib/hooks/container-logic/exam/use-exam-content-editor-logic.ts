@@ -12,14 +12,19 @@ import { certificationKeys } from '../../../constants/query-key-factory';
 import { STALE_TIME_SESSION } from '../../../constants/query-cache-times.constants';
 import {
   validateSections,
-  mapStateToSavePayload,
+  mapDirtyQuestionsToPayload,
+  mapDirtySectionsToPayload,
+  hashQuestion,
+  isTempId,
 } from '../../../services/exam-content-helpers.service';
-import {
-  invalidateExamBuilderCache,
-} from '../../../services/exam-content-cache-helpers.service';
+import { invalidateExamBuilderCache } from '../../../services/exam-content-cache-helpers.service';
 
 interface ToastFn {
-  (props: { title?: React.ReactNode; description?: React.ReactNode; variant?: 'default' | 'destructive' }): void;
+  (props: {
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    variant?: 'default' | 'destructive';
+  }): void;
 }
 
 interface UseExamContentEditorLogicProps {
@@ -38,15 +43,22 @@ export interface UseExamContentEditorLogicReturn {
     totalQuestions: number;
   };
   handlers: {
-    handleAddSection: () => void;
-    handleDeleteSection: (sectionId: string) => void;
-    handleUpdateSection: (sectionId: string, updates: Partial<ExamSectionContent>) => void;
-    handleAddQuestion: (sectionId: string) => void;
-    handleDuplicateQuestion: (sectionId: string, questionId: string) => void;
-    handleUpdateQuestion: (sectionId: string, questionId: string, updates: Partial<ExamSectionQuestion>) => void;
-    handleUpdateGroupPassage: (sectionId: string, passageGroupId: string, passageText: string) => void;
-    handleDeleteQuestion: (sectionId: string, questionId: string) => void;
+    handleUpdateSection: (
+      sectionId: string,
+      updates: Partial<ExamSectionContent>
+    ) => void;
+    handleUpdateQuestion: (
+      sectionId: string,
+      questionId: string,
+      updates: Partial<ExamSectionQuestion>
+    ) => void;
+    handleUpdateGroupPassage: (
+      sectionId: string,
+      passageGroupId: string,
+      passageText: string
+    ) => void;
     handleUpdateSettings: (updates: Partial<ExamContentSettings>) => void;
+    handleDeleteQuestion: (sectionId: string, questionId: string) => void;
     handleSave: () => void;
     handlePublish: () => void;
     handleSelectSection: (sectionId: string) => void;
@@ -76,10 +88,16 @@ const createEmptyState = (): ExamContentState => ({
   sections: [],
   isDirty: false,
   isSaving: false,
+  dirtyQuestionIds: new Set(),
+  dirtySectionIds: new Set(),
+  dirtyExamSettings: false,
 });
 
 // ─── Part-specific question defaults ──────────────────────────────────────────
-const PART_QUESTION_DEFAULTS: Record<number, { questionType: string; optionsCount: number }> = {
+const PART_QUESTION_DEFAULTS: Record<
+  number,
+  { questionType: string; optionsCount: number }
+> = {
   1: { questionType: 'photograph_choice', optionsCount: 4 },
   2: { questionType: 'question_response', optionsCount: 3 },
   3: { questionType: 'conversation_mc', optionsCount: 4 },
@@ -97,101 +115,6 @@ function createDefaultOptions(count: number) {
     text: '',
     isCorrect: false,
   }));
-}
-
-function generateTempId(): string {
-  return `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function addSectionToState(prev: ExamContentState): ExamContentState {
-  const newSection: ExamSectionContent = {
-    id: `temp-${Date.now()}`,
-    order: prev.sections.length + 1,
-    title: 'Section moi',
-    sectionType: 'reading',
-    durationMinutes: 15,
-    questionCount: 0,
-    isBreak: false,
-    questions: [],
-    status: 'Local',
-  };
-  return { ...prev, sections: [...prev.sections, newSection], isDirty: true };
-}
-
-function removeSectionFromState(prev: ExamContentState, sectionId: string): ExamContentState {
-  const filtered = prev.sections.filter((s) => s.id !== sectionId);
-  const renumbered = filtered.map((s, i) => ({ ...s, order: i + 1 }));
-  return { ...prev, sections: renumbered, isDirty: true };
-}
-
-function addQuestionToSection(prev: ExamContentState, sectionId: string): ExamContentState {
-  const section = prev.sections.find((s) => s.id === sectionId);
-  if (!section) return prev;
-  const partDefaults = PART_QUESTION_DEFAULTS[section.order] || { questionType: 'mc', optionsCount: 4 };
-  const timestamp = Date.now();
-  const newQuestion: ExamSectionQuestion = {
-    id: `temp-${timestamp}`,
-    order: section.questions.length + 1,
-    questionType: partDefaults.questionType,
-    questionText: '',
-    difficulty: 'Medium',
-    options: createDefaultOptions(partDefaults.optionsCount),
-    points: 1,
-    estimatedTime: partDefaults.questionType === 'question_response' ? 5 : 10,
-    status: 'Local',
-  };
-  return {
-    ...prev,
-    sections: prev.sections.map((s) =>
-      s.id === sectionId
-        ? { ...s, questions: [...s.questions, newQuestion], questionCount: s.questions.length + 1, status: 'Local' as const }
-        : s
-    ),
-    isDirty: true,
-  };
-}
-
-function duplicateQuestionInSection(prev: ExamContentState, sectionId: string, questionId: string): ExamContentState {
-  const section = prev.sections.find((s) => s.id === sectionId);
-  if (!section) return prev;
-  const source = section.questions.find((q) => q.id === questionId);
-  if (!source) return prev;
-  const rand = Math.random().toString(36).slice(2, 6);
-  const cloned: ExamSectionQuestion = {
-    ...source,
-    id: `temp-${Date.now()}-${rand}`,
-    order: section.questions.length + 1,
-    options: source.options.map((opt) => ({
-      ...opt,
-      id: `opt-${Date.now()}-${rand}-${opt.label}`,
-    })),
-    // Clear passage group — duplicate is independent
-    passageGroupId: undefined,
-    passageText: undefined,
-    status: 'Local',
-  };
-  return {
-    ...prev,
-    sections: prev.sections.map((s) =>
-      s.id === sectionId
-        ? { ...s, questions: [...s.questions, cloned], questionCount: s.questions.length + 1, status: 'Local' as const }
-        : s
-    ),
-    isDirty: true,
-  };
-}
-
-function removeQuestionFromState(prev: ExamContentState, sectionId: string, questionId: string): ExamContentState {
-  return {
-    ...prev,
-    sections: prev.sections.map((s) => {
-      if (s.id !== sectionId) return s;
-      const filtered = s.questions.filter((q) => q.id !== questionId);
-      const renumbered = filtered.map((q, i) => ({ ...q, order: i + 1 }));
-      return { ...s, questions: renumbered, questionCount: renumbered.length, status: 'Local' as const };
-    }),
-    isDirty: true,
-  };
 }
 
 /** Map builder API response to ExamContentState (with questions if available) */
@@ -213,13 +136,18 @@ function mapBuilderDataToState(data: {
   sections?: Array<{
     id: string;
     title: string;
-    description?: string;
-    instructions?: string;
+    subtitle?: string;
+    instruction?: string;
     sectionType: string;
-    orderIndex: number;
+    number: number;
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
+    audioUrl?: string;
+    scriptText?: string;
+    passageText?: string;
+    passageTitle?: string;
+    passageType?: string;
     questions?: Array<{
       id: string;
       title?: string;
@@ -255,49 +183,60 @@ function mapBuilderDataToState(data: {
     }>;
   }>;
 }): ExamContentState {
-  const certType = data.settings?.certificationType || data.certificationType || 'IELTS';
-  const matchingTemplate = EXAM_TEMPLATES.find((t) => t.certificationType === certType);
+  const certType =
+    data.settings?.certificationType || data.certificationType || 'IELTS';
+  const matchingTemplate = EXAM_TEMPLATES.find(
+    (t) => t.certificationType === certType
+  );
   const isFixedStructure = matchingTemplate?.isFixedStructure ?? false;
 
-  const sections: ExamSectionContent[] = (data.sections || []).map((s, idx) => ({
-    id: s.id,
-    title: s.title,
-    subtitle: s.description,
-    sectionType: s.sectionType as ExamSectionContent['sectionType'],
-    instruction: s.instructions,
-    order: s.orderIndex ?? (idx + 1),
-    durationMinutes: s.durationMinutes || 0,
-    questionCount: s.questionCount || s.questions?.length || 0,
-    isBreak: s.isBreak || false,
-    questions: (s.questions || []).map((q, qIdx) => ({
-      id: q.id,
-      order: qIdx + 1,
-      questionType: q.type || q.questionType || 'mc',
-      questionText: q.title || q.questionText || '',
-      difficulty: (q.difficulty as ExamSectionQuestion['difficulty']) || 'Medium',
-      options: (q.choices || q.options || []).map((opt) => {
-        const o = opt as Record<string, unknown>;
-        return {
-          id: o.id as string,
-          label: (o.label as string) || (o.choiceKey as string) || '',
-          text: (o.text as string) || (o.content as string) || '',
-          isCorrect: (o.isCorrect as boolean) ?? false,
-        };
-      }),
-      explanation: q.explanation,
-      points: q.points || 1,
-      estimatedTime: q.estimatedTime,
-      audioUrl: q.audioUrl,
-      imageUrl: q.imageUrl,
-      passageGroupId: q.passageGroupId,
-      passageText: q.passageText,
-      passageType: q.passageType,
-      blankIndex: q.blankIndex ?? q.blankNumber,
-      subQuestionNumber: q.subQuestionNumber,
+  const sections: ExamSectionContent[] = (data.sections || []).map(
+    (s, idx) => ({
+      id: s.id,
+      title: s.title,
+      subtitle: s.subtitle ?? undefined,
+      sectionType: s.sectionType as ExamSectionContent['sectionType'],
+      instruction: s.instruction ?? undefined,
+      order: s.number ?? idx + 1,
+      durationMinutes: s.durationMinutes || 0,
+      questionCount: s.questionCount ?? s.questions?.length ?? 0,
+      isBreak: s.isBreak || false,
+      audioUrl: s.audioUrl || undefined,
+      scriptText: s.scriptText || undefined,
+      passageText: s.passageText || undefined,
+      passageTitle: s.passageTitle || undefined,
+      passageType: s.passageType || undefined,
+      questions: (s.questions || []).map((q, qIdx) => ({
+        id: q.id,
+        order: qIdx + 1,
+        questionType: q.type || q.questionType || 'mc',
+        questionText: q.title || q.questionText || '',
+        difficulty:
+          (q.difficulty as ExamSectionQuestion['difficulty']) || 'Medium',
+        options: (q.choices || q.options || []).map((opt) => {
+          const o = opt as Record<string, unknown>;
+          return {
+            id: o.id as string,
+            label: (o.label as string) || (o.choiceKey as string) || '',
+            text: (o.text as string) || (o.content as string) || '',
+            isCorrect: (o.isCorrect as boolean) ?? false,
+          };
+        }),
+        explanation: q.explanation ?? undefined,
+        points: q.points || 1,
+        estimatedTime: q.estimatedTime ?? undefined,
+        audioUrl: q.audioUrl ?? undefined,
+        imageUrl: q.imageUrl ?? undefined,
+        passageGroupId: q.passageGroupId ?? undefined,
+        passageText: q.passageText ?? undefined,
+        passageType: q.passageType ?? undefined,
+        blankIndex: q.blankIndex ?? q.blankNumber ?? undefined,
+        subQuestionNumber: q.subQuestionNumber ?? undefined,
+        status: 'Saved' as const,
+      })),
       status: 'Saved' as const,
-    })),
-    status: 'Saved' as const,
-  }));
+    })
+  );
 
   return {
     exam: {
@@ -317,6 +256,17 @@ function mapBuilderDataToState(data: {
     isFixedStructure,
     publishStatus: data.status === 'Published' ? 'published' : 'draft',
   };
+}
+
+/** Map API title-cased question type back to internal lowercase type */
+function mapApiTypeToInternalType(apiType: string): string {
+  const typeMap: Record<string, string> = {
+    'Multiple Choice': 'mc',
+    'Single Choice': 'mc',
+    'Fill in Blank': 'fill_in_blank',
+    Essay: 'essay',
+  };
+  return typeMap[apiType] || apiType;
 }
 
 /** Derive part number from section title like "Part 7: Reading Comprehension" */
@@ -352,24 +302,36 @@ function mapSectionQuestionsToState(
     subQuestionNumber: number | null;
     formatMetadata: unknown | null;
   }>,
-  sectionTitle: string = '',
+  sectionTitle = ''
 ): ExamSectionQuestion[] {
   const sectionPartNum = derivePartNumberFromTitle(sectionTitle);
   return questions.map((q) => {
     const partNum = q.partNumber || sectionPartNum;
-    const partDefaults = PART_QUESTION_DEFAULTS[partNum] || { questionType: 'mc', optionsCount: 4 };
+    const partDefaults = PART_QUESTION_DEFAULTS[partNum] || {
+      questionType: 'mc',
+      optionsCount: 4,
+    };
     // Try to extract options from formatMetadata
     const meta = q.formatMetadata as Record<string, unknown> | null;
-    const choices = meta?.choices as Array<{ id: string; label: string; content: string; isCorrect?: boolean; correct?: boolean }> | undefined;
+    const choices = meta?.choices as
+      | Array<{ content: string; isCorrect?: boolean; correct?: boolean }>
+      | undefined;
     const options = choices
-      ? choices.map((c) => ({ id: c.id, label: c.label, text: c.content, isCorrect: c.isCorrect ?? c.correct ?? false }))
+      ? choices.map((c, i) => ({
+          id: `opt-${q.examQuestionId}-${i}`,
+          label: String.fromCharCode(65 + i),
+          text: c.content,
+          isCorrect: c.isCorrect ?? c.correct ?? false,
+        }))
       : createDefaultOptions(partDefaults.optionsCount);
     return {
       id: q.examQuestionId,
       order: q.number,
-      questionType: q.type || partDefaults.questionType,
+      questionType:
+        mapApiTypeToInternalType(q.type) || partDefaults.questionType,
       questionText: q.title || '',
-      difficulty: (q.difficulty as ExamSectionQuestion['difficulty']) || 'Medium',
+      difficulty:
+        (q.difficulty as ExamSectionQuestion['difficulty']) || 'Medium',
       options,
       modelAnswer: q.modelAnswer || undefined,
       explanation: q.explanation || undefined,
@@ -397,13 +359,28 @@ export function useExamContentEditorLogic({
   const [selectedSectionId, setSelectedSectionId] = useState('');
   const [selectedQuestionId, setSelectedQuestionId] = useState('');
   const [initialized, setInitialized] = useState(false);
-  const [lazyLoadedSections, setLazyLoadedSections] = useState<Set<string>>(new Set());
-  const [emptySectionWarning, setEmptySectionWarning] = useState<{ title: string } | null>(null);
+  const [lazyLoadedSections, setLazyLoadedSections] = useState<Set<string>>(
+    new Set()
+  );
   const stateRef = useRef(state);
   stateRef.current = state;
+  // Snapshot of last-saved question data — used to skip unchanged questions on next save
+  const lastSavedSnapshotRef = useRef<Map<string, string>>(new Map());
+  const saveInProgressRef = useRef(false);
+  /** Dirty flags at save-start — only clear these in onSuccess to preserve mid-save edits */
+  const saveStartDirtyRef = useRef<{
+    questionIds: Set<string>;
+    sectionIds: Set<string>;
+    examSettings: boolean;
+    deletedIds: Set<string>;
+  }>({ questionIds: new Set(), sectionIds: new Set(), examSettings: false, deletedIds: new Set() });
 
   // ─── React Query: Fetch exam builder data ────────────────────────────────
-  const { data: apiData, isLoading: isFetching, isError: isQueryError } = useQuery({
+  const {
+    data: apiData,
+    isLoading: isFetching,
+    isError: isQueryError,
+  } = useQuery({
     queryKey: certificationKeys.examContent.builder(examId),
     queryFn: () => ExamApi.getExamBuilderData(examId),
     enabled: Boolean(examId),
@@ -412,156 +389,99 @@ export function useExamContentEditorLogic({
     refetchOnWindowFocus: false,
   });
 
-  const autoInitDoneRef = useRef(false);
-
-  // Reset auto-init flag when examId changes
-  useEffect(() => {
-    autoInitDoneRef.current = false;
-  }, [examId]);
-
   // Initialize state from API data (once)
   useEffect(() => {
     if (apiData && !initialized) {
       const newState = mapBuilderDataToState(apiData);
       setState(newState);
+      // Initialize snapshot from loaded data
+      const snapshot = new Map<string, string>();
+      for (const section of newState.sections) {
+        for (const q of section.questions) {
+          snapshot.set(q.id, hashQuestion(q));
+        }
+      }
+      lastSavedSnapshotRef.current = snapshot;
       setInitialized(true);
     }
   }, [apiData, initialized]);
-  useEffect(() => {
-    if (!initialized || !apiData || autoInitDoneRef.current) return;
-    const certType = apiData.certificationType;
-    if (!certType) return;
 
-    setState((current) => {
-      // Check if ALL sections have 0 questions
-      const allSectionsEmpty = current.sections.every((s) => s.questions.length === 0);
-      if (!allSectionsEmpty) {
-        autoInitDoneRef.current = true;
-        return current;
-      }
-
-      // Find the matching template by certificationType
-      const template = EXAM_TEMPLATES.find((t) => t.certificationType === certType);
-      if (!template) {
-        autoInitDoneRef.current = true;
-        return current;
-      }
-
-      autoInitDoneRef.current = true;
-
-      // Match sections by order/index: map existing sections to template sections
-      // Skip break sections in template when matching
-      const templateNonBreak = template.sections.filter((s) => !s.isBreak);
-
-      const updatedSections = current.sections.map((section, idx) => {
-        // Match by index first, then by part number extracted from title
-        const partNum = section.title.match(/Part\s+(\d+)/i)?.[1];
-        const templateSection = templateNonBreak[idx]
-          || (partNum ? templateNonBreak.find((t) => t.title.includes(`Part ${partNum}`)) : undefined)
-          || templateNonBreak.find((t) => t.title.toLowerCase().startsWith(section.title.toLowerCase().replace(/\s*—\s*/g, ' ').slice(0, 10)));
-        if (!templateSection || section.questions.length > 0) return section;
-
-        // Always use template's questionSlots length (canonical count)
-        const slots = templateSection.questionSlots;
-
-        const questions: ExamSectionQuestion[] = slots.map((slot, qIdx) => {
-          // Compute passageGroupId: use groupSize for uniform groups, or passageGroups for variable
-          let passageGroupId: string | undefined;
-          if (templateSection.passageGroups && templateSection.passageGroups.length > 0) {
-            // Variable grouping: find which group this question belongs to
-            let accumulated = 0;
-            for (const pg of templateSection.passageGroups) {
-              if (qIdx < accumulated + pg.questionCount) {
-                passageGroupId = `grp-${section.id}-${pg.id}`;
-                break;
-              }
-              accumulated += pg.questionCount;
-            }
-          } else if (templateSection.groupSize) {
-            passageGroupId = `grp-${section.id}-${Math.floor(qIdx / templateSection.groupSize)}`;
-          }
-          return {
-            id: generateTempId(),
-            order: qIdx + 1,
-            questionType: slot.questionTypeId,
-            questionText: '',
-            difficulty: 'Medium' as const,
-            options: createDefaultOptions(slot.optionsCount || 4),
-            points: slot.points,
-            estimatedTime: slot.estimatedTime,
-            passageGroupId,
-            passageType: templateSection.passageGroups?.find((_, i) => {
-              let acc = 0;
-              for (let j = 0; j <= i; j++) acc += templateSection.passageGroups![j].questionCount;
-              return qIdx < acc;
-            })?.passageType,
-            status: 'Local' as const,
-          };
-        });
-
-        return { ...section, questions, questionCount: questions.length };
-      });
-
-      // Auto-select first question of first section
-      const firstSection = updatedSections[0];
-      if (firstSection?.questions.length > 0) {
-        // Use setTimeout to avoid state update during render
-        setTimeout(() => {
-          setSelectedSectionId(firstSection.id);
-          setSelectedQuestionId(firstSection.questions[0].id);
-        }, 0);
-      }
-
-      return { ...current, sections: updatedSections, isDirty: true };
-    });
-  }, [initialized, apiData]);
+  // Auto-init REMOVED: Backend handles question initialization idempotently
+  // in the builder endpoint (GET /exams/:id/builder). When sections exist but
+  // have no questions, the backend creates them before returning the response.
+  // This eliminates the race condition between frontend auto-init and backend init.
 
   // Determine if exam has content: show editor if sections exist (regardless of question count)
   // Template selector only shows for truly empty exams (no sections at all)
   const hasExamData = state.sections.length > 0;
 
   // ─── Lazy-load questions for selected section if not loaded from builder ─
-  const selectedSection = state.sections.find((s) => s.id === selectedSectionId) || state.sections[0];
+  const selectedSection =
+    state.sections.find((s) => s.id === selectedSectionId) || state.sections[0];
   const effectiveSectionId = selectedSection?.id || '';
 
-  const needsLazyLoad = hasExamData
-    && effectiveSectionId
-    && selectedSection
-    && selectedSection.questions.length === 0
-    && (selectedSection.questionCount || 0) > 0
-    && !lazyLoadedSections.has(effectiveSectionId);
+  const needsLazyLoad =
+    hasExamData &&
+    effectiveSectionId &&
+    selectedSection &&
+    selectedSection.questions.length === 0 &&
+    (selectedSection.questionCount || 0) > 0 &&
+    !lazyLoadedSections.has(effectiveSectionId);
 
-  const { data: sectionQuestionsData, isLoading: isLoadingQuestions } = useQuery({
-    queryKey: certificationKeys.exams.sectionQuestions(examId, effectiveSectionId),
-    queryFn: () => ExamApi.getSectionQuestions(examId, effectiveSectionId, { pageSize: 200 }),
-    enabled: Boolean(needsLazyLoad),
-    staleTime: STALE_TIME_SESSION,
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes after unmount
-    retry: 1,
-  });
+  const { data: sectionQuestionsData, isLoading: isLoadingQuestions } =
+    useQuery({
+      queryKey: certificationKeys.exams.sectionQuestions(
+        examId,
+        effectiveSectionId
+      ),
+      queryFn: () =>
+        ExamApi.getSectionQuestions(examId, effectiveSectionId, {
+          pageSize: 200,
+        }),
+      enabled: Boolean(needsLazyLoad),
+      staleTime: STALE_TIME_SESSION,
+      gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes after unmount
+      retry: 1,
+    });
 
   // Merge lazily loaded questions into state
   useEffect(() => {
     if (sectionQuestionsData?.questions && effectiveSectionId) {
-      const sectionTitle = stateRef.current.sections.find((s) => s.id === effectiveSectionId)?.title || '';
-      const questions = mapSectionQuestionsToState(sectionQuestionsData.questions, sectionTitle);
+      const sectionTitle =
+        stateRef.current.sections.find((s) => s.id === effectiveSectionId)
+          ?.title || '';
+      const questions = mapSectionQuestionsToState(
+        sectionQuestionsData.questions,
+        sectionTitle
+      );
       setLazyLoadedSections((prev) => new Set(prev).add(effectiveSectionId));
+
+      // Update snapshot with newly loaded questions
+      for (const q of questions) {
+        lastSavedSnapshotRef.current.set(q.id, hashQuestion(q));
+      }
+
       setState((prev) => ({
         ...prev,
-        sections: prev.sections.map((s) =>
-          s.id === effectiveSectionId && s.questions.length === 0
-            ? { ...s, questions }
-            : s
-        ),
+        sections: prev.sections.map((s) => {
+          if (s.id !== effectiveSectionId || s.questions.length !== 0) return s;
+          return {
+            ...s,
+            questions,
+          };
+        }),
       }));
     }
   }, [sectionQuestionsData, effectiveSectionId]);
 
   // Navigation state
-  const selectedQuestion = selectedSection?.questions.find((q) => q.id === selectedQuestionId)
-    || selectedSection?.questions[0];
+  const selectedQuestion =
+    selectedSection?.questions.find((q) => q.id === selectedQuestionId) ||
+    selectedSection?.questions[0];
   const selectedQuestionIndex = selectedSection
-    ? selectedSection.questions.findIndex((q) => q.id === (selectedQuestion?.id || ''))
+    ? selectedSection.questions.findIndex(
+        (q) => q.id === (selectedQuestion?.id || '')
+      )
     : 0;
   const totalQuestions = selectedSection?.questions.length || 0;
 
@@ -576,21 +496,25 @@ export function useExamContentEditorLogic({
     }
   }, [state.sections, selectedSectionId]);
 
-  // Show toast for empty section warning (moved out of setState)
-  useEffect(() => {
-    if (emptySectionWarning) {
-      toast({ title: 'Section trống', description: `"${emptySectionWarning.title}" không còn câu hỏi nào.`, variant: 'destructive' });
-      setEmptySectionWarning(null);
-    }
-  }, [emptySectionWarning, toast]);
-
   // When section changes, select first question
   useEffect(() => {
-    const section = stateRef.current.sections.find((s) => s.id === effectiveSectionId);
-    if (effectiveSectionId && section && section.questions.length > 0 && !selectedQuestionId) {
+    const section = stateRef.current.sections.find(
+      (s) => s.id === effectiveSectionId
+    );
+    if (
+      effectiveSectionId &&
+      section &&
+      section.questions.length > 0 &&
+      !selectedQuestionId
+    ) {
       setSelectedQuestionId(section.questions[0].id);
     }
-    if (effectiveSectionId && section && section.questions.length > 0 && selectedQuestionId) {
+    if (
+      effectiveSectionId &&
+      section &&
+      section.questions.length > 0 &&
+      selectedQuestionId
+    ) {
       const exists = section.questions.some((q) => q.id === selectedQuestionId);
       if (!exists) {
         setSelectedQuestionId(section.questions[0].id);
@@ -599,7 +523,10 @@ export function useExamContentEditorLogic({
   }, [effectiveSectionId, selectedQuestionId]);
 
   // Compute validation issues (debounced via useMemo — only recalculates when sections reference changes)
-  const validationIssues = useMemo(() => validateSections(state.sections), [state.sections]);
+  const validationIssues = useMemo(
+    () => validateSections(state.sections),
+    [state.sections]
+  );
 
   // Sync validation issues to state only when they actually change
   useEffect(() => {
@@ -608,68 +535,246 @@ export function useExamContentEditorLogic({
     if (validationIssues !== prevIssues) {
       setState((prev) => ({ ...prev, validationIssues }));
     }
-  }, [validationIssues]);
+  }, [state.validationIssues, validationIssues]);
 
   // ─── Mutations ───────────────────────────────────────────────────────────
 
   const saveMutation = useMutation({
-    mutationFn: async (variables: { payload: ReturnType<typeof mapStateToSavePayload>; isAutoSave?: boolean }) => {
-      await ExamApi.saveExamContent(examId, variables.payload);
-      // Also save exam-level settings via updateExam
-      const s = stateRef.current.exam;
-      await ExamApi.updateExam(examId, {
-        passScore: s.passingScore,
-        maxScore: s.maxScore,
-        examType: s.examType,
-        certificationType: s.certificationType,
-      });
+    mutationFn: async (variables: { isAutoSave?: boolean }) => {
+      // Mutex: prevent concurrent saves
+      if (saveInProgressRef.current) {
+        return undefined;
+      }
+      saveInProgressRef.current = true;
+
+      const currentState = stateRef.current;
+      const hasDirtyQuestions = (currentState.dirtyQuestionIds?.size || 0) > 0;
+
+      console.log(`[SAVE] dirtyQuestionIds: ${currentState.dirtyQuestionIds?.size ?? 0}, dirtyExamSettings: ${!!currentState.dirtyExamSettings}, deletedIds: ${currentState.deletedQuestionIds?.size ?? 0}, snapshot size: ${lastSavedSnapshotRef.current.size}`);
+
+      // 1. Question-level differential PATCH (highest priority)
+      if (hasDirtyQuestions || currentState.dirtyExamSettings || (currentState.deletedQuestionIds?.size || 0) > 0) {
+        const dirtyPayload = mapDirtyQuestionsToPayload(
+          currentState,
+          lastSavedSnapshotRef.current
+        );
+        console.log(`[SAVE] dirtyPayload sections: ${dirtyPayload.sections.length}, examSettings: ${!!dirtyPayload.examSettings}, removedIds: ${dirtyPayload.removedQuestionIds.length}`);
+        if (dirtyPayload.sections.length > 0) {
+          for (const s of dirtyPayload.sections) {
+            console.log(`[SAVE]   section ${s.id}: ${s.questions.length} questions`);
+            for (const q of s.questions) {
+              console.log(`[SAVE]     question ${q.id}: type=${q.questionType}, text="${q.questionText?.substring(0, 50)}...", options=${q.options.length}`);
+            }
+          }
+        }
+        if (dirtyPayload.sections.length > 0 || dirtyPayload.examSettings || dirtyPayload.removedQuestionIds.length > 0) {
+          const result = await ExamApi.patchExamContent(examId, dirtyPayload);
+          return result;
+        }
+      }
+
+      // 2. Section metadata only (no questions)
+      const sectionMetadataPayload = mapDirtySectionsToPayload(currentState);
+      if (sectionMetadataPayload.sectionMetadata && sectionMetadataPayload.sectionMetadata.length > 0) {
+        const result = await ExamApi.patchExamContent(examId, {
+          sectionMetadata: sectionMetadataPayload.sectionMetadata,
+        });
+        return result;
+      }
+
+      return undefined;
     },
     onMutate: async () => {
+      // Snapshot dirty flags at save-start to preserve mid-save edits
+      const s = stateRef.current;
+      saveStartDirtyRef.current = {
+        questionIds: new Set(s.dirtyQuestionIds),
+        sectionIds: new Set(s.dirtySectionIds),
+        examSettings: !!s.dirtyExamSettings,
+        deletedIds: new Set(s.deletedQuestionIds),
+      };
       setState((prev) => ({ ...prev, isSaving: true }));
-      await queryClient.cancelQueries({ queryKey: certificationKeys.examContent.builder(examId) });
-      const previousData = queryClient.getQueryData(certificationKeys.examContent.builder(examId));
-      return { previousData };
     },
-    onSuccess: (_data, variables) => {
-      setState((prev) => ({ ...prev, isSaving: false, isDirty: false, lastSavedAt: new Date() }));
+    onSuccess: (data: unknown, variables) => {
+      saveInProgressRef.current = false;
+
+      // No-op save: nothing was dirty/sent — do NOT clear dirty flags,
+      // do NOT rebuild snapshot, do NOT show success toast
+      if (data === undefined || data === null) {
+        setState((prev) => ({ ...prev, isSaving: false }));
+        return;
+      }
+
+      const responseData = data as
+        | { tempIdMap?: Record<string, string> }
+        | undefined;
+      const tempIdMap = responseData?.tempIdMap;
+
+      // Replace temp IDs with real DB IDs from server response
+      if (tempIdMap && Object.keys(tempIdMap).length > 0) {
+        setState((prev) => ({
+          ...prev,
+          sections: prev.sections.map((s) => ({
+            ...s,
+            questions: s.questions.map((q) => {
+              const realId = tempIdMap[q.id];
+              return realId ? { ...q, id: realId } : q;
+            }),
+          })),
+        }));
+      }
+
+      // Rebuild snapshot: merge saved questions (with real IDs) with existing snapshot
+      console.log(`[SAVE:ONSUCCESS] tempIdMap:`, tempIdMap, `stateRef sections:`, stateRef.current.sections.length);
+      const snapshot = new Map(lastSavedSnapshotRef.current);
+      // Add/update entries for questions that were in the current state
+      let snapshotAdded = 0;
+      for (const section of stateRef.current.sections) {
+        for (const q of section.questions) {
+          const realId = tempIdMap?.[q.id] ?? q.id;
+          snapshot.set(realId, hashQuestion(q));
+          snapshotAdded++;
+        }
+      }
+      // Remove entries for deleted questions
+      const deletedIds = stateRef.current.deletedQuestionIds;
+      if (deletedIds) {
+        for (const id of deletedIds) {
+          snapshot.delete(id);
+        }
+      }
+      console.log(`[SAVE:ONSUCCESS] snapshot rebuilt: ${snapshotAdded} entries added, total: ${snapshot.size}`);
+      lastSavedSnapshotRef.current = snapshot;
+
+      // Only clear dirty flags that existed at save-start — preserve mid-save edits
+      const saved = saveStartDirtyRef.current;
+      setState((prev) => {
+        const newQuestionIds = new Set(prev.dirtyQuestionIds);
+        const newSectionIds = new Set(prev.dirtySectionIds);
+        const newDeletedIds = new Set(prev.deletedQuestionIds);
+        for (const id of saved.questionIds) newQuestionIds.delete(id);
+        for (const id of saved.sectionIds) newSectionIds.delete(id);
+        for (const id of saved.deletedIds) newDeletedIds.delete(id);
+        const hasRemaining =
+          newQuestionIds.size > 0 ||
+          newSectionIds.size > 0 ||
+          newDeletedIds.size > 0 ||
+          (saved.examSettings ? false : !!prev.dirtyExamSettings);
+        return {
+          ...prev,
+          isSaving: false,
+          isDirty: hasRemaining,
+          lastSavedAt: new Date(),
+          dirtyQuestionIds: newQuestionIds,
+          dirtySectionIds: newSectionIds,
+          dirtyExamSettings: saved.examSettings ? false : !!prev.dirtyExamSettings,
+          deletedQuestionIds: newDeletedIds,
+        };
+      });
       invalidateExamBuilderCache(queryClient, examId);
       if (!variables.isAutoSave) {
-        toast({ title: 'Da luu', description: 'Noi dung bai kiem tra da duoc luu thanh cong.' });
+        toast({
+          title: 'Da luu',
+          description: 'Noi dung bai kiem tra da duoc luu thanh cong.',
+        });
       }
+      saveInProgressRef.current = false;
     },
-    onError: (_error, variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(certificationKeys.examContent.builder(examId), context.previousData);
-      }
+    onError: (_error, variables, _context) => {
       setState((prev) => ({ ...prev, isSaving: false }));
       if (!variables.isAutoSave) {
-        toast({ title: 'Loi luu', description: 'Khong the luu noi dung. Vui long thu lai.', variant: 'destructive' });
+        toast({
+          title: 'Loi luu',
+          description: 'Khong the luu noi dung. Vui long thu lai.',
+          variant: 'destructive',
+        });
       }
+      saveInProgressRef.current = false;
     },
   });
 
   const publishMutation = useMutation({
-    mutationFn: async (payload: ReturnType<typeof mapStateToSavePayload>) => {
-      await ExamApi.saveExamContent(examId, payload);
-      return ExamApi.updateExam(examId, { publishStatus: 'published' });
+    mutationFn: async () => {
+      const currentState = stateRef.current;
+      const dirtyPayload = mapDirtyQuestionsToPayload(
+        currentState,
+        lastSavedSnapshotRef.current
+      );
+      const publishPatch = {
+        ...dirtyPayload,
+        examSettings: {
+          ...dirtyPayload.examSettings,
+          title: currentState.exam.title,
+          description: currentState.exam.description,
+          level: currentState.exam.level,
+          duration: currentState.exam.duration,
+          passScore: currentState.exam.passingScore,
+          maxScore: currentState.exam.maxScore,
+          examType: currentState.exam.examType,
+          certificationType: currentState.exam.certificationType,
+          publishStatus: 'published' as const,
+        },
+      };
+      const result = await ExamApi.patchExamContent(examId, publishPatch);
+      return result;
     },
     onMutate: async () => {
       setState((prev) => ({ ...prev, isSaving: true }));
-      await queryClient.cancelQueries({ queryKey: certificationKeys.examContent.builder(examId) });
-      const previousData = queryClient.getQueryData(certificationKeys.examContent.builder(examId));
-      return { previousData };
     },
-    onSuccess: () => {
-      setState((prev) => ({ ...prev, isSaving: false, isDirty: false, lastSavedAt: new Date() }));
-      invalidateExamBuilderCache(queryClient, examId);
-      toast({ title: 'Da xuat ban', description: 'Bai kiem tra da duoc xuat ban thanh cong.' });
-    },
-    onError: (_error, _payload, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(certificationKeys.examContent.builder(examId), context.previousData);
+    onSuccess: (data: unknown) => {
+      const responseData = data as
+        | { tempIdMap?: Record<string, string> }
+        | undefined;
+      const tempIdMap = responseData?.tempIdMap;
+
+      // Replace temp IDs with real DB IDs
+      if (tempIdMap && Object.keys(tempIdMap).length > 0) {
+        setState((prev) => ({
+          ...prev,
+          sections: prev.sections.map((s) => ({
+            ...s,
+            questions: s.questions.map((q) => {
+              const realId = tempIdMap[q.id];
+              return realId ? { ...q, id: realId } : q;
+            }),
+          })),
+        }));
       }
+
+      // Rebuild snapshot
+      const snapshot = new Map(lastSavedSnapshotRef.current);
+      for (const section of stateRef.current.sections) {
+        for (const q of section.questions) {
+          const realId = tempIdMap?.[q.id] ?? q.id;
+          snapshot.set(realId, hashQuestion(q));
+        }
+      }
+      lastSavedSnapshotRef.current = snapshot;
+
+      setState((prev) => ({
+        ...prev,
+        isSaving: false,
+        isDirty: false,
+        lastSavedAt: new Date(),
+        dirtyQuestionIds: new Set(),
+        dirtySectionIds: new Set(),
+        dirtyExamSettings: false,
+        deletedQuestionIds: new Set(),
+      }));
+      invalidateExamBuilderCache(queryClient, examId);
+      toast({
+        title: 'Da xuat ban',
+        description: 'Bai kiem tra da duoc xuat ban thanh cong.',
+      });
+      saveInProgressRef.current = false;
+    },
+    onError: (_error) => {
       setState((prev) => ({ ...prev, isSaving: false }));
-      toast({ title: 'Loi xuat ban', description: 'Khong the xuat ban bai kiem tra.', variant: 'destructive' });
+      toast({
+        title: 'Loi xuat ban',
+        description: 'Khong the xuat ban bai kiem tra.',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -693,8 +798,14 @@ export function useExamContentEditorLogic({
     autoSaveTimeoutRef.current = setTimeout(() => {
       // Only auto-save if still dirty and not currently saving
       const currentState = stateRef.current;
-      if (currentState.isDirty && !currentState.isSaving && currentState.sections.length > 0) {
-        saveMutation.mutate({ payload: mapStateToSavePayload(currentState), isAutoSave: true });
+      console.log(`[AUTO-SAVE] Timer fired. isDirty: ${currentState.isDirty}, isSaving: ${currentState.isSaving}, saveInProgress: ${saveInProgressRef.current}, dirtyQuestionIds: ${currentState.dirtyQuestionIds?.size ?? 0}`);
+      if (
+        currentState.isDirty &&
+        !currentState.isSaving &&
+        !saveInProgressRef.current &&
+        currentState.sections.length > 0
+      ) {
+        saveMutation.mutate({ isAutoSave: true });
       }
       autoSaveTimeoutRef.current = null;
     }, AUTO_SAVE_DELAY);
@@ -710,7 +821,7 @@ export function useExamContentEditorLogic({
   // ─── Handlers ────────────────────────────────────────────────────────────
 
   const handleSave = useCallback(() => {
-    saveMutation.mutate({ payload: mapStateToSavePayload(stateRef.current), isAutoSave: false });
+    saveMutation.mutate({ isAutoSave: false });
   }, [saveMutation]);
 
   const handlePublish = useCallback(() => {
@@ -723,7 +834,7 @@ export function useExamContentEditorLogic({
       });
       return;
     }
-    publishMutation.mutate(mapStateToSavePayload(stateRef.current));
+    publishMutation.mutate();
   }, [toast, publishMutation]);
 
   const handleSelectSection = useCallback((sectionId: string) => {
@@ -737,34 +848,43 @@ export function useExamContentEditorLogic({
     }
   }, []);
 
-  const handleSelectQuestion = useCallback((sectionId: string, questionId: string) => {
-    setSelectedSectionId(sectionId);
-    setSelectedQuestionId(questionId);
-  }, []);
+  const handleSelectQuestion = useCallback(
+    (sectionId: string, questionId: string) => {
+      setSelectedSectionId(sectionId);
+      setSelectedQuestionId(questionId);
+    },
+    []
+  );
 
   const handleNavigatePrev = useCallback(() => {
     const sections = stateRef.current.sections;
-    const sIdx = sections.findIndex((s) => s.id === selectedSectionId);
+    const sIdx = sections.findIndex((section) => section.id === selectedSectionId);
     if (sIdx < 0) return;
     const section = sections[sIdx];
-    const qIdx = section.questions.findIndex((q) => q.id === selectedQuestionId);
+    const qIdx = section.questions.findIndex(
+      (question) => question.id === selectedQuestionId
+    );
     if (qIdx > 0) {
       setSelectedQuestionId(section.questions[qIdx - 1].id);
     } else if (sIdx > 0) {
       const prevSection = sections[sIdx - 1];
       setSelectedSectionId(prevSection.id);
       if (prevSection.questions.length > 0) {
-        setSelectedQuestionId(prevSection.questions[prevSection.questions.length - 1].id);
+        setSelectedQuestionId(
+          prevSection.questions[prevSection.questions.length - 1].id
+        );
       }
     }
   }, [selectedSectionId, selectedQuestionId]);
 
   const handleNavigateNext = useCallback(() => {
     const sections = stateRef.current.sections;
-    const sIdx = sections.findIndex((s) => s.id === selectedSectionId);
+    const sIdx = sections.findIndex((section) => section.id === selectedSectionId);
     if (sIdx < 0) return;
     const section = sections[sIdx];
-    const qIdx = section.questions.findIndex((q) => q.id === selectedQuestionId);
+    const qIdx = section.questions.findIndex(
+      (question) => question.id === selectedQuestionId
+    );
     if (qIdx < section.questions.length - 1) {
       setSelectedQuestionId(section.questions[qIdx + 1].id);
     } else if (sIdx < sections.length - 1) {
@@ -776,62 +896,199 @@ export function useExamContentEditorLogic({
     }
   }, [selectedSectionId, selectedQuestionId]);
 
-  const handlers = useMemo(() => ({
-    handleAddSection: () => setState((prev) => addSectionToState(prev)),
-    handleDeleteSection: (sectionId: string) => setState((prev) => removeSectionFromState(prev, sectionId)),
-    handleAddQuestion: (sectionId: string) => setState((prev) => addQuestionToSection(prev, sectionId)),
-    handleDuplicateQuestion: (sectionId: string, questionId: string) => setState((prev) => duplicateQuestionInSection(prev, sectionId, questionId)),
-    handleUpdateQuestion: (sectionId: string, questionId: string, updates: Partial<ExamSectionQuestion>) => {
-      setState((prev) => ({
-        ...prev,
-        sections: prev.sections.map((s) =>
-          s.id === sectionId
-            ? { ...s, questions: s.questions.map((q) => q.id === questionId ? { ...q, ...updates, status: 'Local' as const } : q), status: 'Local' as const }
-            : s
-        ),
-        isDirty: true,
-      }));
-    },
-    handleUpdateGroupPassage: (sectionId: string, passageGroupId: string, passageText: string) => {
-      setState((prev) => ({
-        ...prev,
-        sections: prev.sections.map((s) =>
-          s.id === sectionId
-            ? { ...s, questions: s.questions.map((q) => q.passageGroupId === passageGroupId ? { ...q, passageText, status: 'Local' as const } : q), status: 'Local' as const }
-            : s
-        ),
-        isDirty: true,
-      }));
-    },
-    handleUpdateSection: (sectionId: string, updates: Partial<ExamSectionContent>) => {
-      setState((prev) => ({
-        ...prev,
-        sections: prev.sections.map((s) =>
-          s.id === sectionId ? { ...s, ...updates, status: 'Local' as const } : s
-        ),
-        isDirty: true,
-      }));
-    },
-    handleDeleteQuestion: (sectionId: string, questionId: string) => {
-      setState((prev) => {
-        const next = removeQuestionFromState(prev, sectionId, questionId);
-        const section = next.sections.find((s) => s.id === sectionId);
-        if (section && section.questions.length === 0) {
-          setEmptySectionWarning({ title: section.title });
-        }
-        return next;
-      });
-    },
-    handleUpdateSettings: (updates: Partial<ExamContentSettings>) => {
-      setState((prev) => ({ ...prev, exam: { ...prev.exam, ...updates }, isDirty: true }));
-    },
-    handleSave,
-    handlePublish,
-    handleSelectSection,
-    handleSelectQuestion,
-    handleNavigatePrev,
-    handleNavigateNext,
-  }), [handleSave, handlePublish, handleSelectSection, handleSelectQuestion, handleNavigatePrev, handleNavigateNext]);
+  const handlers = useMemo(
+    () => ({
+      handleUpdateQuestion: (
+        sectionId: string,
+        questionId: string,
+        updates: Partial<ExamSectionQuestion>
+      ) => {
+        setState((prev) => {
+          // Find the current question to compute hash after update
+          let updatedQuestion: ExamSectionQuestion | undefined;
+          for (const section of prev.sections) {
+            if (section.id !== sectionId) continue;
+            for (const q of section.questions) {
+              if (q.id === questionId) {
+                updatedQuestion = { ...q, ...updates, status: 'Local' as const };
+                break;
+              }
+            }
+            if (updatedQuestion) break;
+          }
+
+          // Hash-based dirty tracking: only mark dirty if hash actually changed
+          const newDirtyQuestions = new Set(prev.dirtyQuestionIds);
+          if (updatedQuestion) {
+            const currentHash = hashQuestion(updatedQuestion);
+            const lastHash = lastSavedSnapshotRef.current.get(questionId);
+            if (!lastHash || lastHash !== currentHash) {
+              newDirtyQuestions.add(questionId);
+              console.log(`[EDIT] Question ${questionId} marked DIRTY (hash changed)`);
+            } else {
+              newDirtyQuestions.delete(questionId);
+              console.log(`[EDIT] Question ${questionId} hash MATCHES snapshot - NOT dirty`);
+            }
+          } else {
+            newDirtyQuestions.add(questionId);
+            console.warn(`[EDIT] Question ${questionId} NOT FOUND in state - forced dirty`);
+          }
+
+          const newDirtySections = new Set(prev.dirtySectionIds);
+          newDirtySections.add(sectionId);
+
+          return {
+            ...prev,
+            sections: prev.sections.map((section) =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    questions: section.questions.map((question) =>
+                      question.id === questionId
+                        ? { ...question, ...updates, status: 'Local' as const }
+                        : question
+                    ),
+                    status: 'Local' as const,
+                  }
+                : section
+            ),
+            isDirty: true,
+            dirtyQuestionIds: newDirtyQuestions,
+            dirtySectionIds: newDirtySections,
+          };
+        });
+      },
+      handleUpdateGroupPassage: (
+        sectionId: string,
+        passageGroupId: string,
+        passageText: string
+      ) => {
+        setState((prev) => {
+          const newDirtyQuestions = new Set(prev.dirtyQuestionIds);
+          const newDirtySections = new Set(prev.dirtySectionIds);
+          newDirtySections.add(sectionId);
+          // Mark questions in group as dirty only if hash actually changed
+          const section = prev.sections.find((section) => section.id === sectionId);
+          if (section) {
+            for (const q of section.questions) {
+              if (q.passageGroupId === passageGroupId) {
+                const updatedQ = { ...q, passageText, status: 'Local' as const };
+                const currentHash = hashQuestion(updatedQ);
+                const lastHash = lastSavedSnapshotRef.current.get(q.id);
+                if (!lastHash || lastHash !== currentHash) {
+                  newDirtyQuestions.add(q.id);
+                }
+              }
+            }
+          }
+          return {
+            ...prev,
+            sections: prev.sections.map((section) =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    questions: section.questions.map((question) =>
+                      question.passageGroupId === passageGroupId
+                        ? { ...question, passageText, status: 'Local' as const }
+                        : question
+                    ),
+                    status: 'Local' as const,
+                  }
+                : section
+            ),
+            isDirty: true,
+            dirtyQuestionIds: newDirtyQuestions,
+            dirtySectionIds: newDirtySections,
+          };
+        });
+      },
+      handleUpdateSection: (
+        sectionId: string,
+        updates: Partial<ExamSectionContent>
+      ) => {
+        setState((prev) => {
+          const newDirtySections = new Set(prev.dirtySectionIds);
+          newDirtySections.add(sectionId);
+          return {
+            ...prev,
+            sections: prev.sections.map((section) =>
+              section.id === sectionId
+                ? { ...section, ...updates, status: 'Local' as const }
+                : section
+            ),
+            isDirty: true,
+            dirtySectionIds: newDirtySections,
+          };
+        });
+      },
+      handleUpdateSettings: (updates: Partial<ExamContentSettings>) => {
+        setState((prev) => {
+          // Only mark dirty if values actually changed
+          const currentExam = prev.exam;
+          const hasChanges = Object.entries(updates).some(([key, value]) => {
+            const currentValue = currentExam[key as keyof ExamContentSettings];
+            return value !== currentValue && value !== undefined;
+          });
+          if (!hasChanges) return prev;
+          return {
+            ...prev,
+            exam: { ...prev.exam, ...updates },
+            isDirty: true,
+            dirtyExamSettings: true,
+          };
+        });
+      },
+      handleDeleteQuestion: (sectionId: string, questionId: string) => {
+        setState((prev) => {
+          if (isTempId(questionId)) {
+            return {
+              ...prev,
+              sections: prev.sections.map((s) =>
+                s.id === sectionId
+                  ? {
+                      ...s,
+                      questions: s.questions.filter((q) => q.id !== questionId),
+                      questionCount: s.questions.length - 1,
+                    }
+                  : s
+              ),
+              isDirty: true,
+            };
+          }
+          const newDeletedIds = new Set(prev.deletedQuestionIds || []);
+          newDeletedIds.add(questionId);
+          return {
+            ...prev,
+            sections: prev.sections.map((s) =>
+              s.id === sectionId
+                ? {
+                    ...s,
+                    questions: s.questions.filter((q) => q.id !== questionId),
+                    questionCount: s.questions.length - 1,
+                  }
+                : s
+            ),
+            deletedQuestionIds: newDeletedIds,
+            isDirty: true,
+          };
+        });
+      },
+      handleSave,
+      handlePublish,
+      handleSelectSection,
+      handleSelectQuestion,
+      handleNavigatePrev,
+      handleNavigateNext,
+    }),
+    [
+      handleSave,
+      handlePublish,
+      handleSelectSection,
+      handleSelectQuestion,
+      handleNavigatePrev,
+      handleNavigateNext,
+    ]
+  );
 
   return {
     state,

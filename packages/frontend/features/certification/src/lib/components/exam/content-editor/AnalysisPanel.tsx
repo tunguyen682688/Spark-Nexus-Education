@@ -3,7 +3,8 @@ import {
   CheckCircle2, AlertTriangle,
   Settings, Info, XCircle, FileText, Clock,
 } from 'lucide-react';
-import type { ExamSectionContent, ExamSectionQuestion } from '../../../types/exam-content-editor.types';
+import type { ExamSectionContent, ExamSectionQuestion, ExamContentSettings, SectionValidationIssue } from '../../../types/exam-content-editor.types';
+import { validateSections } from '../../../services/exam-content-helpers.service';
 import { MediaUpload } from './MediaUpload';
 
 interface AnalysisPanelProps {
@@ -11,61 +12,30 @@ interface AnalysisPanelProps {
   question: ExamSectionQuestion;
   questionIndex: number;
   totalQuestions: number;
+  examSettings?: ExamContentSettings;
   onUpdateSection?: (sectionId: string, updates: Partial<ExamSectionContent>) => void;
+  onUpdateSettings?: (updates: Partial<ExamContentSettings>) => void;
 }
-
-type ValidationIssue = {
-  questionId: string;
-  questionOrder: number;
-  field: string;
-  message: string;
-  severity: 'error' | 'warning';
-};
 
 export function AnalysisPanel({
   section,
   question,
   questionIndex,
   totalQuestions,
+  examSettings,
   onUpdateSection,
+  onUpdateSettings,
 }: AnalysisPanelProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'settings'>('info');
 
   const correctAnswer = question.options.find((o) => o.isCorrect);
 
-  const validationIssues = useMemo<ValidationIssue[]>(() => {
-    const issues: ValidationIssue[] = [];
-    for (let idx = 0; idx < section.questions.length; idx++) {
-      const q = section.questions[idx];
-      const qNum = q.order || idx + 1;
-      if (!q.questionText?.trim()) {
-        issues.push({ questionId: q.id, questionOrder: qNum, field: 'questionText', message: 'Thieu noi dung cau hoi', severity: 'error' });
-      }
-      if (q.options.length > 0) {
-        if (q.options.length < 2) {
-          issues.push({ questionId: q.id, questionOrder: qNum, field: 'options', message: 'It nhat 2 dap an', severity: 'error' });
-        }
-        if (!q.options.some((o) => o.isCorrect)) {
-          issues.push({ questionId: q.id, questionOrder: qNum, field: 'correctAnswer', message: 'Chua chon dap an dung', severity: 'error' });
-        }
-        if (q.options.some((o) => !o.text?.trim())) {
-          issues.push({ questionId: q.id, questionOrder: qNum, field: 'optionText', message: 'Co dap an chua nhap noi dung', severity: 'warning' });
-        }
-      }
-      if (!q.explanation?.trim()) {
-        issues.push({ questionId: q.id, questionOrder: qNum, field: 'explanation', message: 'Thieu giai thich', severity: 'warning' });
-      }
-      if (q.passageGroupId && !q.passageText?.trim()) {
-        issues.push({ questionId: q.id, questionOrder: qNum, field: 'passageText', message: 'Thieu noi dung passage/script', severity: 'error' });
-      }
-    }
-    return issues;
-  }, [section.questions]);
+  const sectionIssues = useMemo<SectionValidationIssue[]>(() => validateSections([section]), [section]);
 
-  const errorCount = validationIssues.filter((i) => i.severity === 'error').length;
-  const warningCount = validationIssues.filter((i) => i.severity === 'warning').length;
-  const currentIssue = validationIssues.find((i) => i.questionId === question.id);
-  const completedCount = section.questions.length - new Set(validationIssues.filter((i) => i.severity === 'error').map((i) => i.questionId)).size;
+  const errorCount = sectionIssues.filter((i) => i.issueType === 'missing_content' || i.issueType === 'missing_answer' || i.issueType === 'missing_questions').length;
+  const warningCount = sectionIssues.filter((i) => i.issueType === 'warning' || i.issueType === 'invalid_format').length;
+  const currentIssue = sectionIssues.find((i) => i.questionId === question.id);
+  const completedCount = section.questions.length - new Set(sectionIssues.filter((i) => i.questionId).map((i) => i.questionId)).size;
 
   return (
     <div className="w-80 h-full flex flex-col bg-card border-l border-border">
@@ -119,44 +89,51 @@ export function AnalysisPanel({
 
             {/* Current Question Issue */}
             {currentIssue && (
-              <div className={`p-3 rounded-xl border ${currentIssue.severity === 'error' ? 'border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20' : 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20'}`}>
+              <div className={`p-3 rounded-xl border ${
+                currentIssue.issueType === 'missing_content' || currentIssue.issueType === 'missing_answer' || currentIssue.issueType === 'missing_questions'
+                  ? 'border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20'
+                  : 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20'
+              }`}>
                 <div className="flex items-center gap-2 mb-1">
-                  {currentIssue.severity === 'error' ? (
+                  {currentIssue.issueType === 'missing_content' || currentIssue.issueType === 'missing_answer' || currentIssue.issueType === 'missing_questions' ? (
                     <XCircle className="w-3.5 h-3.5 text-red-600" />
                   ) : (
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                   )}
-                  <span className="text-[10px] font-bold text-foreground">Cau hien tai</span>
+                  <span className="text-[10px] font-bold text-foreground">Câu hiện tại</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">{currentIssue.message}</p>
               </div>
             )}
 
             {/* All Issues */}
-            {validationIssues.length > 0 ? (
+            {sectionIssues.length > 0 ? (
               <div className="space-y-1.5">
-                {validationIssues.map((issue, i) => (
-                  <div
-                    key={`${issue.questionId}-${issue.field}-${i}`}
-                    className={`flex items-start gap-2 p-2.5 rounded-lg border ${
-                      issue.questionId === question.id
-                        ? 'border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-950/20'
-                        : 'border-border bg-card'
-                    }`}
-                  >
-                    {issue.severity === 'error' ? (
-                      <XCircle className="w-3 h-3 mt-0.5 shrink-0 text-red-500" />
-                    ) : (
-                      <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0 text-amber-500" />
-                    )}
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-semibold text-foreground">
-                        Cau {issue.questionOrder}
+                {sectionIssues.map((issue, i) => {
+                  const isError = issue.issueType === 'missing_content' || issue.issueType === 'missing_answer' || issue.issueType === 'missing_questions';
+                  return (
+                    <div
+                      key={`${issue.questionId || issue.sectionId}-${issue.issueType}-${i}`}
+                      className={`flex items-start gap-2 p-2.5 rounded-lg border ${
+                        issue.questionId === question.id
+                          ? 'border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-950/20'
+                          : 'border-border bg-card'
+                      }`}
+                    >
+                      {isError ? (
+                        <XCircle className="w-3 h-3 mt-0.5 shrink-0 text-red-500" />
+                      ) : (
+                        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0 text-amber-500" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-semibold text-foreground">
+                          {issue.sectionTitle}
+                        </div>
+                        <div className="text-[9px] text-muted-foreground">{issue.message}</div>
                       </div>
-                      <div className="text-[9px] text-muted-foreground">{issue.message}</div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 text-center">
@@ -214,73 +191,156 @@ export function AnalysisPanel({
           </div>
         ) : (
           /* Settings Tab */
-          <div className="p-4 space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Loai section</label>
-              <select
-                value={section.sectionType}
-                onChange={(e) => onUpdateSection?.(section.id, { sectionType: e.target.value as ExamSectionContent['sectionType'] })}
-                className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
-              >
-                <option value="listening">Listening</option>
-                <option value="reading">Reading</option>
-                <option value="speaking">Speaking</option>
-                <option value="writing">Writing</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Clock className="w-3 h-3" /> Gioi han thoi gian (phut)
-              </label>
-              <input
-                type="number"
-                value={section.durationMinutes}
-                min={0}
-                onChange={(e) => onUpdateSection?.(section.id, { durationMinutes: Number(e.target.value) })}
-                className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tieu de section</label>
-              <input
-                type="text"
-                value={section.title}
-                onChange={(e) => onUpdateSection?.(section.id, { title: e.target.value })}
-                className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Huong dan</label>
-              <textarea
-                value={section.instruction || ''}
-                onChange={(e) => onUpdateSection?.(section.id, { instruction: e.target.value || undefined })}
-                rows={2}
-                placeholder="Nhap huong dan cho section nay..."
-                className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
-              />
-            </div>
-            {section.sectionType === 'listening' && (
-              <MediaUpload
-                type="audio"
-                value={section.audioUrl}
-                onChange={(url) => onUpdateSection?.(section.id, { audioUrl: url })}
-                label="Am thanh section"
-              />
-            )}
-            {section.sectionType === 'listening' && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText className="w-3 h-3" /> Kich ban nghe (Script)
-                </label>
-                <textarea
-                  value={section.scriptText || ''}
-                  onChange={(e) => onUpdateSection?.(section.id, { scriptText: e.target.value || undefined })}
-                  rows={4}
-                  placeholder="Nhap kich ban cho phan nghe..."
-                  className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
-                />
+          <div className="p-4 space-y-5">
+            {/* Exam-level settings */}
+            <div>
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                Cài đặt bài kiểm tra
               </div>
-            )}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Tên bài kiểm tra</label>
+                  <input
+                    type="text"
+                    value={examSettings?.title || ''}
+                    onChange={(e) => onUpdateSettings?.({ title: e.target.value })}
+                    className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Mô tả</label>
+                  <textarea
+                    value={examSettings?.description || ''}
+                    onChange={(e) => onUpdateSettings?.({ description: e.target.value })}
+                    rows={2}
+                    className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Thời gian (phút)</label>
+                    <input
+                      type="number"
+                      value={examSettings?.duration || 0}
+                      min={0}
+                      onChange={(e) => onUpdateSettings?.({ duration: Number(e.target.value) })}
+                      className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Điểm tối đa</label>
+                    <input
+                      type="number"
+                      value={examSettings?.maxScore || 0}
+                      min={0}
+                      onChange={(e) => onUpdateSettings?.({ maxScore: Number(e.target.value) })}
+                      className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Điểm đậu</label>
+                    <input
+                      type="number"
+                      value={examSettings?.passingScore || 0}
+                      min={0}
+                      onChange={(e) => onUpdateSettings?.({ passingScore: Number(e.target.value) })}
+                      className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Loại bài thi</label>
+                    <select
+                      value={examSettings?.examType || 'FULL_MOCK'}
+                      onChange={(e) => onUpdateSettings?.({ examType: e.target.value })}
+                      className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                    >
+                      <option value="FULL_MOCK">Full Mock</option>
+                      <option value="MINI_TEST">Mini Test</option>
+                      <option value="PRACTICE">Practice</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full h-px bg-border" />
+
+            {/* Section-level settings */}
+            <div>
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                Cài đặt Section
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Loại section</label>
+                  <select
+                    value={section.sectionType}
+                    onChange={(e) => onUpdateSection?.(section.id, { sectionType: e.target.value as ExamSectionContent['sectionType'] })}
+                    className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  >
+                    <option value="listening">Listening</option>
+                    <option value="reading">Reading</option>
+                    <option value="speaking">Speaking</option>
+                    <option value="writing">Writing</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" /> Giới hạn thời gian (phút)
+                  </label>
+                  <input
+                    type="number"
+                    value={section.durationMinutes}
+                    min={0}
+                    onChange={(e) => onUpdateSection?.(section.id, { durationMinutes: Number(e.target.value) })}
+                    className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Tiêu đề section</label>
+                  <input
+                    type="text"
+                    value={section.title}
+                    onChange={(e) => onUpdateSection?.(section.id, { title: e.target.value })}
+                    className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Hướng dẫn</label>
+                  <textarea
+                    value={section.instruction || ''}
+                    onChange={(e) => onUpdateSection?.(section.id, { instruction: e.target.value || undefined })}
+                    rows={2}
+                    placeholder="Nhập hướng dẫn cho section này..."
+                    className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
+                  />
+                </div>
+                {section.sectionType === 'listening' && (
+                  <MediaUpload
+                    type="audio"
+                    value={section.audioUrl}
+                    onChange={(url) => onUpdateSection?.(section.id, { audioUrl: url })}
+                    label="Âm thanh section"
+                  />
+                )}
+                {section.sectionType === 'listening' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                      <FileText className="w-3 h-3" /> Kịch bản nghe (Script)
+                    </label>
+                    <textarea
+                      value={section.scriptText || ''}
+                      onChange={(e) => onUpdateSection?.(section.id, { scriptText: e.target.value || undefined })}
+                      rows={4}
+                      placeholder="Nhập kịch bản cho phần nghe..."
+                      className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

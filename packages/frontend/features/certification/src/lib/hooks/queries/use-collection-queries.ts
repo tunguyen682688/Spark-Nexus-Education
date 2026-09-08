@@ -78,3 +78,12 @@ export const useSavedCollections = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useMyCollections = () => {
+  return useQuery<ExamCollection[]>({
+    queryKey: ['certification', 'my-collections'],
+    queryFn: () => CertificationApi.getMyCollections(),
+    staleTime: STALE_TIME_COLLECTIONS,
+    refetchOnWindowFocus: false,
+  });
+};

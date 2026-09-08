@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, FileText, Users } from 'lucide-react';
 import type { ExamSectionContent } from '../../../types/exam-content-editor.types';
-import { PART_TITLES } from './part-titles.constants';
+import { PART_TITLES } from '../../../constants/part-titles.constants';
 
 interface QuestionNavPanelProps {
   sections: ExamSectionContent[];

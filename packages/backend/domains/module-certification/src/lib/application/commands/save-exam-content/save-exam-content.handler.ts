@@ -33,13 +33,32 @@ export class SaveExamContentHandler
     this.logger.log(`Saving exam content for ${examId} by user ${userId}`);
 
     await this.validateOwnership(examId, userId);
-    await this.updateExamMetadata(examId, dto);
-    await this.replaceSectionsAndQuestions(examId, userId, dto);
+
+    // Fetch existing exam question links BEFORE deletion to preserve questionIds
+    const existingLinks = await this.repo.findExamQuestionsByExamId(examId);
+    const existingQuestionIdMap = new Map<string, string>();
+    for (const link of existingLinks) {
+      // Key: exam question link order+sectionId, Value: original questionId
+      existingQuestionIdMap.set(
+        `${link.getSectionId()}-${link.getOrder()}`,
+        link.getQuestionId()
+      );
+    }
+
+    // Single atomic transaction: exam settings + delete + recreate
+    await this.repo.withTransaction(async () => {
+      await this.updateExamMetadata(examId, dto);
+      await this.replaceSectionsAndQuestions(examId, userId, dto, existingQuestionIdMap);
+
+      const totalQuestions = dto.sections.reduce(
+        (sum, s) => sum + s.questions.length, 0
+      );
+      await this.updateExamTotalQuestions(examId, totalQuestions);
+    });
 
     const totalQuestions = dto.sections.reduce(
       (sum, s) => sum + s.questions.length, 0
     );
-    await this.updateExamTotalQuestions(examId, totalQuestions);
 
     this.logger.log(
       `Exam ${examId} saved: ${dto.sections.length} sections, ${totalQuestions} questions`
@@ -65,18 +84,39 @@ export class SaveExamContentHandler
 
   private async updateExamMetadata(
     examId: string,
-    dto: { title?: string; description?: string; level?: string; duration?: number }
+    dto: {
+      title?: string;
+      description?: string;
+      level?: string;
+      duration?: number;
+      passScore?: number;
+      maxScore?: number;
+      examType?: string;
+      certificationType?: string;
+      publishStatus?: string;
+    }
   ): Promise<void> {
-    if (!dto.title && !dto.description && !dto.duration && !dto.level) return;
-
     const exam = await this.repo.findExamById(examId);
     if (!exam) return;
+
+    const hasExamSettings = dto.title !== undefined || dto.description !== undefined
+      || dto.duration !== undefined || dto.level !== undefined
+      || dto.passScore !== undefined || dto.maxScore !== undefined
+      || dto.examType !== undefined || dto.certificationType !== undefined
+      || dto.publishStatus !== undefined;
+
+    if (!hasExamSettings) return;
 
     exam.update({
       ...(dto.title !== undefined && { title: dto.title }),
       ...(dto.description !== undefined && { description: dto.description }),
       ...(dto.duration !== undefined && { duration: dto.duration }),
       ...(dto.level !== undefined && { level: dto.level }),
+      ...(dto.passScore !== undefined && { passScore: dto.passScore }),
+      ...(dto.maxScore !== undefined && { maxScore: dto.maxScore }),
+      ...(dto.examType !== undefined && { examType: dto.examType }),
+      ...(dto.certificationType !== undefined && { certificationType: dto.certificationType }),
+      ...(dto.publishStatus !== undefined && { publishStatus: dto.publishStatus }),
     });
     await this.repo.saveExam(exam);
   }
@@ -84,20 +124,22 @@ export class SaveExamContentHandler
   private async replaceSectionsAndQuestions(
     examId: string,
     userId: string,
-    dto: { sections: SaveExamContentSectionDto[] }
+    dto: { sections: SaveExamContentSectionDto[] },
+    existingQuestionIdMap: Map<string, string>
   ): Promise<void> {
     await this.repo.deleteAllExamQuestionsByExamId(examId);
     await this.repo.deleteAllSectionsByExamId(examId);
 
     for (const sectionDto of dto.sections) {
-      await this.createSectionWithQuestions(examId, userId, sectionDto);
+      await this.createSectionWithQuestions(examId, userId, sectionDto, existingQuestionIdMap);
     }
   }
 
   private async createSectionWithQuestions(
     examId: string,
     userId: string,
-    sectionDto: SaveExamContentSectionDto
+    sectionDto: SaveExamContentSectionDto,
+    existingQuestionIdMap: Map<string, string>
   ): Promise<void> {
     const sectionId = sectionDto.id || randomUUID();
 
@@ -112,21 +154,32 @@ export class SaveExamContentHandler
       durationMinutes: sectionDto.durationMinutes ?? 0,
       questionCount: sectionDto.questions.length,
       isBreak: sectionDto.isBreak ?? false,
+      audioUrl: sectionDto.audioUrl ?? null,
+      scriptText: sectionDto.scriptText ?? null,
+      passageText: sectionDto.passageText ?? null,
+      passageTitle: sectionDto.passageTitle ?? null,
+      passageType: sectionDto.passageType ?? null,
     });
     await this.repo.saveExamSection(section);
 
     let order = 0;
     for (const questionDto of sectionDto.questions) {
-      const questionId = await this.createQuestionInBank(questionDto, userId);
+      // Look up original questionId to avoid creating orphaned question bank records
+      const linkKey = `${sectionId}-${order}`;
+      const originalQuestionId = existingQuestionIdMap.get(linkKey);
+
+      const questionId = await this.createOrUpdateQuestionInBank(questionDto, userId, originalQuestionId);
       await this.createExamQuestionLink(examId, questionId, sectionId, order++, sectionDto.order, questionDto, userId);
     }
   }
 
-  private async createQuestionInBank(
+  private async createOrUpdateQuestionInBank(
     dto: SaveExamContentQuestionDto,
-    userId: string
+    userId: string,
+    existingQuestionId?: string
   ): Promise<string> {
-    const questionId = dto.id || randomUUID();
+    // Use existing questionId if available to avoid orphaned records in question bank
+    const questionId = existingQuestionId || dto.id || randomUUID();
 
     const question = QuestionEntity.create({
       id: questionId,
@@ -189,6 +242,7 @@ export class SaveExamContentHandler
       audioUrl: dto.audioUrl ?? null,
       imageUrl: dto.imageUrl ?? null,
       partNumber: sectionOrder,
+      formatMetadata: dto.formatMetadata ?? null,
       passageGroupId: dto.passageGroupId ?? null,
       passageType: dto.passageType ?? null,
       passageTitle: dto.passageTitle ?? null,

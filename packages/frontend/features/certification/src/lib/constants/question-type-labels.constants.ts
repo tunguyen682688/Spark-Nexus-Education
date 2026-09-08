@@ -18,6 +18,7 @@ export const QUESTION_TYPE_LABELS: Record<string, string> = {
   yes_no_not_given: 'C/K/KG',
   sentence_completion: 'Hoàn thành câu',
   note_completion: 'Điền ghi chú',
+  short_answer: 'Trả lời ngắn',
   map_labeling: 'Gán nhãn sơ đồ',
   mc: 'Trắc nghiệm',
   writing_task_1_academic: 'Viết Task 1',

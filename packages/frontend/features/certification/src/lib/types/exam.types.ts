@@ -27,13 +27,18 @@ export interface ExamQuestion {
 export interface ExamSection {
   id: string;
   title: string;
-  description?: string;
-  instructions?: string;
+  subtitle?: string;
+  instruction?: string;
   sectionType: string;
-  orderIndex: number;
+  number: number;
   durationMinutes?: number;
   questionCount?: number;
   isBreak?: boolean;
+  audioUrl?: string;
+  scriptText?: string;
+  passageText?: string;
+  passageTitle?: string;
+  passageType?: string;
   questions: ExamQuestion[];
 }
 

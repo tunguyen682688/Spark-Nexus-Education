@@ -10,8 +10,6 @@ import { TOEIC_TEMPLATE } from './certificate-templates-toeic.constants';
 import { IELTS_TEMPLATE } from './certificate-templates-ielts.constants';
 import { CAMBRIDGE_TEMPLATE } from './certificate-templates-cambridge.constants';
 import { VSTEP_TEMPLATE } from './certificate-templates-vstep.constants';
-import { TOEFL_TEMPLATE } from './certificate-templates-toefl.constants';
-import { SAT_TEMPLATE } from './certificate-templates-sat.constants';
 import type { CertificateTypeTemplate } from './certificate-templates-types.constants';
 
 export const CERTIFICATE_TYPE_TEMPLATES: Record<string, CertificateTypeTemplate> = {
@@ -19,8 +17,7 @@ export const CERTIFICATE_TYPE_TEMPLATES: Record<string, CertificateTypeTemplate>
   IELTS: IELTS_TEMPLATE,
   CAMBRIDGE: CAMBRIDGE_TEMPLATE,
   VSTEP: VSTEP_TEMPLATE,
-  TOEFL: TOEFL_TEMPLATE,
-  SAT: SAT_TEMPLATE,
+  // TOEFL and SAT not yet implemented (no backend strategy)
 };
 
 export const CERTIFICATE_TYPE_OPTIONS = Object.values(CERTIFICATE_TYPE_TEMPLATES).map((t) => ({

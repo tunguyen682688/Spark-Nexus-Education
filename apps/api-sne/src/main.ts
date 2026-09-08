@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BigIntSerializerInterceptor } from './big-int-serializer.interceptor';
+import * as express from 'express';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -25,6 +26,59 @@ async function bootstrap() {
       ? ['log', 'debug', 'error', 'verbose', 'warn']
       : ['error', 'warn', 'log'],
   });
+
+  // Increase body parser limit for large exam content payloads
+  app.use(express.json({ limit: '5mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+
+  // Graceful shutdown
+  const shutdown = async () => {
+    logger.log('🛑 Shutdown signal received, closing application...');
+    await app.close();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+
+  // Bull Board dashboard (dev only)
+  if (isDevelopment) {
+    try {
+      const { Board } = await import('@bull-board/api');
+      const { BullMQAdapter } = await import('@bull-board/api/bullMQAdapter');
+      const { ExpressAdapter } = await import('@bull-board/express');
+      const { Queue } = await import('bullmq');
+
+      const serverAdapter = new ExpressAdapter();
+      serverAdapter.setBasePath('/api/admin/queues');
+
+      const redisHost = process.env.REDIS_HOST || 'localhost';
+      const redisPort = parseInt(process.env.REDIS_PORT ?? '6379', 10);
+      const redisPassword = process.env.REDIS_PASSWORD;
+
+      const connection = {
+        host: redisHost,
+        port: redisPort,
+        ...(redisPassword && redisPassword.trim() !== '' ? { password: redisPassword } : {}),
+      };
+
+      const queues = [
+        'certification-init',
+        'certification-scoring',
+        'certification-analytics',
+        'certification-publishing',
+      ];
+
+      const board = new Board({
+        queues: queues.map((name) => new BullMQAdapter(new Queue(name, { connection }))),
+      });
+      board.setAdapter(serverAdapter);
+
+      app.use('/api/admin/queues', serverAdapter.getRouter());
+      logger.log(`📊 Bull Board dashboard available at /api/admin/queues`);
+    } catch (error) {
+      logger.warn(`⚠️ Bull Board not available: ${(error as Error).message}`);
+    }
+  }
 
   // Global prefix
   const globalPrefix = 'api';
@@ -55,7 +109,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
       transform: true,
       transformOptions: {
         enableImplicitConversion: true,

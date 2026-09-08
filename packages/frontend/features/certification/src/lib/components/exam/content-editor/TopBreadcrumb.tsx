@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Save, Send } from 'lucide-react';
-import { PART_TITLES } from './part-titles.constants';
+import { PART_TITLES } from '../../../constants/part-titles.constants';
 
 interface TopBreadcrumbProps {
   examTitle: string;

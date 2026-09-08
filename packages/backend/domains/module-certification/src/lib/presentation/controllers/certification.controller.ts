@@ -3,14 +3,19 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
   Query,
   Req,
   UseGuards,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import * as auth from '@spark-nest-ed/infrastructure-auth';
 import express from 'express';
@@ -57,6 +62,8 @@ import {
   GetClonedCollectionsQuery,
   GetCollectionActivitiesQuery,
   GetInProgressSessionsQuery,
+  GetMyCollectionsQuery,
+  GetExamInitializationStatusQuery,
 } from '../../application/queries';
 
 import { StartExamSessionDto } from '../../application/dtos/start-exam-session.dto';
@@ -71,12 +78,13 @@ import { UpdateCollectionDto } from '../../application/dtos/update-collection.dt
 import { CreateExamDto } from '../../application/dtos/create-exam.dto';
 import { UpdateExamDto } from '../../application/dtos/update-exam.dto';
 import { SaveExamSectionsDto } from '../../application/dtos/save-exam-sections.dto';
-import { SaveExamContentDto } from '../../application/dtos/save-exam-content.dto';
+import { SaveExamContentDto, PatchExamContentDto } from '../../application/dtos/save-exam-content.dto';
 import { LinkQuestionToExamDto } from '../../application/dtos/link-question-to-exam.dto';
 import { FeaturedCollectionsQueryDto, SectionQuestionsQueryDto } from '../../application/dtos/certification-query-params.dto';
 import { CertificationCollectionResponseDto } from '../../application/dtos/response-certification.dto';
 import { SyncChaptersDto } from '../../application/dtos/sync-chapters.dto';
 import { AddBookmarkDto } from '../../application/dtos/add-bookmark.dto';
+import { InitializeExamQuestionsDto } from '../../application/dtos/initialize-exam-questions.dto';
 
 import {
   StartExamSessionCommand,
@@ -105,8 +113,10 @@ import {
   SyncChaptersCommand,
   SaveExamSectionsCommand,
   SaveExamContentCommand,
+  PatchExamContentCommand,
   LinkQuestionToExamCommand,
   UnlinkQuestionFromExamCommand,
+  InitializeExamQuestionsCommand,
 } from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
@@ -119,6 +129,8 @@ export class CertificationController {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
     private readonly cacheService: CertificationCacheService,
+    @InjectQueue('certification-init')
+    private readonly initQueue: Queue,
   ) {}
 
   /**
@@ -324,6 +336,104 @@ export class CertificationController {
       message: 'Exam builder details retrieved successfully',
       version: '1.0.0',
     });
+  }
+
+  @Get('exams/:id/initialization-status')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get exam question initialization status' })
+  async getExamInitializationStatus(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const examData = await this.queryBus.execute(new GetExamQuery(id)) as { collectionId?: string } | null;
+    if (!examData?.collectionId) {
+      throw new NotFoundException(`Exam ${id} not found`);
+    }
+    const collection = await this.queryBus.execute(new GetCollectionQuery(examData.collectionId)) as { ownerId?: string } | null;
+    if (collection && collection.ownerId !== user.id) {
+      throw new ForbiddenException('Not the collection owner');
+    }
+
+    const data = await this.queryBus.execute(new GetExamInitializationStatusQuery(id));
+    return convertEntityToJsonApi(
+      data,
+      'exam-initialization-status',
+      {
+        selfLink: getSelfLinkFromRequest(req, `exams/${id}/initialization-status`),
+        message: 'Initialization status retrieved',
+        version: '1.0.0',
+      }
+    );
+  }
+
+  @Post('exams/:id/retry-initialization')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Retry failed exam question initialization' })
+  async retryExamInitialization(
+    @Param('id') id: string,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const examData = await this.queryBus.execute(new GetExamQuery(id)) as { collectionId?: string; certificationType?: string; sections?: Array<{ id: string; order: number }> } | null;
+    if (!examData) {
+      throw new NotFoundException(`Exam ${id} not found`);
+    }
+    if (examData.collectionId) {
+      const collection = await this.queryBus.execute(new GetCollectionQuery(examData.collectionId)) as { ownerId?: string } | null;
+      if (collection && collection.ownerId !== user.id) {
+        throw new ForbiddenException('Not the collection owner');
+      }
+    }
+
+    const statusData = await this.queryBus.execute(new GetExamInitializationStatusQuery(id)) as { initializationStatus: string };
+
+    if (statusData.initializationStatus === 'completed') {
+      return convertEntityToJsonApi(
+        { id, status: 'already_completed', message: 'Exam already initialized' },
+        'exam-initialization-status',
+        { selfLink: getSelfLinkFromRequest(req, `exams/${id}/retry-initialization`), version: '1.0.0' }
+      );
+    }
+
+    if (statusData.initializationStatus === 'initializing') {
+      return convertEntityToJsonApi(
+        { id, status: 'already_in_progress', message: 'Initialization already in progress' },
+        'exam-initialization-status',
+        { selfLink: getSelfLinkFromRequest(req, `exams/${id}/retry-initialization`), version: '1.0.0' }
+      );
+    }
+
+    // Re-queue the initialization job
+    await this.cacheService.delete(`certification:init-progress:${id}`);
+    await this.cacheService.delete(`certification:exams:${id}`);
+
+    if (!examData.certificationType) {
+      throw new NotFoundException(`Exam ${id} has no certification type`);
+    }
+
+    await this.initQueue.add(
+      'initialize-exam-questions',
+      {
+        examId: id,
+        userId: user.id,
+        certificationType: examData.certificationType,
+        sectionIds: (examData.sections || []).map((s) => ({ id: s.id, order: s.order })),
+      },
+      {
+        attempts: 1,
+        removeOnComplete: { age: 3600 },
+        removeOnFail: { age: 86400 },
+      },
+    );
+
+    return convertEntityToJsonApi(
+      { id, status: 'retry_queued', message: 'Initialization re-queued' },
+      'exam-initialization-status',
+      { selfLink: getSelfLinkFromRequest(req, `exams/${id}/retry-initialization`), version: '1.0.0' }
+    );
   }
 
   @Get('exams/:examId/sections/:sectionId/questions')
@@ -890,6 +1000,35 @@ export class CertificationController {
       {
         selfLink: getSelfLinkFromRequest(req, 'collections/cloned'),
         message: 'Cloned collections retrieved successfully',
+        version: '1.0.0',
+      }
+    );
+    await this.cacheService.set(cacheKey, response, 300);
+    return response;
+  }
+
+  @Get('collections/my')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get collections owned by authenticated user' })
+  async getMyCollections(
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const cacheKey = `certification:my-collections:${user.id}`;
+    const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
+    const data = await this.queryBus.execute(
+      new GetMyCollectionsQuery(user.id)
+    ) as { items: Array<Record<string, unknown>> };
+
+    const response = convertEntityToJsonApi(
+      { id: `my-${user.id}`, userId: user.id, totalMy: data.items.length, items: data.items },
+      'certification-collections-my',
+      {
+        selfLink: getSelfLinkFromRequest(req, 'collections/my'),
+        message: 'My collections retrieved successfully',
         version: '1.0.0',
       }
     );
@@ -1502,6 +1641,50 @@ export class CertificationController {
     return convertEntityToJsonApi({ id: examId, ...result }, 'exam', {
       selfLink: getSelfLinkFromRequest(req, `exams/${examId}/content`),
       message: 'Exam content saved successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Patch('exams/:id/content')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Patch exam content', description: 'Differential save: only updates changed sections/questions. Much faster for large exams with small edits.' })
+  @ApiJsonApiSuccessResponse({ description: 'Exam content patched successfully', resourceType: 'exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam not found' })
+  async patchExamContent(
+    @Param('id') examId: string,
+    @Body() dto: PatchExamContentDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new PatchExamContentCommand(examId, user.id, dto)
+    );
+    return convertEntityToJsonApi({ id: examId, ...result }, 'exam', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}/content`),
+      message: 'Exam content patched successfully',
+      version: '1.0.0',
+    });
+  }
+
+  @Post('exams/:id/initialize-questions')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Initialize exam questions from certification template', description: 'Creates all questions for a TOEIC/IELTS/VSTEP/Cambridge exam in the database at creation time.' })
+  @ApiJsonApiCreatedResponse({ description: 'Questions initialized successfully', resourceType: 'exam' })
+  @ApiJsonApiErrorResponse({ status: 404, description: 'Exam or certification type not found' })
+  async initializeExamQuestions(
+    @Param('id') examId: string,
+    @Body() dto: InitializeExamQuestionsDto,
+    @auth.CurrentUser() user: auth.AuthUser,
+    @Req() req: express.Request
+  ) {
+    const result = await this.commandBus.execute(
+      new InitializeExamQuestionsCommand(examId, user.id, dto.certificationType)
+    );
+    return convertEntityToJsonApi({ id: examId, ...result }, 'exam', {
+      selfLink: getSelfLinkFromRequest(req, `exams/${examId}/initialize-questions`),
+      message: 'Exam questions initialized successfully',
       version: '1.0.0',
     });
   }

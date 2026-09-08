@@ -3,6 +3,7 @@ import { SavedCollectionsPanel } from '../../components/library/SavedCollections
 import { InProgressSessionsPanel } from '../../components/library/InProgressSessionsPanel';
 import { ExamHistoryPanel } from '../../components/library/ExamHistoryPanel';
 import { MyClonesPanel } from '../../components/library/MyClonesPanel';
+import { MyCollectionsPanel } from '../../components/library/MyCollectionsPanel';
 import { CERTIFICATION_UI_TEXT } from '../../constants/certification.constants';
 
 interface LibraryContentSectionProps {
@@ -58,6 +59,17 @@ interface LibraryContentSectionProps {
   isLoadingCloned: boolean;
   isErrorCloned: boolean;
   refetchCloned: () => void;
+  myCollections: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    examCount?: number;
+    itemCount?: number;
+    publishStatus?: string;
+  }>;
+  isLoadingMyCollections: boolean;
+  isErrorMyCollections: boolean;
+  refetchMyCollections: () => void;
   handleUnbookmark: (id: string, e: React.MouseEvent) => void;
   handleOpenCollection: (id: string) => void;
   handleStartExam: (id: string, e?: React.MouseEvent) => void;
@@ -89,6 +101,10 @@ export const LibraryContentSection = ({
   isLoadingCloned,
   isErrorCloned,
   refetchCloned,
+  myCollections,
+  isLoadingMyCollections,
+  isErrorMyCollections,
+  refetchMyCollections,
   handleUnbookmark,
   handleOpenCollection,
   handleStartExam,
@@ -149,6 +165,17 @@ export const LibraryContentSection = ({
           isLoading={isLoadingCloned}
           isError={isErrorCloned}
           refetch={refetchCloned}
+          onOpenCollection={handleOpenCollection}
+          text={libText}
+        />
+      )}
+
+      {activeTab === 'my_collections' && (
+        <MyCollectionsPanel
+          collections={myCollections}
+          isLoading={isLoadingMyCollections}
+          isError={isErrorMyCollections}
+          refetch={refetchMyCollections}
           onOpenCollection={handleOpenCollection}
           text={libText}
         />
