@@ -1,5 +1,6 @@
 import type {
   ExamContentState,
+  ExamContentSettings,
   ExamSectionContent,
   ExamSectionQuestion,
   SectionValidationIssue,
@@ -31,6 +32,37 @@ export function hashQuestion(q: ExamSectionQuestion): string {
     ppo: q.passageTitle,
     bi: q.blankIndex,
     sq: q.subQuestionNumber,
+    fm: q.formatMetadata,
+  });
+}
+
+/** Hash of section metadata for change detection */
+export function hashSection(s: ExamSectionContent): string {
+  return JSON.stringify({
+    title: s.title,
+    subtitle: s.subtitle,
+    instruction: s.instruction,
+    order: s.order,
+    durationMinutes: s.durationMinutes,
+    audioUrl: s.audioUrl,
+    scriptText: s.scriptText,
+    passageText: s.passageText,
+    passageTitle: s.passageTitle,
+    passageType: s.passageType,
+  });
+}
+
+/** Hash of exam settings for change detection */
+export function hashExamSettings(e: ExamContentSettings): string {
+  return JSON.stringify({
+    title: e.title,
+    description: e.description,
+    level: e.level,
+    duration: e.duration,
+    passScore: e.passingScore,
+    maxScore: e.maxScore,
+    examType: e.examType,
+    certificationType: e.certificationType,
   });
 }
 
@@ -272,10 +304,12 @@ export function mapStateToSavePayload(
 }
 
 /** Build granular PATCH payload: only dirty questions grouped by section.
- *  @param snapshot - Map of questionId → hash of last-saved state. If provided, questions with matching hash are skipped. */
+ *  @param snapshot - Map of questionId → hash of last-saved state. If provided, questions with matching hash are skipped.
+ *  @param sectionSnapshot - Map of sectionId → hash of last-saved section metadata. If provided, sections with matching hash are skipped. */
 export function mapDirtyQuestionsToPayload(
   state: ExamContentState,
-  snapshot?: Map<string, string>
+  snapshot?: Map<string, string>,
+  sectionSnapshot?: Map<string, string>
 ): {
   examSettings?: {
     title: string;
@@ -393,27 +427,46 @@ export function mapDirtyQuestionsToPayload(
         })),
     }));
 
-  // Build sectionMetadata for dirty sections
+  // Build sectionMetadata for dirty sections — only if hash actually changed
   const dirtySectionIds = state.dirtySectionIds || new Set();
-  const sectionMetadata = dirtySectionIds.size > 0
-    ? state.sections
-        .filter((s) => dirtySectionIds.has(s.id))
-        .map((s) => ({
-          id: s.id,
-          title: s.title,
-          subtitle: s.subtitle,
-          instruction: s.instruction,
-          order: s.order,
-          durationMinutes: s.durationMinutes,
-        }))
-    : undefined;
+  const sectionMetadata: Array<{
+    id: string;
+    title?: string;
+    subtitle?: string;
+    instruction?: string;
+    order?: number;
+    durationMinutes?: number;
+  }> = [];
+  for (const sectionId of dirtySectionIds) {
+    const section = state.sections.find((s) => s.id === sectionId);
+    if (!section || isTempId(section.id)) continue;
+    const currentHash = hashSection(section);
+    const lastHash = sectionSnapshot?.get(sectionId);
+    if (!lastHash || lastHash !== currentHash) {
+      sectionMetadata.push({
+        id: section.id,
+        title: section.title,
+        subtitle: section.subtitle,
+        instruction: section.instruction,
+        order: section.order,
+        durationMinutes: section.durationMinutes,
+      });
+    }
+  }
 
-  return { examSettings, sections, sectionMetadata, removedQuestionIds: Array.from(state.deletedQuestionIds || []) };
+  return {
+    examSettings,
+    sections,
+    sectionMetadata: sectionMetadata.length > 0 ? sectionMetadata : undefined,
+    removedQuestionIds: Array.from(state.deletedQuestionIds || []),
+  };
 }
 
-/** Build selective PATCH payload: only section metadata for dirty sections (no questions) */
+/** Build selective PATCH payload: only section metadata for dirty sections (no questions)
+ *  @param sectionSnapshot - Map of sectionId → hash of last-saved section metadata */
 export function mapDirtySectionsToPayload(
-  state: ExamContentState
+  state: ExamContentState,
+  sectionSnapshot?: Map<string, string>
 ): {
   sectionMetadata?: Array<{
     id: string;
@@ -427,7 +480,13 @@ export function mapDirtySectionsToPayload(
   const dirtySectionIds = state.dirtySectionIds || new Set();
 
   const sectionMetadata = state.sections
-    .filter((s) => dirtySectionIds.has(s.id) && !isTempId(s.id))
+    .filter((s) => {
+      if (!dirtySectionIds.has(s.id) || isTempId(s.id)) return false;
+      // Only include if hash actually changed
+      const currentHash = hashSection(s);
+      const lastHash = sectionSnapshot?.get(s.id);
+      return !lastHash || lastHash !== currentHash;
+    })
     .map((s) => ({
       id: s.id,
       title: s.title,

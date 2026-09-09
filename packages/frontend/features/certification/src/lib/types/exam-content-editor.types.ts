@@ -42,6 +42,8 @@ export interface ExamSectionQuestion {
   passageTitle?: string;
   /** For Part 7: sub-questions linked to a passage */
   subQuestions?: ExamSectionQuestion[];
+  /** Flexible metadata for per-exam extra data (e.g., choices layout for TOEIC) */
+  formatMetadata?: Record<string, unknown>;
   
   // Status tracking
   status?: 'Local' | 'Saving' | 'Saved' | 'Error';

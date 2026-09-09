@@ -191,6 +191,13 @@ export interface ICertificationRepository {
     }>;
   }): Promise<number>;
 
+  // Differential choice update — only inserts/updates/deletes what changed
+  upsertChoicesDifferential(
+    questionId: string,
+    newChoices: Array<{ text: string; isCorrect: boolean; order: number }>,
+    userId: string,
+  ): Promise<void>;
+
   // Batch Initialize Exam Questions (for async init — single transaction)
   batchInitializeExamQuestions(params: {
     examId: string;

@@ -92,7 +92,6 @@ import { CertificationSaga } from './domain/sagas/certification.saga';
 import { CertificationInitProcessor } from './infrastructure/processors/certification-init.processor';
 import { CertificationScoringProcessor } from './infrastructure/processors/certification-scoring.processor';
 import { CertificationAnalyticsProcessor } from './infrastructure/processors/certification-analytics.processor';
-import { CertificationPublishingProcessor } from './infrastructure/processors/certification-publishing.processor';
 import { ExamStrategyRegistry } from './domain/exam-strategies/exam-strategy.registry';
 import { ToeicStrategy } from './domain/exam-strategies/toeic/toeic.strategy';
 import { IeltsStrategy } from './domain/exam-strategies/ielts/ielts.strategy';
@@ -184,8 +183,8 @@ const CommandHandlers = [
       name: 'certification-init',
       defaultJobOptions: {
         attempts: 1,
-        removeOnComplete: { age: 3600 },
-        removeOnFail: { age: 86400 },
+        removeOnComplete: { count: 50, age: 1800 },
+        removeOnFail: { count: 20, age: 3600 },
       },
     }),
 
@@ -195,8 +194,8 @@ const CommandHandlers = [
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
-        removeOnComplete: { age: 3600 },
-        removeOnFail: { age: 86400 },
+        removeOnComplete: { count: 50, age: 1800 },
+        removeOnFail: { count: 20, age: 3600 },
       },
     }),
 
@@ -206,19 +205,8 @@ const CommandHandlers = [
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
-        removeOnComplete: { age: 1800 },
-        removeOnFail: { age: 86400 },
-      },
-    }),
-
-    // Queue 4: Publishing (validation, clone, publish)
-    BullModule.registerQueue({
-      name: 'certification-publishing',
-      defaultJobOptions: {
-        attempts: 2,
-        backoff: { type: 'exponential', delay: 3000 },
-        removeOnComplete: { age: 3600 },
-        removeOnFail: { age: 86400 },
+        removeOnComplete: { count: 50, age: 900 },
+        removeOnFail: { count: 20, age: 3600 },
       },
     }),
   ],
@@ -232,7 +220,6 @@ const CommandHandlers = [
     CertificationInitProcessor,
     CertificationScoringProcessor,
     CertificationAnalyticsProcessor,
-    CertificationPublishingProcessor,
     {
       provide: CERTIFICATION_REPOSITORY,
       useClass: CertificationRepository,

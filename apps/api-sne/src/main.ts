@@ -43,7 +43,7 @@ async function bootstrap() {
   // Bull Board dashboard (dev only)
   if (isDevelopment) {
     try {
-      const { Board } = await import('@bull-board/api');
+      const { createBullBoard } = await import('@bull-board/api');
       const { BullMQAdapter } = await import('@bull-board/api/bullMQAdapter');
       const { ExpressAdapter } = await import('@bull-board/express');
       const { Queue } = await import('bullmq');
@@ -68,10 +68,10 @@ async function bootstrap() {
         'certification-publishing',
       ];
 
-      const board = new Board({
+      createBullBoard({
         queues: queues.map((name) => new BullMQAdapter(new Queue(name, { connection }))),
+        serverAdapter,
       });
-      board.setAdapter(serverAdapter);
 
       app.use('/api/admin/queues', serverAdapter.getRouter());
       logger.log(`📊 Bull Board dashboard available at /api/admin/queues`);

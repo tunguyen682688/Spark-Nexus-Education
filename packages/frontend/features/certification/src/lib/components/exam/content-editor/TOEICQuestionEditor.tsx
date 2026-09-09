@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useForm, Controller, type RegisterOptions } from 'react-hook-form';
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Check, HelpCircle, FileText, Users, MessageSquare,
@@ -19,7 +20,20 @@ interface TOEICQuestionEditorProps {
   onNavigateNext: () => void;
 }
 
-// ─── Part-specific configuration ─────────────────────────────────────────────
+type QuestionFormValues = {
+  questionText: string;
+  questionType: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  points: number;
+  estimatedTime: number;
+  audioUrl: string;
+  imageUrl: string;
+  explanation: string;
+  passageText: string;
+  blankIndex: number;
+  options: { id: string; label: string; text: string; isCorrect: boolean }[];
+};
+
 const PART_CONFIG: Record<number, {
   minOptions: number;
   maxOptions: number;
@@ -99,7 +113,6 @@ export function TOEICQuestionEditor({
   const isTriple = question.questionType === 'reading_comprehension_triple';
   const isDouble = question.questionType === 'reading_comprehension_double';
 
-  // Get group questions (questions that share the same passage)
   const groupQuestions = useMemo(() => {
     const gid = question.passageGroupId;
     if (!gid) return [question];
@@ -113,29 +126,90 @@ export function TOEICQuestionEditor({
   const hasAnswer = question.options.some((o) => o.isCorrect);
   const isComplete = question.questionText.trim() && hasAnswer;
 
-  const handleOptionUpdate = (optionId: string, field: 'text' | 'isCorrect', value: string | boolean) => {
-    const newOptions = question.options.map((opt) =>
+  // ─── React Hook Form ────────────────────────────────────────────────────
+  const defaultValues: QuestionFormValues = useMemo(() => ({
+    questionText: question.questionText || '',
+    questionType: question.questionType || 'mc',
+    difficulty: question.difficulty || 'Medium',
+    points: question.points || 1,
+    estimatedTime: question.estimatedTime || 10,
+    audioUrl: question.audioUrl || '',
+    imageUrl: question.imageUrl || '',
+    explanation: question.explanation || '',
+    passageText: question.passageText || '',
+    blankIndex: question.blankIndex || questionIndex + 1,
+    options: question.options || [],
+  }), [question, questionIndex]);
+
+  const { register, control, watch, setValue, reset, formState: { errors } } = useForm<QuestionFormValues>({
+    defaultValues,
+    mode: 'onChange',
+  });
+
+  // Reset form on question navigation
+  useEffect(() => {
+    reset(defaultValues);
+  }, [question.id, reset, defaultValues]);
+
+  // Ref to avoid stale closure in registerWithUpdate
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
+  const onUpdateGroupPassageRef = useRef(onUpdateGroupPassage);
+  useEffect(() => {
+    onUpdateGroupPassageRef.current = onUpdateGroupPassage;
+  }, [onUpdateGroupPassage]);
+
+  /**
+   * Helper: register a field with RHF and propagate changes to parent.
+   * Combines RHF's register (validation, dirty tracking) with parent's onUpdate.
+   */
+  const registerWithUpdate = useCallback((
+    name: keyof QuestionFormValues,
+    rules?: RegisterOptions<QuestionFormValues, keyof QuestionFormValues>
+  ) => {
+    const reg = register(name as any, rules as any);
+    return {
+      ...reg,
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        reg.onChange(e);
+        const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+        onUpdateRef.current({ [name]: value } as Partial<ExamSectionQuestion>);
+      },
+    };
+  }, [register]);
+
+  // ─── Options handlers ────────────────────────────────────────────────────
+  const handleOptionUpdate = useCallback((optionId: string, field: 'text' | 'isCorrect', value: string | boolean) => {
+    const currentOptions = watch('options');
+    const newOptions = currentOptions.map((opt) =>
       opt.id === optionId ? { ...opt, [field]: value } : opt,
     );
-    onUpdate({ options: newOptions });
-  };
+    setValue('options', newOptions, { shouldDirty: true, shouldValidate: true });
+    onUpdateRef.current({ options: newOptions });
+  }, [watch, setValue]);
 
-  const handleSetCorrect = (optionId: string) => {
-    const newOptions = question.options.map((opt) => ({
+  const handleSetCorrect = useCallback((optionId: string) => {
+    const currentOptions = watch('options');
+    const newOptions = currentOptions.map((opt) => ({
       ...opt,
       isCorrect: opt.id === optionId,
     }));
-    onUpdate({ options: newOptions });
-  };
+    setValue('options', newOptions, { shouldDirty: true, shouldValidate: true });
+    onUpdateRef.current({ options: newOptions });
+  }, [watch, setValue]);
 
-  // Update passage for all questions in the group
-  const handlePassageUpdate = (passageText: string) => {
+  // Passage update
+  const handlePassageUpdate = useCallback((passageText: string) => {
+    setValue('passageText', passageText, { shouldDirty: true });
     if (isGrouped && question.passageGroupId) {
-      onUpdateGroupPassage(passageText);
+      onUpdateGroupPassageRef.current(passageText);
     } else {
-      onUpdate({ passageText });
+      onUpdateRef.current({ passageText });
     }
-  };
+  }, [setValue, isGrouped, question.passageGroupId]);
 
   return (
     <div className="flex-1 min-w-0 h-full flex flex-col bg-background overflow-hidden">
@@ -182,7 +256,7 @@ export function TOEICQuestionEditor({
         </div>
       </div>
 
-      {/* Tabs - simplified to content only */}
+      {/* Tabs */}
       <div className="flex items-center gap-0 px-5 border-b border-border shrink-0">
         <div className="px-4 py-2.5 text-[11px] font-semibold text-indigo-600">
           Nội dung câu hỏi
@@ -198,8 +272,32 @@ export function TOEICQuestionEditor({
                 <FileText className="w-3 h-3" />
                 Part {section.order} — {partTitle}
               </span>
-              <QuestionTypePicker value={question.questionType} onChange={(val) => onUpdate({ questionType: val })} />
+              <Controller
+                name="questionType"
+                control={control}
+                render={({ field }) => (
+                  <QuestionTypePicker
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      onUpdateRef.current({ questionType: val });
+                    }}
+                  />
+                )}
+              />
             </div>
+
+            {/* Validation errors summary */}
+            {Object.keys(errors).length > 0 && (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30">
+                <p className="text-[11px] font-bold text-red-700 dark:text-red-300 mb-1">Lỗi xác thực:</p>
+                <ul className="text-[10px] text-red-600 dark:text-red-400 space-y-0.5">
+                  {errors.questionText && <li>- Đề bài không được để trống</li>}
+                  {errors.points && <li>- Điểm phải từ 1-10</li>}
+                  {errors.estimatedTime && <li>- Thời gian phải từ 5-120 giây</li>}
+                </ul>
+              </div>
+            )}
 
             {/* Guidance Box */}
             <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30">
@@ -213,12 +311,21 @@ export function TOEICQuestionEditor({
 
             {/* Audio (for listening parts) */}
             {partConfig.showAudio && (
-              <MediaUpload
-                type="audio"
-                value={question.audioUrl}
-                onChange={(url) => onUpdate({ audioUrl: url })}
-                label={`Âm thanh câu hỏi ${isListeningPart ? '(bắt buộc cho phần nghe)' : ''}`}
-                required={isListeningPart}
+              <Controller
+                name="audioUrl"
+                control={control}
+                render={({ field }) => (
+                  <MediaUpload
+                    type="audio"
+                    value={field.value || undefined}
+                    onChange={(url) => {
+                      field.onChange(url || '');
+                      onUpdateRef.current({ audioUrl: url });
+                    }}
+                    label={`Âm thanh câu hỏi ${isListeningPart ? '(bắt buộc cho phần nghe)' : ''}`}
+                    required={isListeningPart}
+                  />
+                )}
               />
             )}
 
@@ -273,8 +380,7 @@ export function TOEICQuestionEditor({
                 </label>
                 <input
                   type="number"
-                  value={question.blankIndex || questionIndex + 1}
-                  onChange={(e) => onUpdate({ blankIndex: Number(e.target.value) })}
+                  {...registerWithUpdate('blankIndex', { min: 1, max: 4 })}
                   min={1}
                   max={4}
                   className="w-28 text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
@@ -315,26 +421,37 @@ export function TOEICQuestionEditor({
               </label>
               <div className="relative">
                 <textarea
-                  value={question.questionText}
-                  onChange={(e) => onUpdate({ questionText: e.target.value })}
+                  {...registerWithUpdate('questionText', {
+                    required: true,
+                    minLength: { value: 1, message: 'Đề bài không được để trống' },
+                  })}
                   rows={3}
                   placeholder={partConfig.questionPlaceholder}
                   className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 leading-relaxed resize-none transition-all"
                 />
                 <div className="absolute bottom-3 right-3 text-[9px] text-muted-foreground font-medium">
-                  {question.questionText.length}/500
+                  {(watch('questionText') || '').length}/500
                 </div>
               </div>
             </div>
 
             {/* Image (for Part 1) */}
             {partConfig.showImage && (
-              <MediaUpload
-                type="image"
-                value={question.imageUrl}
-                onChange={(url) => onUpdate({ imageUrl: url })}
-                label="Hình ảnh câu hỏi (bắt buộc cho Part 1)"
-                required={section.order === 1}
+              <Controller
+                name="imageUrl"
+                control={control}
+                render={({ field }) => (
+                  <MediaUpload
+                    type="image"
+                    value={field.value || undefined}
+                    onChange={(url) => {
+                      field.onChange(url || '');
+                      onUpdateRef.current({ imageUrl: url });
+                    }}
+                    label="Hình ảnh câu hỏi (bắt buộc cho Part 1)"
+                    required={section.order === 1}
+                  />
+                )}
               />
             )}
 
@@ -342,7 +459,7 @@ export function TOEICQuestionEditor({
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 text-[11px] font-bold text-foreground uppercase tracking-wide">
-                  Dap an lua chon ({question.options.length}/{partConfig.maxOptions})
+                  Đáp án lựa chọn ({question.options.length}/{partConfig.maxOptions})
                 </label>
               </div>
               <div className="space-y-2">
@@ -384,7 +501,7 @@ export function TOEICQuestionEditor({
               >
                 <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
                 Giải thích
-                {question.explanation?.trim() && (
+                {(watch('explanation') || question.explanation)?.trim() && (
                   <span className="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
                     Đã có
                   </span>
@@ -395,8 +512,7 @@ export function TOEICQuestionEditor({
               {showExplanation && (
                 <div className="px-4 pb-4">
                   <textarea
-                    value={question.explanation || ''}
-                    onChange={(e) => onUpdate({ explanation: e.target.value })}
+                    {...registerWithUpdate('explanation')}
                     rows={4}
                     placeholder="Giải thích: ngữ pháp, từ vựng, mẹo làm bài..."
                     className="w-full text-[13px] text-foreground bg-background border border-border rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 leading-relaxed resize-none transition-all"
@@ -405,13 +521,12 @@ export function TOEICQuestionEditor({
               )}
             </div>
 
-            {/* Difficulty + Points */}
+            {/* Difficulty + Points + Time */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Độ khó</label>
                 <select
-                  value={question.difficulty}
-                  onChange={(e) => onUpdate({ difficulty: e.target.value as 'Easy' | 'Medium' | 'Hard' })}
+                  {...registerWithUpdate('difficulty')}
                   className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
                 >
                   <option value="Easy">Dễ</option>
@@ -423,10 +538,9 @@ export function TOEICQuestionEditor({
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Điểm</label>
                 <input
                   type="number"
-                  value={question.points}
+                  {...registerWithUpdate('points', { min: 1, max: 10 })}
                   min={1}
                   max={10}
-                  onChange={(e) => onUpdate({ points: Number(e.target.value) })}
                   className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
                 />
               </div>
@@ -434,10 +548,9 @@ export function TOEICQuestionEditor({
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Thời gian (giây)</label>
                 <input
                   type="number"
-                  value={question.estimatedTime || 10}
+                  {...registerWithUpdate('estimatedTime', { min: 5, max: 120 })}
                   min={5}
                   max={120}
-                  onChange={(e) => onUpdate({ estimatedTime: Number(e.target.value) })}
                   className="w-full text-[13px] font-semibold text-foreground bg-background border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
                 />
               </div>

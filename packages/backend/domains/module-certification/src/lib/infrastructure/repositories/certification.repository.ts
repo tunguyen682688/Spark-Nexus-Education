@@ -1316,7 +1316,7 @@ export class CertificationRepository implements ICertificationRepository {
         examQuestionId: eq.id,
         id: eq.questionId,
         number: skip + idx + 1,
-        title: eq.question?.title || eq.question?.content || `Question ${eq.order}`,
+        title: eq.question?.title || eq.question?.content || `Question ${idx + 1}`,
         partTag: eq.partNumber ? `Part ${eq.partNumber}` : '',
         type: this.mapQuestionType(eq.question?.type),
         difficulty: this.mapDifficulty(eq.question?.difficulty),
@@ -2034,6 +2034,7 @@ export class CertificationRepository implements ICertificationRepository {
       blankNumber?: number;
       subQuestionNumber?: number;
       formatMetadata?: Record<string, unknown>;
+      detailedExplanation?: string;
       sectionId: string;
       sectionOrder: number;
       order: number;
@@ -2051,127 +2052,238 @@ export class CertificationRepository implements ICertificationRepository {
 
     const allQuestionIds = questionsWithHash.map(q => q.questionId);
 
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch existing links + metadata in parallel
-      const [existingLinks, existingMetadata] = await Promise.all([
-        tx.examQuestion.findMany({
-          where: { examId, questionId: { in: allQuestionIds } },
-        }),
-        tx.questionMetadata.findMany({
-          where: { questionId: { in: allQuestionIds } },
-        }),
-      ]);
-      const existingLinkMap = new Map(existingLinks.map(l => [l.questionId, l]));
-      const existingMetadataSet = new Set(existingMetadata.map(m => m.questionId));
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. Fetch existing links + metadata in parallel
+        const [existingLinks, existingMetadata] = await Promise.all([
+          tx.examQuestion.findMany({
+            where: { examId, questionId: { in: allQuestionIds } },
+          }),
+          tx.questionMetadata.findMany({
+            where: { questionId: { in: allQuestionIds } },
+          }),
+        ]);
+        const existingLinkMap = new Map(existingLinks.map(l => [l.questionId, l]));
+        const existingMetadataSet = new Set(existingMetadata.map(m => m.questionId));
 
-      // 2. Batch upsert Questions (parallel)
-      await Promise.all(questionsWithHash.map(q =>
-        tx.question.upsert({
-          where: { id: q.questionId },
-          create: {
-            id: q.questionId,
-            title: q.questionText,
-            content: q.questionText,
-            type: q.questionType,
-            difficulty: q.difficulty,
-            status: 'draft',
-            createdBy: userId,
-            updatedBy: userId,
-          },
-          update: {
-            title: q.questionText,
-            content: q.questionText,
-            type: q.questionType,
-            difficulty: q.difficulty,
-            updatedBy: userId,
-          },
-        })
-      ));
+        // 1b. Content hash skip — filter to only questions that actually changed
+        const changedQuestions = questionsWithHash.filter(q => {
+          const existing = existingLinkMap.get(q.questionId);
+          return !existing || existing.contentHash !== q._hash;
+        });
+        if (changedQuestions.length === 0) {
+          this.logger.debug(`All ${questionsWithHash.length} questions unchanged (hash match), skipping DB writes`);
+          return 0;
+        }
 
-      // 3. Batch delete ALL old choices in ONE query, then create ALL new choices
-      await tx.questionChoice.deleteMany({
-        where: { questionId: { in: allQuestionIds } },
-      });
-      const allChoices = questionsWithHash.flatMap(q =>
-        q.options.map((opt, idx) => ({
-          id: opt.id || crypto.randomUUID(),
-          questionId: q.questionId,
-          content: opt.text,
-          isCorrect: opt.isCorrect,
-          order: idx,
+        // 2. Chunked upsert Questions (20 per batch)
+        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
+          Promise.all(chunk.map(q => {
+            const title = q.questionText?.substring(0, 255) || '';
+            return tx.question.upsert({
+              where: { id: q.questionId },
+              create: {
+                id: q.questionId,
+                title,
+                content: q.questionText,
+                type: q.questionType,
+                difficulty: q.difficulty,
+                status: 'draft',
+                createdBy: userId,
+                updatedBy: userId,
+              },
+              update: {
+                title,
+                content: q.questionText,
+                type: q.questionType,
+                difficulty: q.difficulty,
+                updatedBy: userId,
+              },
+            });
+          }))
+        );
+
+        // 3. Differential choice update (only changes what's different)
+        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
+          Promise.all(chunk.map(q =>
+            this.upsertChoicesDifferentialWithTx(tx, q.questionId, q.options.map((o, i) => ({
+              text: o.text,
+              isCorrect: o.isCorrect,
+              order: i,
+            })), userId)
+          ))
+        );
+
+        // 4. Chunked upsert Metadata
+        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
+          Promise.all(chunk.map(q => {
+            const isNew = !existingMetadataSet.has(q.questionId);
+            if (isNew) {
+              return tx.questionMetadata.create({
+                data: {
+                  id: crypto.randomUUID(),
+                  questionId: q.questionId,
+                  explanation: q.explanation || null,
+                  points: q.points,
+                  estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
+                  shuffleOptions: false,
+                  modelAnswer: q.modelAnswer || null,
+                  rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
+                  passageText: q.passageText || null,
+                },
+              });
+            }
+            return tx.questionMetadata.update({
+              where: { questionId: q.questionId },
+              data: {
+                explanation: q.explanation || null,
+                points: q.points,
+                estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
+                modelAnswer: q.modelAnswer || null,
+                rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
+                passageText: q.passageText || null,
+              },
+            });
+          }))
+        );
+
+        // 5. Chunked upsert ExamQuestion links
+        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
+          Promise.all(chunk.map(q => {
+            const existing = existingLinkMap.get(q.questionId);
+            const linkId = existing?.id || q.linkId || crypto.randomUUID();
+            const data = {
+              examId,
+              questionId: q.questionId,
+              sectionId: q.sectionId,
+              order: q.order,
+              points: q.points,
+              audioUrl: q.audioUrl ?? null,
+              imageUrl: q.imageUrl ?? null,
+              partNumber: q.sectionOrder,
+              formatMetadata: (q.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
+              passageGroupId: q.passageGroupId ?? null,
+              passageType: q.passageType ?? null,
+              passageTitle: q.passageTitle ?? null,
+              blankNumber: q.blankNumber ?? null,
+              subQuestionNumber: q.subQuestionNumber ?? null,
+              contentHash: q._hash,
+            };
+            if (existing) {
+              return tx.examQuestion.update({
+                where: { id: linkId },
+                data: { ...data, updatedBy: userId },
+              });
+            }
+            return tx.examQuestion.create({
+              data: { ...data, id: linkId, createdBy: userId, updatedBy: userId },
+            });
+          }))
+        );
+
+        return changedQuestions.length;
+      }, { maxWait: 30000, timeout: 60000 });
+    } catch (error) {
+      const err = error as Error & { code?: string; meta?: unknown };
+      this.logger.error(
+        `batchUpsertQuestionsForPatch FAILED: ${err.message}`,
+        err.stack
+      );
+      if (err.code) {
+        this.logger.error(`Prisma error code: ${err.code}, meta: ${JSON.stringify(err.meta)}`);
+      }
+      this.logger.error(`Payload summary: examId=${examId}, questionsCount=${questions.length}, questionIds=${JSON.stringify(questions.map(q => q.questionId))}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute operations in chunks to avoid connection pool exhaustion.
+   * Runs each chunk sequentially; within a chunk, operations run in parallel.
+   */
+  private async chunkedParallel<T>(
+    items: T[],
+    chunkSize: number,
+    handler: (chunk: T[]) => Promise<unknown>,
+  ): Promise<void> {
+    for (let i = 0; i < items.length; i += chunkSize) {
+      await handler(items.slice(i, i + chunkSize));
+    }
+  }
+
+  /**
+   * Differential choice update within a transaction.
+   * Only inserts/updates/deletes choices that actually changed.
+   */
+  private async upsertChoicesDifferentialWithTx(
+    tx: Prisma.TransactionClient,
+    questionId: string,
+    newChoices: Array<{ text: string; isCorrect: boolean; order: number }>,
+    userId: string,
+  ): Promise<void> {
+    const existing = await tx.questionChoice.findMany({
+      where: { questionId },
+      orderBy: { order: 'asc' },
+    });
+
+    const toDelete: string[] = [];
+    const toUpdate: Array<{ id: string; data: Prisma.QuestionChoiceUpdateInput }> = [];
+    const toCreate: Prisma.QuestionChoiceCreateManyInput[] = [];
+
+    const maxLen = Math.max(existing.length, newChoices.length);
+    for (let i = 0; i < maxLen; i++) {
+      const old = existing[i];
+      const nu = newChoices[i];
+
+      if (!old && nu) {
+        toCreate.push({
+          questionId,
+          content: nu.text,
+          isCorrect: nu.isCorrect,
+          order: i,
           createdBy: userId,
           updatedBy: userId,
-        }))
-      );
-      if (allChoices.length > 0) {
-        await tx.questionChoice.createMany({ data: allChoices });
-      }
-
-      // 4. Batch upsert Metadata (parallel — separate new vs existing)
-      await Promise.all(questionsWithHash.map(q => {
-        const isNew = !existingMetadataSet.has(q.questionId);
-        if (isNew) {
-          return tx.questionMetadata.create({
-            data: {
-              id: crypto.randomUUID(),
-              questionId: q.questionId,
-              explanation: q.explanation || null,
-              points: q.points,
-              estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
-              shuffleOptions: false,
-              modelAnswer: q.modelAnswer || null,
-              rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
-              passageText: q.passageText || null,
-            },
-          });
-        }
-        return tx.questionMetadata.update({
-          where: { questionId: q.questionId },
+        });
+      } else if (old && !nu) {
+        toDelete.push(old.id);
+      } else if (old && nu && (old.content !== nu.text || old.isCorrect !== nu.isCorrect)) {
+        toUpdate.push({
+          id: old.id,
           data: {
-            explanation: q.explanation || null,
-            points: q.points,
-            estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
-            modelAnswer: q.modelAnswer || null,
-            rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
-            passageText: q.passageText || null,
+            content: nu.text,
+            isCorrect: nu.isCorrect,
+            order: i,
+            updatedBy: userId,
           },
         });
-      }));
+      }
+      // else: same → skip (no change)
+    }
 
-      // 5. Batch upsert ExamQuestion links (parallel)
-      await Promise.all(questionsWithHash.map(q => {
-        const existing = existingLinkMap.get(q.questionId);
-        const linkId = existing?.id || q.linkId || crypto.randomUUID();
-        const data = {
-          examId,
-          questionId: q.questionId,
-          sectionId: q.sectionId,
-          order: q.order,
-          points: q.points,
-          audioUrl: q.audioUrl ?? null,
-          imageUrl: q.imageUrl ?? null,
-          partNumber: q.sectionOrder,
-          formatMetadata: (q.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
-          passageGroupId: q.passageGroupId ?? null,
-          passageType: q.passageType ?? null,
-          passageTitle: q.passageTitle ?? null,
-          blankNumber: q.blankNumber ?? null,
-          subQuestionNumber: q.subQuestionNumber ?? null,
-          contentHash: q._hash,
-        };
-        if (existing) {
-          return tx.examQuestion.update({
-            where: { id: linkId },
-            data: { ...data, updatedBy: userId },
-          });
-        }
-        return tx.examQuestion.create({
-          data: { ...data, id: linkId, createdBy: userId, updatedBy: userId },
-        });
-      }));
+    if (toDelete.length > 0) {
+      await tx.questionChoice.deleteMany({ where: { id: { in: toDelete } } });
+    }
+    if (toUpdate.length > 0) {
+      await Promise.all(toUpdate.map(u =>
+        tx.questionChoice.update({ where: { id: u.id }, data: u.data })
+      ));
+    }
+    if (toCreate.length > 0) {
+      await tx.questionChoice.createMany({ data: toCreate });
+    }
+  }
 
-      return questionsWithHash.length;
-    }, { maxWait: 30000, timeout: 60000 });
+  /**
+   * Differential choice update (public, for direct use outside transactions).
+   */
+  async upsertChoicesDifferential(
+    questionId: string,
+    newChoices: Array<{ text: string; isCorrect: boolean; order: number }>,
+    userId: string,
+  ): Promise<void> {
+    return this.prisma.$transaction(async (tx) => {
+      return this.upsertChoicesDifferentialWithTx(tx, questionId, newChoices, userId);
+    }, { maxWait: 10000, timeout: 30000 });
   }
 
   async batchInitializeExamQuestions(params: {
@@ -2338,7 +2450,7 @@ export class CertificationRepository implements ICertificationRepository {
     questionType: string;
     difficulty: string;
     points: number;
-    options: Array<{ text: string; isCorrect: boolean }>;
+    options: Array<{ text: string; isCorrect: boolean; label?: string }>;
     explanation?: string;
     modelAnswer?: string;
     rubric?: string;
@@ -2352,15 +2464,17 @@ export class CertificationRepository implements ICertificationRepository {
     blankNumber?: number;
     subQuestionNumber?: number;
     formatMetadata?: Record<string, unknown>;
+    detailedExplanation?: string;
   }): string {
     const data = JSON.stringify({
       t: q.questionType,
       txt: q.questionText,
       d: q.difficulty,
       p: q.points,
-      o: q.options.map(o => ({ t: o.text, c: o.isCorrect })),
+      o: q.options.map(o => ({ l: o.label, t: o.text, c: o.isCorrect })),
       e: q.explanation,
       m: q.modelAnswer,
+      de: q.detailedExplanation,
       r: q.rubric,
       et: q.estimatedTime,
       au: q.audioUrl,
@@ -2369,7 +2483,7 @@ export class CertificationRepository implements ICertificationRepository {
       pt: q.passageText,
       pp: q.passageType,
       ppo: q.passageTitle,
-      bn: q.blankNumber,
+      bi: q.blankNumber,
       sq: q.subQuestionNumber,
       fm: q.formatMetadata,
     });

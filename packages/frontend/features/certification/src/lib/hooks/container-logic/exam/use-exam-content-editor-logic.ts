@@ -15,6 +15,8 @@ import {
   mapDirtyQuestionsToPayload,
   mapDirtySectionsToPayload,
   hashQuestion,
+  hashSection,
+  hashExamSettings,
   isTempId,
 } from '../../../services/exam-content-helpers.service';
 import { invalidateExamBuilderCache } from '../../../services/exam-content-cache-helpers.service';
@@ -380,6 +382,10 @@ export function useExamContentEditorLogic({
   stateRef.current = state;
   // Snapshot of last-saved question data — used to skip unchanged questions on next save
   const lastSavedSnapshotRef = useRef<Map<string, string>>(new Map());
+  // Snapshot of last-saved section metadata — used to skip unchanged sections on next save
+  const lastSavedSectionSnapshotRef = useRef<Map<string, string>>(new Map());
+  // Snapshot of last-saved exam settings — used to skip unchanged exam settings on next save
+  const lastSavedExamSettingsRef = useRef<string>('');
   const saveInProgressRef = useRef(false);
   /** Dirty flags at save-start — only clear these in onSuccess to preserve mid-save edits */
   const saveStartDirtyRef = useRef<{
@@ -403,19 +409,23 @@ export function useExamContentEditorLogic({
     refetchOnWindowFocus: false,
   });
 
-  // Initialize state from API data (once)
+  // Initialize state from API data (once, or when force-reinit after async save)
   useEffect(() => {
     if (apiData && !initialized) {
       const newState = mapBuilderDataToState(apiData);
       setState(newState);
-      // Initialize snapshot from loaded data
+      // Initialize snapshots from loaded data
       const snapshot = new Map<string, string>();
+      const sectionSnapshot = new Map<string, string>();
       for (const section of newState.sections) {
+        sectionSnapshot.set(section.id, hashSection(section));
         for (const q of section.questions) {
           snapshot.set(q.id, hashQuestion(q));
         }
       }
       lastSavedSnapshotRef.current = snapshot;
+      lastSavedSectionSnapshotRef.current = sectionSnapshot;
+      lastSavedExamSettingsRef.current = hashExamSettings(newState.exam);
       setInitialized(true);
     }
   }, [apiData, initialized]);
@@ -555,7 +565,8 @@ export function useExamContentEditorLogic({
       if (hasDirtyQuestions || currentState.dirtyExamSettings || (currentState.deletedQuestionIds?.size || 0) > 0) {
         const dirtyPayload = mapDirtyQuestionsToPayload(
           currentState,
-          lastSavedSnapshotRef.current
+          lastSavedSnapshotRef.current,
+          lastSavedSectionSnapshotRef.current
         );
         console.log(`[SAVE] dirtyPayload sections: ${dirtyPayload.sections.length}, examSettings: ${!!dirtyPayload.examSettings}, removedIds: ${dirtyPayload.removedQuestionIds.length}`);
         if (dirtyPayload.sections.length > 0) {
@@ -573,7 +584,10 @@ export function useExamContentEditorLogic({
       }
 
       // 2. Section metadata only (no questions)
-      const sectionMetadataPayload = mapDirtySectionsToPayload(currentState);
+      const sectionMetadataPayload = mapDirtySectionsToPayload(
+        currentState,
+        lastSavedSectionSnapshotRef.current
+      );
       if (sectionMetadataPayload.sectionMetadata && sectionMetadataPayload.sectionMetadata.length > 0) {
         const result = await ExamApi.patchExamContent(examId, {
           sectionMetadata: sectionMetadataPayload.sectionMetadata,
@@ -597,16 +611,13 @@ export function useExamContentEditorLogic({
     onSuccess: (data: unknown, variables) => {
       saveInProgressRef.current = false;
 
-      // No-op save: nothing was dirty/sent — do NOT clear dirty flags,
-      // do NOT rebuild snapshot, do NOT show success toast
+      // No-op save: nothing was dirty/sent
       if (data === undefined || data === null) {
         setState((prev) => ({ ...prev, isSaving: false }));
         return;
       }
 
-      const responseData = data as
-        | { tempIdMap?: Record<string, string> }
-        | undefined;
+      const responseData = data as { tempIdMap?: Record<string, string> } | undefined;
       const tempIdMap = responseData?.tempIdMap;
 
       // Replace temp IDs with real DB IDs from server response
@@ -623,12 +634,14 @@ export function useExamContentEditorLogic({
         }));
       }
 
-      // Rebuild snapshot: merge saved questions (with real IDs) with existing snapshot
+      // Rebuild snapshots: merge saved data (with real IDs) with existing snapshots
       console.log(`[SAVE:ONSUCCESS] tempIdMap:`, tempIdMap, `stateRef sections:`, stateRef.current.sections.length);
       const snapshot = new Map(lastSavedSnapshotRef.current);
-      // Add/update entries for questions that were in the current state
+      const sectionSnapshot = new Map(lastSavedSectionSnapshotRef.current);
+      // Add/update entries for questions and sections in current state
       let snapshotAdded = 0;
       for (const section of stateRef.current.sections) {
+        sectionSnapshot.set(section.id, hashSection(section));
         for (const q of section.questions) {
           const realId = tempIdMap?.[q.id] ?? q.id;
           snapshot.set(realId, hashQuestion(q));
@@ -644,6 +657,8 @@ export function useExamContentEditorLogic({
       }
       console.log(`[SAVE:ONSUCCESS] snapshot rebuilt: ${snapshotAdded} entries added, total: ${snapshot.size}`);
       lastSavedSnapshotRef.current = snapshot;
+      lastSavedSectionSnapshotRef.current = sectionSnapshot;
+      lastSavedExamSettingsRef.current = hashExamSettings(stateRef.current.exam);
 
       // Only clear dirty flags that existed at save-start — preserve mid-save edits
       const saved = saveStartDirtyRef.current;
@@ -697,7 +712,8 @@ export function useExamContentEditorLogic({
       const currentState = stateRef.current;
       const dirtyPayload = mapDirtyQuestionsToPayload(
         currentState,
-        lastSavedSnapshotRef.current
+        lastSavedSnapshotRef.current,
+        lastSavedSectionSnapshotRef.current
       );
       const publishPatch = {
         ...dirtyPayload,
@@ -714,42 +730,14 @@ export function useExamContentEditorLogic({
           publishStatus: 'published' as const,
         },
       };
-      const result = await ExamApi.patchExamContent(examId, publishPatch);
-      return result;
+
+      // Publish is done via PATCH with publishStatus: 'published'
+      return ExamApi.patchExamContent(examId, publishPatch);
     },
     onMutate: async () => {
       setState((prev) => ({ ...prev, isSaving: true }));
     },
-    onSuccess: (data: unknown) => {
-      const responseData = data as
-        | { tempIdMap?: Record<string, string> }
-        | undefined;
-      const tempIdMap = responseData?.tempIdMap;
-
-      // Replace temp IDs with real DB IDs
-      if (tempIdMap && Object.keys(tempIdMap).length > 0) {
-        setState((prev) => ({
-          ...prev,
-          sections: prev.sections.map((s) => ({
-            ...s,
-            questions: s.questions.map((q) => {
-              const realId = tempIdMap[q.id];
-              return realId ? { ...q, id: realId } : q;
-            }),
-          })),
-        }));
-      }
-
-      // Rebuild snapshot
-      const snapshot = new Map(lastSavedSnapshotRef.current);
-      for (const section of stateRef.current.sections) {
-        for (const q of section.questions) {
-          const realId = tempIdMap?.[q.id] ?? q.id;
-          snapshot.set(realId, hashQuestion(q));
-        }
-      }
-      lastSavedSnapshotRef.current = snapshot;
-
+    onSuccess: () => {
       setState((prev) => ({
         ...prev,
         isSaving: false,
@@ -918,11 +906,13 @@ export function useExamContentEditorLogic({
 
           // Hash-based dirty tracking: only mark dirty if hash actually changed
           const newDirtyQuestions = new Set(prev.dirtyQuestionIds);
+          const newDirtySections = new Set(prev.dirtySectionIds);
           if (updatedQuestion) {
             const currentHash = hashQuestion(updatedQuestion);
             const lastHash = lastSavedSnapshotRef.current.get(questionId);
             if (!lastHash || lastHash !== currentHash) {
               newDirtyQuestions.add(questionId);
+              newDirtySections.add(sectionId);
               console.log(`[EDIT] Question ${questionId} marked DIRTY (hash changed)`);
             } else {
               newDirtyQuestions.delete(questionId);
@@ -930,11 +920,9 @@ export function useExamContentEditorLogic({
             }
           } else {
             newDirtyQuestions.add(questionId);
+            newDirtySections.add(sectionId);
             console.warn(`[EDIT] Question ${questionId} NOT FOUND in state - forced dirty`);
           }
-
-          const newDirtySections = new Set(prev.dirtySectionIds);
-          newDirtySections.add(sectionId);
 
           return {
             ...prev,
@@ -1006,8 +994,29 @@ export function useExamContentEditorLogic({
         updates: Partial<ExamSectionContent>
       ) => {
         setState((prev) => {
+          // Find the current section to compute hash after update
+          let updatedSection: ExamSectionContent | undefined;
+          for (const s of prev.sections) {
+            if (s.id === sectionId) {
+              updatedSection = { ...s, ...updates, status: 'Local' as const };
+              break;
+            }
+          }
+
+          // Hash-based dirty tracking for sections
           const newDirtySections = new Set(prev.dirtySectionIds);
-          newDirtySections.add(sectionId);
+          if (updatedSection) {
+            const currentHash = hashSection(updatedSection);
+            const lastHash = lastSavedSectionSnapshotRef.current.get(sectionId);
+            if (!lastHash || lastHash !== currentHash) {
+              newDirtySections.add(sectionId);
+            } else {
+              newDirtySections.delete(sectionId);
+            }
+          } else {
+            newDirtySections.add(sectionId);
+          }
+
           return {
             ...prev,
             sections: prev.sections.map((section) =>
@@ -1029,17 +1038,27 @@ export function useExamContentEditorLogic({
             return value !== currentValue && value !== undefined;
           });
           if (!hasChanges) return prev;
+
+          const updatedExam = { ...prev.exam, ...updates };
+
+          // Hash-based dirty tracking for exam settings
+          const currentHash = hashExamSettings(updatedExam);
+          const lastHash = lastSavedExamSettingsRef.current;
+          const isDirty = !lastHash || lastHash !== currentHash;
+
           return {
             ...prev,
-            exam: { ...prev.exam, ...updates },
+            exam: updatedExam,
             isDirty: true,
-            dirtyExamSettings: true,
+            dirtyExamSettings: isDirty,
           };
         });
       },
       handleDeleteQuestion: (sectionId: string, questionId: string) => {
         setState((prev) => {
           if (isTempId(questionId)) {
+            const newDirtyQuestions = new Set(prev.dirtyQuestionIds);
+            newDirtyQuestions.delete(questionId);
             return {
               ...prev,
               sections: prev.sections.map((s) =>
@@ -1051,6 +1070,7 @@ export function useExamContentEditorLogic({
                     }
                   : s
               ),
+              dirtyQuestionIds: newDirtyQuestions,
               isDirty: true,
             };
           }

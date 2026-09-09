@@ -1,44 +1,65 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger, Inject } from '@nestjs/common';
+import { Job } from 'bullmq';
 import { randomUUID } from 'crypto';
-import type {
-  ICertificationRepository,
-} from '../../../domain/repositories/certification.repository.interface';
-import { CERTIFICATION_REPOSITORY } from '../../../domain/repositories/certification.repository.interface';
-import {
-  PatchExamContentCommand,
-  PatchExamContentResult,
-} from './patch-exam-content.command';
-import { ExamSectionEntity } from '../../../domain/entities/exam-section.entity';
-import { PatchExamContentSectionDto } from '../../dtos/save-exam-content.dto';
+import type { ICertificationRepository } from '../../domain/repositories/certification.repository.interface';
+import { CERTIFICATION_REPOSITORY } from '../../domain/repositories/certification.repository.interface';
+import type { CertificationCacheService } from '../cache/certification-cache.service';
+import { PatchExamContentDto, PatchExamContentSectionDto } from '../../application/dtos/save-exam-content.dto';
+import { ExamSectionEntity } from '../../domain/entities/exam-section.entity';
 
-@CommandHandler(PatchExamContentCommand)
-export class PatchExamContentHandler
-  implements ICommandHandler<PatchExamContentCommand, PatchExamContentResult>
-{
-  private readonly logger = new Logger(PatchExamContentHandler.name);
+interface EditJobData {
+  examId: string;
+  userId: string;
+  payloadKey: string;
+  expectedVersion: number;
+}
+
+interface EditJobResult {
+  sectionsUpdated: number;
+  questionsUpdated: number;
+}
+
+@Processor('certification-edit')
+export class CertificationEditProcessor extends WorkerHost {
+  private readonly logger = new Logger(CertificationEditProcessor.name);
 
   constructor(
     @Inject(CERTIFICATION_REPOSITORY)
     private readonly repo: ICertificationRepository,
-  ) {}
+    @Inject('CertificationCacheService')
+    private readonly cacheService: CertificationCacheService,
+  ) {
+    super();
+  }
 
-  async execute(command: PatchExamContentCommand): Promise<PatchExamContentResult> {
-    const { examId, userId, dto } = command;
-    const sections = dto.sections ?? [];
+  async process(job: Job<EditJobData>): Promise<EditJobResult> {
+    const { examId, userId, payloadKey, expectedVersion } = job.data;
+    this.logger.log(`[Edit] Processing content save for exam ${examId}, job ${job.id}`);
 
-    this.logger.log(`Patching exam content for ${examId}: ${sections.length} dirty sections, ${dto.removedQuestionIds?.length || 0} removed`);
+    // 1. Retrieve full DTO from Redis (stored by handler with 5min TTL)
+    const dto = await this.cacheService.get<PatchExamContentDto>(payloadKey);
+    if (!dto) {
+      throw new Error(`Payload expired or not found for key ${payloadKey}`);
+    }
+    // Clean up the temp key
+    await this.cacheService.delete(payloadKey).catch(() => {});
 
-    // 1. Validation + ownership (fast)
+    // 1. Optimistic lock check
     const exam = await this.repo.findExamById(examId);
-    if (!exam) throw new NotFoundException(`Exam ${examId} not found`);
-
-    const collection = await this.repo.findCollectionById(exam.getCollectionId());
-    if (!collection || collection.getOwnerId() !== userId) {
-      throw new ForbiddenException('You can only edit your own exams');
+    if (!exam) {
+      throw new Error(`Exam ${examId} not found`);
+    }
+    if (Number(exam.version) !== expectedVersion) {
+      throw new Error(
+        `Conflict: exam version mismatch (expected ${expectedVersion}, got ${Number(exam.version)})`
+      );
     }
 
-    // 2. Exam-level settings (if changed)
+    const sections = dto.sections ?? [];
+    let totalUpdated = 0;
+
+    // 2. Update exam-level settings if provided
     const settings = dto.examSettings;
     const hasSettings = settings
       || dto.title || dto.description || dto.level || dto.duration !== undefined
@@ -68,21 +89,19 @@ export class PatchExamContentHandler
       await this.repo.saveExam(exam);
     }
 
-    // 3. Differential question upsert per dirty section
-    let totalUpdated = 0;
-    const allTempIdMaps = new Map<string, string>();
-
+    // 3. Per-section dirty question upsert
     for (const sectionDto of sections) {
-      const { count, tempIdMap } = await this.patchSection(examId, userId, sectionDto);
+      const count = await this.patchSection(examId, userId, sectionDto);
       totalUpdated += count;
-      for (const [tempId, realId] of tempIdMap) allTempIdMaps.set(tempId, realId);
+      await job.updateProgress({ phase: 'questions', processed: totalUpdated });
     }
 
-    // 4. Section metadata (title, instruction, etc.)
-    if (dto.sectionMetadata?.length) {
+    // 4. Update section metadata
+    if (dto.sectionMetadata && dto.sectionMetadata.length > 0) {
       for (const meta of dto.sectionMetadata) {
         const existing = await this.repo.findSectionById(meta.id);
         if (!existing) continue;
+
         const section = ExamSectionEntity.create({
           id: meta.id,
           examId,
@@ -105,12 +124,12 @@ export class PatchExamContentHandler
     }
 
     // 5. Delete removed questions
-    if (dto.removedQuestionIds?.length) {
+    if (dto.removedQuestionIds && dto.removedQuestionIds.length > 0) {
       await this.repo.deleteExamQuestionsByIds(examId, dto.removedQuestionIds);
     }
 
-    // 6. Update counts only if questions changed
-    const hasQuestionChanges = sections.length > 0 || dto.removedQuestionIds?.length;
+    // 6. Update total question count + section counts
+    const hasQuestionChanges = sections.length > 0 || (dto.removedQuestionIds && dto.removedQuestionIds.length > 0);
     if (hasQuestionChanges) {
       const totalQuestions = await this.repo.countExamQuestionsByExamId(examId);
       exam.update({ totalQuestions });
@@ -121,7 +140,10 @@ export class PatchExamContentHandler
         ...(dto.sectionMetadata || []).map(s => s.id),
       ]);
       if (affectedSectionIds.size > 0) {
-        const sectionCounts = await this.repo.batchCountQuestionsBySectionIds(examId, Array.from(affectedSectionIds));
+        const sectionCounts = await this.repo.batchCountQuestionsBySectionIds(
+          examId,
+          Array.from(affectedSectionIds)
+        );
         for (const [sectionId, count] of sectionCounts) {
           const section = await this.repo.findSectionById(sectionId);
           if (section) {
@@ -132,26 +154,23 @@ export class PatchExamContentHandler
       }
     }
 
-    this.logger.log(`Exam ${examId} patched: ${sections.length} sections, ${totalUpdated} questions`);
-
-    return {
-      examId,
-      sectionsUpdated: sections.length,
-      questionsUpdated: totalUpdated,
-      tempIdMap: Object.fromEntries(allTempIdMaps),
-    };
+    this.logger.log(`[Edit] Content save completed for exam ${examId}: ${totalUpdated} questions`);
+    return { sectionsUpdated: sections.length, questionsUpdated: totalUpdated };
   }
 
   /**
-   * Differential section save — builds batch payload, delegates to repo.
+   * Question-level differential section save (same logic as handler.patchSection).
    */
   private async patchSection(
     examId: string,
     userId: string,
     sectionDto: PatchExamContentSectionDto
-  ): Promise<{ count: number; tempIdMap: Map<string, string> }> {
+  ): Promise<number> {
     const sectionId = sectionDto.id;
-    if (!sectionId) return { count: 0, tempIdMap: new Map() };
+    if (!sectionId) {
+      this.logger.warn('[Edit] Skipping section without id');
+      return 0;
+    }
 
     const existingLinks = await this.repo.findExamQuestionsByExamIdAndSectionId(examId, sectionId);
     const existingByQuestionId = new Map<string, { linkId: string; questionId: string; order: number }>();
@@ -221,12 +240,10 @@ export class PatchExamContentHandler
       };
     });
 
-    const count = await this.repo.batchUpsertQuestionsForPatch({
+    return this.repo.batchUpsertQuestionsForPatch({
       examId,
       userId,
       questions: batchQuestions,
     });
-
-    return { count, tempIdMap };
   }
 }
