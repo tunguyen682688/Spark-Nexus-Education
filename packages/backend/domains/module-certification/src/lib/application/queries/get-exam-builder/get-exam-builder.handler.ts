@@ -71,7 +71,7 @@ export class GetExamBuilderQueryHandler implements IQueryHandler<GetExamBuilderQ
       questionCount: realTimeCounts.get(section.id) ?? section.getQuestionCount(),
       durationMinutes: section.getDurationMinutes(),
       isBreak: section.getIsBreak(),
-      audioUrl: section.getAudioUrl(),
+      audioMediaId: section.getAudioMediaId(),
       scriptText: section.getScriptText(),
       passageText: section.getPassageText(),
       passageTitle: section.getPassageTitle(),

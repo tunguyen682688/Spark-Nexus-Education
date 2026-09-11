@@ -1,12 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import * as crypto from 'crypto';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { ExamEntity } from '../../../domain/entities/exam.entity';
 import { ExamSectionEntity } from '../../../domain/entities/exam-section.entity';
 import { CreateExamCommand } from './create-exam.command';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
 @CommandHandler(CreateExamCommand)
 export class CreateExamCommandHandler implements ICommandHandler<CreateExamCommand> {
@@ -15,8 +14,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
   constructor(
     @Inject(certificationRepoInterface.CERTIFICATION_REPOSITORY)
     private readonly repository: certificationRepoInterface.ICertificationRepository,
-    @InjectQueue('certification-init')
-    private readonly initQueue: Queue,
+    private readonly bullMQ: BullMQService,
   ) {}
 
   async execute(command: CreateExamCommand) {
@@ -28,49 +26,46 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
     }
 
     let validChapterId = chapterId ?? null;
-    if (validChapterId) {
-      const chapter = await this.repository.findChapterById(validChapterId);
+    if (chapterId) {
+      const chapters = await this.repository.findChaptersByCollectionId(collectionId);
+      const chapter = chapters.find((ch) => ch.id === chapterId);
       if (!chapter) {
-        validChapterId = null;
+        throw new NotFoundException(`Chapter ${chapterId} not found in collection ${collectionId}`);
       }
     }
 
-    const id = crypto.randomUUID();
-    const exam = ExamEntity.create({
-      id,
+    const examId = crypto.randomUUID();
+    const examEntity = ExamEntity.create({
+      id: examId,
+      collectionId,
       title,
       description: description ?? null,
-      duration: duration ?? 60,
+      duration: duration ?? 0,
       totalQuestions: totalQuestions ?? 0,
-      maxScore: maxScore ?? 100,
-      passScore: passScore ?? 50,
-      collectionId,
-      examType: examType ?? 'FULL_MOCK',
+      maxScore: maxScore ?? 0,
+      passScore: passScore ?? 0,
+      examType: examType ?? 'practice',
       certificationType: certificationType ?? null,
       level: level ?? null,
       chapterId: validChapterId,
-      createdBy: userId,
-      updatedBy: userId,
     });
 
-    const saved = await this.repository.saveExam(exam);
+    const saved = await this.repository.saveExam(examEntity);
 
-    // Auto-create sections if provided
+    // Create sections if provided
     const savedSections: ExamSectionEntity[] = [];
     if (sections && sections.length > 0) {
       for (let i = 0; i < sections.length; i++) {
-        const sec = sections[i];
+        const sectionData = sections[i];
         const sectionEntity = ExamSectionEntity.create({
           id: crypto.randomUUID(),
           examId: saved.id,
-          title: sec.title,
-          subtitle: sec.subtitle ?? null,
-          sectionType: sec.sectionType,
-          instruction: sec.instruction ?? null,
-          order: i + 1,
-          durationMinutes: sec.durationMinutes ?? 0,
-          questionCount: sec.questionCount ?? 0,
-          isBreak: sec.isBreak ?? false,
+          title: sectionData.title,
+          order: i,
+          sectionType: sectionData.sectionType ?? 'multiple-choice',
+          durationMinutes: sectionData.durationMinutes ?? undefined,
+          questionCount: sectionData.questionCount ?? 0,
+          instruction: sectionData.instruction ?? null,
         });
         const savedSection = await this.repository.saveExamSection(sectionEntity);
         savedSections.push(savedSection);
@@ -80,7 +75,8 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
     // Queue async question initialization for certification exams
     if (certificationType) {
       await this.repository.updateExamInitializationStatus(saved.id, 'pending');
-      await this.initQueue.add(
+      await this.bullMQ.add(
+        'certification-tasks',
         'initialize-exam-questions',
         {
           examId: saved.id,
@@ -104,7 +100,7 @@ export class CreateExamCommandHandler implements ICommandHandler<CreateExamComma
       examType: saved.getExamType(),
       certificationType: saved.getCertificationType(),
       level: saved.getLevel(),
-      initializationStatus: certificationType ? 'pending' : 'none',
+      readinessStatus: saved.getPublishStatus(),
     };
   }
 }

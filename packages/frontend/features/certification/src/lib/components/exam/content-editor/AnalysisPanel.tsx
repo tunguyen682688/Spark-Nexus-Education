@@ -320,8 +320,8 @@ export function AnalysisPanel({
                 {section.sectionType === 'listening' && (
                   <MediaUpload
                     type="audio"
-                    value={section.audioUrl}
-                    onChange={(url) => onUpdateSection?.(section.id, { audioUrl: url })}
+                    value={section.audioMediaId}
+                    onChange={(url) => onUpdateSection?.(section.id, { audioMediaId: url })}
                     label="Âm thanh section"
                   />
                 )}

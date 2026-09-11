@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { BullModule } from '@nestjs/bullmq';
 // ===== INFRASTRUCTURE MODULES =====
 import { InfrastructureDatabaseModule } from '@spark-nest-ed/infrastructure-database';
+import { InfrastructureCacheModule } from '@spark-nest-ed/infrastructure-cache';
 
 // ===== REPOSITORY IMPLEMENTATIONS =====
 import { VocabularySetRepository } from './infrastructure/repositories/vocabulary-set.repository';
@@ -35,10 +35,8 @@ import { VocabularySetCreationSaga } from './domain/sagas/vocabulary-set-creatio
 import { VocabularySetCreatedHandler } from './application/events/vocabulary-set-created.handler';
 import { EntryCreatedHandler } from './application/events/entry-created.handler';
 import { EntryAddedToSetHandler } from './application/events/entry-added-to-set.handler';
-  
 
-// ===== INFRASTRUCTURE LAYER: Processors =====
-import { VocabularySetImportProcessor } from './infrastructure/processors/vocabulary-set-import.processor';
+// ===== APPLICATION LAYER: Query Handlers =====
 import { GetVocabularySetQueryHandler } from './application/querys/get-vocabulary-set';
 import { GetWordsVocabularySetQueryHandler } from './application/querys/get-word-vocabulary-set';
 import { GetCommunityVocabularySetQueryHandler } from './application/querys/get-community-vocabulary-set';
@@ -47,20 +45,20 @@ import { GetUserFavoritesQueryHandler } from './application/querys/get-user-favo
 import { GetEntryDetailQueryHandler } from './application/querys/get-entry-detail';
 import { GetFlashcardSessionQueryHandler } from './application/querys/get-flashcard-session';
 
+// ===== INFRASTRUCTURE LAYER: Processors =====
+import { VocabularySetImportProcessor } from './infrastructure/processors/vocabulary-set-import.processor';
+
 @Module({
   imports: [
     CqrsModule.forRoot(),
-    BullModule.registerQueue({
-      name: 'vocabulary-set-import',
-    }),
-    InfrastructureDatabaseModule, // Provides PrismaService globally
+    InfrastructureDatabaseModule,
+    InfrastructureCacheModule,
+    // No BullModule — using BullMQService instead (1 shared connection)
   ],
   controllers: [
-    // ===== PRESENTATION LAYER: REST Controllers =====
     VocabularySetController,
   ],
   providers: [
-    // ===== APPLICATION LAYER: Command Handlers =====
     CreateVocabularySetHandler,
     UpdateVocabularySetHandler,
     AddWordToSetHandler,
@@ -68,8 +66,6 @@ import { GetFlashcardSessionQueryHandler } from './application/querys/get-flashc
     DeleteVocabularySetHandler,
     SyncVocabularySetItemsHandler,
     ReviewFlashcardHandler,
-
-    // ===== APPLICATION LAYER: Query Handlers =====
     GetVocabularySetQueryHandler,
     GetWordsVocabularySetQueryHandler,
     GetCommunityVocabularySetQueryHandler,
@@ -77,20 +73,12 @@ import { GetFlashcardSessionQueryHandler } from './application/querys/get-flashc
     GetUserFavoritesQueryHandler,
     GetEntryDetailQueryHandler,
     GetFlashcardSessionQueryHandler,
-    // ===== APPLICATION LAYER: Event Handlers =====
     VocabularySetCreatedHandler,
     EntryCreatedHandler,
     EntryAddedToSetHandler,
-
-    // ===== DOMAIN LAYER: Services =====
     VocabularySetCreationService,
     VocabularySetCreationOrchestrator,
-
-    // ===== DOMAIN LAYER: Sagas (NestJS CQRS) =====
     VocabularySetCreationSaga,
-
-    // ===== INFRASTRUCTURE LAYER: Repository Implementations =====
-    // Wire domain interfaces to concrete implementations
     {
       provide: VOCABULARY_SET_REPOSITORY,
       useClass: VocabularySetRepository,
@@ -107,13 +95,10 @@ import { GetFlashcardSessionQueryHandler } from './application/querys/get-flashc
       provide: USER_VOCABULARY_PROGRESS_REPOSITORY,
       useClass: UserVocabularyProgressRepository,
     },
-
-    // ===== INFRASTRUCTURE LAYER: Background Job Processors =====
     VocabularySetImportProcessor,
   ],
   exports: [
     CqrsModule,
-    // Export repositories
     VOCABULARY_SET_REPOSITORY,
     VOCABULARY_SET_ITEM_REPOSITORY,
     ENTRY_REPOSITORY,

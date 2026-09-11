@@ -10,8 +10,8 @@ export interface SectionQuestionsResult {
     type: string;
     difficulty: string;
     points: number;
-    imageUrl: string | null;
-    audioUrl: string | null;
+    imageMediaId: string | null;
+    audioMediaId: string | null;
     passageId: string | null;
     passageText: string | null;
     modelAnswer: string | null;

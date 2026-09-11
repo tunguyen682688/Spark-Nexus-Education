@@ -13,8 +13,8 @@ export interface ExamQuestion {
   points?: number;
   explanation?: string;
   estimatedTime?: number;
-  imageUrl?: string;
-  audioUrl?: string;
+  imageMediaId?: string;
+  audioMediaId?: string;
   passageGroupId?: string;
   passageText?: string;
   passageType?: string;
@@ -34,7 +34,7 @@ export interface ExamSection {
   durationMinutes?: number;
   questionCount?: number;
   isBreak?: boolean;
-  audioUrl?: string;
+  audioMediaId?: string;
   scriptText?: string;
   passageText?: string;
   passageTitle?: string;

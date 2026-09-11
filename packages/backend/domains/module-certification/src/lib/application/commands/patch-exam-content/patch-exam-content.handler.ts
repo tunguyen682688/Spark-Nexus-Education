@@ -94,11 +94,11 @@ export class PatchExamContentHandler
           durationMinutes: meta.durationMinutes ?? existing.getDurationMinutes(),
           questionCount: existing.getQuestionCount(),
           isBreak: existing.getIsBreak(),
-          audioUrl: existing.getAudioUrl(),
-          scriptText: existing.getScriptText(),
-          passageText: existing.getPassageText(),
-          passageTitle: existing.getPassageTitle(),
-          passageType: existing.getPassageType(),
+          audioMediaId: meta.audioMediaId ?? existing.getAudioMediaId(),
+          scriptText: meta.scriptText ?? existing.getScriptText(),
+          passageText: meta.passageText ?? existing.getPassageText(),
+          passageTitle: meta.passageTitle ?? existing.getPassageTitle(),
+          passageType: meta.passageType ?? existing.getPassageType(),
         });
         await this.repo.saveExamSection(section);
       }
@@ -205,8 +205,8 @@ export class PatchExamContentHandler
         modelAnswer: questionDto.modelAnswer,
         rubric: questionDto.rubric as string | undefined,
         estimatedTime: questionDto.estimatedTime,
-        audioUrl: questionDto.audioUrl,
-        imageUrl: questionDto.imageUrl,
+        audioMediaId: questionDto.audioMediaId,
+        imageMediaId: questionDto.imageMediaId,
         passageGroupId: questionDto.passageGroupId,
         passageText: questionDto.passageText,
         passageType: questionDto.passageType,

@@ -1,33 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ofType, Saga } from '@nestjs/cqrs';
 import { Observable, mergeMap, map, catchError, EMPTY } from 'rxjs';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 
 import { ReadingProgressUpdatedEvent } from '../events/reading-progress-updated.event';
 import { ReadingQuizSubmittedEvent } from '../events/reading-quiz-submitted.event';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
-/**
- * ReadingSaga
- *
- * NestJS CQRS Saga implementation for the Reading context.
- * Listens to domain events and triggers asynchronous/background workflow actions.
- */
 @Injectable()
 export class ReadingSaga {
   private readonly logger = new Logger(ReadingSaga.name);
 
-  constructor(
-    @InjectQueue('reading-tasks')
-    private readonly readingQueue: Queue
-  ) {}
+  constructor(private readonly bullMQ: BullMQService) {}
 
-  /**
-   * Saga: Handle ReadingProgressUpdatedEvent
-   *
-   * Triggers when user saves/updates progress.
-   * If the article is completed (progress === 100), pushes a job to process completion analytics.
-   */
   @Saga()
   readingProgressUpdated = (
     events$: Observable<ReadingProgressUpdatedEvent>
@@ -40,11 +24,8 @@ export class ReadingSaga {
         );
 
         if (event.progress === 100) {
-          this.logger.log(
-            `Article completed! Queuing background analytics for user ${event.userId}, article ${event.articleId}`
-          );
-
-          await this.readingQueue.add(
+          await this.bullMQ.add(
+            'reading-tasks',
             'process-reading-completion',
             {
               userId: event.userId,
@@ -52,13 +33,7 @@ export class ReadingSaga {
               timeSpent: event.timeSpent,
               completedAt: event.completedAt,
             },
-            {
-              attempts: 3,
-              backoff: {
-                type: 'exponential',
-                delay: 2000,
-              },
-            }
+            { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
           );
         }
       }),
@@ -70,12 +45,6 @@ export class ReadingSaga {
     );
   };
 
-  /**
-   * Saga: Handle ReadingQuizSubmittedEvent
-   *
-   * Triggers when user submits a quiz.
-   * Queues a background job to process result metrics and adjust mastery levels.
-   */
   @Saga()
   readingQuizSubmitted = (
     events$: Observable<ReadingQuizSubmittedEvent>
@@ -87,7 +56,8 @@ export class ReadingSaga {
           `Saga: ReadingQuizSubmittedEvent received. User: ${event.userId}, Article: ${event.articleId}, Score: ${event.score}%`
         );
 
-        await this.readingQueue.add(
+        await this.bullMQ.add(
+          'reading-tasks',
           'process-quiz-result',
           {
             userId: event.userId,
@@ -96,13 +66,7 @@ export class ReadingSaga {
             correctCount: event.correctCount,
             totalQuestions: event.totalQuestions,
           },
-          {
-            attempts: 3,
-            backoff: {
-              type: 'exponential',
-              delay: 2000,
-            },
-          }
+          { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
         );
       }),
       map(() => undefined),

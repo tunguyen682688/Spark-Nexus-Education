@@ -12,9 +12,9 @@ export class ExamQuestionEntity extends Entity<string> {
     private updatedBy: string | null,
     createdAt: Date,
     updatedAt: Date,
-    // Per-exam media overrides
-    private audioUrl: string | null,
-    private imageUrl: string | null,
+    // Per-exam media overrides — reference MediaFile by ID
+    private audioMediaId: string | null,
+    private imageMediaId: string | null,
     // Per-exam positioning
     private partNumber: number | null,
     private gapNumber: number | null,
@@ -31,6 +31,7 @@ export class ExamQuestionEntity extends Entity<string> {
     private subQuestionNumber: number | null,
     private passageTitle: string | null,
     private passageType: string | null,
+    private contentHash: string | null,
   ) {
     super(id, createdAt, updatedAt);
   }
@@ -46,8 +47,8 @@ export class ExamQuestionEntity extends Entity<string> {
     updatedBy?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
-    audioUrl?: string | null;
-    imageUrl?: string | null;
+    audioMediaId?: string | null;
+    imageMediaId?: string | null;
     partNumber?: number | null;
     gapNumber?: number | null;
     writingTaskType?: string | null;
@@ -59,6 +60,7 @@ export class ExamQuestionEntity extends Entity<string> {
     subQuestionNumber?: number | null;
     passageTitle?: string | null;
     passageType?: string | null;
+    contentHash?: string | null;
   }): ExamQuestionEntity {
     const now = new Date();
     return new ExamQuestionEntity(
@@ -72,8 +74,8 @@ export class ExamQuestionEntity extends Entity<string> {
       params.updatedBy ?? null,
       params.createdAt ?? now,
       params.updatedAt ?? now,
-      params.audioUrl ?? null,
-      params.imageUrl ?? null,
+      params.audioMediaId ?? null,
+      params.imageMediaId ?? null,
       params.partNumber ?? null,
       params.gapNumber ?? null,
       params.writingTaskType ?? null,
@@ -85,6 +87,7 @@ export class ExamQuestionEntity extends Entity<string> {
       params.subQuestionNumber ?? null,
       params.passageTitle ?? null,
       params.passageType ?? null,
+      params.contentHash ?? null,
     );
   }
 
@@ -116,12 +119,12 @@ export class ExamQuestionEntity extends Entity<string> {
     return this.updatedBy;
   }
 
-  getAudioUrl(): string | null {
-    return this.audioUrl;
+  getAudioMediaId(): string | null {
+    return this.audioMediaId;
   }
 
-  getImageUrl(): string | null {
-    return this.imageUrl;
+  getImageMediaId(): string | null {
+    return this.imageMediaId;
   }
 
   getPartNumber(): number | null {
@@ -168,13 +171,17 @@ export class ExamQuestionEntity extends Entity<string> {
     return this.passageType;
   }
 
+  getContentHash(): string | null {
+    return this.contentHash;
+  }
+
   update(params: {
     sectionId?: string | null;
     order?: number;
     points?: number;
     updatedBy?: string | null;
-    audioUrl?: string | null;
-    imageUrl?: string | null;
+    audioMediaId?: string | null;
+    imageMediaId?: string | null;
     partNumber?: number | null;
     gapNumber?: number | null;
     writingTaskType?: string | null;
@@ -186,13 +193,14 @@ export class ExamQuestionEntity extends Entity<string> {
     subQuestionNumber?: number | null;
     passageTitle?: string | null;
     passageType?: string | null;
+    contentHash?: string | null;
   }): void {
     if (params.sectionId !== undefined) this.sectionId = params.sectionId;
     if (params.order !== undefined) this.order = params.order;
     if (params.points !== undefined) this.points = params.points;
     if (params.updatedBy !== undefined) this.updatedBy = params.updatedBy;
-    if (params.audioUrl !== undefined) this.audioUrl = params.audioUrl;
-    if (params.imageUrl !== undefined) this.imageUrl = params.imageUrl;
+    if (params.audioMediaId !== undefined) this.audioMediaId = params.audioMediaId;
+    if (params.imageMediaId !== undefined) this.imageMediaId = params.imageMediaId;
     if (params.partNumber !== undefined) this.partNumber = params.partNumber;
     if (params.gapNumber !== undefined) this.gapNumber = params.gapNumber;
     if (params.writingTaskType !== undefined) this.writingTaskType = params.writingTaskType;
@@ -204,6 +212,7 @@ export class ExamQuestionEntity extends Entity<string> {
     if (params.subQuestionNumber !== undefined) this.subQuestionNumber = params.subQuestionNumber;
     if (params.passageTitle !== undefined) this.passageTitle = params.passageTitle;
     if (params.passageType !== undefined) this.passageType = params.passageType;
+    if (params.contentHash !== undefined) this.contentHash = params.contentHash;
   }
 
   toPlainObject(): Record<string, unknown> {
@@ -218,8 +227,8 @@ export class ExamQuestionEntity extends Entity<string> {
       updatedBy: this.updatedBy,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      audioUrl: this.audioUrl,
-      imageUrl: this.imageUrl,
+      audioMediaId: this.audioMediaId,
+      imageMediaId: this.imageMediaId,
       partNumber: this.partNumber,
       gapNumber: this.gapNumber,
       writingTaskType: this.writingTaskType,
@@ -231,6 +240,7 @@ export class ExamQuestionEntity extends Entity<string> {
       subQuestionNumber: this.subQuestionNumber,
       passageTitle: this.passageTitle,
       passageType: this.passageType,
+      contentHash: this.contentHash,
     };
   }
 }

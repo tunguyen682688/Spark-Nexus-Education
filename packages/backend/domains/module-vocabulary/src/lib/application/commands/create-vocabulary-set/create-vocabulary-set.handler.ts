@@ -6,8 +6,7 @@ import {
 } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { Inject, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
 import { CreateVocabularySetCommand } from './create-vocabulary-set.command';
 import { VocabularySetAggregate } from '../../../domain/aggregates/vocabulary-set.aggregate';
@@ -58,8 +57,7 @@ export class CreateVocabularySetHandler
     @Inject(VOCABULARY_SET_REPOSITORY)
     private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository,
     private readonly eventBus: EventBus,
-    @InjectQueue('vocabulary-set-import')
-    private readonly importQueue: Queue,
+    private readonly bullMQ: BullMQService,
     private readonly orchestrator: VocabularySetCreationOrchestrator
   ) {}
 
@@ -200,35 +198,47 @@ export class CreateVocabularySetHandler
 
     const persistedSet = await this.vocabularySetRepository.create(set);
 
-    // Step 2: Queue background job
-    await this.importQueue.add(
-      'import-vocabulary-words',
-      {
-        vocabularySetId: persistedSet.getId(),
-        words: initialWords,
-        language: language,
-        userId: userId,
-      },
-      {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000,
+    // Step 2: Queue background jobs — split into chunks to avoid large Redis payloads
+    const BATCH_SIZE = 50;
+    const chunks: typeof initialWords[] = [];
+    for (let i = 0; i < initialWords.length; i += BATCH_SIZE) {
+      chunks.push(initialWords.slice(i, i + BATCH_SIZE));
+    }
+
+    for (let i = 0; i < chunks.length; i++) {
+      await this.bullMQ.add(
+        'vocabulary-set-import',
+        'import-vocabulary-words',
+        {
+          vocabularySetId: persistedSet.getId(),
+          words: chunks[i],
+          language: language,
+          userId: userId,
+          batchIndex: i,
+          totalBatches: chunks.length,
         },
-        removeOnComplete: {
-          age: 3600,
-          count: 1000,
-        },
-        removeOnFail: {
-          age: 86400,
-        },
-      }
-    );
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+          removeOnComplete: {
+            age: 1800,
+            count: 50,
+          },
+          removeOnFail: {
+            age: 3600,
+            count: 10,
+          },
+        }
+      );
+    }
 
     this.logger.log(
-      `Queued background job for vocabulary set ${persistedSet.getId()} with ${
+      `Queued ${chunks.length} import jobs for vocabulary set ${persistedSet.getId()} with ${
         initialWords.length
-      } words`
+      } words (${BATCH_SIZE}/batch)`
     );
 
     // Step 3: Publish creation event

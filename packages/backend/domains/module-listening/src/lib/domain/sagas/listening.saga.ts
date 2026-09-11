@@ -1,32 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ofType, Saga } from '@nestjs/cqrs';
 import { Observable, mergeMap, map, catchError, EMPTY } from 'rxjs';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 
 import { ListeningMaterialCreatedEvent } from '../events/listening-material-created.event';
 import { ListeningProgressUpdatedEvent } from '../events/listening-progress-updated.event';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
-/**
- * ListeningSaga
- *
- * NestJS CQRS Saga implementation for the Listening context.
- * Listens to domain events and triggers background/asynchronous workflow actions.
- */
 @Injectable()
 export class ListeningSaga {
   private readonly logger = new Logger(ListeningSaga.name);
 
-  constructor(
-    @InjectQueue('listening-tasks')
-    private readonly queue: Queue
-  ) {}
+  constructor(private readonly bullMQ: BullMQService) {}
 
-  /**
-   * Saga: Handle ListeningMaterialCreatedEvent
-   *
-   * Queues a background job to warm up caches when a new material is created.
-   */
   @Saga()
   materialCreated = (
     events$: Observable<ListeningMaterialCreatedEvent>
@@ -38,18 +23,11 @@ export class ListeningSaga {
           `Saga: ListeningMaterialCreatedEvent received for material ${event.materialId}`
         );
 
-        await this.queue.add(
+        await this.bullMQ.add(
+          'listening-tasks',
           'warm-material-cache',
-          {
-            materialId: event.materialId,
-          },
-          {
-            attempts: 3,
-            backoff: {
-              type: 'exponential',
-              delay: 2000,
-            },
-          }
+          { materialId: event.materialId },
+          { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
         );
       }),
       map(() => undefined),
@@ -60,12 +38,6 @@ export class ListeningSaga {
     );
   };
 
-  /**
-   * Saga: Handle ListeningProgressUpdatedEvent
-   *
-   * Queues a background job to perform stats aggregation and daily streak analysis
-   * when a user updates progress or completes a listening material.
-   */
   @Saga()
   progressUpdated = (
     events$: Observable<ListeningProgressUpdatedEvent>
@@ -74,27 +46,18 @@ export class ListeningSaga {
       ofType(ListeningProgressUpdatedEvent),
       mergeMap(async (event: ListeningProgressUpdatedEvent) => {
         this.logger.log(
-          `Saga: ListeningProgressUpdatedEvent received for user ${event.userId}, material ${event.materialId}, progress: ${event.progress}%`
+          `Saga: ListeningProgressUpdatedEvent received for user ${event.userId}, material ${event.materialId}`
         );
 
-        this.logger.log(
-          `Queuing background stats aggregation for user ${event.userId}`
-        );
-
-        await this.queue.add(
+        await this.bullMQ.add(
+          'listening-tasks',
           'aggregate-user-listening-stats',
           {
             userId: event.userId,
             materialId: event.materialId,
             timeSpent: event.timeSpent,
           },
-          {
-            attempts: 3,
-            backoff: {
-              type: 'exponential',
-              delay: 2000,
-            },
-          }
+          { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
         );
       }),
       map(() => undefined),

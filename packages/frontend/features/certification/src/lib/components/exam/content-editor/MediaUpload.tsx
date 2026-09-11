@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, Image, Music, Link, Trash2 } from 'lucide-react';
+import { Upload, Image, Music, Link, Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useFileUpload } from '@spark-nest-ed/frontend-shared-hooks';
 
 interface MediaUploadProps {
   type: 'image' | 'audio';
@@ -21,10 +22,19 @@ export function MediaUpload({
   className = '',
 }: MediaUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [inputMode, setInputMode] = useState<'drop' | 'url'>(value ? 'drop' : 'drop');
+  const [inputMode, setInputMode] = useState<'drop' | 'url'>('drop');
   const [urlInput, setUrlInput] = useState('');
   const [previewError, setPreviewError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { upload, status, progress, error, reset } = useFileUpload({
+    visibility: 'public',
+    onSuccess: (file) => {
+      onChange(file.id);
+      setPreviewError(false);
+    },
+    onError: () => {},
+  });
 
   const Icon = type === 'image' ? Image : Music;
   const accept = type === 'image' ? 'image/jpeg,image/png,image/gif,image/webp' : 'audio/mpeg,audio/wav,audio/ogg,audio/mp4';
@@ -32,14 +42,8 @@ export function MediaUpload({
 
   const handleFile = useCallback((file: File) => {
     if (disabled) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      onChange(result);
-      setPreviewError(false);
-    };
-    reader.readAsDataURL(file);
-  }, [disabled, onChange]);
+    upload(file);
+  }, [disabled, upload]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -75,14 +79,19 @@ export function MediaUpload({
     onChange(undefined);
     setUrlInput('');
     setPreviewError(false);
+    reset();
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [onChange]);
+  }, [onChange, reset]);
+
+  const isUploading = status === 'requesting' || status === 'uploading' || status === 'confirming';
+  const uploadSuccess = status === 'done';
+  const uploadError = status === 'error';
 
   return (
     <div className={`space-y-2 ${className}`}>
       <label className="flex items-center gap-1.5 text-[11px] font-bold text-foreground uppercase tracking-wide">
         <Icon className="w-3.5 h-3.5 text-indigo-500" />
-        {label || (type === 'image' ? 'Hình ảnh' : 'Âm thanh')}
+        {label || (type === 'image' ? 'Hinh anh' : 'Am thanh')}
         {required && <span className="text-rose-500">*</span>}
       </label>
 
@@ -117,8 +126,44 @@ export function MediaUpload({
         </div>
       )}
 
+      {/* Upload progress */}
+      {isUploading && (
+        <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+            <span className="text-[11px] font-semibold text-indigo-600">
+              {status === 'requesting' && 'Dang tao lien ket...'}
+              {status === 'uploading' && `Dang tai len... ${progress}%`}
+              {status === 'confirming' && 'Dang xac nhan...'}
+            </span>
+          </div>
+          <div className="w-full bg-indigo-100 dark:bg-indigo-900/30 rounded-full h-1.5">
+            <div
+              className="bg-indigo-500 h-1.5 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Upload success */}
+      {uploadSuccess && !value && (
+        <div className="flex items-center gap-2 text-[11px] text-emerald-600 font-semibold">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Tai len thanh cong
+        </div>
+      )}
+
+      {/* Upload error */}
+      {uploadError && (
+        <div className="flex items-center gap-2 text-[11px] text-rose-600 font-semibold">
+          <AlertCircle className="w-3.5 h-3.5" />
+          {error?.message || 'Tai len that bai'}
+        </div>
+      )}
+
       {/* Drop zone / URL input */}
-      {!value && (
+      {!value && !isUploading && (
         <div className="space-y-2">
           {/* Toggle buttons */}
           <div className="flex gap-1">
@@ -131,7 +176,7 @@ export function MediaUpload({
               }`}
             >
               <Upload className="w-3 h-3" />
-              Tải file
+              Tai file
             </button>
             <button
               onClick={() => setInputMode('url')}
@@ -142,7 +187,7 @@ export function MediaUpload({
               }`}
             >
               <Link className="w-3 h-3" />
-              Dán URL
+              Dan URL
             </button>
           </div>
 
@@ -165,10 +210,10 @@ export function MediaUpload({
               </div>
               <div className="text-center">
                 <p className="text-[11px] font-semibold text-foreground">
-                  {isDragging ? 'Thả file vào đây' : 'Kéo thả hoặc nhấn để chọn'}
+                  {isDragging ? 'Tha file vao day' : 'Keo hoac nhan de chon'}
                 </p>
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  Hỗ trợ: {hint}
+                  Ho tro: {hint}
                 </p>
               </div>
               <input
@@ -195,7 +240,7 @@ export function MediaUpload({
                 disabled={disabled || !urlInput.trim()}
                 className="px-3 py-2 text-[11px] font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
-                Áp dụng
+                Ap dung
               </button>
             </div>
           )}

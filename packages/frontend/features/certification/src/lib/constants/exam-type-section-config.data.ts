@@ -27,7 +27,7 @@ export interface ExamTypeSectionConfig {
 
 const TOEIC_LISTENING: ExamTypeSectionConfig = {
   sectionFields: [
-    { key: 'audioUrl', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
+    { key: 'audioMediaId', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
     { key: 'scriptText', label: 'Script / Transcript', type: 'textarea', placeholder: 'Transcript của bài nghe...' },
   ],
   questionGroups: [
@@ -60,7 +60,7 @@ const TOEIC_READING: ExamTypeSectionConfig = {
 
 const IELTS_LISTENING: ExamTypeSectionConfig = {
   sectionFields: [
-    { key: 'audioUrl', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
+    { key: 'audioMediaId', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
     { key: 'scriptText', label: 'Script / Transcript', type: 'textarea', placeholder: 'Transcript...' },
   ],
   questionGroups: [
@@ -123,7 +123,7 @@ const IELTS_SPEAKING: ExamTypeSectionConfig = {
 
 const VSTEP_LISTENING: ExamTypeSectionConfig = {
   sectionFields: [
-    { key: 'audioUrl', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
+    { key: 'audioMediaId', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
     { key: 'scriptText', label: 'Script / Transcript', type: 'textarea' },
   ],
   questionGroups: [
@@ -214,7 +214,7 @@ const CAMBRIDGE_WRITING: ExamTypeSectionConfig = {
 
 const CAMBRIDGE_LISTENING: ExamTypeSectionConfig = {
   sectionFields: [
-    { key: 'audioUrl', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
+    { key: 'audioMediaId', label: 'Audio URL', type: 'url', placeholder: 'https://...mp3', required: true },
     { key: 'scriptText', label: 'Script / Transcript', type: 'textarea' },
   ],
   questionGroups: [
@@ -246,7 +246,7 @@ const CAMBRIDGE_SPEAKING: ExamTypeSectionConfig = {
 
 const GENERIC_LISTENING: ExamTypeSectionConfig = {
   sectionFields: [
-    { key: 'audioUrl', label: 'Audio URL', type: 'url', placeholder: 'https://...', required: true },
+    { key: 'audioMediaId', label: 'Audio URL', type: 'url', placeholder: 'https://...', required: true },
     { key: 'scriptText', label: 'Script', type: 'textarea' },
   ],
   questionGroups: [],

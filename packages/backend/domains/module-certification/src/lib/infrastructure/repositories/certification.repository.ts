@@ -675,7 +675,7 @@ export class CertificationRepository implements ICertificationRepository {
       durationMinutes: section.getDurationMinutes(),
       questionCount: section.getQuestionCount(),
       isBreak: section.getIsBreak(),
-      audioUrl: section.getAudioUrl(),
+      audioMediaId: section.getAudioMediaId(),
       scriptText: section.getScriptText(),
       passageText: section.getPassageText(),
       passageTitle: section.getPassageTitle(),
@@ -1321,8 +1321,8 @@ export class CertificationRepository implements ICertificationRepository {
         type: this.mapQuestionType(eq.question?.type),
         difficulty: this.mapDifficulty(eq.question?.difficulty),
         points: eq.points,
-        imageUrl: eq.imageUrl ?? null,
-        audioUrl: eq.audioUrl ?? null,
+        imageMediaId: eq.imageMediaId ?? null,
+        audioMediaId: eq.audioMediaId ?? null,
         partNumber: eq.partNumber ?? null,
         // From QuestionMetadata (question-level, shared across exams)
         passageId: eq.question?.metadata?.passageId ?? null,
@@ -1377,8 +1377,8 @@ export class CertificationRepository implements ICertificationRepository {
       points: entity.getPoints(),
       createdBy: entity.getCreatedBy(),
       updatedBy: entity.getUpdatedBy(),
-      audioUrl: entity.getAudioUrl(),
-      imageUrl: entity.getImageUrl(),
+      audioMediaId: entity.getAudioMediaId(),
+      imageMediaId: entity.getImageMediaId(),
       partNumber: entity.getPartNumber(),
       gapNumber: entity.getGapNumber(),
       writingTaskType: entity.getWritingTaskType(),
@@ -2025,8 +2025,8 @@ export class CertificationRepository implements ICertificationRepository {
       modelAnswer?: string;
       rubric?: string;
       estimatedTime?: number;
-      audioUrl?: string;
-      imageUrl?: string;
+      audioMediaId?: string;
+      imageMediaId?: string;
       passageGroupId?: string;
       passageText?: string;
       passageType?: string;
@@ -2158,8 +2158,8 @@ export class CertificationRepository implements ICertificationRepository {
               sectionId: q.sectionId,
               order: q.order,
               points: q.points,
-              audioUrl: q.audioUrl ?? null,
-              imageUrl: q.imageUrl ?? null,
+              audioMediaId: q.audioMediaId ?? null,
+              imageMediaId: q.imageMediaId ?? null,
               partNumber: q.sectionOrder,
               formatMetadata: (q.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
               passageGroupId: q.passageGroupId ?? null,
@@ -2330,8 +2330,8 @@ export class CertificationRepository implements ICertificationRepository {
         points: number;
         createdBy: string;
         updatedBy: string;
-        audioUrl: string | null;
-        imageUrl: string | null;
+        audioMediaId: string | null;
+        imageMediaId: string | null;
         partNumber: number;
         formatMetadata: unknown | null;
         passageGroupId: string | null;
@@ -2425,8 +2425,8 @@ export class CertificationRepository implements ICertificationRepository {
           points: q.examQuestion.points,
           createdBy: q.examQuestion.createdBy,
           updatedBy: q.examQuestion.updatedBy,
-          audioUrl: q.examQuestion.audioUrl,
-          imageUrl: q.examQuestion.imageUrl,
+          audioMediaId: q.examQuestion.audioMediaId,
+          imageMediaId: q.examQuestion.imageMediaId,
           partNumber: q.examQuestion.partNumber,
           formatMetadata: (q.examQuestion.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
           passageGroupId: q.examQuestion.passageGroupId,
@@ -2455,8 +2455,8 @@ export class CertificationRepository implements ICertificationRepository {
     modelAnswer?: string;
     rubric?: string;
     estimatedTime?: number;
-    audioUrl?: string;
-    imageUrl?: string;
+    audioMediaId?: string;
+    imageMediaId?: string;
     passageGroupId?: string;
     passageText?: string;
     passageType?: string;
@@ -2477,8 +2477,8 @@ export class CertificationRepository implements ICertificationRepository {
       de: q.detailedExplanation,
       r: q.rubric,
       et: q.estimatedTime,
-      au: q.audioUrl,
-      im: q.imageUrl,
+      au: q.audioMediaId,
+      im: q.imageMediaId,
       pg: q.passageGroupId,
       pt: q.passageText,
       pp: q.passageType,
@@ -2544,7 +2544,7 @@ export class CertificationRepository implements ICertificationRepository {
       durationMinutes: dbObj.durationMinutes ?? 0,
       questionCount: dbObj.questionCount ?? 0,
       isBreak: dbObj.isBreak ?? false,
-      audioUrl: dbObj.audioUrl ?? undefined,
+      audioMediaId: dbObj.audioMediaId ?? undefined,
       scriptText: dbObj.scriptText ?? undefined,
       passageText: dbObj.passageText ?? undefined,
       passageTitle: dbObj.passageTitle ?? undefined,
@@ -2632,8 +2632,8 @@ export class CertificationRepository implements ICertificationRepository {
       updatedBy: dbObj.updatedBy,
       createdAt: dbObj.createdAt,
       updatedAt: dbObj.updatedAt,
-      audioUrl: dbObj.audioUrl,
-      imageUrl: dbObj.imageUrl,
+      audioMediaId: dbObj.audioMediaId,
+      imageMediaId: dbObj.imageMediaId,
       partNumber: dbObj.partNumber,
       gapNumber: dbObj.gapNumber,
       writingTaskType: dbObj.writingTaskType,

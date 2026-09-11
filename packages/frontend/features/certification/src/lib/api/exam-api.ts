@@ -76,8 +76,8 @@ export class ExamApi {
       type: string;
       difficulty: string;
       points: number;
-      imageUrl: string | null;
-      audioUrl: string | null;
+      imageMediaId: string | null;
+      audioMediaId: string | null;
       passageId: string | null;
       passageText: string | null;
       modelAnswer: string | null;
@@ -112,8 +112,8 @@ export class ExamApi {
       type: string;
       difficulty: string;
       points: number;
-      imageUrl: string | null;
-      audioUrl: string | null;
+      imageMediaId: string | null;
+      audioMediaId: string | null;
       passageId: string | null;
       passageText: string | null;
       modelAnswer: string | null;
@@ -157,7 +157,7 @@ export class ExamApi {
       order: number;
       durationMinutes?: number;
       isBreak?: boolean;
-      audioUrl?: string;
+      audioMediaId?: string;
       scriptText?: string;
       passageText?: string;
       passageTitle?: string;
@@ -173,8 +173,8 @@ export class ExamApi {
         explanation?: string;
         points: number;
         estimatedTime?: number;
-        audioUrl?: string;
-        imageUrl?: string;
+        audioMediaId?: string;
+        imageMediaId?: string;
         passageGroupId?: string;
         passageText?: string;
         passageType?: string;
@@ -210,7 +210,7 @@ export class ExamApi {
       order?: number;
       durationMinutes?: number;
       isBreak?: boolean;
-      audioUrl?: string;
+      audioMediaId?: string;
       scriptText?: string;
       passageText?: string;
       passageTitle?: string;
@@ -226,8 +226,8 @@ export class ExamApi {
         explanation?: string;
         points: number;
         estimatedTime?: number;
-        audioUrl?: string;
-        imageUrl?: string;
+        audioMediaId?: string;
+        imageMediaId?: string;
         passageGroupId?: string;
         passageText?: string;
         passageType?: string;
@@ -245,6 +245,11 @@ export class ExamApi {
       instruction?: string;
       order?: number;
       durationMinutes?: number;
+      audioMediaId?: string;
+      scriptText?: string;
+      passageText?: string;
+      passageTitle?: string;
+      passageType?: string;
     }>;
   }): Promise<{ examId: string; sectionsUpdated: number; questionsUpdated: number; tempIdMap?: Record<string, string> }> {
     const client = await getAxiosInstance();

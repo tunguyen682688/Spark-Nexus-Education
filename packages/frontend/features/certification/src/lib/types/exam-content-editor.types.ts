@@ -26,8 +26,8 @@ export interface ExamSectionQuestion {
   estimatedTime?: number; // seconds
   
   // Format-specific fields
-  audioUrl?: string;
-  imageUrl?: string;
+  audioMediaId?: string;
+  imageMediaId?: string;
   passageGroupId?: string;
   subQuestionNumber?: number;
   
@@ -62,7 +62,7 @@ export interface ExamSectionContent {
   isBreak: boolean;
   
   // Section-specific content
-  audioUrl?: string;
+  audioMediaId?: string;
   passageText?: string;
   passageTitle?: string;
   passageType?: string;

@@ -12,7 +12,7 @@ export class ExamSectionEntity extends Entity<string> {
     private durationMinutes: number,
     private questionCount: number,
     private isBreak: boolean,
-    private audioUrl: string | null,
+    private audioMediaId: string | null,
     private scriptText: string | null,
     private passageText: string | null,
     private passageTitle: string | null,
@@ -34,7 +34,7 @@ export class ExamSectionEntity extends Entity<string> {
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
-    audioUrl?: string | null;
+    audioMediaId?: string | null;
     scriptText?: string | null;
     passageText?: string | null;
     passageTitle?: string | null;
@@ -54,7 +54,7 @@ export class ExamSectionEntity extends Entity<string> {
       params.durationMinutes ?? 0,
       params.questionCount ?? 0,
       params.isBreak ?? false,
-      params.audioUrl ?? null,
+      params.audioMediaId ?? null,
       params.scriptText ?? null,
       params.passageText ?? null,
       params.passageTitle ?? null,
@@ -100,8 +100,8 @@ export class ExamSectionEntity extends Entity<string> {
     return this.isBreak;
   }
 
-  getAudioUrl(): string | null {
-    return this.audioUrl;
+  getAudioMediaId(): string | null {
+    return this.audioMediaId;
   }
 
   getScriptText(): string | null {
@@ -129,7 +129,7 @@ export class ExamSectionEntity extends Entity<string> {
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
-    audioUrl?: string | null;
+    audioMediaId?: string | null;
     scriptText?: string | null;
     passageText?: string | null;
     passageTitle?: string | null;
@@ -143,7 +143,7 @@ export class ExamSectionEntity extends Entity<string> {
     if (params.durationMinutes !== undefined) this.durationMinutes = params.durationMinutes;
     if (params.questionCount !== undefined) this.questionCount = params.questionCount;
     if (params.isBreak !== undefined) this.isBreak = params.isBreak;
-    if (params.audioUrl !== undefined) this.audioUrl = params.audioUrl;
+    if (params.audioMediaId !== undefined) this.audioMediaId = params.audioMediaId;
     if (params.scriptText !== undefined) this.scriptText = params.scriptText;
     if (params.passageText !== undefined) this.passageText = params.passageText;
     if (params.passageTitle !== undefined) this.passageTitle = params.passageTitle;
@@ -163,7 +163,7 @@ export class ExamSectionEntity extends Entity<string> {
       durationMinutes: this.durationMinutes,
       questionCount: this.questionCount,
       isBreak: this.isBreak,
-      audioUrl: this.audioUrl,
+      audioMediaId: this.audioMediaId,
       scriptText: this.scriptText,
       passageText: this.passageText,
       passageTitle: this.passageTitle,

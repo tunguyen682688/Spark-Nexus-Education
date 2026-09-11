@@ -36,7 +36,7 @@ export interface ExamBuilderResult {
     questionCount: number;
     durationMinutes: number;
     isBreak: boolean;
-    audioUrl: string | null;
+    audioMediaId: string | null;
     scriptText: string | null;
     passageText: string | null;
     passageTitle: string | null;
@@ -49,7 +49,7 @@ export interface ExamBuilderResult {
       type: string;
       difficulty: string;
       points: number;
-      imageUrl: string | null;
+      imageMediaId: string | null;
     }>;
   }>;
   blueprint: {

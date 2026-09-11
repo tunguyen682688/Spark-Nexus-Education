@@ -1,8 +1,8 @@
 import { Command } from '@nestjs/cqrs';
 
 export interface ExamFormatFields {
-  audioUrl?: string | null;
-  imageUrl?: string | null;
+  audioMediaId?: string | null;
+  imageMediaId?: string | null;
   partNumber?: number | null;
   gapNumber?: number | null;
   writingTaskType?: string | null;

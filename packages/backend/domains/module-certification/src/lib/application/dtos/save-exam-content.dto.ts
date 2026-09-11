@@ -91,17 +91,17 @@ export class SaveExamContentQuestionDto {
   @Transform(({ value }) => value ?? undefined)
   estimatedTime?: number;
 
-  @ApiPropertyOptional({ description: 'Audio URL override' })
+  @ApiPropertyOptional({ description: 'Audio media ID' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value ?? undefined)
-  audioUrl?: string;
+  audioMediaId?: string;
 
-  @ApiPropertyOptional({ description: 'Image URL override' })
+  @ApiPropertyOptional({ description: 'Image media ID' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value ?? undefined)
-  imageUrl?: string;
+  imageMediaId?: string;
 
   @ApiPropertyOptional({ description: 'Passage group ID' })
   @IsOptional()
@@ -190,11 +190,11 @@ export class SaveExamContentSectionDto {
   @Transform(({ value }) => value ?? undefined)
   isBreak?: boolean;
 
-  @ApiPropertyOptional({ description: 'Audio URL (listening sections)' })
+  @ApiPropertyOptional({ description: 'Audio media ID (listening sections)' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value ?? undefined)
-  audioUrl?: string;
+  audioMediaId?: string;
 
   @ApiPropertyOptional({ description: 'Script text (listening sections)' })
   @IsOptional()
@@ -318,6 +318,36 @@ export class PatchSectionMetadataDto {
   @IsNumber()
   @Transform(({ value }) => value ?? undefined)
   durationMinutes?: number;
+
+  @ApiPropertyOptional({ description: 'Section audio media ID' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value ?? undefined)
+  audioMediaId?: string;
+
+  @ApiPropertyOptional({ description: 'Listening script text' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value ?? undefined)
+  scriptText?: string;
+
+  @ApiPropertyOptional({ description: 'Passage text (reading)' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value ?? undefined)
+  passageText?: string;
+
+  @ApiPropertyOptional({ description: 'Passage title' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value ?? undefined)
+  passageTitle?: string;
+
+  @ApiPropertyOptional({ description: 'Passage type (single, double, triple)' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value ?? undefined)
+  passageType?: string;
 }
 
 export class PatchExamSettingsDto {

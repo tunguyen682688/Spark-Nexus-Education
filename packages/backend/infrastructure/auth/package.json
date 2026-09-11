@@ -48,6 +48,7 @@
     "passport-jwt": "^4.0.1",
     "jwks-rsa": "^3.2.0",
     "@spark-nest-ed/infrastructure-database": "0.0.1",
+    "@spark-nest-ed/infrastructure-cache": "0.0.1",
     "ioredis": "^5.8.2",
     "axios": "^1.13.2",
     "express": "5.1.0"

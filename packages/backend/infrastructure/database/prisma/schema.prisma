@@ -1260,8 +1260,8 @@ model ExamSection {
   questionCount   Int      @default(0) @map("question_count")
   isBreak         Boolean  @default(false) @map("is_break")
 
-  // Section-level media and content (TOEIC Parts 3, 4 share audio at section level)
-  audioUrl        String?  @map("audio_url") @db.VarChar(500)
+  // Section-level media — reference MediaFile by ID (not URL)
+  audioMediaId    String?  @map("audio_media_id")
   scriptText      String?  @map("script_text") @db.Text
   passageText     String?  @map("passage_text") @db.Text
   passageTitle    String?  @map("passage_title") @db.VarChar(255)
@@ -1275,9 +1275,11 @@ model ExamSection {
   // Relations
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
   questions ExamQuestion[]
+  audioMedia MediaFile? @relation("ExamSectionAudio", fields: [audioMediaId], references: [id], onDelete: SetNull)
 
   @@index([examId])
   @@index([examId, order])
+  @@index([audioMediaId])
   @@map("exam_sections")
 }
 
@@ -1296,9 +1298,9 @@ model ExamQuestion {
   // Content hash for server-side skip-unchanged optimization
   contentHash String? @map("content_hash") @db.VarChar(64)
 
-  // Per-exam media overrides (same question can have different audio/image per exam)
-  audioUrl       String? @map("audio_url") @db.VarChar(500)
-  imageUrl       String? @map("image_url") @db.VarChar(500)
+  // Per-exam media overrides — reference MediaFile by ID (not URL)
+  audioMediaId    String?  @map("audio_media_id")
+  imageMediaId    String?  @map("image_media_id")
 
   // Per-exam positioning
   partNumber     Int?    @map("part_number")
@@ -1325,10 +1327,14 @@ model ExamQuestion {
   exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   section  ExamSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  audioMedia MediaFile? @relation("ExamQuestionAudio", fields: [audioMediaId], references: [id], onDelete: SetNull)
+  imageMedia MediaFile? @relation("ExamQuestionImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
 
   @@index([examId])
   @@index([questionId])
   @@index([sectionId])
+  @@index([audioMediaId])
+  @@index([imageMediaId])
   @@index([examId, sectionId])
   @@index([examId, order])
   @@unique([examId, questionId])
@@ -1719,4 +1725,36 @@ model DiscussionReply {
   @@index([discussionId, createdAt])
   @@index([userId])
   @@map("discussion_replies")
+}
+
+// ─── Object Storage ──────────────────────────────────────────────────────────
+model MediaFile {
+  id            String   @id @default(uuid())
+  storageKey    String   @unique @map("storage_key") // "media/{uuid}.{ext}" — server-generated
+  bucket        String   // "r2-primary" | "b2-backup"
+  provider      String   // "r2" | "b2" | "local"
+  mimeType      String   @map("mime_type") @db.VarChar(127)
+  size          Int      // bytes
+  originalName  String   @map("original_name") @db.VarChar(500)
+  width         Int?
+  height        Int?
+  visibility    String   @default("public") // "public" | "private"
+  status        String   @default("pending") // "pending" | "active" | "deleted" | "processing"
+  checksum      String?  @db.VarChar(64) // SHA-256 for dedup
+  ownerId       String?  @map("owner_id")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  // Reverse relations
+  examSections ExamSection[] @relation("ExamSectionAudio")
+  examQuestionAudio ExamQuestion[] @relation("ExamQuestionAudio")
+  examQuestionImage ExamQuestion[] @relation("ExamQuestionImage")
+
+  @@index([storageKey])
+  @@index([checksum])
+  @@index([ownerId])
+  @@index([status])
+  @@map("media_files")
 }

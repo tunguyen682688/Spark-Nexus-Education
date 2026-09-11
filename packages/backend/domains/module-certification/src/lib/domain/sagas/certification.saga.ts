@@ -1,21 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ofType, Saga } from '@nestjs/cqrs';
 import { Observable, mergeMap, map, catchError, EMPTY } from 'rxjs';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { ExamSessionSubmittedEvent } from '../events/exam-session-submitted.event';
 import { ExamSessionStartedEvent } from '../events/exam-session-started.event';
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
 @Injectable()
 export class CertificationSaga {
   private readonly logger = new Logger(CertificationSaga.name);
 
   constructor(
-    @InjectQueue('certification-scoring')
-    private readonly scoringQueue: Queue,
-    @InjectQueue('certification-analytics')
-    private readonly analyticsQueue: Queue,
+    private readonly bullMQ: BullMQService,
     private readonly cacheService: CertificationCacheService
   ) {}
 
@@ -30,7 +26,6 @@ export class CertificationSaga {
           `Saga: ExamSessionStartedEvent received for session ${event.sessionId}, user ${event.userId}`
         );
 
-        // Invalidate dashboard cache when a session starts
         const cacheKey = `certification:dashboard:${event.userId}`;
         await this.cacheService.delete(cacheKey);
         this.logger.log(`Saga: Invalidated cache key: ${cacheKey}`);
@@ -54,39 +49,27 @@ export class CertificationSaga {
           `Saga: ExamSessionSubmittedEvent received for session ${event.sessionId}, user ${event.userId}`
         );
 
-        // 1. Invalidate caches
-        const dashboardCacheKey = `certification:dashboard:${event.userId}`;
-        const studyPlanCacheKey = `certification:study-plan:${event.userId}`;
-        
         await Promise.all([
-          this.cacheService.delete(dashboardCacheKey),
-          this.cacheService.delete(studyPlanCacheKey),
+          this.cacheService.delete(`certification:dashboard:${event.userId}`),
+          this.cacheService.delete(`certification:study-plan:${event.userId}`),
         ]);
-        
-        this.logger.log(`Saga: Invalidated cache keys: ${dashboardCacheKey}, ${studyPlanCacheKey}`);
 
-        // 2. Queue scoring job (heavy — goes to scoring queue)
-        await this.scoringQueue.add(
-          'calculate-exam-score',
-          {
-            sessionId: event.sessionId,
-            examId: event.examId,
-            userId: event.userId,
-          },
-        );
+        // Queue scoring job
+        await this.bullMQ.add('certification-tasks', 'calculate-exam-score', {
+          sessionId: event.sessionId,
+          examId: event.examId,
+          userId: event.userId,
+        });
 
-        // 3. Queue analytics job (light — goes to analytics queue)
-        await this.analyticsQueue.add(
-          'process-exam-analytics',
-          {
-            sessionId: event.sessionId,
-            examId: event.examId,
-            userId: event.userId,
-            score: event.score,
-            passed: event.passed,
-            submittedAt: event.submittedAt,
-          },
-        );
+        // Queue analytics job
+        await this.bullMQ.add('certification-tasks', 'process-exam-analytics', {
+          sessionId: event.sessionId,
+          examId: event.examId,
+          userId: event.userId,
+          score: event.score,
+          passed: event.passed,
+          submittedAt: event.submittedAt,
+        });
       }),
       map(() => undefined),
       catchError((error) => {

@@ -14,8 +14,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import * as auth from '@spark-nest-ed/infrastructure-auth';
 import express from 'express';
@@ -120,6 +119,7 @@ import {
 } from '../../application/commands';
 
 import { CertificationCacheService } from '../../infrastructure/cache/certification-cache.service';
+import { SharedCacheService } from '@spark-nest-ed/infrastructure-cache';
 import { CollectionEntity } from '../../domain/entities/collection.entity';
 
 @ApiTags('Certification')
@@ -129,8 +129,8 @@ export class CertificationController {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
     private readonly cacheService: CertificationCacheService,
-    @InjectQueue('certification-init')
-    private readonly initQueue: Queue,
+    private readonly sharedCache: SharedCacheService,
+    private readonly bullMQ: BullMQService,
   ) {}
 
   /**
@@ -218,34 +218,26 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const cacheKey = `certification:dashboard:${user.id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
-    );
-    if (cached) {
-      return cached;
-    }
+    return this.sharedCache.singleflight(cacheKey, 300, async () => {
+      const result = await this.queryBus.execute(
+        new GetCertificationDashboardQuery(user.id)
+      );
 
-    const result = await this.queryBus.execute(
-      new GetCertificationDashboardQuery(user.id)
-    );
+      const dashboardEntity = {
+        id: user.id,
+        ...result,
+      };
 
-    const dashboardEntity = {
-      id: user.id,
-      ...result,
-    };
-
-    const response = convertEntityToJsonApi(
-      dashboardEntity,
-      'certification-dashboard',
-      {
-        selfLink: getSelfLinkFromRequest(req, 'dashboard'),
-        message: 'Certification dashboard retrieved successfully',
-        version: '1.0.0',
-      }
-    );
-
-    await this.cacheService.set(cacheKey, response, 300); // 5 mins cache
-    return response;
+      return convertEntityToJsonApi(
+        dashboardEntity,
+        'certification-dashboard',
+        {
+          selfLink: getSelfLinkFromRequest(req, 'dashboard'),
+          message: 'Certification dashboard retrieved successfully',
+          version: '1.0.0',
+        }
+      );
+    });
   }
 
   @Get('creator-dashboard')
@@ -303,12 +295,15 @@ export class CertificationController {
     @auth.CurrentUser() user: auth.AuthUser,
     @Req() req: express.Request
   ) {
-    const data = await this.queryBus.execute(new GetCollectionEditorQuery(id, user.id));
+    const cacheKey = `certification:editor:${id}`;
+    return this.sharedCache.singleflight(cacheKey, 300, async () => {
+      const data = await this.queryBus.execute(new GetCollectionEditorQuery(id, user.id));
 
-    return convertEntityToJsonApi(data, 'collection-editor', {
-      selfLink: getSelfLinkFromRequest(req, `collections/${id}/editor`),
-      message: 'Collection editor details retrieved successfully',
-      version: '1.0.0',
+      return convertEntityToJsonApi(data, 'collection-editor', {
+        selfLink: getSelfLinkFromRequest(req, `collections/${id}/editor`),
+        message: 'Collection editor details retrieved successfully',
+        version: '1.0.0',
+      });
     });
   }
 
@@ -407,14 +402,17 @@ export class CertificationController {
     }
 
     // Re-queue the initialization job
-    await this.cacheService.delete(`certification:init-progress:${id}`);
-    await this.cacheService.delete(`certification:exams:${id}`);
+    await this.sharedCache.deleteMany([
+      `certification:init-progress:${id}`,
+      `certification:exams:${id}`,
+    ]);
 
     if (!examData.certificationType) {
       throw new NotFoundException(`Exam ${id} has no certification type`);
     }
 
-    await this.initQueue.add(
+    await this.bullMQ.add(
+      'certification-tasks',
       'initialize-exam-questions',
       {
         examId: id,
@@ -629,44 +627,34 @@ export class CertificationController {
     const exam = queryParams.exam;
     const search = queryParams.search;
 
-    const cacheKey = `certification:collections:featured:${JSON.stringify(
-      parsedParams
-    )}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
-    );
-    if (cached) {
-      return cached;
-    }
+    const cacheKey = `certification:collections:featured:${this.sharedCache.hashParams(parsedParams as Record<string, unknown>)}`;
+    return this.sharedCache.singleflight(cacheKey, 600, async () => {
+      const result = await this.queryBus.execute(
+        new GetFeaturedCollectionsQuery(exam, search, parsedParams)
+      );
 
-    const result = await this.queryBus.execute(
-      new GetFeaturedCollectionsQuery(exam, search, parsedParams)
-    );
+      const mappedItems = result.items.map(
+        (collection: CollectionEntity) =>
+          this.mapCollectionToResponse(collection, 'Featured')
+      );
 
-    const mappedItems = result.items.map(
-      (collection: CollectionEntity) =>
-        this.mapCollectionToResponse(collection, 'Featured')
-    );
-
-    const response = createJsonApiPaginatedResponse(
-      mappedItems,
-      result.total,
-      'certification-collection',
-      getBaseUrlFromRequest(req),
-      {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
-      },
-      {
-        version: '1.0.0',
-        message: 'Featured collections retrieved successfully',
-      }
-    );
-
-    await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
-    return response;
+      return createJsonApiPaginatedResponse(
+        mappedItems,
+        result.total,
+        'certification-collection',
+        getBaseUrlFromRequest(req),
+        {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+        {
+          version: '1.0.0',
+          message: 'Featured collections retrieved successfully',
+        }
+      );
+    });
   }
 
   @Get('collections/trending')
@@ -686,44 +674,34 @@ export class CertificationController {
     @Req() req: express.Request
   ) {
     const parsedParams = createQueryParamsFromObject(queryParams);
-    const cacheKey = `certification:collections:trending:${JSON.stringify(
-      parsedParams
-    )}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
-    );
-    if (cached) {
-      return cached;
-    }
+    const cacheKey = `certification:collections:trending:${this.sharedCache.hashParams(parsedParams as Record<string, unknown>)}`;
+    return this.sharedCache.singleflight(cacheKey, 600, async () => {
+      const result = await this.queryBus.execute(
+        new GetTrendingCollectionsQuery(parsedParams)
+      );
 
-    const result = await this.queryBus.execute(
-      new GetTrendingCollectionsQuery(parsedParams)
-    );
+      const mappedItems = result.items.map(
+        (collection: CollectionEntity) =>
+          this.mapCollectionToResponse(collection, 'Trending')
+      );
 
-    const mappedItems = result.items.map(
-      (collection: CollectionEntity) =>
-        this.mapCollectionToResponse(collection, 'Trending')
-    );
-
-    const response = createJsonApiPaginatedResponse(
-      mappedItems,
-      result.total,
-      'certification-collection',
-      getBaseUrlFromRequest(req),
-      {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
-      },
-      {
-        version: '1.0.0',
-        message: 'Trending collections retrieved successfully',
-      }
-    );
-
-    await this.cacheService.set(cacheKey, response, 600);
-    return response;
+      return createJsonApiPaginatedResponse(
+        mappedItems,
+        result.total,
+        'certification-collection',
+        getBaseUrlFromRequest(req),
+        {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+        {
+          version: '1.0.0',
+          message: 'Trending collections retrieved successfully',
+        }
+      );
+    });
   }
 
   @Get('collections/official')
@@ -1709,8 +1687,8 @@ export class CertificationController {
         dto.points,
         dto.sectionId,
         {
-          audioUrl: dto.audioUrl,
-          imageUrl: dto.imageUrl,
+          audioMediaId: dto.audioMediaId,
+          imageMediaId: dto.imageMediaId,
           partNumber: dto.partNumber,
           gapNumber: dto.gapNumber,
           writingTaskType: dto.writingTaskType,
@@ -1775,8 +1753,10 @@ export class CertificationController {
     const result = await this.commandBus.execute(
       new SaveCollectionCommand(id, user.id)
     );
-    await this.cacheService.delete(`certification:saved:${user.id}`);
-    await this.cacheService.delete(`certification:bookmarks:${user.id}`);
+    await this.sharedCache.deleteMany([
+      `certification:saved:${user.id}`,
+      `certification:bookmarks:${user.id}`,
+    ]);
     return convertEntityToJsonApi(
       { id, ...result },
       'certification-collection-save',
@@ -1910,22 +1890,14 @@ export class CertificationController {
   })
   async getExam(@Param('id') id: string, @Req() req: express.Request) {
     const cacheKey = `certification:exams:${id}`;
-    const cached = await this.cacheService.get<Record<string, unknown>>(
-      cacheKey
-    );
-    if (cached) {
-      return cached;
-    }
-
-    const result = await this.queryBus.execute(new GetExamQuery(id));
-    const response = convertEntityToJsonApi(result, 'certification-exam', {
-      selfLink: getSelfLinkFromRequest(req, `exams/${id}`),
-      message: 'Exam structure retrieved successfully',
-      version: '1.0.0',
+    return this.sharedCache.singleflight(cacheKey, 600, async () => {
+      const result = await this.queryBus.execute(new GetExamQuery(id));
+      return convertEntityToJsonApi(result, 'certification-exam', {
+        selfLink: getSelfLinkFromRequest(req, `exams/${id}`),
+        message: 'Exam structure retrieved successfully',
+        version: '1.0.0',
+      });
     });
-
-    await this.cacheService.set(cacheKey, response, 600); // 10 mins cache
-    return response;
   }
 
   @Get('sessions/in-progress')

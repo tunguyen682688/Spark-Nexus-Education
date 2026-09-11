@@ -146,7 +146,7 @@ function mapBuilderDataToState(data: {
     durationMinutes?: number;
     questionCount?: number;
     isBreak?: boolean;
-    audioUrl?: string;
+    audioMediaId?: string;
     scriptText?: string;
     passageText?: string;
     passageTitle?: string;
@@ -160,8 +160,8 @@ function mapBuilderDataToState(data: {
       difficulty?: string;
       points?: number;
       explanation?: string;
-      imageUrl?: string;
-      audioUrl?: string;
+      imageMediaId?: string;
+      audioMediaId?: string;
       passageGroupId?: string;
       passageText?: string;
       passageType?: string;
@@ -204,7 +204,7 @@ function mapBuilderDataToState(data: {
       durationMinutes: s.durationMinutes || 0,
       questionCount: s.questionCount ?? s.questions?.length ?? 0,
       isBreak: s.isBreak || false,
-      audioUrl: s.audioUrl || undefined,
+      audioMediaId: s.audioMediaId || undefined,
       scriptText: s.scriptText || undefined,
       passageText: s.passageText || undefined,
       passageTitle: s.passageTitle || undefined,
@@ -228,8 +228,8 @@ function mapBuilderDataToState(data: {
         explanation: q.explanation ?? undefined,
         points: q.points || 1,
         estimatedTime: q.estimatedTime ?? undefined,
-        audioUrl: q.audioUrl ?? undefined,
-        imageUrl: q.imageUrl ?? undefined,
+        audioMediaId: q.audioMediaId ?? undefined,
+        imageMediaId: q.imageMediaId ?? undefined,
         passageGroupId: q.passageGroupId ?? undefined,
         passageText: q.passageText ?? undefined,
         passageType: q.passageType ?? undefined,
@@ -289,8 +289,8 @@ function mapSectionQuestionsToState(
     type: string;
     difficulty: string;
     points: number;
-    imageUrl: string | null;
-    audioUrl: string | null;
+    imageMediaId: string | null;
+    audioMediaId: string | null;
     passageId: string | null;
     passageText: string | null;
     modelAnswer: string | null;
@@ -353,8 +353,8 @@ function mapSectionQuestionsToState(
       explanation: q.explanation || undefined,
       points: q.metadataPoints || q.points || 1,
       estimatedTime: q.estimatedTime || undefined,
-      audioUrl: q.audioUrl || undefined,
-      imageUrl: q.imageUrl || undefined,
+      audioMediaId: q.audioMediaId || undefined,
+      imageMediaId: q.imageMediaId || undefined,
       passageGroupId: q.passageGroupId || q.passageId || undefined,
       passageText: q.passageText || undefined,
       passageType: q.passageType || undefined,

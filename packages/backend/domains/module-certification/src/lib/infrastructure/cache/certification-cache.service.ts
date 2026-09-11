@@ -1,96 +1,23 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+import { Injectable } from '@nestjs/common';
+import { SharedCacheService } from '@spark-nest-ed/infrastructure-cache';
 
 @Injectable()
-export class CertificationCacheService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(CertificationCacheService.name);
-  private redis: Redis | null = null;
-
-  constructor(private readonly configService: ConfigService) {}
-
-  onModuleInit() {
-    this.initializeRedis();
-  }
-
-  onModuleDestroy() {
-    if (this.redis) {
-      this.redis.disconnect();
-    }
-  }
-
-  private initializeRedis(): void {
-    try {
-      const redisHost = this.configService.get<string>('REDIS_HOST');
-      const redisPort = parseInt(this.configService.get<string>('REDIS_PORT') ?? '6379', 10);
-      const redisPassword = this.configService.get<string>('REDIS_PASSWORD');
-
-      if (redisHost && redisHost.trim() !== '') {
-        this.redis = new Redis({
-          host: redisHost,
-          port: redisPort,
-          ...(redisPassword && redisPassword.trim() !== '' ? { password: redisPassword } : {}),
-          maxRetriesPerRequest: 1,
-          connectTimeout: 2000,
-        });
-
-        this.redis.on('error', (err) => {
-          this.logger.warn(`Redis connection error, cache disabled: ${err.message}`);
-        });
-
-        this.logger.log('🚀 Redis cache initialized successfully for Certification Module');
-      } else {
-        this.logger.warn('Redis is not configured. Cache disabled.');
-      }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Failed to initialize Redis cache: ${msg}`);
-      this.redis = null;
-    }
-  }
+export class CertificationCacheService {
+  constructor(private readonly cache: SharedCacheService) {}
 
   async get<T>(key: string): Promise<T | null> {
-    if (!this.redis) return null;
-    try {
-      const val = await this.redis.get(key);
-      return val ? JSON.parse(val) : null;
-    } catch (err) {
-      this.logger.warn(`Failed to get cache key ${key}: ${(err as Error).message}`);
-      return null;
-    }
+    return this.cache.get<T>(key);
   }
 
   async set(key: string, value: unknown, ttlSeconds = 300): Promise<void> {
-    if (!this.redis) return;
-    try {
-      await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
-    } catch (err) {
-      this.logger.warn(`Failed to set cache key ${key}: ${(err as Error).message}`);
-    }
+    return this.cache.set(key, value, ttlSeconds);
   }
 
   async delete(key: string): Promise<void> {
-    if (!this.redis) return;
-    try {
-      await this.redis.del(key);
-    } catch (err) {
-      this.logger.warn(`Failed to delete cache key ${key}: ${(err as Error).message}`);
-    }
+    return this.cache.delete(key);
   }
 
   async clearPattern(pattern: string): Promise<void> {
-    if (!this.redis) return;
-    try {
-      let cursor = '0';
-      do {
-        const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
-        cursor = nextCursor;
-        if (keys.length > 0) {
-          await this.redis.del(...keys);
-        }
-      } while (cursor !== '0');
-    } catch (err) {
-      this.logger.warn(`Failed to clear cache pattern ${pattern}: ${(err as Error).message}`);
-    }
+    return this.cache.clearPattern(pattern);
   }
 }

@@ -46,6 +46,12 @@
       "path": "../../packages/backend/domains/module-user/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/backend/infrastructure/cache"
+    },
+    {
+      "path": "../../packages/backend/infrastructure/storage/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/backend/infrastructure/database/tsconfig.lib.json"
     },
     {

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { BullModule } from '@nestjs/bullmq';
 import { InfrastructureDatabaseModule } from '@spark-nest-ed/infrastructure-database';
+import { InfrastructureCacheModule } from '@spark-nest-ed/infrastructure-cache';
 
 // Controller
 import { ReadingController } from './presentation/controllers/reading.controller';
@@ -45,16 +45,12 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({
-      name: 'reading-tasks',
-    }),
     InfrastructureDatabaseModule,
+    InfrastructureCacheModule,
+    // No BullModule — using BullMQService instead (1 shared connection)
   ],
-  controllers: [
-    ReadingController,
-  ],
+  controllers: [ReadingController],
   providers: [
-    // ===== APPLICATION LAYER: Query Handlers =====
     GetReadingDashboardQueryHandler,
     GetArticlesQueryHandler,
     GetArticleQueryHandler,
@@ -63,8 +59,6 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
     GetCommunityArticlesHandler,
     GetMyArticlesHandler,
     TranslateParagraphQueryHandler,
-
-    // ===== APPLICATION LAYER: Command Handlers =====
     UpdateReadingProgressCommandHandler,
     SubmitArticleQuizCommandHandler,
     CreateCommunityArticleHandler,
@@ -73,39 +67,14 @@ import { ReadingProcessor } from './infrastructure/processors/reading.processor'
     CreateStudioArticleHandler,
     UpdateStudioArticleHandler,
     DeleteStudioArticleHandler,
-
-    // ===== APPLICATION LAYER: Event Handlers =====
     ReadingProgressUpdatedHandler,
     ReadingQuizSubmittedHandler,
-
-    // ===== INFRASTRUCTURE LAYER: Service Implementations =====
-    {
-      provide: READING_QUIZ_SERVICE,
-      useClass: ReadingQuizService,
-    },
-    {
-      provide: TRANSLATION_SERVICE,
-      useClass: TranslationService,
-    },
-
-    // ===== INFRASTRUCTURE LAYER: Repository Implementation =====
-    {
-      provide: READING_REPOSITORY,
-      useClass: ReadingRepository,
-    },
-
-    // ===== DOMAIN LAYER: Saga =====
+    { provide: READING_QUIZ_SERVICE, useClass: ReadingQuizService },
+    { provide: TRANSLATION_SERVICE, useClass: TranslationService },
+    { provide: READING_REPOSITORY, useClass: ReadingRepository },
     ReadingSaga,
-
-    // ===== INFRASTRUCTURE LAYER: Background Job Processor =====
     ReadingProcessor,
   ],
-  exports: [
-    CqrsModule,
-    READING_REPOSITORY,
-    READING_QUIZ_SERVICE,
-    TRANSLATION_SERVICE,
-  ],
+  exports: [CqrsModule, READING_REPOSITORY, READING_QUIZ_SERVICE, TRANSLATION_SERVICE],
 })
 export class ReadingModule {}
-

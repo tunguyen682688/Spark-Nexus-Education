@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { BullModule } from '@nestjs/bullmq';
 import { InfrastructureDatabaseModule } from '@spark-nest-ed/infrastructure-database';
+import { InfrastructureCacheModule } from '@spark-nest-ed/infrastructure-cache';
 
 // Controller
 import { ListeningController } from './presentation/controllers/listening.controller';
@@ -29,21 +29,18 @@ import { ListeningCacheService } from './infrastructure/cache/listening-cache.se
 // Services
 import { ListeningService } from './domain/services/listening.service';
 
-// Saga & Processors
+// Saga & Processor
 import { ListeningSaga } from './domain/sagas/listening.saga';
 import { ListeningProcessor } from './infrastructure/processors/listening.processor';
 
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({
-      name: 'listening-tasks',
-    }),
     InfrastructureDatabaseModule,
+    InfrastructureCacheModule,
+    // No BullModule — using BullMQService instead (1 shared connection)
   ],
-  controllers: [
-    ListeningController,
-  ],
+  controllers: [ListeningController],
   providers: [
     ListeningCacheService,
     ListeningService,
@@ -63,10 +60,6 @@ import { ListeningProcessor } from './infrastructure/processors/listening.proces
     ListeningSaga,
     ListeningProcessor,
   ],
-  exports: [
-    CqrsModule,
-    LISTENING_REPOSITORY,
-    ListeningService,
-  ],
+  exports: [CqrsModule, LISTENING_REPOSITORY, ListeningService],
 })
 export class ListeningModule {}

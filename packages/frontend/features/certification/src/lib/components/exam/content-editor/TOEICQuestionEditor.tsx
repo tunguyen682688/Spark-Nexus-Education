@@ -26,8 +26,8 @@ type QuestionFormValues = {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   points: number;
   estimatedTime: number;
-  audioUrl: string;
-  imageUrl: string;
+  audioMediaId: string;
+  imageMediaId: string;
   explanation: string;
   passageText: string;
   blankIndex: number;
@@ -133,8 +133,8 @@ export function TOEICQuestionEditor({
     difficulty: question.difficulty || 'Medium',
     points: question.points || 1,
     estimatedTime: question.estimatedTime || 10,
-    audioUrl: question.audioUrl || '',
-    imageUrl: question.imageUrl || '',
+    audioMediaId: question.audioMediaId || '',
+    imageMediaId: question.imageMediaId || '',
     explanation: question.explanation || '',
     passageText: question.passageText || '',
     blankIndex: question.blankIndex || questionIndex + 1,
@@ -312,7 +312,7 @@ export function TOEICQuestionEditor({
             {/* Audio (for listening parts) */}
             {partConfig.showAudio && (
               <Controller
-                name="audioUrl"
+                name="audioMediaId"
                 control={control}
                 render={({ field }) => (
                   <MediaUpload
@@ -320,7 +320,7 @@ export function TOEICQuestionEditor({
                     value={field.value || undefined}
                     onChange={(url) => {
                       field.onChange(url || '');
-                      onUpdateRef.current({ audioUrl: url });
+                      onUpdateRef.current({ audioMediaId: url });
                     }}
                     label={`Âm thanh câu hỏi ${isListeningPart ? '(bắt buộc cho phần nghe)' : ''}`}
                     required={isListeningPart}
@@ -438,7 +438,7 @@ export function TOEICQuestionEditor({
             {/* Image (for Part 1) */}
             {partConfig.showImage && (
               <Controller
-                name="imageUrl"
+                name="imageMediaId"
                 control={control}
                 render={({ field }) => (
                   <MediaUpload
@@ -446,7 +446,7 @@ export function TOEICQuestionEditor({
                     value={field.value || undefined}
                     onChange={(url) => {
                       field.onChange(url || '');
-                      onUpdateRef.current({ imageUrl: url });
+                      onUpdateRef.current({ imageMediaId: url });
                     }}
                     label="Hình ảnh câu hỏi (bắt buộc cho Part 1)"
                     required={section.order === 1}

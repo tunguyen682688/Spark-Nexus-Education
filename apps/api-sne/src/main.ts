@@ -9,6 +9,7 @@ import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BigIntSerializerInterceptor } from './big-int-serializer.interceptor';
 import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -31,6 +32,13 @@ async function bootstrap() {
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
+  // Serve uploaded files (local storage dev mode)
+  const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+  app.use('/uploads', express.static(uploadDir, {
+    maxAge: '1d',
+    immutable: false,
+  }));
+
   // Graceful shutdown
   const shutdown = async () => {
     logger.log('🛑 Shutdown signal received, closing application...');
@@ -39,46 +47,6 @@ async function bootstrap() {
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
-
-  // Bull Board dashboard (dev only)
-  if (isDevelopment) {
-    try {
-      const { createBullBoard } = await import('@bull-board/api');
-      const { BullMQAdapter } = await import('@bull-board/api/bullMQAdapter');
-      const { ExpressAdapter } = await import('@bull-board/express');
-      const { Queue } = await import('bullmq');
-
-      const serverAdapter = new ExpressAdapter();
-      serverAdapter.setBasePath('/api/admin/queues');
-
-      const redisHost = process.env.REDIS_HOST || 'localhost';
-      const redisPort = parseInt(process.env.REDIS_PORT ?? '6379', 10);
-      const redisPassword = process.env.REDIS_PASSWORD;
-
-      const connection = {
-        host: redisHost,
-        port: redisPort,
-        ...(redisPassword && redisPassword.trim() !== '' ? { password: redisPassword } : {}),
-      };
-
-      const queues = [
-        'certification-init',
-        'certification-scoring',
-        'certification-analytics',
-        'certification-publishing',
-      ];
-
-      createBullBoard({
-        queues: queues.map((name) => new BullMQAdapter(new Queue(name, { connection }))),
-        serverAdapter,
-      });
-
-      app.use('/api/admin/queues', serverAdapter.getRouter());
-      logger.log(`📊 Bull Board dashboard available at /api/admin/queues`);
-    } catch (error) {
-      logger.warn(`⚠️ Bull Board not available: ${(error as Error).message}`);
-    }
-  }
 
   // Global prefix
   const globalPrefix = 'api';
@@ -97,103 +65,62 @@ async function bootstrap() {
           'http://localhost:3000',
           'http://localhost:4200',
           'http://localhost:5173',
+          'http://localhost:5174',
+          'http://localhost:3001',
+          'http://127.0.0.1:4200',
+          'http://127.0.0.1:5173',
         ]
-      : process.env.CORS_ORIGIN?.split(',') || [],
+      : process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',').map((o: string) => o.trim())
+        : [],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   });
-  logger.log('✅ CORS enabled');
 
-  // Global Validation Pipe
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
       transform: true,
       transformOptions: {
         enableImplicitConversion: true,
       },
-    })
+    }),
   );
-  logger.log('✅ Global validation pipe configured');
 
-  // Global BigInt serializer — converts all BigInt values to Number before JSON serialization
+  // Global BigInt serializer interceptor
   app.useGlobalInterceptors(new BigIntSerializerInterceptor());
-  logger.log('✅ Global BigInt serializer interceptor configured');
 
-  // Swagger Documentation (Development only)
+  // Swagger (dev only)
   if (isDevelopment) {
     const config = new DocumentBuilder()
-      .setTitle('EnglishReelNet API')
-      .setDescription(
-        'API documentation for EnglishReelNet - English learning platform'
-      )
+      .setTitle('Spark Nexus Ed API')
+      .setDescription('API documentation for Spark Nexus Ed English learning platform')
       .setVersion('1.0')
       .addBearerAuth(
         {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description:
-            'Enter JWT token from Auth0. Token will be automatically prefixed with "Bearer ".',
+          name: 'Authorization',
+          in: 'header',
         },
-        'JWT' // Security scheme name/key - must match @ApiBearerAuth('JWT')
+        'access-token',
       )
       .build();
-
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document, {
-      customSiteTitle: 'EnglishReelNet API Docs',
-      customfavIcon: '📚',
-      customCss: '.swagger-ui .topbar { display: none }',
-      swaggerOptions: {
-        persistAuthorization: true, // Persist auth token across page refreshes
-        displayRequestDuration: true,
-        filter: true,
-        showExtensions: true,
-        showCommonExtensions: true,
-        docExpansion: 'none', // Collapse all endpoints by default
-        defaultModelsExpandDepth: 1,
-        defaultModelExpandDepth: 1,
-      },
-    });
-    logger.log('📚 Swagger documentation available at /api/docs');
+    SwaggerModule.setup('api/docs', app, document);
+    logger.log(`📚 Swagger docs available at /api/docs`);
   }
 
   // Start server
   const port = process.env.PORT || 3000;
-  const host = process.env.HOST || 'localhost';
+  await app.listen(port);
 
-  await app.listen(port, host);
-
-  // Display startup information
-  logger.log('');
-  logger.log('═══════════════════════════════════════════');
-  logger.log(`🚀 Application successfully started!`);
-  logger.log('═══════════════════════════════════════════');
-  logger.log(`📍 Server URL: http://${host}:${port}/${globalPrefix}`);
-
-  if (isDevelopment) {
-    logger.log(`📖 API Documentation: http://${host}:${port}/api/docs`);
-    logger.log(
-      `🔍 Health Check: http://${host}:${port}/${globalPrefix}/health`
-    );
-  }
-
+  logger.log(`🚀 Server running on http://localhost:${port}`);
   logger.log(`🌍 Environment: ${environment}`);
-  logger.log(
-    `🔌 CORS: ${
-      isDevelopment ? 'Development (permissive)' : 'Production (restricted)'
-    }`
-  );
-  logger.log(`✨ API Version: v1`);
-  logger.log('═══════════════════════════════════════════');
-  logger.log('');
 }
 
-bootstrap().catch((error) => {
-  const logger = new Logger('Bootstrap');
-  logger.error('❌ Failed to start application:', error);
-  process.exit(1);
-});
+bootstrap();

@@ -21,7 +21,6 @@
     ]
   },
   "dependencies": {
-    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.0",
     "@nestjs/cqrs": "^11.0.3",
     "@nestjs/swagger": "^11.2.1",

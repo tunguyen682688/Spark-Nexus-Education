@@ -175,8 +175,8 @@ export interface ICertificationRepository {
       modelAnswer?: string;
       rubric?: string;
       estimatedTime?: number;
-      audioUrl?: string;
-      imageUrl?: string;
+      audioMediaId?: string;
+      imageMediaId?: string;
       passageGroupId?: string;
       passageText?: string;
       passageType?: string;
@@ -243,8 +243,8 @@ export interface ICertificationRepository {
         points: number;
         createdBy: string;
         updatedBy: string;
-        audioUrl: string | null;
-        imageUrl: string | null;
+        audioMediaId: string | null;
+        imageMediaId: string | null;
         partNumber: number;
         formatMetadata: unknown | null;
         passageGroupId: string | null;
@@ -286,8 +286,8 @@ export interface ICertificationRepository {
       type: string;
       difficulty: string;
       points: number;
-      imageUrl: string | null;
-      audioUrl: string | null;
+      imageMediaId: string | null;
+      audioMediaId: string | null;
       partNumber: number | null;
       // From QuestionMetadata (question-level)
       passageId: string | null;

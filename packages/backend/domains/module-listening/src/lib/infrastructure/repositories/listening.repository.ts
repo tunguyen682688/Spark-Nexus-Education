@@ -9,8 +9,6 @@ import {
 } from '../../domain/repositories/listening.repository.interface';
 import {
   ListeningMaterial,
-  ListeningSubtitle,
-  ListeningQuestion,
   Prisma,
 } from '@prisma/client';
 import { GetListeningMaterialsQueryDto } from '../../application/dtos/get-materials-query.dto';
@@ -55,11 +53,21 @@ export class ListeningRepository implements IListeningRepository {
       ];
     }
 
-    const cacheKey = `listening:materials:raw:cat:${category || 'all'}:diff:${difficulty || 'all'}:comm:${isCommunity !== undefined ? isCommunity : 'all'}:q:${q || ''}:p:${page}:l:${limit}`;
-    let cached = await this.cacheService.get<{ items: ListeningMaterial[]; total: number }>(cacheKey);
-
-    if (!cached) {
-      const [items, total] = await Promise.all([
+    const cacheKey = this.cacheService.key(
+      'listening', 'materials',
+      this.cacheService.hashParams({
+        cat: category || 'all',
+        diff: difficulty || 'all',
+        comm: isCommunity !== undefined ? isCommunity : 'all',
+        q: q || '',
+        p: page,
+        l: limit,
+      }),
+    );
+    const cached = await this.cacheService.singleflight<{ items: ListeningMaterial[]; total: number }>(
+      cacheKey,
+      300,
+      () => Promise.all([
         this.prisma.listeningMaterial.findMany({
           where,
           orderBy: { createdAt: 'desc' },
@@ -67,10 +75,8 @@ export class ListeningRepository implements IListeningRepository {
           take: limit,
         }),
         this.prisma.listeningMaterial.count({ where }),
-      ]);
-      cached = { items, total };
-      await this.cacheService.set(cacheKey, cached, 300); // 5 mins TTL
-    }
+      ]).then(([items, total]) => ({ items, total })),
+    );
 
     const { items, total } = cached;
 
@@ -130,11 +136,11 @@ export class ListeningRepository implements IListeningRepository {
   }
 
   async findMaterialById(id: string, userId?: string): Promise<ListeningMaterialDetail | null> {
-    const cacheKey = `listening:material:${id}:raw`;
-    let material = await this.cacheService.get<ListeningMaterial & { subtitles: ListeningSubtitle[]; questions: ListeningQuestion[] }>(cacheKey);
-
-    if (!material) {
-      material = await this.prisma.listeningMaterial.findFirst({
+    const cacheKey = this.cacheService.key('listening', 'material', id, 'raw');
+    const material = await this.cacheService.singleflight(
+      cacheKey,
+      300,
+      () => this.prisma.listeningMaterial.findFirst({
         where: {
           id,
           deleted: false,
@@ -147,12 +153,8 @@ export class ListeningRepository implements IListeningRepository {
             orderBy: { order: 'asc' },
           },
         },
-      });
-
-      if (material) {
-        await this.cacheService.set(cacheKey, material, 300); // 5 mins TTL
-      }
-    }
+      }),
+    );
 
     if (!material) return null;
 
@@ -402,10 +404,10 @@ export class ListeningRepository implements IListeningRepository {
     });
     
     // Invalidate caches asynchronously
-    this.cacheService.delete(`listening:material:${materialId}:raw`).catch(err =>
+    this.cacheService.delete(this.cacheService.key('listening', 'material', materialId, 'raw')).catch(err =>
       this.logger.error('Failed to delete cached material:', err)
     );
-    this.cacheService.clearPattern('listening:materials:raw:*').catch(err =>
+    this.cacheService.clearPattern('listening:materials:*').catch(err =>
       this.logger.error('Failed to clear cached lists:', err)
     );
 
@@ -473,7 +475,7 @@ export class ListeningRepository implements IListeningRepository {
     });
 
     // Invalidate list caches asynchronously
-    this.cacheService.clearPattern('listening:materials:raw:*').catch(err =>
+    this.cacheService.clearPattern('listening:materials:*').catch(err =>
       this.logger.error('Failed to clear cached lists:', err)
     );
 
@@ -481,28 +483,28 @@ export class ListeningRepository implements IListeningRepository {
   }
 
   async findUserStats(userId: string): Promise<UserListeningStatsWithStreak | null> {
-    const cacheKey = `listening:user-stats:${userId}`;
-    const cached = await this.cacheService.get<UserListeningStatsWithStreak>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = this.cacheService.key('listening', 'user-stats', userId);
+    return this.cacheService.singleflight<UserListeningStatsWithStreak>(
+      cacheKey,
+      120,
+      async () => {
+        const [stats, streakRecord] = await Promise.all([
+          this.prisma.userListeningStats.findUnique({
+            where: { userId },
+          }),
+          this.prisma.userDailyStreak.findUnique({
+            where: { userId },
+          }),
+        ]);
 
-    const [stats, streakRecord] = await Promise.all([
-      this.prisma.userListeningStats.findUnique({
-        where: { userId },
-      }),
-      this.prisma.userDailyStreak.findUnique({
-        where: { userId },
-      }),
-    ]);
-
-    const result = {
-      totalMaterials: stats?.totalMaterials || 0,
-      totalTime: stats?.totalTime || 0,
-      masteryLevel: stats?.masteryLevel || 'A1',
-      streak: streakRecord?.streakCount || 0,
-    };
-
-    await this.cacheService.set(cacheKey, result, 120); // 2 min TTL
-    return result;
+        return {
+          totalMaterials: stats?.totalMaterials || 0,
+          totalTime: stats?.totalTime || 0,
+          masteryLevel: stats?.masteryLevel || 'A1',
+          streak: streakRecord?.streakCount || 0,
+        };
+      },
+    );
   }
 
   async findWeeklyActivity(userId: string): Promise<{ day: string; minutes: number }[]> {
@@ -534,40 +536,39 @@ export class ListeningRepository implements IListeningRepository {
   }
 
   async findLeaderboard(limit = 5): Promise<ListeningLeaderboardEntry[]> {
-    const cacheKey = `listening:leaderboard:${limit}`;
-    const cached = await this.cacheService.get<ListeningLeaderboardEntry[]>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = this.cacheService.key('listening', 'leaderboard', limit);
+    return this.cacheService.singleflight<ListeningLeaderboardEntry[]>(
+      cacheKey,
+      300,
+      async () => {
+        const statsList = await this.prisma.userListeningStats.findMany({
+          orderBy: { totalTime: 'desc' },
+          take: limit,
+        });
 
-    const statsList = await this.prisma.userListeningStats.findMany({
-      orderBy: { totalTime: 'desc' },
-      take: limit,
-    });
+        if (statsList.length === 0) {
+          return [];
+        }
 
-    if (statsList.length === 0) {
-      await this.cacheService.set(cacheKey, [], 300);
-      return [];
-    }
+        const userIds = statsList.map((s) => s.userId);
+        const users = await this.prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, picture: true },
+        });
 
-    const userIds = statsList.map((s) => s.userId);
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true, picture: true },
-    });
+        const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const result = statsList.map((s) => {
-      const u = userMap.get(s.userId);
-      return {
-        userId: s.userId,
-        totalTime: s.totalTime,
-        masteryLevel: s.masteryLevel,
-        userName: u?.name || 'Học viên ẩn danh',
-        userPicture: u?.picture || null,
-      };
-    });
-
-    await this.cacheService.set(cacheKey, result, 300);
-    return result;
+        return statsList.map((s) => {
+          const u = userMap.get(s.userId);
+          return {
+            userId: s.userId,
+            totalTime: s.totalTime,
+            masteryLevel: s.masteryLevel,
+            userName: u?.name || 'Học viên ẩn danh',
+            userPicture: u?.picture || null,
+          };
+        });
+      },
+    );
   }
 }

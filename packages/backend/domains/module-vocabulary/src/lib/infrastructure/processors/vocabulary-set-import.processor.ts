@@ -1,14 +1,12 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger, Inject } from '@nestjs/common';
+import { OnModuleInit } from '@nestjs/common';
 import { VocabularySetCreationOrchestrator } from '../../domain/sagas/vocabulary-set-creation-orchestrator';
 import { VocabularySetAggregate } from '../../domain/aggregates/vocabulary-set.aggregate';
 import * as vocabularySetRepositoryInterface from '../../domain/repositories/vocabulary-set.repository.interface';
 import { VOCABULARY_SET_REPOSITORY } from '../../domain/repositories/vocabulary-set.repository.interface';
+import { BullMQService } from '@spark-nest-ed/infrastructure-cache';
 
-/**
- * Background Job Data
- */
 interface VocabularySetImportJobData {
   vocabularySetId: string;
   words: Array<{
@@ -19,32 +17,25 @@ interface VocabularySetImportJobData {
   }>;
   language: string;
   userId: string;
+  batchIndex: number;
+  totalBatches: number;
 }
 
-/**
- * VocabularySetImportProcessor
- *
- * Background job processor for importing words into vocabulary set
- * Uses BullMQ with Redis for queue management
- *
- * Handles:
- * - Large batch imports (>50 words)
- * - Progress tracking
- * - Error handling and retries
- */
-@Processor('vocabulary-set-import')
-export class VocabularySetImportProcessor extends WorkerHost {
+export class VocabularySetImportProcessor implements OnModuleInit {
   private readonly logger = new Logger(VocabularySetImportProcessor.name);
 
   constructor(
     private readonly orchestrator: VocabularySetCreationOrchestrator,
     @Inject(VOCABULARY_SET_REPOSITORY)
-    private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository
-  ) {
-    super();
+    private readonly vocabularySetRepository: vocabularySetRepositoryInterface.IVocabularySetRepository,
+    private readonly bullMQ: BullMQService,
+  ) {}
+
+  onModuleInit() {
+    this.bullMQ.registerWorker('vocabulary-set-import', (job) => this.process(job as Job<VocabularySetImportJobData>));
   }
 
-  async process(job: Job<VocabularySetImportJobData>): Promise<void> {
+  private async process(job: Job<VocabularySetImportJobData>): Promise<void> {
     const { vocabularySetId, words, language } = job.data;
 
     this.logger.log(
@@ -52,24 +43,15 @@ export class VocabularySetImportProcessor extends WorkerHost {
     );
 
     try {
-      // Step 1: Load vocabulary set
-      const vocabularySet = await this.vocabularySetRepository.findById(
-        vocabularySetId
-      );
+      const vocabularySet = await this.vocabularySetRepository.findById(vocabularySetId);
       if (!vocabularySet) {
         throw new Error(`Vocabulary set ${vocabularySetId} not found`);
       }
 
-      // Step 2: Update import status to processing
       vocabularySet.setImportStatus('processing');
-      vocabularySet.setImportProgress({
-        total: words.length,
-        processed: 0,
-        failed: 0,
-      });
+      vocabularySet.setImportProgress({ total: words.length, processed: 0, failed: 0 });
       await this.vocabularySetRepository.update(vocabularySet);
 
-      // Step 3: Process words in chunks for better progress tracking
       const chunkSize = 50;
       const chunks = this.chunkArray(words, chunkSize);
       let totalProcessed = 0;
@@ -79,25 +61,16 @@ export class VocabularySetImportProcessor extends WorkerHost {
         const chunk = chunks[i];
 
         try {
-          // Create aggregate for this chunk (reload set to get latest state)
-          const currentSet = await this.vocabularySetRepository.findById(
-            vocabularySetId
-          );
+          const currentSet = await this.vocabularySetRepository.findById(vocabularySetId);
           if (!currentSet) {
             throw new Error(`Vocabulary set ${vocabularySetId} not found`);
           }
 
-          const aggregate = VocabularySetAggregate.fromPersistence(
-            currentSet,
-            [] // Items will be added by saga
-          );
-
-          // Process chunk using orchestrator
+          const aggregate = VocabularySetAggregate.fromPersistence(currentSet, []);
           await this.orchestrator.execute(aggregate, chunk, language);
 
           totalProcessed += chunk.length;
 
-          // Update progress
           vocabularySet.updateImportProgress(
             totalProcessed,
             failedItems.length,
@@ -105,39 +78,23 @@ export class VocabularySetImportProcessor extends WorkerHost {
           );
           await this.vocabularySetRepository.update(vocabularySet);
 
-          // Update job progress
           await job.updateProgress({
             processed: totalProcessed,
             total: words.length,
             percentage: Math.round((totalProcessed / words.length) * 100),
           });
 
-          this.logger.log(
-            `Processed chunk ${i + 1}/${
-              chunks.length
-            } for vocabulary set ${vocabularySetId}`
-          );
+          this.logger.log(`Processed chunk ${i + 1}/${chunks.length} for vocabulary set ${vocabularySetId}`);
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          this.logger.error(
-            `Failed to process chunk ${
-              i + 1
-            } for vocabulary set ${vocabularySetId}`,
-            error
-          );
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          this.logger.error(`Failed to process chunk ${i + 1} for vocabulary set ${vocabularySetId}`, error);
 
-          // Mark chunk words as failed
           for (const word of chunk) {
-            failedItems.push({
-              word: word.word,
-              reason: errorMessage,
-            });
+            failedItems.push({ word: word.word, reason: errorMessage });
           }
         }
       }
 
-      // Step 5: Mark import as completed
       vocabularySet.markImportCompleted();
       await this.vocabularySetRepository.update(vocabularySet);
 
@@ -145,29 +102,18 @@ export class VocabularySetImportProcessor extends WorkerHost {
         `Import job ${job.id} completed: ${totalProcessed}/${words.length} words processed, ${failedItems.length} failed`
       );
     } catch (error) {
-      this.logger.error(
-        `Import job ${job.id} failed for vocabulary set ${vocabularySetId}`,
-        error
-      );
+      this.logger.error(`Import job ${job.id} failed for vocabulary set ${vocabularySetId}`, error);
 
-      // Mark import as failed
-      const vocabularySet = await this.vocabularySetRepository.findById(
-        vocabularySetId
-      );
+      const vocabularySet = await this.vocabularySetRepository.findById(vocabularySetId);
       if (vocabularySet) {
-        vocabularySet.markImportFailed(
-          error instanceof Error ? error.message : 'Unknown error'
-        );
+        vocabularySet.markImportFailed(error instanceof Error ? error.message : 'Unknown error');
         await this.vocabularySetRepository.update(vocabularySet);
       }
 
-      throw error; // Re-throw to trigger retry
+      throw error;
     }
   }
 
-  /**
-   * Chunk array into smaller arrays
-   */
   private chunkArray<T>(array: T[], size: number): T[][] {
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {

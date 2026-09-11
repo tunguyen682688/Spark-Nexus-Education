@@ -24,8 +24,8 @@ export function hashQuestion(q: ExamSectionQuestion): string {
     r: q.rubric,
     p: q.points,
     et: q.estimatedTime,
-    au: q.audioUrl,
-    im: q.imageUrl,
+    au: q.audioMediaId,
+    im: q.imageMediaId,
     pg: q.passageGroupId,
     pt: q.passageText,
     pp: q.passageType,
@@ -44,7 +44,7 @@ export function hashSection(s: ExamSectionContent): string {
     instruction: s.instruction,
     order: s.order,
     durationMinutes: s.durationMinutes,
-    audioUrl: s.audioUrl,
+    audioMediaId: s.audioMediaId,
     scriptText: s.scriptText,
     passageText: s.passageText,
     passageTitle: s.passageTitle,
@@ -70,8 +70,8 @@ const MC_TYPES = new Set(['mc', 'photograph_choice', 'question_response', 'conve
 const FIXED_ANSWER_TYPES = new Set(['true_false_not_given', 'yes_no_not_given', 'opinion_tfng']);
 
 // Part-specific validation rules
-const PART_REQUIRES_IMAGE = new Set([1]);        // Part 1: moi cau hoi can imageUrl
-const PART_REQUIRES_AUDIO = new Set([1, 2]);     // Part 1 & 2: moi cau hoi can audioUrl
+const PART_REQUIRES_IMAGE = new Set([1]);        // Part 1: moi cau hoi can imageMediaId
+const PART_REQUIRES_AUDIO = new Set([1, 2]);     // Part 1 & 2: moi cau hoi can audioMediaId
 
 export function validateSections(sections: ExamSectionContent[]): SectionValidationIssue[] {
   const issues: SectionValidationIssue[] = [];
@@ -80,7 +80,7 @@ export function validateSections(sections: ExamSectionContent[]): SectionValidat
     if (section.isBreak) continue;
 
     // Section-level audio check (Parts 3, 4 share audio at section level)
-    if (section.sectionType === 'listening' && !section.audioUrl) {
+    if (section.sectionType === 'listening' && !section.audioMediaId) {
       issues.push({
         sectionId: section.id,
         sectionTitle: section.title,
@@ -132,7 +132,7 @@ export function validateSections(sections: ExamSectionContent[]): SectionValidat
       }
 
       // Part 1: image required per question
-      if (PART_REQUIRES_IMAGE.has(section.order) && !question.imageUrl?.trim()) {
+      if (PART_REQUIRES_IMAGE.has(section.order) && !question.imageMediaId?.trim()) {
         issues.push({
           sectionId: section.id,
           sectionTitle: section.title,
@@ -143,7 +143,7 @@ export function validateSections(sections: ExamSectionContent[]): SectionValidat
       }
 
       // Part 2: audio required per question (each question has independent audio)
-      if (PART_REQUIRES_AUDIO.has(section.order) && !question.audioUrl?.trim()) {
+      if (PART_REQUIRES_AUDIO.has(section.order) && !question.audioMediaId?.trim()) {
         issues.push({
           sectionId: section.id,
           sectionTitle: section.title,
@@ -200,7 +200,7 @@ export function mapStateToSavePayload(
     order: number;
     durationMinutes: number;
     isBreak: boolean;
-    audioUrl?: string;
+    audioMediaId?: string;
     scriptText?: string;
     passageText?: string;
     passageTitle?: string;
@@ -216,8 +216,8 @@ export function mapStateToSavePayload(
       explanation?: string;
       points: number;
       estimatedTime?: number;
-      audioUrl?: string;
-      imageUrl?: string;
+      audioMediaId?: string;
+      imageMediaId?: string;
       passageGroupId?: string;
       passageText?: string;
       passageType?: string;
@@ -234,6 +234,11 @@ export function mapStateToSavePayload(
     instruction?: string;
     order?: number;
     durationMinutes?: number;
+    audioMediaId?: string;
+    scriptText?: string;
+    passageText?: string;
+    passageTitle?: string;
+    passageType?: string;
   }>;
   removedQuestionIds: string[];
 } {
@@ -256,7 +261,7 @@ export function mapStateToSavePayload(
         order: s.order,
         durationMinutes: s.durationMinutes,
         isBreak: s.isBreak,
-        audioUrl: s.audioUrl ?? undefined,
+        audioMediaId: s.audioMediaId ?? undefined,
         scriptText: s.scriptText ?? undefined,
         passageText: s.passageText ?? undefined,
         passageTitle: s.passageTitle ?? undefined,
@@ -286,8 +291,8 @@ export function mapStateToSavePayload(
             explanation: (q.detailedExplanation || q.explanation) ?? undefined,
             points: q.points,
             estimatedTime: q.estimatedTime ?? undefined,
-            audioUrl: q.audioUrl ?? undefined,
-            imageUrl: q.imageUrl ?? undefined,
+            audioMediaId: q.audioMediaId ?? undefined,
+            imageMediaId: q.imageMediaId ?? undefined,
             passageGroupId: q.passageGroupId ?? undefined,
             passageText: q.passageText ?? undefined,
             passageType: q.passageType ?? undefined,
@@ -334,8 +339,8 @@ export function mapDirtyQuestionsToPayload(
       explanation?: string;
       points: number;
       estimatedTime?: number;
-      audioUrl?: string;
-      imageUrl?: string;
+      audioMediaId?: string;
+      imageMediaId?: string;
       passageGroupId?: string;
       passageText?: string;
       passageType?: string;
@@ -352,6 +357,11 @@ export function mapDirtyQuestionsToPayload(
     instruction?: string;
     order?: number;
     durationMinutes?: number;
+    audioMediaId?: string;
+    scriptText?: string;
+    passageText?: string;
+    passageTitle?: string;
+    passageType?: string;
   }>;
   removedQuestionIds: string[];
 } {
@@ -410,8 +420,8 @@ export function mapDirtyQuestionsToPayload(
           explanation: (q.detailedExplanation || q.explanation) ?? undefined,
           points: q.points,
           estimatedTime: q.estimatedTime ?? undefined,
-          audioUrl: q.audioUrl ?? undefined,
-          imageUrl: q.imageUrl ?? undefined,
+          audioMediaId: q.audioMediaId ?? undefined,
+          imageMediaId: q.imageMediaId ?? undefined,
           passageGroupId: q.passageGroupId ?? undefined,
           passageText: q.passageText ?? undefined,
           passageType: q.passageType ?? undefined,
@@ -436,6 +446,11 @@ export function mapDirtyQuestionsToPayload(
     instruction?: string;
     order?: number;
     durationMinutes?: number;
+    audioMediaId?: string;
+    scriptText?: string;
+    passageText?: string;
+    passageTitle?: string;
+    passageType?: string;
   }> = [];
   for (const sectionId of dirtySectionIds) {
     const section = state.sections.find((s) => s.id === sectionId);
@@ -450,6 +465,11 @@ export function mapDirtyQuestionsToPayload(
         instruction: section.instruction,
         order: section.order,
         durationMinutes: section.durationMinutes,
+        audioMediaId: section.audioMediaId ?? undefined,
+        scriptText: section.scriptText ?? undefined,
+        passageText: section.passageText ?? undefined,
+        passageTitle: section.passageTitle ?? undefined,
+        passageType: section.passageType ?? undefined,
       });
     }
   }
@@ -475,6 +495,11 @@ export function mapDirtySectionsToPayload(
     instruction?: string;
     order?: number;
     durationMinutes?: number;
+    audioMediaId?: string;
+    scriptText?: string;
+    passageText?: string;
+    passageTitle?: string;
+    passageType?: string;
   }>;
 } {
   const dirtySectionIds = state.dirtySectionIds || new Set();
@@ -482,7 +507,6 @@ export function mapDirtySectionsToPayload(
   const sectionMetadata = state.sections
     .filter((s) => {
       if (!dirtySectionIds.has(s.id) || isTempId(s.id)) return false;
-      // Only include if hash actually changed
       const currentHash = hashSection(s);
       const lastHash = sectionSnapshot?.get(s.id);
       return !lastHash || lastHash !== currentHash;
@@ -494,6 +518,11 @@ export function mapDirtySectionsToPayload(
       instruction: s.instruction ?? undefined,
       order: s.order,
       durationMinutes: s.durationMinutes,
+      audioMediaId: s.audioMediaId ?? undefined,
+      scriptText: s.scriptText ?? undefined,
+      passageText: s.passageText ?? undefined,
+      passageTitle: s.passageTitle ?? undefined,
+      passageType: s.passageType ?? undefined,
     }));
 
   return { sectionMetadata: sectionMetadata.length > 0 ? sectionMetadata : undefined };

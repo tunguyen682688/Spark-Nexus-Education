@@ -51,8 +51,8 @@ export interface QuestionBuilderResponseDto {
   } | null;
   // Exam-specific format fields (from ExamQuestion)
   examFormatFields: {
-    audioUrl: string | null;
-    imageUrl: string | null;
+    audioMediaId: string | null;
+    imageMediaId: string | null;
     passageId: string | null;
     passageText: string | null;
     partNumber: number | null;
@@ -140,8 +140,8 @@ export class GetQuestionBuilderQueryHandler
 
         // Populate format fields from ExamQuestion
         examFormatFields = {
-          audioUrl: eq.getAudioUrl(),
-          imageUrl: eq.getImageUrl(),
+          audioMediaId: eq.getAudioMediaId(),
+          imageMediaId: eq.getImageMediaId(),
           partNumber: eq.getPartNumber(),
           gapNumber: eq.getGapNumber(),
           writingTaskType: eq.getWritingTaskType(),

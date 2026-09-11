@@ -42,15 +42,15 @@ export class LinkQuestionToExamDto {
 
   // ── Exam-specific format fields (ExamQuestion columns) ──
 
-  @ApiPropertyOptional({ description: 'Audio URL for listening questions (exam-specific)' })
+  @ApiPropertyOptional({ description: 'Audio MediaFile ID for listening questions (exam-specific)' })
   @IsOptional()
   @IsString()
-  audioUrl?: string;
+  audioMediaId?: string;
 
-  @ApiPropertyOptional({ description: 'Image URL for visual questions (exam-specific)' })
+  @ApiPropertyOptional({ description: 'Image MediaFile ID for visual questions (exam-specific)' })
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  imageMediaId?: string;
 
   @ApiPropertyOptional({ description: 'Part number for TOEIC (1-7)' })
   @IsOptional()
