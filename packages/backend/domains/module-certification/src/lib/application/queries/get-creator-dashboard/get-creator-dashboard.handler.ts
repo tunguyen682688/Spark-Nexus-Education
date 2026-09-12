@@ -2,6 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import * as certificationRepoInterface from '../../../domain/repositories/certification.repository.interface';
 import { GetCreatorDashboardQuery, CreatorDashboardResult } from './get-creator-dashboard.query';
+import { CREATOR_DASHBOARD_LIMIT } from '../../../certification.constants';
 
 function getTimeAgo(date: Date): string {
   const now = new Date();
@@ -24,8 +25,8 @@ export class GetCreatorDashboardQueryHandler implements IQueryHandler<GetCreator
 
   async execute(query: GetCreatorDashboardQuery): Promise<CreatorDashboardResult> {
     const [examsResult, , sessions, results] = await Promise.all([
-      this.repository.findExams({ limit: 200 }),
-      this.repository.findCollections({ limit: 200 }),
+      this.repository.findExams({ limit: CREATOR_DASHBOARD_LIMIT }),
+      this.repository.findCollections({ limit: CREATOR_DASHBOARD_LIMIT }),
       this.repository.findSessionsByUserId(query.userId),
       this.repository.findResultsByUserId(query.userId),
     ]);

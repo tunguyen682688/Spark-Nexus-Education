@@ -80,6 +80,14 @@ import {
 // Repository Implementations
 import { CERTIFICATION_REPOSITORY } from './domain/repositories/certification.repository.interface';
 import { CertificationRepository } from './infrastructure/repositories/certification.repository';
+import { CollectionRepository } from './infrastructure/repositories/collection.repository';
+import { ExamRepository } from './infrastructure/repositories/exam.repository';
+import { QuestionRepository } from './infrastructure/repositories/question.repository';
+import { ExamQuestionRepository } from './infrastructure/repositories/exam-question.repository';
+import { QuestionBatchRepository } from './infrastructure/repositories/question-batch.repository';
+import { SessionRepository } from './infrastructure/repositories/session.repository';
+import { ResultRepository } from './infrastructure/repositories/result.repository';
+import { SocialRepository } from './infrastructure/repositories/social.repository';
 
 // Domain Services
 import { ExamSessionDomainService } from './domain/services/exam-session-domain.service';
@@ -180,6 +188,14 @@ const CommandHandlers = [
     CertificationCacheService,
     CertificationSaga,
     CertificationProcessor,
+    CollectionRepository,
+    ExamRepository,
+    QuestionRepository,
+    ExamQuestionRepository,
+    QuestionBatchRepository,
+    SessionRepository,
+    ResultRepository,
+    SocialRepository,
     {
       provide: CERTIFICATION_REPOSITORY,
       useClass: CertificationRepository,

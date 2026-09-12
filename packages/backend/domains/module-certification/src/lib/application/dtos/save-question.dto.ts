@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsNumber,
   IsArray,
+  IsIn,
   ValidateNested,
   Min,
 } from 'class-validator';
@@ -19,15 +20,29 @@ export class SaveQuestionOptionDto {
 
   @ApiProperty({ description: 'Option label', example: 'A' })
   @IsString()
+  @IsNotEmpty()
   label!: string;
 
   @ApiProperty({ description: 'Option answer text', example: 'It offers free certification.' })
   @IsString()
+  @IsNotEmpty()
   text!: string;
 
   @ApiProperty({ description: 'Whether this option is the correct answer', example: false })
   @IsBoolean()
   isCorrect!: boolean;
+}
+
+export class MatchingPairDto {
+  @ApiProperty({ description: 'Left side of the matching pair', example: 'happy' })
+  @IsString()
+  @IsNotEmpty()
+  left!: string;
+
+  @ApiProperty({ description: 'Right side of the matching pair', example: 'vui vẻ' })
+  @IsString()
+  @IsNotEmpty()
+  right!: string;
 }
 
 /**
@@ -48,10 +63,12 @@ export class SaveQuestionDto {
 
   @ApiProperty({ description: 'Question type', example: 'Multiple Choice (Single Answer)' })
   @IsString()
+  @IsNotEmpty()
   questionType!: string;
 
   @ApiProperty({ description: 'Difficulty level', example: 'Medium' })
   @IsString()
+  @IsNotEmpty()
   difficulty!: string;
 
   @ApiPropertyOptional({ description: 'Question category (reading, listening, grammar, vocabulary, writing, speaking)', example: 'reading' })
@@ -106,6 +123,7 @@ export class SaveQuestionDto {
   @ApiPropertyOptional({ description: 'Save target: exam question or reusable bank item', example: 'exam' })
   @IsOptional()
   @IsString()
+  @IsIn(['exam', 'bank'])
   target?: 'exam' | 'bank';
 
   // Reference fields (bank metadata)
@@ -145,10 +163,12 @@ export class SaveQuestionDto {
   @IsOptional()
   rubric?: unknown;
 
-  @ApiPropertyOptional({ description: 'Matching pairs for matching questions' })
+  @ApiPropertyOptional({ description: 'Matching pairs for matching questions', type: [MatchingPairDto] })
   @IsOptional()
   @IsArray()
-  matchingPairs?: Array<{ left: string; right: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => MatchingPairDto)
+  matchingPairs?: MatchingPairDto[];
 
   @ApiPropertyOptional({ description: 'Root word for Cambridge word formation' })
   @IsOptional()

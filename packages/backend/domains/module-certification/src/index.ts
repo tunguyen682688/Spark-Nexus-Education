@@ -1,4 +1,5 @@
 export * from './lib/certification.module';
+export * from './lib/certification.constants';
 
 // ===== DOMAIN REPOSITORIES & ENTITIES =====
 export * from './lib/domain/repositories/certification.repository.interface';

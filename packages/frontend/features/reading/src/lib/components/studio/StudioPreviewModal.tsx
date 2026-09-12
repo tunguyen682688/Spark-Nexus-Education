@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import type { StudioFormValues, EditorJsOutputData, EditorJsBlock } from '../../types';
-import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { cn, sanitizeHtml } from '@spark-nest-ed/frontend-shared-utils';
 
 interface StudioPreviewModalProps {
   isOpen: boolean;
@@ -28,11 +28,11 @@ function renderEditorBlocks(content: EditorJsOutputData | null): React.ReactNode
       case 'header': {
         const level = block.data?.level || 2;
         const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-        return <Tag key={key} className="font-bold text-slate-800 dark:text-slate-100" dangerouslySetInnerHTML={{ __html: block.data?.text || '' }} />;
+        return <Tag key={key} className="font-bold text-slate-800 dark:text-slate-100" dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.text || '') }} />;
       }
 
       case 'paragraph':
-        return <p key={key} className="leading-relaxed" dangerouslySetInnerHTML={{ __html: block.data?.text || '' }} />;
+        return <p key={key} className="leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.text || '') }} />;
 
       case 'list': {
         const items = block.data?.items || [];
@@ -40,7 +40,7 @@ function renderEditorBlocks(content: EditorJsOutputData | null): React.ReactNode
         return (
           <ListTag key={key} className={cn("pl-6 space-y-1", ListTag === 'ol' ? 'list-decimal' : 'list-disc')}>
             {items.map((item: string, i: number) => (
-              <li key={i} dangerouslySetInnerHTML={{ __html: item }} />
+              <li key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(item) }} />
             ))}
           </ListTag>
         );
@@ -49,7 +49,7 @@ function renderEditorBlocks(content: EditorJsOutputData | null): React.ReactNode
       case 'quote':
         return (
           <blockquote key={key} className="border-l-4 border-blue-500 pl-4 italic text-slate-600 dark:text-slate-400">
-            <p dangerouslySetInnerHTML={{ __html: block.data?.text || '' }} />
+            <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.text || '') }} />
             {block.data?.caption && <cite className="text-sm not-italic text-slate-500">— {block.data.caption}</cite>}
           </blockquote>
         );
@@ -70,17 +70,17 @@ function renderEditorBlocks(content: EditorJsOutputData | null): React.ReactNode
           <div key={key} className="flex flex-col md:flex-row gap-4 p-4 border rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 my-4">
             <div className="flex-1">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bản gốc</div>
-              <div dangerouslySetInnerHTML={{ __html: block.data?.original || '' }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.original || '') }} />
             </div>
             <div className="flex-1">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bản dịch</div>
-              <div dangerouslySetInnerHTML={{ __html: block.data?.translation || '' }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.translation || '') }} />
             </div>
           </div>
         );
 
       default:
-        return <p key={key} dangerouslySetInnerHTML={{ __html: block.data?.text || '' }} />;
+        return <p key={key} dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.data?.text || '') }} />;
     }
   });
 }

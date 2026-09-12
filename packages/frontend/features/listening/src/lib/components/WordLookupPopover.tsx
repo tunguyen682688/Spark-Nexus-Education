@@ -1,6 +1,6 @@
 import React from 'react';
 import { Volume2, X, Plus, Check, Loader2, Bookmark } from 'lucide-react';
-import { useWordLookup } from '../hooks/useWordLookup';
+import { useWordLookup } from '../hooks/use-word-lookup';
 import { WORD_LOOKUP_TEXT } from '../constants';
 import { Badge, Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@spark-nest-ed/frontend-shared-components';
 

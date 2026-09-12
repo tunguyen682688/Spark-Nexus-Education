@@ -28,6 +28,9 @@
   ],
   "references": [
     {
+      "path": "../../packages/backend/infrastructure/exception-global/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/backend/domains/module-certification/tsconfig.lib.json"
     },
     {

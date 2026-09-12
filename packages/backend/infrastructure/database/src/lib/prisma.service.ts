@@ -42,7 +42,7 @@ export class PrismaService
         { emit: 'event', level: 'info' },
         { emit: 'event', level: 'warn' },
       ],
-      errorFormat: 'pretty',
+      errorFormat: process.env.NODE_ENV === 'production' ? 'minimal' : 'pretty',
     });
 
     this.setupEventListeners();
@@ -110,9 +110,12 @@ export class PrismaService
       WHERE schemaname='public'
     `;
 
+    // Sanitize table names — only allow alphanumeric and underscore
+    const SAFE_TABLE_NAME = /^[a-zA-Z0-9_]+$/;
+
     const tables = tablenames
       .map(({ tablename }: { tablename: string }) => tablename)
-      .filter((name: string) => name !== '_prisma_migrations')
+      .filter((name: string) => name !== '_prisma_migrations' && SAFE_TABLE_NAME.test(name))
       .map((name: unknown) => `"public"."${name}"`)
       .join(', ');
 

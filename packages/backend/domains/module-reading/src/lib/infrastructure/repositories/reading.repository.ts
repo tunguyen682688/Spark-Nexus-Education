@@ -553,6 +553,42 @@ export class ReadingRepository implements IReadingRepository {
     });
   }
 
+  /**
+   * Ensure a VocabularySet exists for the article. Creates one if missing.
+   * Shared between syncArticleVocabulary and syncArticleHighlights.
+   */
+  private async ensureVocabularySetForArticle(
+    articleId: string,
+    articleTitle: string,
+    creatorId: string,
+  ): Promise<string> {
+    const article = await this.prisma.article.findUnique({
+      where: { id: articleId },
+      select: { vocabularySetId: true },
+    });
+    if (!article) throw new Error(`Article ${articleId} not found`);
+
+    if (article.vocabularySetId) return article.vocabularySetId;
+
+    const newSet = await this.prisma.vocabularySet.create({
+      data: {
+        title: `Vocabulary for: ${articleTitle}`,
+        description: `Automatically generated vocabulary set for the article "${articleTitle}"`,
+        language: 'en',
+        type: 'reading',
+        isPublic: false,
+        isActive: true,
+        userId: creatorId || 'system',
+        tags: [],
+      },
+    });
+    await this.prisma.article.update({
+      where: { id: articleId },
+      data: { vocabularySetId: newSet.id },
+    });
+    return newSet.id;
+  }
+
   async syncArticleVocabulary(
     articleId: string,
     creatorId: string,
@@ -604,26 +640,7 @@ export class ReadingRepository implements IReadingRepository {
     }
 
     // Ensure a VocabularySet is linked to the article
-    let vocabSetId = article.vocabularySetId;
-    if (!vocabSetId) {
-      const newSet = await this.prisma.vocabularySet.create({
-        data: {
-          title: `Vocabulary for: ${article.title}`,
-          description: `Automatically generated vocabulary set for the article "${article.title}"`,
-          language: 'en',
-          type: 'reading',
-          isPublic: false,
-          isActive: true,
-          userId: creatorId || 'system',
-          tags: [],
-        },
-      });
-      vocabSetId = newSet.id;
-      await this.prisma.article.update({
-        where: { id: articleId },
-        data: { vocabularySetId: vocabSetId },
-      });
-    }
+    const vocabSetId = await this.ensureVocabularySetForArticle(articleId, article.title, creatorId);
 
     const activeEntryIds: string[] = [];
 
@@ -739,26 +756,7 @@ export class ReadingRepository implements IReadingRepository {
     }
 
     // 2. Sync linked VocabularySet & VocabularySetItem
-    let vocabSetId = article.vocabularySetId;
-    if (!vocabSetId) {
-      const newSet = await this.prisma.vocabularySet.create({
-        data: {
-          title: `Vocabulary for: ${article.title}`,
-          description: `Automatically generated vocabulary set for the article "${article.title}"`,
-          language: 'en',
-          type: 'reading',
-          isPublic: false,
-          isActive: true,
-          userId: creatorId || 'system',
-          tags: [],
-        },
-      });
-      vocabSetId = newSet.id;
-      await this.prisma.article.update({
-        where: { id: articleId },
-        data: { vocabularySetId: vocabSetId },
-      });
-    }
+    const vocabSetId = await this.ensureVocabularySetForArticle(articleId, article.title, creatorId);
 
     if (!highlights || highlights.length === 0) {
       // Delete all items in the vocabulary set

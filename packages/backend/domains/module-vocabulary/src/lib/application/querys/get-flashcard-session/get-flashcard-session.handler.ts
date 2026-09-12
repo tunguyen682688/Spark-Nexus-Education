@@ -12,6 +12,9 @@ import * as vocabularySetItemRepositoryInterface from '../../../domain/repositor
 import * as userVocabularyProgressRepositoryInterface from '../../../domain/repositories/user-vocabulary-progress.repository.interface';
 import * as entryRepositoryInterface from '../../../domain/repositories/entry.repository.interface';
 
+/** Maximum flashcard items per study session */
+const FLASHCARD_SESSION_LIMIT = 1000;
+
 @QueryHandler(GetFlashcardSessionQuery)
 export class GetFlashcardSessionQueryHandler
   implements IQueryHandler<GetFlashcardSessionQuery, FlashcardSessionResponseDto>
@@ -36,10 +39,10 @@ export class GetFlashcardSessionQueryHandler
       throw new NotFoundException(`Vocabulary set with ID ${setId} not found`);
     }
 
-    // 2. Fetch all items in the vocabulary set (limit to 1000 for study session)
+    // 2. Fetch all items in the vocabulary set (limit to FLASHCARD_SESSION_LIMIT for study session)
     const result = await this.vocabularySetItemRepository.findByVocabularySetId(setId, {
       page: 1,
-      limit: 1000,
+      limit: FLASHCARD_SESSION_LIMIT,
     });
 
     const items = result.items;

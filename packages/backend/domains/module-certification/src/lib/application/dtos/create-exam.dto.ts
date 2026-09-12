@@ -1,5 +1,44 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, MaxLength, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, MaxLength, IsIn, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class SectionTemplateDto {
+  @ApiProperty({ description: 'Section title' })
+  @IsString()
+  @IsNotEmpty()
+  title!: string;
+
+  @ApiPropertyOptional({ description: 'Section subtitle' })
+  @IsString()
+  @IsOptional()
+  subtitle?: string | null;
+
+  @ApiProperty({ description: 'Section type (listening, reading, etc.)' })
+  @IsString()
+  @IsNotEmpty()
+  sectionType!: string;
+
+  @ApiPropertyOptional({ description: 'Section instruction text' })
+  @IsString()
+  @IsOptional()
+  instruction?: string;
+
+  @ApiPropertyOptional({ description: 'Duration in minutes' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  durationMinutes?: number;
+
+  @ApiPropertyOptional({ description: 'Number of questions in this section' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  questionCount?: number;
+
+  @ApiPropertyOptional({ description: 'Whether this is a break section' })
+  @IsOptional()
+  isBreak?: boolean;
+}
 
 export class CreateExamDto {
   @ApiProperty({ description: 'Exam title', example: 'TOEIC Practice Test 1' })
@@ -76,15 +115,11 @@ export class CreateExamDto {
   @ApiPropertyOptional({
     description: 'Section templates to auto-create (JSON array of section configs)',
     example: [{ title: 'Listening', sectionType: 'listening', durationMinutes: 45 }],
+    type: [SectionTemplateDto],
   })
   @IsOptional()
-  sections?: Array<{
-    title: string;
-    subtitle?: string | null;
-    sectionType: string;
-    instruction?: string;
-    durationMinutes?: number;
-    questionCount?: number;
-    isBreak?: boolean;
-  }>;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SectionTemplateDto)
+  sections?: SectionTemplateDto[];
 }

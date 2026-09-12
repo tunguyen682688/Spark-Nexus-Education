@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -18,6 +20,15 @@ import { CertificationModule } from '@spark-nest-ed/module-certification';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Global rate limiting: 100 requests per 60 seconds per IP
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ([{
+        ttl: config.get<number>('THROTTLE_TTL', 60000),
+        limit: config.get<number>('THROTTLE_LIMIT', 100),
+      }]),
+    }),
     VocabularyModule,
     UserModule,
     GrammarModule,
@@ -31,6 +42,12 @@ import { CertificationModule } from '@spark-nest-ed/module-certification';
     // No BullModule — using BullMQService (1 shared Redis connection)
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

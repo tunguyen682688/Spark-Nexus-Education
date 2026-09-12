@@ -5,6 +5,8 @@ import { GRAMMAR_STREAK_REPOSITORY } from '../../../domain/repositories/grammar-
 import type { IGrammarStreakRepository } from '../../../domain/repositories/grammar-streak.repository.interface';
 import { PrismaService } from '@spark-nest-ed/infrastructure-database';
 
+const LEADERBOARD_PAGE_SIZE = 50;
+
 @QueryHandler(GetLeaderboardQuery)
 export class GetLeaderboardHandler implements IQueryHandler<GetLeaderboardQuery, any> {
   constructor(
@@ -14,7 +16,7 @@ export class GetLeaderboardHandler implements IQueryHandler<GetLeaderboardQuery,
   ) {}
 
   async execute(query: GetLeaderboardQuery): Promise<any> {
-    const topStreaks = await this.streakRepository.getLeaderboard(50);
+    const topStreaks = await this.streakRepository.getLeaderboard(LEADERBOARD_PAGE_SIZE);
     const userIds = topStreaks.map((s) => s.userId);
 
     const users = await this.prisma.user.findMany({

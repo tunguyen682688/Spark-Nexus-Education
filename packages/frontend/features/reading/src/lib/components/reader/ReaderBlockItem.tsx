@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@spark-nest-ed/frontend-shared-utils';
+import { cn, sanitizeHtml } from '@spark-nest-ed/frontend-shared-utils';
 import { Languages } from 'lucide-react';
 import type { EditorJsBlock } from '../../types';
 import { buildReaderHeadingId } from '../../utils/reader-parser';
@@ -50,7 +50,7 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
             <Tag
               id={buildReaderHeadingId(text, index)}
               className={cn("font-bold text-slate-800 dark:text-slate-100", sizeClass, "mt-0 mb-0")}
-              dangerouslySetInnerHTML={{ __html: transformText(text) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(text)) }}
             />
             {(activeTranslations[key] || isBilingualView) && (
               <div className="mt-1.5 text-sm font-sans font-normal text-slate-500 dark:text-slate-400 italic bg-blue-500/5 dark:bg-blue-500/10 border-l-2 border-blue-500 pl-3 py-0.5 rounded-r-md animate-in fade-in slide-in-from-top-1 duration-200">
@@ -84,7 +84,7 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
           <div className="flex-1">
             <p
               className="leading-relaxed text-slate-705 dark:text-slate-300"
-              dangerouslySetInnerHTML={{ __html: transformText(text) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(text)) }}
             />
             {(activeTranslations[key] || isBilingualView) && (
               <div className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 italic bg-blue-500/5 dark:bg-blue-500/10 border-l-2 border-blue-500 pl-3 py-1 rounded-r-md animate-in fade-in slide-in-from-top-1 duration-200">
@@ -124,7 +124,7 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
           {items.map((item: string, i: number) => (
             <li
               key={i}
-              dangerouslySetInnerHTML={{ __html: transformText(item) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(item)) }}
             />
           ))}
         </ListTag>
@@ -136,11 +136,11 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
       const caption = block.data?.caption || '';
       return (
         <blockquote className="border-l-4 border-blue-500 pl-4 py-1 pr-2 italic text-slate-650 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-r-lg my-4">
-          <p dangerouslySetInnerHTML={{ __html: transformText(text) }} />
+          <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(text)) }} />
           {caption && (
             <cite
               className="text-sm not-italic text-slate-500 block mt-1"
-              dangerouslySetInnerHTML={{ __html: transformText(`— ${caption}`) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(`— ${caption}`)) }}
             />
           )}
         </blockquote>
@@ -174,14 +174,14 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Bản gốc / Original</div>
             <div
               className="text-slate-800 dark:text-slate-205"
-              dangerouslySetInnerHTML={{ __html: transformText(original) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(original)) }}
             />
           </div>
           <div className="flex-1 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-3 md:pt-0 md:pl-4">
             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Bản dịch / Translation</div>
             <div
               className="text-slate-600 dark:text-slate-400 italic"
-              dangerouslySetInnerHTML={{ __html: transformText(translation) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(translation)) }}
             />
           </div>
         </div>
@@ -195,7 +195,7 @@ export const ReaderBlockItem: React.FC<ReaderBlockItemProps> = ({
           <div className="flex-1">
             <p
               className="leading-relaxed text-slate-705 dark:text-slate-300"
-              dangerouslySetInnerHTML={{ __html: transformText(text) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(transformText(text)) }}
             />
             {(activeTranslations[key] || isBilingualView) && (
               <div className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 italic bg-blue-500/5 dark:bg-blue-500/10 border-l-2 border-blue-500 pl-3 py-1 rounded-r-md animate-in fade-in slide-in-from-top-1 duration-200">

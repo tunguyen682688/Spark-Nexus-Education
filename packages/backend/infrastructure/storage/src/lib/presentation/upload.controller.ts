@@ -56,17 +56,25 @@ export class UploadController {
   }
 
   @Put('local/*key')
+  @UseGuards(auth.JwtAuthGuard)
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Upload file to local storage (dev mode)' })
   async uploadLocal(@Param('key') key: string, @Req() req: any) {
     if (!(this.objectStorage instanceof LocalObjectStorage)) {
       throw new BadRequestException('Local upload not supported in this storage mode');
     }
 
+    // Sanitize path — reject traversal attacks
+    const normalizedKey = path.posix.normalize(key);
+    if (normalizedKey.includes('..') || path.isAbsolute(normalizedKey)) {
+      throw new BadRequestException('Invalid storage key: path traversal detected');
+    }
+
     const maxSize = (parseInt(process.env.UPLOAD_MAX_SIZE_MB || '10', 10)) * 1024 * 1024;
 
     // Resolve the full file path and ensure directory exists
     const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
-    const filePath = path.join(uploadDir, key);
+    const filePath = path.join(uploadDir, normalizedKey);
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });

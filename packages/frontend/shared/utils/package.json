@@ -23,5 +23,11 @@
     "tags": [
       "frontend"
     ]
+  },
+  "dependencies": {
+    "dompurify": "^3.4.15"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.2.0"
   }
 }

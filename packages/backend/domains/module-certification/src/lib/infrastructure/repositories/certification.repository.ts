@@ -1,28 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@spark-nest-ed/infrastructure-database';
-import * as crypto from 'crypto';
+import { Injectable } from '@nestjs/common';
 import {
-  Collection,
-  CollectionItem,
-  Exam,
-  Chapter,
-  ExamSection,
-  ExamSession,
-  ExamResult,
-  Question,
-  SessionAnswer,
-  ExamQuestion,
-  QuestionChoice,
-  SessionViolation,
-  SkillResult,
-  QuestionResult,
-  AiEvaluation,
-  CreatorProfile,
   UserDownload,
   CollectionPurchase,
   CollectionReport,
-  Prisma,
-} from '@prisma/client';
+  CollectionReview,
+  CollectionDiscussion,
+  DiscussionReply,
+} from '../../domain/types/certification-domain.types';
 import { CollectionEntity } from '../../domain/entities/collection.entity';
 import { ExamEntity } from '../../domain/entities/exam.entity';
 import { ChapterEntity } from '../../domain/entities/chapter.entity';
@@ -40,665 +24,145 @@ import { QuestionResultEntity } from '../../domain/entities/question-result.enti
 import { AiEvaluationEntity } from '../../domain/entities/ai-evaluation.entity';
 import { CreatorProfileEntity } from '../../domain/entities/creator-profile.entity';
 import { ICertificationRepository } from '../../domain/repositories/certification.repository.interface';
-import {
-  buildPrismaQuery,
-  normalizeQueryParams,
-  extractPagination,
-  QueryParams,
-} from '@spark-nest-ed/shared-libs';
-import {
-  stripKeys,
-  sanitizeSortField,
-  resolveOrderBy,
-  derivePaginationMeta,
-  mergeSearchFilter,
-} from './query-helpers';
+import { QueryParams } from '@spark-nest-ed/shared-libs';
+import { CollectionRepository } from './collection.repository';
+import { ExamRepository } from './exam.repository';
+import { QuestionRepository } from './question.repository';
+import { ExamQuestionRepository } from './exam-question.repository';
+import { QuestionBatchRepository } from './question-batch.repository';
+import { SessionRepository } from './session.repository';
+import { ResultRepository } from './result.repository';
+import { SocialRepository } from './social.repository';
 
 @Injectable()
 export class CertificationRepository implements ICertificationRepository {
-  private readonly logger = new Logger(CertificationRepository.name);
-
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly collectionRepo: CollectionRepository,
+    private readonly examRepo: ExamRepository,
+    private readonly questionRepo: QuestionRepository,
+    private readonly examQuestionRepo: ExamQuestionRepository,
+    private readonly questionBatchRepo: QuestionBatchRepository,
+    private readonly sessionRepo: SessionRepository,
+    private readonly resultRepo: ResultRepository,
+    private readonly socialRepo: SocialRepository,
+  ) {}
 
   // ============================================
   // COLLECTION OPERATIONS
   // ============================================
 
-  async findCollections(queryParams?: QueryParams) {
-    const normalizedParams = normalizeQueryParams(queryParams || {});
-    const baseWhere: Prisma.CollectionWhereInput = {
-      publishStatus: 'published',
-      deletedAt: null,
-    };
-
-    const prismaQuery = buildPrismaQuery(normalizedParams, {
-      maxLimit: 100,
-      defaultLimit: 20,
-    });
-
-    const cleanedWhere = stripKeys(
-      { ...prismaQuery.where } as Record<string, unknown>,
-      ['exam']
-    );
-
-    const where: Prisma.CollectionWhereInput =
-      Object.keys(cleanedWhere).length > 0
-        ? { AND: [baseWhere, cleanedWhere as Prisma.CollectionWhereInput] }
-        : baseWhere;
-
-    const search = (normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search;
-    mergeSearchFilter(
-      where as Record<string, unknown>,
-      search as string | undefined,
-      ['title']
-    );
-
-    const ALLOWED_COLLECTION_SORT_FIELDS = new Set([
-      'id', 'title', 'description', 'subtitle', 'level', 'tags',
-      'visibility', 'coverImage', 'ownerId', 'publishStatus',
-      'createdAt', 'updatedAt', 'deletedAt',
-    ]);
-    const orderBy = sanitizeSortField(
-      resolveOrderBy(prismaQuery.orderBy),
-      ALLOWED_COLLECTION_SORT_FIELDS
-    ) as Prisma.CollectionOrderByWithRelationInput;
-
-    const pagination = extractPagination(normalizedParams);
-    const { page, limit } = derivePaginationMeta(pagination, prismaQuery.take);
-
-    try {
-      const [total, items] = await Promise.all([
-        this.prisma.collection.count({ where }),
-        this.prisma.collection.findMany({
-          where,
-          include: { items: true, exams: true },
-          orderBy,
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-      ]);
-
-      const totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
-
-      return {
-        items: items.map((item) => this.mapCollectionToEntity(item)),
-        total,
-        page,
-        limit,
-        totalPages,
-      };
-    } catch (error) {
-      this.logger.warn(`findCollections DB error: ${(error as Error)?.message || error}`);
-      return {
-        items: [],
-        total: 0,
-        page,
-        limit,
-        totalPages: 0,
-      };
-    }
+  findCollections(queryParams?: QueryParams) {
+    return this.collectionRepo.findCollections(queryParams);
   }
 
-  async findCollectionById(id: string): Promise<CollectionEntity | null> {
-    try {
-      const col = await this.prisma.collection.findFirst({
-        where: { id, deletedAt: null },
-        include: {
-          items: true,
-          exams: true,
-        },
-      });
-      if (!col) return null;
-      return this.mapCollectionToEntity(col);
-    } catch (error) {
-      this.logger.warn(`findCollectionById(${id}) DB error: ${(error as Error)?.message || error}`);
-      return null;
-    }
+  findCollectionById(id: string): Promise<CollectionEntity | null> {
+    return this.collectionRepo.findCollectionById(id);
   }
 
-  async saveCollection(collection: CollectionEntity): Promise<CollectionEntity> {
-    const data = {
-      title: collection.getTitle(),
-      description: collection.getDescription(),
-      subtitle: collection.getSubtitle(),
-      level: collection.getLevel(),
-      tags: collection.getTags(),
-      visibility: collection.getVisibility(),
-      allowDownloads: collection.getAllowDownloads(),
-      coverImage: collection.getCoverImage(),
-      ownerId: collection.getOwnerId(),
-      publishStatus: collection.getPublishStatus(),
-      createdBy: collection.getCreatedBy(),
-      updatedBy: collection.getUpdatedBy(),
-      deletedAt: collection.getDeletedAt(),
-      version: collection.version + BigInt(1),
-    };
-
-    const saved = await this.prisma.collection.upsert({
-      where: { id: collection.id },
-      create: {
-        id: collection.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapCollectionToEntity(saved);
+  saveCollection(collection: CollectionEntity): Promise<CollectionEntity> {
+    return this.collectionRepo.saveCollection(collection);
   }
 
-  async cloneCollection(sourceCollectionId: string, newOwnerId: string): Promise<CollectionEntity> {
-    const source = await this.prisma.collection.findFirst({
-      where: { id: sourceCollectionId, deletedAt: null },
-      include: {
-        exams: {
-          include: {
-            sections: true,
-            examQuestions: true,
-          },
-        },
-      },
-    });
-    if (!source) {
-      throw new Error(`Source collection ${sourceCollectionId} not found`);
-    }
-
-    const newCollectionId = crypto.randomUUID();
-
-    const newCollection = await this.prisma.collection.create({
-      data: {
-        id: newCollectionId,
-        title: `${source.title} (Copy)`,
-        description: source.description,
-        subtitle: source.subtitle,
-        level: source.level,
-        tags: source.tags,
-        visibility: source.visibility,
-        allowDownloads: source.allowDownloads,
-        coverImage: source.coverImage,
-        ownerId: newOwnerId,
-        createdBy: newOwnerId,
-        updatedBy: newOwnerId,
-        publishStatus: 'draft',
-        version: BigInt(1),
-      },
-    });
-
-    for (const exam of source.exams) {
-      const newExamId = crypto.randomUUID();
-
-      await this.prisma.exam.create({
-        data: {
-          id: newExamId,
-          title: exam.title,
-          description: exam.description,
-          collectionId: newCollectionId,
-          duration: exam.duration,
-          totalQuestions: exam.totalQuestions,
-          maxScore: exam.maxScore,
-          passScore: exam.passScore,
-          publishStatus: exam.publishStatus,
-          createdBy: newOwnerId,
-          updatedBy: newOwnerId,
-          version: BigInt(1),
-        },
-      });
-
-      // Map old section IDs to new section IDs for correct question assignment
-      const sectionIdMap = new Map<string, string>();
-
-      for (const section of exam.sections) {
-        const newSectionId = crypto.randomUUID();
-        sectionIdMap.set(section.id, newSectionId);
-        await this.prisma.examSection.create({
-          data: {
-            id: newSectionId,
-            examId: newExamId,
-            title: section.title,
-            subtitle: section.subtitle,
-            instruction: section.instruction,
-            order: section.order,
-            durationMinutes: section.durationMinutes,
-            questionCount: section.questionCount,
-            isBreak: section.isBreak,
-            createdBy: newOwnerId,
-            updatedBy: newOwnerId,
-          },
-        });
-      }
-
-      for (const eq of exam.examQuestions) {
-        const newSectionId = eq.sectionId ? sectionIdMap.get(eq.sectionId) ?? null : null;
-        await this.prisma.examQuestion.create({
-          data: {
-            id: crypto.randomUUID(),
-            examId: newExamId,
-            questionId: eq.questionId,
-            sectionId: newSectionId,
-            order: eq.order,
-            points: eq.points,
-            createdBy: newOwnerId,
-            updatedBy: newOwnerId,
-          },
-        });
-      }
-    }
-
-    return this.mapCollectionToEntity({
-      ...newCollection,
-      items: [],
-      exams: [],
-    } as Collection & { items?: CollectionItem[]; exams?: Exam[] });
+  cloneCollection(sourceCollectionId: string, newOwnerId: string): Promise<CollectionEntity> {
+    return this.collectionRepo.cloneCollection(sourceCollectionId, newOwnerId);
   }
 
-  async findClonedCollectionsByUserId(userId: string) {
-    const collections = await this.prisma.collection.findMany({
-      where: { ownerId: userId, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const collectionIds = collections.map((c) => c.id);
-    const examCounts = collectionIds.length > 0
-      ? await this.prisma.exam.groupBy({
-          by: ['collectionId'],
-          where: { collectionId: { in: collectionIds }, deletedAt: null },
-          _count: { id: true },
-        })
-      : [];
-    const examCountMap = new Map(examCounts.map((e) => [e.collectionId, e._count.id]));
-
-    const itemCounts = collectionIds.length > 0
-      ? await this.prisma.collectionItem.groupBy({
-          by: ['collectionId'],
-          where: { collectionId: { in: collectionIds } },
-          _count: { id: true },
-        })
-      : [];
-    const itemCountMap = new Map(itemCounts.map((i) => [i.collectionId, i._count.id]));
-
-    return collections.map((c) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      ownerId: c.ownerId,
-      publishStatus: c.publishStatus,
-      createdAt: c.createdAt,
-      examCount: examCountMap.get(c.id) ?? 0,
-      itemCount: itemCountMap.get(c.id) ?? 0,
-    }));
+  findClonedCollectionsByUserId(userId: string) {
+    return this.collectionRepo.findClonedCollectionsByUserId(userId);
   }
 
-  async findCollectionsByOwnerId(userId: string) {
-    const collections = await this.prisma.collection.findMany({
-      where: { ownerId: userId, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const collectionIds = collections.map((c) => c.id);
-    const examCounts = collectionIds.length > 0
-      ? await this.prisma.exam.groupBy({
-          by: ['collectionId'],
-          where: { collectionId: { in: collectionIds }, deletedAt: null },
-          _count: { id: true },
-        })
-      : [];
-    const examCountMap = new Map(examCounts.map((e) => [e.collectionId, e._count.id]));
-
-    const itemCounts = collectionIds.length > 0
-      ? await this.prisma.collectionItem.groupBy({
-          by: ['collectionId'],
-          where: { collectionId: { in: collectionIds } },
-          _count: { id: true },
-        })
-      : [];
-    const itemCountMap = new Map(itemCounts.map((i) => [i.collectionId, i._count.id]));
-
-    return collections.map((c) => ({
-      id: c.id,
-      ownerId: c.ownerId,
-      title: c.title,
-      description: c.description,
-      publishStatus: c.publishStatus,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-      examCount: examCountMap.get(c.id) ?? 0,
-      itemCount: itemCountMap.get(c.id) ?? 0,
-    }));
+  findCollectionsByOwnerId(userId: string) {
+    return this.collectionRepo.findCollectionsByOwnerId(userId);
   }
 
-  async deleteCollection(id: string): Promise<void> {
-    await this.prisma.collection.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+  deleteCollection(id: string): Promise<void> {
+    return this.collectionRepo.deleteCollection(id);
   }
 
-  async findActivitiesByCollectionId(
+  findActivitiesByCollectionId(
     collectionId: string,
     limit = 10
   ): Promise<Array<{ user: string; action: string; time: string }>> {
-    const exams = await this.prisma.exam.findMany({
-      where: { collectionId },
-      select: { id: true, title: true },
-    });
-
-    if (exams.length === 0) {
-      return [];
-    }
-
-    const examIds = exams.map((e) => e.id);
-    const examMap = new Map(exams.map((e) => [e.id, e.title]));
-
-    const results = await this.prisma.examResult.findMany({
-      where: { examId: { in: examIds } },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-
-    if (results.length === 0) {
-      const sessions = await this.prisma.examSession.findMany({
-        where: { examId: { in: examIds } },
-        orderBy: { startedAt: 'desc' },
-        take: limit,
-      });
-
-      return sessions.map((s) => {
-        const examTitle = examMap.get(s.examId) || 'Practice Exam';
-        const agoMins = Math.max(1, Math.floor((Date.now() - s.startedAt.getTime()) / 60000));
-        const timeStr = agoMins < 60 ? `${agoMins} mins ago` : `${Math.floor(agoMins / 60)} hours ago`;
-        return {
-          user: `Learner ${s.userId.substring(0, 5)}`,
-          action: `started ${examTitle}`,
-          time: timeStr,
-        };
-      });
-    }
-
-    return results.map((r) => {
-      const examTitle = examMap.get(r.examId) || 'Exam';
-      const agoMins = Math.max(1, Math.floor((Date.now() - r.createdAt.getTime()) / 60000));
-      const timeStr = agoMins < 60 ? `${agoMins} mins ago` : `${Math.floor(agoMins / 60)} hours ago`;
-      return {
-        user: `Learner ${r.userId.substring(0, 5)}`,
-        action: `completed ${examTitle} with score ${r.totalScore}`,
-        time: timeStr,
-      };
-    });
+    return this.collectionRepo.findActivitiesByCollectionId(collectionId, limit);
   }
 
   // ============================================
   // EXAM OPERATIONS
   // ============================================
 
-  async findExams(queryParams?: QueryParams) {
-    const normalizedParams = normalizeQueryParams(queryParams || {});
-    const baseWhere: Prisma.ExamWhereInput = {
-      publishStatus: 'published',
-      deletedAt: null,
-    };
-
-    const prismaQuery = buildPrismaQuery(normalizedParams, {
-      maxLimit: 100,
-      defaultLimit: 20,
-    });
-
-    const cleanedWhere = stripKeys(
-      { ...prismaQuery.where } as Record<string, unknown>,
-      ['exam']
-    );
-
-    const where: Prisma.ExamWhereInput =
-      Object.keys(cleanedWhere).length > 0
-        ? { AND: [baseWhere, cleanedWhere as Prisma.ExamWhereInput] }
-        : baseWhere;
-
-    const search = (normalizedParams as Record<string, unknown>)['q'] || normalizedParams.search;
-    mergeSearchFilter(
-      where as Record<string, unknown>,
-      search as string | undefined,
-      ['title']
-    );
-
-    const ALLOWED_EXAM_SORT_FIELDS = new Set([
-      'id', 'collectionId', 'chapterId', 'title', 'description',
-      'publishStatus', 'examType', 'certificationType', 'level',
-      'order', 'createdAt', 'updatedAt', 'deletedAt',
-      'duration', 'totalQuestions', 'maxScore', 'passScore',
-    ]);
-    const orderBy = sanitizeSortField(
-      resolveOrderBy(prismaQuery.orderBy),
-      ALLOWED_EXAM_SORT_FIELDS
-    ) as Prisma.ExamOrderByWithRelationInput;
-
-    const pagination = extractPagination(normalizedParams);
-    const { page, limit } = derivePaginationMeta(pagination, prismaQuery.take);
-
-    try {
-      const [total, items] = await Promise.all([
-        this.prisma.exam.count({ where }),
-        this.prisma.exam.findMany({
-          where,
-          orderBy,
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-      ]);
-
-      const totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
-
-      return {
-        items: items.map((item) => this.mapExamToEntity(item)),
-        total,
-        page,
-        limit,
-        totalPages,
-      };
-    } catch (error) {
-      this.logger.warn(`findExams DB error: ${(error as Error)?.message || error}`);
-      return {
-        items: [],
-        total: 0,
-        page,
-        limit,
-        totalPages: 0,
-      };
-    }
+  findExams(queryParams?: QueryParams) {
+    return this.examRepo.findExams(queryParams);
   }
 
-  async findExamById(id: string): Promise<ExamEntity | null> {
-    try {
-      const exam = await this.prisma.exam.findFirst({
-        where: { id, deletedAt: null },
-      });
-      if (!exam) return null;
-      return this.mapExamToEntity(exam);
-    } catch (error) {
-      this.logger.warn(`findExamById(${id}) DB error: ${(error as Error)?.message || error}`);
-      return null;
-    }
+  findExamById(id: string): Promise<ExamEntity | null> {
+    return this.examRepo.findExamById(id);
   }
 
-  async findExamsByCollectionId(collectionId: string): Promise<ExamEntity[]> {
-    try {
-      const exams = await this.prisma.exam.findMany({
-        where: { collectionId, deletedAt: null },
-        orderBy: { order: 'asc' },
-      });
-      return exams.map((exam) => this.mapExamToEntity(exam));
-    } catch (error) {
-      this.logger.warn(`findExamsByCollectionId(${collectionId}) DB error: ${(error as Error)?.message || error}`);
-      return [];
-    }
+  findExamsByCollectionId(collectionId: string): Promise<ExamEntity[]> {
+    return this.examRepo.findExamsByCollectionId(collectionId);
   }
 
-  async saveExam(exam: ExamEntity): Promise<ExamEntity> {
-    const data = {
-      title: exam.getTitle(),
-      description: exam.getDescription(),
-      duration: exam.getDuration(),
-      totalQuestions: exam.getTotalQuestions(),
-      maxScore: exam.getMaxScore(),
-      passScore: exam.getPassScore(),
-      publishStatus: exam.getPublishStatus(),
-      certificationType: exam.getCertificationType(),
-      examType: exam.getExamType(),
-      level: exam.getLevel(),
-      collectionId: exam.getCollectionId(),
-      chapterId: exam.getChapterId(),
-      order: exam.getOrder(),
-      createdBy: exam.getCreatedBy(),
-      updatedBy: exam.getUpdatedBy(),
-      deletedAt: exam.getDeletedAt(),
-      version: exam.version + BigInt(1),
-    };
-
-    const saved = await this.prisma.exam.upsert({
-      where: { id: exam.id },
-      create: {
-        id: exam.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapExamToEntity(saved);
+  saveExam(exam: ExamEntity): Promise<ExamEntity> {
+    return this.examRepo.saveExam(exam);
   }
 
-  async deleteExam(id: string): Promise<void> {
-    await this.prisma.exam.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+  deleteExam(id: string): Promise<void> {
+    return this.examRepo.deleteExam(id);
   }
 
-  async findExamsByChapterId(chapterId: string): Promise<ExamEntity[]> {
-    const exams = await this.prisma.exam.findMany({
-      where: { chapterId, deletedAt: null },
-      orderBy: { order: 'asc' },
-    });
-    return exams.map((e) => this.mapExamToEntity(e));
+  findExamsByChapterId(chapterId: string): Promise<ExamEntity[]> {
+    return this.examRepo.findExamsByChapterId(chapterId);
   }
 
-  async updateExamChapterId(examId: string, chapterId: string | null): Promise<void> {
-    await this.prisma.exam.update({
-      where: { id: examId },
-      data: { chapterId },
-    });
+  updateExamChapterId(examId: string, chapterId: string | null): Promise<void> {
+    return this.examRepo.updateExamChapterId(examId, chapterId);
   }
 
-  async updateExamOrder(examId: string, order: number): Promise<void> {
-    await this.prisma.exam.update({
-      where: { id: examId },
-      data: { order },
-    });
+  updateExamOrder(examId: string, order: number): Promise<void> {
+    return this.examRepo.updateExamOrder(examId, order);
   }
 
-  async updateExamInitializationStatus(examId: string, status: string): Promise<void> {
-    await this.prisma.exam.updateMany({
-      where: { id: examId },
-      data: { initializationStatus: status },
-    });
+  updateExamInitializationStatus(examId: string, status: string): Promise<void> {
+    return this.examRepo.updateExamInitializationStatus(examId, status);
   }
 
   // ============================================
   // CHAPTER OPERATIONS
   // ============================================
 
-  async findChapterById(id: string): Promise<ChapterEntity | null> {
-    const chapter = await this.prisma.chapter.findFirst({
-      where: { id, deletedAt: null },
-    });
-    return chapter ? this.mapChapterToEntity(chapter) : null;
+  findChapterById(id: string): Promise<ChapterEntity | null> {
+    return this.examRepo.findChapterById(id);
   }
 
-  async findChaptersByCollectionId(collectionId: string): Promise<ChapterEntity[]> {
-    const chapters = await this.prisma.chapter.findMany({
-      where: { collectionId, deletedAt: null },
-      orderBy: { order: 'asc' },
-    });
-    return chapters.map((ch) => this.mapChapterToEntity(ch));
+  findChaptersByCollectionId(collectionId: string): Promise<ChapterEntity[]> {
+    return this.examRepo.findChaptersByCollectionId(collectionId);
   }
 
-  async saveChapter(chapter: ChapterEntity): Promise<ChapterEntity> {
-    const data = {
-      collectionId: chapter.getCollectionId(),
-      title: chapter.getTitle(),
-      description: chapter.getDescription(),
-      order: chapter.getOrder(),
-      createdBy: chapter.getCreatedBy(),
-      updatedBy: chapter.getUpdatedBy(),
-      deletedAt: chapter.getDeletedAt(),
-    };
-
-    const saved = await this.prisma.chapter.upsert({
-      where: { id: chapter.id },
-      create: { id: chapter.id, ...data },
-      update: data,
-    });
-
-    return this.mapChapterToEntity(saved);
+  saveChapter(chapter: ChapterEntity): Promise<ChapterEntity> {
+    return this.examRepo.saveChapter(chapter);
   }
 
-  async deleteChapter(id: string): Promise<void> {
-    await this.prisma.chapter.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+  deleteChapter(id: string): Promise<void> {
+    return this.examRepo.deleteChapter(id);
   }
 
   // ============================================
   // EXAM SECTION OPERATIONS
   // ============================================
 
-  async findSectionsByExamId(examId: string): Promise<ExamSectionEntity[]> {
-    const sections = await this.prisma.examSection.findMany({
-      where: { examId },
-      orderBy: { order: 'asc' },
-    });
-    return sections.map((s) => this.mapSectionToEntity(s));
+  findSectionsByExamId(examId: string): Promise<ExamSectionEntity[]> {
+    return this.examRepo.findSectionsByExamId(examId);
   }
 
-  async findSectionById(id: string): Promise<ExamSectionEntity | null> {
-    const section = await this.prisma.examSection.findUnique({
-      where: { id },
-    });
-    return section ? this.mapSectionToEntity(section) : null;
+  findSectionById(id: string): Promise<ExamSectionEntity | null> {
+    return this.examRepo.findSectionById(id);
   }
 
-  async saveExamSection(section: ExamSectionEntity): Promise<ExamSectionEntity> {
-    const data = {
-      examId: section.getExamId(),
-      title: section.getTitle(),
-      subtitle: section.getSubtitle(),
-      sectionType: section.getSectionType(),
-      instruction: section.getInstruction(),
-      order: section.getOrder(),
-      durationMinutes: section.getDurationMinutes(),
-      questionCount: section.getQuestionCount(),
-      isBreak: section.getIsBreak(),
-      audioMediaId: section.getAudioMediaId(),
-      scriptText: section.getScriptText(),
-      passageText: section.getPassageText(),
-      passageTitle: section.getPassageTitle(),
-      passageType: section.getPassageType(),
-    };
-
-    const saved = await this.prisma.examSection.upsert({
-      where: { id: section.id },
-      create: {
-        id: section.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapSectionToEntity(saved);
+  saveExamSection(section: ExamSectionEntity): Promise<ExamSectionEntity> {
+    return this.examRepo.saveExamSection(section);
   }
 
-  async deleteExamSection(id: string): Promise<void> {
-    await this.prisma.examSection.delete({ where: { id } });
-  }
-
-  async updateSectionMetadata(sectionId: string, data: {
+  updateSectionMetadata(sectionId: string, data: {
     title?: string;
     subtitle?: string | null;
     instruction?: string | null;
@@ -706,1312 +170,208 @@ export class CertificationRepository implements ICertificationRepository {
     durationMinutes?: number;
     questionCount?: number;
   }): Promise<void> {
-    const updateData: Prisma.ExamSectionUpdateInput = {};
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
-    if (data.instruction !== undefined) updateData.instruction = data.instruction;
-    if (data.order !== undefined) updateData.order = data.order;
-    if (data.durationMinutes !== undefined) updateData.durationMinutes = data.durationMinutes;
-    if (data.questionCount !== undefined) updateData.questionCount = data.questionCount;
-
-    if (Object.keys(updateData).length > 0) {
-      await this.prisma.examSection.update({
-        where: { id: sectionId },
-        data: updateData,
-      });
-    }
+    return this.examRepo.updateSectionMetadata(sectionId, data);
   }
 
-  async deleteAllSectionsByExamId(examId: string): Promise<void> {
-    await this.prisma.examSection.deleteMany({ where: { examId } });
+  deleteExamSection(id: string): Promise<void> {
+    return this.examRepo.deleteExamSection(id);
+  }
+
+  deleteAllSectionsByExamId(examId: string): Promise<void> {
+    return this.examRepo.deleteAllSectionsByExamId(examId);
   }
 
   // ============================================
   // EXAM SESSION OPERATIONS
   // ============================================
 
-  async findSessionById(id: string): Promise<ExamSessionEntity | null> {
-    const session = await this.prisma.examSession.findUnique({
-      where: { id },
-      include: {
-        answers: true,
-        violations: true,
-      },
-    });
-    if (!session) return null;
-    return this.mapSessionToEntity(session);
+  findSessionById(id: string): Promise<ExamSessionEntity | null> {
+    return this.sessionRepo.findSessionById(id);
   }
 
-  async saveSession(session: ExamSessionEntity): Promise<ExamSessionEntity> {
-    const data = {
-      examId: session.getExamId(),
-      userId: session.getUserId(),
-      status: session.getStatus(),
-      startedAt: session.getStartedAt(),
-      endedAt: session.getEndedAt(),
-      version: session.version + BigInt(1),
-    };
-
-    const saved = await this.prisma.examSession.upsert({
-      where: { id: session.id },
-      create: {
-        id: session.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapSessionToEntity(saved);
+  saveSession(session: ExamSessionEntity): Promise<ExamSessionEntity> {
+    return this.sessionRepo.saveSession(session);
   }
 
-  async findSessionsByUserId(userId: string): Promise<ExamSessionEntity[]> {
-    const sessions = await this.prisma.examSession.findMany({
-      where: { userId },
-      orderBy: { startedAt: 'desc' },
-    });
-    return sessions.map((s) => this.mapSessionToEntity(s));
+  findSessionsByUserId(userId: string): Promise<ExamSessionEntity[]> {
+    return this.sessionRepo.findSessionsByUserId(userId);
   }
 
-  async findInProgressSessionsByUserId(userId: string) {
-    const sessions = await this.prisma.examSession.findMany({
-      where: { userId, status: 'in_progress' },
-      include: {
-        exam: {
-          select: { id: true, title: true, collectionId: true, duration: true, totalQuestions: true },
-        },
-      },
-      orderBy: { startedAt: 'desc' },
-    });
-    return sessions.map((s) => ({
-      id: s.id,
-      examId: s.examId,
-      userId: s.userId,
-      status: s.status,
-      startedAt: s.startedAt,
-      endedAt: s.endedAt,
-      exam: s.exam ? { id: s.exam.id, title: s.exam.title, collectionId: s.exam.collectionId, duration: s.exam.duration, totalQuestions: s.exam.totalQuestions } : null,
-    }));
+  findInProgressSessionsByUserId(userId: string) {
+    return this.sessionRepo.findInProgressSessionsByUserId(userId);
   }
 
   // ============================================
   // EXAM RESULT OPERATIONS
   // ============================================
 
-  async findResultById(id: string): Promise<ExamResultEntity | null> {
-    const result = await this.prisma.examResult.findUnique({
-      where: { id },
-      include: {
-        skills: true,
-        questions: true,
-        evaluation: true,
-      },
-    });
-    if (!result) return null;
-    return this.mapResultToEntity(result);
+  findResultById(id: string): Promise<ExamResultEntity | null> {
+    return this.resultRepo.findResultById(id);
   }
 
-  async findResultBySessionId(sessionId: string): Promise<ExamResultEntity | null> {
-    const result = await this.prisma.examResult.findFirst({
-      where: { sessionId },
-      include: {
-        skills: true,
-        questions: true,
-        evaluation: true,
-      },
-    });
-    if (!result) return null;
-    return this.mapResultToEntity(result);
+  findResultBySessionId(sessionId: string): Promise<ExamResultEntity | null> {
+    return this.resultRepo.findResultBySessionId(sessionId);
   }
 
-  async saveResult(result: ExamResultEntity): Promise<ExamResultEntity> {
-    const data = {
-      sessionId: result.getSessionId(),
-      examId: result.getExamId(),
-      userId: result.getUserId(),
-      totalScore: result.getTotalScore(),
-      passed: result.isPassed(),
-    };
-
-    const saved = await this.prisma.examResult.upsert({
-      where: { id: result.id },
-      create: {
-        id: result.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapResultToEntity(saved);
+  saveResult(result: ExamResultEntity): Promise<ExamResultEntity> {
+    return this.resultRepo.saveResult(result);
   }
 
-  async findResultsByUserId(userId: string): Promise<ExamResultEntity[]> {
-    const results = await this.prisma.examResult.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return results.map((r) => this.mapResultToEntity(r));
+  findResultsByUserId(userId: string): Promise<ExamResultEntity[]> {
+    return this.resultRepo.findResultsByUserId(userId);
   }
 
   // ============================================
   // QUESTION OPERATIONS
   // ============================================
 
-  async findQuestionById(id: string): Promise<QuestionEntity | null> {
-    const question = await this.prisma.question.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        choices: true,
-      },
-    });
-    if (!question) return null;
-    return this.mapQuestionToEntity(question);
+  findQuestionById(id: string): Promise<QuestionEntity | null> {
+    return this.questionRepo.findQuestionById(id);
   }
 
-  async findQuestionsByIds(ids: string[]): Promise<QuestionEntity[]> {
-    if (ids.length === 0) return [];
-    const questions = await this.prisma.question.findMany({
-      where: { id: { in: ids }, deletedAt: null },
-    });
-    return questions.map((q) => this.mapQuestionToEntity(q));
+  findQuestionsByIds(ids: string[]): Promise<QuestionEntity[]> {
+    return this.questionRepo.findQuestionsByIds(ids);
   }
 
-  async findQuestionVersionsByQuestionId(questionId: string) {
-    const versions = await this.prisma.questionVersion.findMany({
-      where: { questionId },
-      orderBy: { version: 'desc' },
-    });
-    return versions.map((v) => ({
-      id: v.id,
-      questionId: v.questionId,
-      version: v.version,
-      content: v.content,
-      createdAt: v.createdAt,
-      createdBy: v.createdBy,
-    }));
+  findQuestionVersionsByQuestionId(questionId: string) {
+    return this.questionRepo.findQuestionVersionsByQuestionId(questionId);
   }
 
-  async saveQuestion(question: QuestionEntity): Promise<QuestionEntity> {
-    const data = {
-      title: question.getTitle(),
-      content: question.getContent(),
-      type: question.getType(),
-      difficulty: question.getDifficulty(),
-      status: question.getStatus(),
-      createdBy: question.getCreatedBy(),
-      updatedBy: question.getUpdatedBy(),
-      deletedAt: question.getDeletedAt(),
-    };
-
-    const saved = await this.prisma.question.upsert({
-      where: { id: question.id },
-      create: {
-        id: question.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapQuestionToEntity(saved);
+  saveQuestion(question: QuestionEntity): Promise<QuestionEntity> {
+    return this.questionRepo.saveQuestion(question);
   }
 
-  async deleteQuestion(id: string): Promise<void> {
-    await this.prisma.question.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+  deleteQuestion(id: string): Promise<void> {
+    return this.questionRepo.deleteQuestion(id);
   }
 
-  // ============================================
-  // QUESTION BUILDER OPERATIONS
-  // ============================================
-
-  async findQuestionWithBuilderData(id: string): Promise<{
-    question: QuestionEntity;
-    choices: QuestionChoiceEntity[];
-    metadata: QuestionMetadataEntity | null;
-    examQuestions: ExamQuestionEntity[];
-  } | null> {
-    const question = await this.prisma.question.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        choices: { orderBy: { order: 'asc' } },
-        metadata: true,
-      },
-    });
-
-    if (!question) return null;
-
-    // Also fetch ExamQuestion links (question may be in multiple exams)
-    const examQuestionRecords = await this.prisma.examQuestion.findMany({
-      where: { questionId: id },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return {
-      question: this.mapQuestionToEntity(question),
-      choices: question.choices.map((c) => this.mapChoiceToEntity(c)),
-      metadata: question.metadata ? this.mapMetadataToEntity(question.metadata) : null,
-      examQuestions: examQuestionRecords.map((eq) => this.mapExamQuestionToEntity(eq)),
-    };
+  findQuestionWithBuilderData(id: string) {
+    return this.questionRepo.findQuestionWithBuilderData(id);
   }
 
-  async saveQuestionWithChoices(
+  saveQuestionWithChoices(
     question: QuestionEntity,
     choices: QuestionChoiceEntity[],
     metadata: QuestionMetadataEntity | null
   ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      // 1. Upsert question
-      await tx.question.upsert({
-        where: { id: question.id },
-        create: {
-          id: question.id,
-          title: question.getTitle(),
-          content: question.getContent(),
-          type: question.getType(),
-          difficulty: question.getDifficulty(),
-          category: question.getCategory(),
-          status: question.getStatus(),
-          createdBy: question.getCreatedBy(),
-          updatedBy: question.getUpdatedBy(),
-        },
-        update: {
-          title: question.getTitle(),
-          content: question.getContent(),
-          type: question.getType(),
-          difficulty: question.getDifficulty(),
-          category: question.getCategory(),
-          status: question.getStatus(),
-          updatedBy: question.getUpdatedBy(),
-        },
-      });
-
-      // 2. Delete old choices and create new ones
-      await tx.questionChoice.deleteMany({ where: { questionId: question.id } });
-      if (choices.length > 0) {
-        await tx.questionChoice.createMany({
-          data: choices.map((c) => ({
-            id: c.id,
-            questionId: question.id,
-            content: c.getContent(),
-            isCorrect: c.getIsCorrect(),
-            order: c.getOrder(),
-            createdBy: c.getCreatedBy(),
-            updatedBy: c.getUpdatedBy(),
-          })),
-        });
-      }
-
-      // 3. Upsert metadata
-      if (metadata) {
-        await tx.questionMetadata.upsert({
-          where: { questionId: question.id },
-          create: {
-            id: metadata.id,
-            questionId: question.id,
-            explanation: metadata.getExplanation(),
-            points: metadata.getPoints(),
-            estimatedTime: metadata.getEstimatedTime(),
-            shuffleOptions: metadata.getShuffleOptions(),
-            referenceType: metadata.getReferenceType(),
-            passageSource: metadata.getPassageSource(),
-            highlight: metadata.getHighlight(),
-            cognitiveLevel: metadata.getCognitiveLevel(),
-            tags: metadata.getTags(),
-            skills: metadata.getSkills(),
-            qualityScore: metadata.getQualityScore(),
-            qualityRating: metadata.getQualityRating(),
-            passageId: metadata.getPassageId(),
-            passageText: metadata.getPassageText(),
-            modelAnswer: metadata.getModelAnswer(),
-            rubric: metadata.getRubric() as Prisma.InputJsonValue ?? null,
-            matchingPairs: metadata.getMatchingPairs() as Prisma.InputJsonValue ?? null,
-            wordRoot: metadata.getWordRoot(),
-            keyWord: metadata.getKeyWord(),
-            media: metadata.getMedia() as Prisma.InputJsonValue ?? null,
-            hints: metadata.getHints() as Prisma.InputJsonValue ?? null,
-          },
-          update: {
-            explanation: metadata.getExplanation(),
-            points: metadata.getPoints(),
-            estimatedTime: metadata.getEstimatedTime(),
-            shuffleOptions: metadata.getShuffleOptions(),
-            referenceType: metadata.getReferenceType(),
-            passageSource: metadata.getPassageSource(),
-            highlight: metadata.getHighlight(),
-            cognitiveLevel: metadata.getCognitiveLevel(),
-            tags: metadata.getTags(),
-            skills: metadata.getSkills(),
-            qualityScore: metadata.getQualityScore(),
-            qualityRating: metadata.getQualityRating(),
-            passageId: metadata.getPassageId(),
-            passageText: metadata.getPassageText(),
-            modelAnswer: metadata.getModelAnswer(),
-            rubric: metadata.getRubric() as Prisma.InputJsonValue ?? null,
-            matchingPairs: metadata.getMatchingPairs() as Prisma.InputJsonValue ?? null,
-            wordRoot: metadata.getWordRoot(),
-            keyWord: metadata.getKeyWord(),
-            media: metadata.getMedia() as Prisma.InputJsonValue ?? null,
-            hints: metadata.getHints() as Prisma.InputJsonValue ?? null,
-          },
-        });
-      }
-
-      // 4. Create version snapshot
-      const latestVersion = await tx.questionVersion.findFirst({
-        where: { questionId: question.id },
-        orderBy: { version: 'desc' },
-      });
-      const nextVersion = (latestVersion?.version ?? 0) + 1;
-      await tx.questionVersion.create({
-        data: {
-          questionId: question.id,
-          version: nextVersion,
-          content: JSON.stringify({
-            title: question.getTitle(),
-            content: question.getContent(),
-            type: question.getType(),
-            difficulty: question.getDifficulty(),
-            choices: choices.map((c) => ({
-              id: c.id,
-              content: c.getContent(),
-              isCorrect: c.getIsCorrect(),
-              order: c.getOrder(),
-            })),
-            metadata: metadata ? metadata.toPlainObject() : null,
-          }),
-          createdBy: question.getUpdatedBy() || question.getCreatedBy(),
-        },
-      });
-    });
+    return this.questionRepo.saveQuestionWithChoices(question, choices, metadata);
   }
 
-  async deleteQuestionCascade(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      // Explicitly delete ExamQuestion links first (before question is deleted)
-      await tx.examQuestion.deleteMany({ where: { questionId: id } });
-      await tx.questionChoice.deleteMany({ where: { questionId: id } });
-      await tx.questionMetadata.deleteMany({ where: { questionId: id } });
-      await tx.questionVersion.deleteMany({ where: { questionId: id } });
-      await tx.question.delete({ where: { id } });
-    });
+  deleteQuestionCascade(id: string): Promise<void> {
+    return this.questionRepo.deleteQuestionCascade(id);
   }
 
   // ============================================
   // QUESTION METADATA OPERATIONS
   // ============================================
 
-  async findMetadataByQuestionId(questionId: string): Promise<QuestionMetadataEntity | null> {
-    const metadata = await this.prisma.questionMetadata.findUnique({
-      where: { questionId },
-    });
-    if (!metadata) return null;
-    return this.mapMetadataToEntity(metadata);
+  findMetadataByQuestionId(questionId: string): Promise<QuestionMetadataEntity | null> {
+    return this.questionRepo.findMetadataByQuestionId(questionId);
   }
 
-  async saveQuestionMetadata(metadata: QuestionMetadataEntity): Promise<QuestionMetadataEntity> {
-    const saved = await this.prisma.questionMetadata.upsert({
-      where: { questionId: metadata.getQuestionId() },
-      create: {
-        id: metadata.id,
-        questionId: metadata.getQuestionId(),
-        explanation: metadata.getExplanation(),
-        points: metadata.getPoints(),
-        estimatedTime: metadata.getEstimatedTime(),
-        shuffleOptions: metadata.getShuffleOptions(),
-        referenceType: metadata.getReferenceType(),
-        passageSource: metadata.getPassageSource(),
-        highlight: metadata.getHighlight(),
-        cognitiveLevel: metadata.getCognitiveLevel(),
-        tags: metadata.getTags(),
-        skills: metadata.getSkills(),
-        qualityScore: metadata.getQualityScore(),
-        qualityRating: metadata.getQualityRating(),
-        passageId: metadata.getPassageId(),
-        passageText: metadata.getPassageText(),
-        modelAnswer: metadata.getModelAnswer(),
-        rubric: metadata.getRubric() as Prisma.InputJsonValue ?? null,
-        matchingPairs: metadata.getMatchingPairs() as Prisma.InputJsonValue ?? null,
-        wordRoot: metadata.getWordRoot(),
-        keyWord: metadata.getKeyWord(),
-        media: metadata.getMedia() as Prisma.InputJsonValue ?? null,
-        hints: metadata.getHints() as Prisma.InputJsonValue ?? null,
-      },
-      update: {
-        explanation: metadata.getExplanation(),
-        points: metadata.getPoints(),
-        estimatedTime: metadata.getEstimatedTime(),
-        shuffleOptions: metadata.getShuffleOptions(),
-        referenceType: metadata.getReferenceType(),
-        passageSource: metadata.getPassageSource(),
-        highlight: metadata.getHighlight(),
-        cognitiveLevel: metadata.getCognitiveLevel(),
-        tags: metadata.getTags(),
-        skills: metadata.getSkills(),
-        qualityScore: metadata.getQualityScore(),
-        qualityRating: metadata.getQualityRating(),
-        passageId: metadata.getPassageId(),
-        passageText: metadata.getPassageText(),
-        modelAnswer: metadata.getModelAnswer(),
-        rubric: metadata.getRubric() as Prisma.InputJsonValue ?? null,
-        matchingPairs: metadata.getMatchingPairs() as Prisma.InputJsonValue ?? null,
-        wordRoot: metadata.getWordRoot(),
-        keyWord: metadata.getKeyWord(),
-        media: metadata.getMedia() as Prisma.InputJsonValue ?? null,
-        hints: metadata.getHints() as Prisma.InputJsonValue ?? null,
-      },
-    });
-
-    return this.mapMetadataToEntity(saved);
+  saveQuestionMetadata(metadata: QuestionMetadataEntity): Promise<QuestionMetadataEntity> {
+    return this.questionRepo.saveQuestionMetadata(metadata);
   }
 
   // ============================================
   // QUESTION CHOICE OPERATIONS
   // ============================================
 
-  async saveQuestionChoice(choice: QuestionChoiceEntity): Promise<QuestionChoiceEntity> {
-    const data = {
-      questionId: choice.getQuestionId(),
-      content: choice.getContent(),
-      isCorrect: choice.getIsCorrect(),
-      order: choice.getOrder(),
-      createdBy: choice.getCreatedBy(),
-      updatedBy: choice.getUpdatedBy(),
-      version: choice.version + BigInt(1),
-    };
-
-    const saved = await this.prisma.questionChoice.upsert({
-      where: { id: choice.id },
-      create: {
-        id: choice.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapChoiceToEntity(saved);
+  saveQuestionChoice(choice: QuestionChoiceEntity): Promise<QuestionChoiceEntity> {
+    return this.questionRepo.saveQuestionChoice(choice);
   }
 
-  async deleteQuestionChoice(id: string): Promise<void> {
-    await this.prisma.questionChoice.delete({
-      where: { id },
-    });
+  deleteQuestionChoice(id: string): Promise<void> {
+    return this.questionRepo.deleteQuestionChoice(id);
+  }
+
+  findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]> {
+    return this.questionRepo.findChoicesByQuestionId(questionId);
   }
 
   // ============================================
   // ANSWERS, QUESTIONS, CHOICES, VIOLATIONS
   // ============================================
 
-  async findAnswersBySessionId(sessionId: string): Promise<SessionAnswerEntity[]> {
-    const answers = await this.prisma.sessionAnswer.findMany({
-      where: { sessionId },
-    });
-    return answers.map((a) => this.mapAnswerToEntity(a));
+  findAnswersBySessionId(sessionId: string): Promise<SessionAnswerEntity[]> {
+    return this.sessionRepo.findAnswersBySessionId(sessionId);
   }
 
-  async findExamQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]> {
-    const eq = await this.prisma.examQuestion.findMany({
-      where: { examId },
-      orderBy: { order: 'asc' },
-    });
-    return eq.map((item) => this.mapExamQuestionToEntity(item));
+  saveSessionAnswer(answer: SessionAnswerEntity): Promise<SessionAnswerEntity> {
+    return this.sessionRepo.saveSessionAnswer(answer);
   }
 
-  async findExamQuestionsByExamIdAndSectionId(examId: string, sectionId: string): Promise<ExamQuestionEntity[]> {
-    const eq = await this.prisma.examQuestion.findMany({
-      where: { examId, sectionId },
-      orderBy: { order: 'asc' },
-    });
-    return eq.map((item) => this.mapExamQuestionToEntity(item));
+  saveViolation(violation: SessionViolationEntity): Promise<SessionViolationEntity> {
+    return this.sessionRepo.saveViolation(violation);
   }
 
-  async deleteExamQuestionsByIds(examId: string, questionIds: string[]): Promise<void> {
-    if (questionIds.length === 0) return;
-    await this.prisma.examQuestion.deleteMany({
-      where: { examId, questionId: { in: questionIds } },
-    });
+  findExamQuestionsByExamId(examId: string): Promise<ExamQuestionEntity[]> {
+    return this.examQuestionRepo.findExamQuestionsByExamId(examId);
   }
 
-  async deleteQuestionsByIds(questionIds: string[]): Promise<void> {
-    if (questionIds.length === 0) return;
-    await this.prisma.$transaction(async (tx) => {
-      await tx.questionChoice.deleteMany({ where: { questionId: { in: questionIds } } });
-      await tx.questionMetadata.deleteMany({ where: { questionId: { in: questionIds } } });
-      await tx.questionVersion.deleteMany({ where: { questionId: { in: questionIds } } });
-      await tx.examQuestion.deleteMany({ where: { questionId: { in: questionIds } } });
-      await tx.question.deleteMany({ where: { id: { in: questionIds } } });
-    });
+  findExamQuestionsByExamIdAndSectionId(examId: string, sectionId: string): Promise<ExamQuestionEntity[]> {
+    return this.examQuestionRepo.findExamQuestionsByExamIdAndSectionId(examId, sectionId);
   }
 
-  async findSectionQuestionsPaginated(params: {
+  deleteExamQuestionsByIds(examId: string, questionIds: string[]): Promise<void> {
+    return this.examQuestionRepo.deleteExamQuestionsByIds(examId, questionIds);
+  }
+
+  deleteQuestionsByIds(questionIds: string[]): Promise<void> {
+    return this.questionRepo.deleteQuestionsByIds(questionIds);
+  }
+
+  findSectionQuestionsPaginated(params: {
     examId: string;
     sectionId: string;
     page: number;
     pageSize: number;
     search?: string;
   }) {
-    const { examId, sectionId, page, pageSize, search } = params;
-    const skip = (Math.max(1, page) - 1) * pageSize;
-
-    const questionFilter: Prisma.QuestionWhereInput = { deletedAt: null };
-    if (search?.trim()) {
-      questionFilter.OR = [
-        { content: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
-        { type: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const where: Prisma.ExamQuestionWhereInput = {
-      examId,
-      sectionId,
-      question: questionFilter,
-    };
-
-    const [rows, total] = await Promise.all([
-      this.prisma.examQuestion.findMany({
-        where,
-        include: {
-          question: {
-            select: {
-              id: true,
-              title: true,
-              content: true,
-              type: true,
-              difficulty: true,
-              metadata: {
-                select: {
-                  passageId: true,
-                  passageText: true,
-                  modelAnswer: true,
-                  estimatedTime: true,
-                  explanation: true,
-                  points: true,
-                },
-              },
-              choices: {
-                orderBy: { order: 'asc' },
-                select: {
-                  id: true,
-                  content: true,
-                  isCorrect: true,
-                  order: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { order: 'asc' },
-        skip,
-        take: pageSize,
-      }),
-      this.prisma.examQuestion.count({ where }),
-    ]);
-
-    const totalPages = pageSize > 0 ? Math.ceil(total / pageSize) : 0;
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-
-    return {
-      questions: rows.map((eq, idx) => ({
-        examQuestionId: eq.id,
-        id: eq.questionId,
-        number: skip + idx + 1,
-        title: eq.question?.title || eq.question?.content || `Question ${idx + 1}`,
-        partTag: eq.partNumber ? `Part ${eq.partNumber}` : '',
-        type: this.mapQuestionType(eq.question?.type),
-        difficulty: this.mapDifficulty(eq.question?.difficulty),
-        points: eq.points,
-        imageMediaId: eq.imageMediaId ?? null,
-        audioMediaId: eq.audioMediaId ?? null,
-        partNumber: eq.partNumber ?? null,
-        // From QuestionMetadata (question-level, shared across exams)
-        passageId: eq.question?.metadata?.passageId ?? null,
-        passageText: eq.question?.metadata?.passageText ?? null,
-        modelAnswer: eq.question?.metadata?.modelAnswer ?? null,
-        explanation: eq.question?.metadata?.explanation ?? null,
-        estimatedTime: eq.question?.metadata?.estimatedTime ? Number(eq.question.metadata.estimatedTime) : null,
-        metadataPoints: eq.question?.metadata?.points ?? null,
-        // From ExamQuestion (per-exam overrides)
-        passageGroupId: eq.passageGroupId ?? null,
-        passageType: eq.passageType ?? null,
-        passageTitle: eq.passageTitle ?? null,
-        blankNumber: eq.blankNumber ?? null,
-        subQuestionNumber: eq.subQuestionNumber ?? null,
-        formatMetadata: eq.formatMetadata ?? null,
-        // From QuestionChoice table (actual answer options)
-        choices: (eq.question as any)?.choices?.map((c: any) => ({
-          id: c.id,
-          content: c.content,
-          isCorrect: c.isCorrect,
-          order: c.order,
-        })) ?? null,
-      })),
-      totalCount: total,
-      page: safePage,
-      pageSize,
-      totalPages,
-    };
+    return this.examQuestionRepo.findSectionQuestionsPaginated(params);
   }
 
-  async findExamQuestionsByQuestionId(questionId: string): Promise<ExamQuestionEntity[]> {
-    const eq = await this.prisma.examQuestion.findMany({
-      where: { questionId },
-      orderBy: { order: 'asc' },
-    });
-    return eq.map((item) => this.mapExamQuestionToEntity(item));
+  findExamQuestionsByQuestionId(questionId: string): Promise<ExamQuestionEntity[]> {
+    return this.examQuestionRepo.findExamQuestionsByQuestionId(questionId);
   }
 
-  async findExamQuestionByExamAndQuestion(examId: string, questionId: string): Promise<ExamQuestionEntity | null> {
-    const eq = await this.prisma.examQuestion.findFirst({
-      where: { examId, questionId },
-    });
-    return eq ? this.mapExamQuestionToEntity(eq) : null;
+  findExamQuestionByExamAndQuestion(examId: string, questionId: string): Promise<ExamQuestionEntity | null> {
+    return this.examQuestionRepo.findExamQuestionByExamAndQuestion(examId, questionId);
   }
 
-  async saveExamQuestion(entity: ExamQuestionEntity): Promise<ExamQuestionEntity> {
-    const data = {
-      examId: entity.getExamId(),
-      questionId: entity.getQuestionId(),
-      sectionId: entity.getSectionId(),
-      order: entity.getOrder(),
-      points: entity.getPoints(),
-      createdBy: entity.getCreatedBy(),
-      updatedBy: entity.getUpdatedBy(),
-      audioMediaId: entity.getAudioMediaId(),
-      imageMediaId: entity.getImageMediaId(),
-      partNumber: entity.getPartNumber(),
-      gapNumber: entity.getGapNumber(),
-      writingTaskType: entity.getWritingTaskType(),
-      speakingPrompt: entity.getSpeakingPrompt(),
-      isGridIn: entity.getIsGridIn(),
-      formatMetadata: entity.getFormatMetadata() as Prisma.InputJsonValue ?? null,
-      passageGroupId: entity.getPassageGroupId(),
-      blankNumber: entity.getBlankNumber(),
-      subQuestionNumber: entity.getSubQuestionNumber(),
-      passageTitle: entity.getPassageTitle(),
-      passageType: entity.getPassageType(),
-    };
-
-    const saved = await this.prisma.examQuestion.upsert({
-      where: { id: entity.id },
-      create: { id: entity.id, ...data },
-      update: data,
-    });
-
-    return this.mapExamQuestionToEntity(saved);
+  saveExamQuestion(entity: ExamQuestionEntity): Promise<ExamQuestionEntity> {
+    return this.examQuestionRepo.saveExamQuestion(entity);
   }
 
-  async deleteExamQuestion(examId: string, questionId: string): Promise<boolean> {
-    const result = await this.prisma.examQuestion.deleteMany({
-      where: { examId, questionId },
-    });
-    return result.count > 0;
+  deleteExamQuestion(examId: string, questionId: string): Promise<boolean> {
+    return this.examQuestionRepo.deleteExamQuestion(examId, questionId);
   }
 
-  async deleteAllExamQuestionsByExamId(examId: string): Promise<void> {
-    await this.prisma.examQuestion.deleteMany({ where: { examId } });
+  deleteAllExamQuestionsByExamId(examId: string): Promise<void> {
+    return this.examQuestionRepo.deleteAllExamQuestionsByExamId(examId);
   }
 
-  async countExamQuestionsByExamId(examId: string): Promise<number> {
-    return this.prisma.examQuestion.count({ where: { examId } });
+  countExamQuestionsByExamId(examId: string): Promise<number> {
+    return this.examQuestionRepo.countExamQuestionsByExamId(examId);
   }
 
-  async countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number> {
-    return this.prisma.examQuestion.count({ where: { examId, sectionId } });
+  countExamQuestionsBySectionId(examId: string, sectionId: string): Promise<number> {
+    return this.examQuestionRepo.countExamQuestionsBySectionId(examId, sectionId);
   }
 
-  async batchCountQuestionsBySectionIds(examId: string, sectionIds: string[]): Promise<Map<string, number>> {
-    if (sectionIds.length === 0) return new Map();
-    const rows = await this.prisma.examQuestion.groupBy({
-      by: ['sectionId'],
-      where: { examId, sectionId: { in: sectionIds } },
-      _count: { id: true },
-    });
-    const map = new Map<string, number>();
-    for (const row of rows) {
-      if (row.sectionId) {
-        map.set(row.sectionId, row._count.id);
-      }
-    }
-    // Ensure all requested IDs are present (0 for missing)
-    for (const sid of sectionIds) {
-      if (!map.has(sid)) map.set(sid, 0);
-    }
-    return map;
-  }
-
-  async findChoicesByQuestionId(questionId: string): Promise<QuestionChoiceEntity[]> {
-    const choices = await this.prisma.questionChoice.findMany({
-      where: { questionId },
-      orderBy: { order: 'asc' },
-    });
-    return choices.map((c) => this.mapChoiceToEntity(c));
-  }
-
-  async saveSessionAnswer(answer: SessionAnswerEntity): Promise<SessionAnswerEntity> {
-    const data = {
-      sessionId: answer.getSessionId(),
-      questionId: answer.getQuestionId(),
-      answerText: answer.getAnswerText(),
-      choiceIds: answer.getChoiceIds(),
-      isCorrect: answer.getIsCorrect(),
-      points: answer.getPoints(),
-      createdBy: answer.getCreatedBy(),
-      updatedBy: answer.getUpdatedBy(),
-      version: answer.version + BigInt(1),
-    };
-
-    const saved = await this.prisma.sessionAnswer.upsert({
-      where: { id: answer.id },
-      create: {
-        id: answer.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapAnswerToEntity(saved);
-  }
-
-  async saveViolation(violation: SessionViolationEntity): Promise<SessionViolationEntity> {
-    const data = {
-      sessionId: violation.getSessionId(),
-      violationType: violation.getViolationType(),
-      description: violation.getDescription(),
-      occurredAt: violation.getOccurredAt(),
-    };
-
-    const saved = await this.prisma.sessionViolation.create({
-      data: {
-        id: violation.id,
-        ...data,
-      },
-    });
-
-    return this.mapViolationToEntity(saved);
+  batchCountQuestionsBySectionIds(examId: string, sectionIds: string[]): Promise<Map<string, number>> {
+    return this.examQuestionRepo.batchCountQuestionsBySectionIds(examId, sectionIds);
   }
 
   // ============================================
-  // SKILL RESULT OPERATIONS
+  // TRANSACTION SUPPORT
   // ============================================
 
-  async findSkillResultsByResultId(resultId: string): Promise<SkillResultEntity[]> {
-    const skills = await this.prisma.skillResult.findMany({
-      where: { resultId },
-    });
-    return skills.map((s) => this.mapSkillResultToEntity(s));
+  withTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    return this.questionBatchRepo.withTransaction(fn);
   }
 
-  async saveSkillResult(skillResult: SkillResultEntity): Promise<SkillResultEntity> {
-    const data = {
-      resultId: skillResult.getResultId(),
-      skillName: skillResult.getSkillName(),
-      score: skillResult.getScore(),
-      maxScore: skillResult.getMaxScore(),
-      accuracyRate: skillResult.getAccuracyRate(),
-    };
-
-    const saved = await this.prisma.skillResult.create({
-      data: {
-        id: skillResult.id,
-        ...data,
-      },
-    });
-
-    return this.mapSkillResultToEntity(saved);
-  }
-
-  // ============================================
-  // QUESTION RESULT OPERATIONS
-  // ============================================
-
-  async findQuestionResultsByResultId(resultId: string): Promise<QuestionResultEntity[]> {
-    const qr = await this.prisma.questionResult.findMany({
-      where: { resultId },
-    });
-    return qr.map((q) => this.mapQuestionResultToEntity(q));
-  }
-
-  async saveQuestionResult(questionResult: QuestionResultEntity): Promise<QuestionResultEntity> {
-    const data = {
-      resultId: questionResult.getResultId(),
-      questionId: questionResult.getQuestionId(),
-      isCorrect: questionResult.getIsCorrect(),
-      scoreAwarded: questionResult.getScoreAwarded(),
-      timeSpent: questionResult.getTimeSpent(),
-    };
-
-    const saved = await this.prisma.questionResult.create({
-      data: {
-        id: questionResult.id,
-        ...data,
-      },
-    });
-
-    return this.mapQuestionResultToEntity(saved);
-  }
-
-  // ============================================
-  // AI EVALUATION OPERATIONS
-  // ============================================
-
-  async findAiEvaluationByResultId(resultId: string): Promise<AiEvaluationEntity | null> {
-    const evaluation = await this.prisma.aiEvaluation.findUnique({
-      where: { resultId },
-    });
-    if (!evaluation) return null;
-    return this.mapAiEvaluationToEntity(evaluation);
-  }
-
-  async saveAiEvaluation(evaluation: AiEvaluationEntity): Promise<AiEvaluationEntity> {
-    const data = {
-      resultId: evaluation.getResultId(),
-      evaluationText: evaluation.getEvaluationText(),
-      feedbackJson: evaluation.getFeedbackJson() as Prisma.InputJsonValue,
-    };
-
-    const saved = await this.prisma.aiEvaluation.create({
-      data: {
-        id: evaluation.id,
-        ...data,
-      },
-    });
-
-    return this.mapAiEvaluationToEntity(saved);
-  }
-
-  // ============================================
-  // CREATOR PROFILE OPERATIONS
-  // ============================================
-
-  async findCreatorProfileByUserId(userId: string): Promise<CreatorProfileEntity | null> {
-    const profile = await this.prisma.creatorProfile.findFirst({
-      where: { userId },
-    });
-    if (!profile) return null;
-    return this.mapCreatorProfileToEntity(profile);
-  }
-
-  async findCreatorProfileById(id: string): Promise<CreatorProfileEntity | null> {
-    const profile = await this.prisma.creatorProfile.findUnique({
-      where: { id },
-    });
-    if (!profile) return null;
-    return this.mapCreatorProfileToEntity(profile);
-  }
-
-  async findCreatorProfiles(limit = 20): Promise<CreatorProfileEntity[]> {
-    const profiles = await this.prisma.creatorProfile.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    });
-    return profiles.map((p) => this.mapCreatorProfileToEntity(p));
-  }
-
-  async saveCreatorProfile(profile: CreatorProfileEntity): Promise<CreatorProfileEntity> {
-    const data = {
-      userId: profile.getUserId(),
-      displayName: profile.getDisplayName(),
-      bio: profile.getBio(),
-      status: profile.getStatus(),
-    };
-
-    const saved = await this.prisma.creatorProfile.upsert({
-      where: { id: profile.id },
-      create: {
-        id: profile.id,
-        ...data,
-      },
-      update: data,
-    });
-
-    return this.mapCreatorProfileToEntity(saved);
-  }
-
-  // ============================================
-  // COLLECTION FAVORITE OPERATIONS
-  // ============================================
-
-  async findFavoritesByUserId(userId: string) {
-    return this.prisma.collectionFavorite.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async findFavoritesWithCollectionsByUserId(userId: string) {
-    const favorites = await this.prisma.collectionFavorite.findMany({
-      where: { userId },
-      include: {
-        collection: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            ownerId: true,
-            publishStatus: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const collectionIds = favorites
-      .filter((f): f is typeof f & { collection: NonNullable<typeof f.collection> } => f.collection !== null)
-      .map(f => f.collection.id);
-
-    const exams = collectionIds.length > 0
-      ? await this.prisma.exam.findMany({
-          where: { collectionId: { in: collectionIds }, deletedAt: null },
-          select: { id: true, collectionId: true, title: true, duration: true, totalQuestions: true },
-        })
-      : [];
-
-    const examsByCollection = new Map<string, typeof exams>();
-    for (const exam of exams) {
-      const list = examsByCollection.get(exam.collectionId) || [];
-      list.push(exam);
-      examsByCollection.set(exam.collectionId, list);
-    }
-
-    return favorites.map(f => ({
-      ...f,
-      collection: f.collection,
-      exams: f.collection ? (examsByCollection.get(f.collection.id) || []).map(e => ({
-        id: e.id,
-        title: e.title,
-        duration: e.duration,
-        totalQuestions: e.totalQuestions,
-      })) : [],
-    }));
-  }
-
-  async findFavoriteById(id: string) {
-    return this.prisma.collectionFavorite.findUnique({ where: { id } });
-  }
-
-  async findFavoriteByUserAndCollection(userId: string, collectionId: string) {
-    return this.prisma.collectionFavorite.findUnique({
-      where: {
-        collectionId_userId: { collectionId, userId },
-      },
-    });
-  }
-
-  async saveFavorite(favorite: { userId: string; collectionId: string }) {
-    return this.prisma.collectionFavorite.upsert({
-      where: {
-        collectionId_userId: {
-          collectionId: favorite.collectionId,
-          userId: favorite.userId,
-        },
-      },
-      create: {
-        collectionId: favorite.collectionId,
-        userId: favorite.userId,
-      },
-      update: {},
-    });
-  }
-
-  async deleteFavorite(userId: string, collectionId: string): Promise<void> {
-    await this.prisma.collectionFavorite.delete({
-      where: {
-        collectionId_userId: { collectionId, userId },
-      },
-    });
-  }
-
-  // ============================================
-  // COLLECTION BOOKMARK OPERATIONS
-  // ============================================
-
-  async findBookmarksByUserId(userId: string) {
-    return this.prisma.collectionBookmark.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async findBookmarksWithDetailsByUserId(userId: string) {
-    const bookmarks = await this.prisma.collectionBookmark.findMany({
-      where: { userId },
-      include: {
-        collection: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            ownerId: true,
-            publishStatus: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const collectionIds = bookmarks
-      .filter((b): b is typeof b & { collection: NonNullable<typeof b.collection> } => b.collection !== null)
-      .map(b => b.collection.id);
-
-    const exams = collectionIds.length > 0
-      ? await this.prisma.exam.findMany({
-          where: { collectionId: { in: collectionIds }, deletedAt: null },
-          select: { id: true, collectionId: true, title: true, duration: true, totalQuestions: true },
-        })
-      : [];
-
-    const examsByCollection = new Map<string, typeof exams>();
-    for (const exam of exams) {
-      const list = examsByCollection.get(exam.collectionId) || [];
-      list.push(exam);
-      examsByCollection.set(exam.collectionId, list);
-    }
-
-    return bookmarks.map(b => ({
-      ...b,
-      collection: b.collection,
-      exams: b.collection ? (examsByCollection.get(b.collection.id) || []).map(e => ({
-        id: e.id,
-        title: e.title,
-        duration: e.duration,
-        totalQuestions: e.totalQuestions,
-      })) : [],
-    }));
-  }
-
-  async findBookmarkById(id: string) {
-    return this.prisma.collectionBookmark.findUnique({ where: { id } });
-  }
-
-  async findBookmarksWithCollectionsByUserId(userId: string) {
-    const bookmarks = await this.prisma.collectionBookmark.findMany({
-      where: { userId },
-      include: {
-        collection: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            ownerId: true,
-            publishStatus: true,
-            createdAt: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const collectionIds = bookmarks
-      .filter((b): b is typeof b & { collection: NonNullable<typeof b.collection> } => b.collection !== null)
-      .map(b => b.collection.id);
-    const examCounts = await this.prisma.exam.groupBy({
-      by: ['collectionId'],
-      where: { collectionId: { in: collectionIds }, deletedAt: null },
-      _count: { id: true },
-    });
-    const examCountMap = new Map(examCounts.map(e => [e.collectionId, e._count.id]));
-
-    const itemCounts = await this.prisma.collectionItem.groupBy({
-      by: ['collectionId'],
-      where: { collectionId: { in: collectionIds } },
-      _count: { id: true },
-    });
-    const itemCountMap = new Map(itemCounts.map(i => [i.collectionId, i._count.id]));
-
-    return bookmarks.map(b => ({
-      id: b.id,
-      collectionId: b.collectionId,
-      userId: b.userId,
-      createdAt: b.createdAt,
-      collection: b.collection ? {
-        ...b.collection,
-        examCount: examCountMap.get(b.collection.id) ?? 0,
-        itemCount: itemCountMap.get(b.collection.id) ?? 0,
-      } : null,
-    }));
-  }
-
-  async findBookmarkByUserAndCollection(userId: string, collectionId: string) {
-    return this.prisma.collectionBookmark.findUnique({
-      where: {
-        collectionId_userId: { collectionId, userId },
-      },
-    });
-  }
-
-  async saveBookmark(bookmark: { userId: string; collectionId: string }) {
-    return this.prisma.collectionBookmark.upsert({
-      where: {
-        collectionId_userId: {
-          collectionId: bookmark.collectionId,
-          userId: bookmark.userId,
-        },
-      },
-      create: {
-        collectionId: bookmark.collectionId,
-        userId: bookmark.userId,
-      },
-      update: {},
-    });
-  }
-
-  async deleteBookmark(userId: string, collectionId: string): Promise<void> {
-    await this.prisma.collectionBookmark.delete({
-      where: {
-        collectionId_userId: { collectionId, userId },
-      },
-    });
-  }
-
-  // ============================================
-  // USER DOWNLOAD OPERATIONS
-  // ============================================
-
-  async findDownloadsByUserId(userId: string): Promise<UserDownload[]> {
-    return this.prisma.userDownload.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async saveDownload(download: {
-    userId: string;
-    itemType: string;
-    itemId: string;
-    fileName: string;
-    fileSize: number;
-    downloadUrl?: string;
-  }): Promise<UserDownload> {
-    return this.prisma.userDownload.create({
-      data: {
-        userId: download.userId,
-        itemType: download.itemType,
-        itemId: download.itemId,
-        fileName: download.fileName,
-        fileSize: download.fileSize,
-        downloadUrl: download.downloadUrl,
-      },
-    });
-  }
-
-  async deleteDownload(id: string): Promise<void> {
-    await this.prisma.userDownload.delete({
-      where: { id },
-    });
-  }
-
-  async deleteAllDownloads(userId: string): Promise<void> {
-    await this.prisma.userDownload.deleteMany({
-      where: { userId },
-    });
-  }
-
-  // ============================================
-  // COLLECTION PURCHASE OPERATIONS
-  // ============================================
-
-  async findPurchasesByUserId(userId: string): Promise<CollectionPurchase[]> {
-    return this.prisma.collectionPurchase.findMany({
-      where: { userId },
-      orderBy: { purchasedAt: 'desc' },
-    });
-  }
-
-  async findPurchaseByUserAndCollection(
-    userId: string,
-    collectionId: string
-  ): Promise<CollectionPurchase | null> {
-    return this.prisma.collectionPurchase.findUnique({
-      where: {
-        userId_collectionId: { userId, collectionId },
-      },
-    });
-  }
-
-  async savePurchase(purchase: {
-    userId: string;
-    collectionId: string;
-    amount?: number;
-    currency?: string;
-  }): Promise<CollectionPurchase> {
-    return this.prisma.collectionPurchase.upsert({
-      where: {
-        userId_collectionId: {
-          userId: purchase.userId,
-          collectionId: purchase.collectionId,
-        },
-      },
-      create: {
-        userId: purchase.userId,
-        collectionId: purchase.collectionId,
-        amount: purchase.amount,
-        currency: purchase.currency,
-      },
-      update: {
-        amount: purchase.amount,
-        currency: purchase.currency,
-      },
-    });
-  }
-
-  // ============================================
-  // COLLECTION REPORT OPERATIONS
-  // ============================================
-
-  async saveReport(report: {
-    collectionId: string;
-    userId: string;
-    reason?: string;
-  }): Promise<CollectionReport> {
-    return this.prisma.collectionReport.create({
-      data: {
-        collectionId: report.collectionId,
-        userId: report.userId,
-        reason: report.reason,
-      },
-    });
-  }
-
-  // ============================================
-  // PRIVATE MAPPER FUNCTIONS
-  // ============================================
-
-  private mapCollectionToEntity(
-    dbObj: Collection & { items?: CollectionItem[]; exams?: Exam[] }
-  ): CollectionEntity {
-    return CollectionEntity.create({
-      id: dbObj.id,
-      title: dbObj.title,
-      description: dbObj.description ?? undefined,
-      subtitle: dbObj.subtitle ?? undefined,
-      level: dbObj.level ?? undefined,
-      tags: dbObj.tags ?? [],
-      visibility: dbObj.visibility,
-      allowDownloads: dbObj.allowDownloads,
-      coverImage: dbObj.coverImage ?? undefined,
-      ownerId: dbObj.ownerId,
-      publishStatus: dbObj.publishStatus,
-      itemCount: dbObj.items?.length ?? 0,
-      examCount: dbObj.exams?.length ?? 0,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      deletedAt: dbObj.deletedAt ?? undefined,
-      version: dbObj.version,
-    });
-  }
-
-  async withTransaction<T>(fn: () => Promise<T>): Promise<T> {
-    return this.prisma.$transaction(fn, { maxWait: 60000, timeout: 120000 });
-  }
-
-  /**
-   * Batch upsert questions for PATCH — single transaction, no version snapshots.
-   * Skips questions where contentHash matches (no DB writes for unchanged data).
-   */
-  async batchUpsertQuestionsForPatch(params: {
+  batchUpsertQuestionsForPatch(params: {
     examId: string;
     userId: string;
     questions: Array<{
@@ -2041,252 +401,18 @@ export class CertificationRepository implements ICertificationRepository {
       linkId?: string;
     }>;
   }): Promise<number> {
-    const { examId, userId, questions } = params;
-    if (questions.length === 0) return 0;
-
-    // Pre-compute hashes
-    const questionsWithHash = questions.map(q => ({
-      ...q,
-      _hash: this.computeQuestionHash(q),
-    }));
-
-    const allQuestionIds = questionsWithHash.map(q => q.questionId);
-
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        // 1. Fetch existing links + metadata in parallel
-        const [existingLinks, existingMetadata] = await Promise.all([
-          tx.examQuestion.findMany({
-            where: { examId, questionId: { in: allQuestionIds } },
-          }),
-          tx.questionMetadata.findMany({
-            where: { questionId: { in: allQuestionIds } },
-          }),
-        ]);
-        const existingLinkMap = new Map(existingLinks.map(l => [l.questionId, l]));
-        const existingMetadataSet = new Set(existingMetadata.map(m => m.questionId));
-
-        // 1b. Content hash skip — filter to only questions that actually changed
-        const changedQuestions = questionsWithHash.filter(q => {
-          const existing = existingLinkMap.get(q.questionId);
-          return !existing || existing.contentHash !== q._hash;
-        });
-        if (changedQuestions.length === 0) {
-          this.logger.debug(`All ${questionsWithHash.length} questions unchanged (hash match), skipping DB writes`);
-          return 0;
-        }
-
-        // 2. Chunked upsert Questions (20 per batch)
-        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
-          Promise.all(chunk.map(q => {
-            const title = q.questionText?.substring(0, 255) || '';
-            return tx.question.upsert({
-              where: { id: q.questionId },
-              create: {
-                id: q.questionId,
-                title,
-                content: q.questionText,
-                type: q.questionType,
-                difficulty: q.difficulty,
-                status: 'draft',
-                createdBy: userId,
-                updatedBy: userId,
-              },
-              update: {
-                title,
-                content: q.questionText,
-                type: q.questionType,
-                difficulty: q.difficulty,
-                updatedBy: userId,
-              },
-            });
-          }))
-        );
-
-        // 3. Differential choice update (only changes what's different)
-        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
-          Promise.all(chunk.map(q =>
-            this.upsertChoicesDifferentialWithTx(tx, q.questionId, q.options.map((o, i) => ({
-              text: o.text,
-              isCorrect: o.isCorrect,
-              order: i,
-            })), userId)
-          ))
-        );
-
-        // 4. Chunked upsert Metadata
-        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
-          Promise.all(chunk.map(q => {
-            const isNew = !existingMetadataSet.has(q.questionId);
-            if (isNew) {
-              return tx.questionMetadata.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  questionId: q.questionId,
-                  explanation: q.explanation || null,
-                  points: q.points,
-                  estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
-                  shuffleOptions: false,
-                  modelAnswer: q.modelAnswer || null,
-                  rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
-                  passageText: q.passageText || null,
-                },
-              });
-            }
-            return tx.questionMetadata.update({
-              where: { questionId: q.questionId },
-              data: {
-                explanation: q.explanation || null,
-                points: q.points,
-                estimatedTime: q.estimatedTime ? String(q.estimatedTime) : null,
-                modelAnswer: q.modelAnswer || null,
-                rubric: (q.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
-                passageText: q.passageText || null,
-              },
-            });
-          }))
-        );
-
-        // 5. Chunked upsert ExamQuestion links
-        await this.chunkedParallel(changedQuestions, 20, (chunk) =>
-          Promise.all(chunk.map(q => {
-            const existing = existingLinkMap.get(q.questionId);
-            const linkId = existing?.id || q.linkId || crypto.randomUUID();
-            const data = {
-              examId,
-              questionId: q.questionId,
-              sectionId: q.sectionId,
-              order: q.order,
-              points: q.points,
-              audioMediaId: q.audioMediaId ?? null,
-              imageMediaId: q.imageMediaId ?? null,
-              partNumber: q.sectionOrder,
-              formatMetadata: (q.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
-              passageGroupId: q.passageGroupId ?? null,
-              passageType: q.passageType ?? null,
-              passageTitle: q.passageTitle ?? null,
-              blankNumber: q.blankNumber ?? null,
-              subQuestionNumber: q.subQuestionNumber ?? null,
-              contentHash: q._hash,
-            };
-            if (existing) {
-              return tx.examQuestion.update({
-                where: { id: linkId },
-                data: { ...data, updatedBy: userId },
-              });
-            }
-            return tx.examQuestion.create({
-              data: { ...data, id: linkId, createdBy: userId, updatedBy: userId },
-            });
-          }))
-        );
-
-        return changedQuestions.length;
-      }, { maxWait: 30000, timeout: 60000 });
-    } catch (error) {
-      const err = error as Error & { code?: string; meta?: unknown };
-      this.logger.error(
-        `batchUpsertQuestionsForPatch FAILED: ${err.message}`,
-        err.stack
-      );
-      if (err.code) {
-        this.logger.error(`Prisma error code: ${err.code}, meta: ${JSON.stringify(err.meta)}`);
-      }
-      this.logger.error(`Payload summary: examId=${examId}, questionsCount=${questions.length}, questionIds=${JSON.stringify(questions.map(q => q.questionId))}`);
-      throw error;
-    }
+    return this.questionBatchRepo.batchUpsertQuestionsForPatch(params);
   }
 
-  /**
-   * Execute operations in chunks to avoid connection pool exhaustion.
-   * Runs each chunk sequentially; within a chunk, operations run in parallel.
-   */
-  private async chunkedParallel<T>(
-    items: T[],
-    chunkSize: number,
-    handler: (chunk: T[]) => Promise<unknown>,
-  ): Promise<void> {
-    for (let i = 0; i < items.length; i += chunkSize) {
-      await handler(items.slice(i, i + chunkSize));
-    }
-  }
-
-  /**
-   * Differential choice update within a transaction.
-   * Only inserts/updates/deletes choices that actually changed.
-   */
-  private async upsertChoicesDifferentialWithTx(
-    tx: Prisma.TransactionClient,
+  upsertChoicesDifferential(
     questionId: string,
     newChoices: Array<{ text: string; isCorrect: boolean; order: number }>,
     userId: string,
   ): Promise<void> {
-    const existing = await tx.questionChoice.findMany({
-      where: { questionId },
-      orderBy: { order: 'asc' },
-    });
-
-    const toDelete: string[] = [];
-    const toUpdate: Array<{ id: string; data: Prisma.QuestionChoiceUpdateInput }> = [];
-    const toCreate: Prisma.QuestionChoiceCreateManyInput[] = [];
-
-    const maxLen = Math.max(existing.length, newChoices.length);
-    for (let i = 0; i < maxLen; i++) {
-      const old = existing[i];
-      const nu = newChoices[i];
-
-      if (!old && nu) {
-        toCreate.push({
-          questionId,
-          content: nu.text,
-          isCorrect: nu.isCorrect,
-          order: i,
-          createdBy: userId,
-          updatedBy: userId,
-        });
-      } else if (old && !nu) {
-        toDelete.push(old.id);
-      } else if (old && nu && (old.content !== nu.text || old.isCorrect !== nu.isCorrect)) {
-        toUpdate.push({
-          id: old.id,
-          data: {
-            content: nu.text,
-            isCorrect: nu.isCorrect,
-            order: i,
-            updatedBy: userId,
-          },
-        });
-      }
-      // else: same → skip (no change)
-    }
-
-    if (toDelete.length > 0) {
-      await tx.questionChoice.deleteMany({ where: { id: { in: toDelete } } });
-    }
-    if (toUpdate.length > 0) {
-      await Promise.all(toUpdate.map(u =>
-        tx.questionChoice.update({ where: { id: u.id }, data: u.data })
-      ));
-    }
-    if (toCreate.length > 0) {
-      await tx.questionChoice.createMany({ data: toCreate });
-    }
+    return this.questionBatchRepo.upsertChoicesDifferential(questionId, newChoices, userId);
   }
 
-  /**
-   * Differential choice update (public, for direct use outside transactions).
-   */
-  async upsertChoicesDifferential(
-    questionId: string,
-    newChoices: Array<{ text: string; isCorrect: boolean; order: number }>,
-    userId: string,
-  ): Promise<void> {
-    return this.prisma.$transaction(async (tx) => {
-      return this.upsertChoicesDifferentialWithTx(tx, questionId, newChoices, userId);
-    }, { maxWait: 10000, timeout: 30000 });
-  }
-
-  async batchInitializeExamQuestions(params: {
+  batchInitializeExamQuestions(params: {
     examId: string;
     userId: string;
     questions: Array<{
@@ -2342,564 +468,250 @@ export class CertificationRepository implements ICertificationRepository {
       };
     }>;
   }): Promise<number> {
-    if (params.questions.length === 0) return 0;
-
-    await this.prisma.$transaction(async (tx) => {
-      // 1. Create ALL questions in one query
-      await tx.question.createMany({
-        data: params.questions.map(q => ({
-          id: q.question.id,
-          title: q.question.content,
-          content: q.question.content,
-          type: q.question.type,
-          difficulty: q.question.difficulty,
-          category: q.question.category,
-          status: q.question.status,
-          createdBy: q.question.createdBy,
-          updatedBy: q.question.updatedBy,
-        })),
-      });
-
-      // 2. Create ALL choices in one query (no deleteMany needed — fresh init)
-      const allChoices = params.questions.flatMap(q =>
-        q.choices.map(c => ({
-          id: c.id,
-          questionId: c.questionId,
-          content: c.content,
-          isCorrect: c.isCorrect,
-          order: c.order,
-          createdBy: c.createdBy,
-          updatedBy: c.updatedBy,
-        }))
-      );
-      if (allChoices.length > 0) {
-        await tx.questionChoice.createMany({ data: allChoices });
-      }
-
-      // 3. Create ALL metadata in one query (all version 1 on init)
-      await tx.questionMetadata.createMany({
-        data: params.questions.map(q => ({
-          id: q.metadata.id,
-          questionId: q.metadata.questionId,
-          explanation: q.metadata.explanation,
-          points: q.metadata.points,
-          estimatedTime: q.metadata.estimatedTime,
-          shuffleOptions: q.metadata.shuffleOptions,
-          modelAnswer: q.metadata.modelAnswer,
-          rubric: (q.metadata.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
-          passageText: q.metadata.passageText,
-          qualityScore: q.metadata.qualityScore,
-        })),
-      });
-
-      // 4. Create ALL version snapshots in one query (all version 1 on init)
-      await tx.questionVersion.createMany({
-        data: params.questions.map(q => ({
-          questionId: q.question.id,
-          version: 1,
-          content: JSON.stringify({
-            title: q.question.content,
-            content: q.question.content,
-            type: q.question.type,
-            difficulty: q.question.difficulty,
-            choices: q.choices.map(c => ({
-              id: c.id,
-              content: c.content,
-              isCorrect: c.isCorrect,
-              order: c.order,
-            })),
-            metadata: q.metadata,
-          }),
-          createdBy: q.question.updatedBy || q.question.createdBy,
-        })),
-      });
-
-      // 5. Create ALL exam-question links in one query
-      await tx.examQuestion.createMany({
-        data: params.questions.map(q => ({
-          id: q.examQuestion.id,
-          examId: q.examQuestion.examId,
-          questionId: q.examQuestion.questionId,
-          sectionId: q.examQuestion.sectionId,
-          order: q.examQuestion.order,
-          points: q.examQuestion.points,
-          createdBy: q.examQuestion.createdBy,
-          updatedBy: q.examQuestion.updatedBy,
-          audioMediaId: q.examQuestion.audioMediaId,
-          imageMediaId: q.examQuestion.imageMediaId,
-          partNumber: q.examQuestion.partNumber,
-          formatMetadata: (q.examQuestion.formatMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
-          passageGroupId: q.examQuestion.passageGroupId,
-          passageType: q.examQuestion.passageType,
-          passageTitle: q.examQuestion.passageTitle,
-          blankNumber: q.examQuestion.blankNumber,
-          subQuestionNumber: q.examQuestion.subQuestionNumber,
-        })),
-      });
-    }, { maxWait: 60000, timeout: 120000 });
-
-    return params.questions.length;
+    return this.questionBatchRepo.batchInitializeExamQuestions(params);
   }
 
-  /**
-   * Compute deterministic hash of question data for change detection.
-   * Used by batchUpsertQuestionsForPatch to skip unchanged questions.
-   */
-  private computeQuestionHash(q: {
-    questionText: string;
-    questionType: string;
-    difficulty: string;
-    points: number;
-    options: Array<{ text: string; isCorrect: boolean; label?: string }>;
-    explanation?: string;
-    modelAnswer?: string;
-    rubric?: string;
-    estimatedTime?: number;
-    audioMediaId?: string;
-    imageMediaId?: string;
-    passageGroupId?: string;
-    passageText?: string;
-    passageType?: string;
-    passageTitle?: string;
-    blankNumber?: number;
-    subQuestionNumber?: number;
-    formatMetadata?: Record<string, unknown>;
-    detailedExplanation?: string;
-  }): string {
-    const data = JSON.stringify({
-      t: q.questionType,
-      txt: q.questionText,
-      d: q.difficulty,
-      p: q.points,
-      o: q.options.map(o => ({ l: o.label, t: o.text, c: o.isCorrect })),
-      e: q.explanation,
-      m: q.modelAnswer,
-      de: q.detailedExplanation,
-      r: q.rubric,
-      et: q.estimatedTime,
-      au: q.audioMediaId,
-      im: q.imageMediaId,
-      pg: q.passageGroupId,
-      pt: q.passageText,
-      pp: q.passageType,
-      ppo: q.passageTitle,
-      bi: q.blankNumber,
-      sq: q.subQuestionNumber,
-      fm: q.formatMetadata,
-    });
-    return crypto.createHash('sha256').update(data).digest('hex');
+  // ============================================
+  // SKILL RESULT OPERATIONS
+  // ============================================
+
+  findSkillResultsByResultId(resultId: string): Promise<SkillResultEntity[]> {
+    return this.resultRepo.findSkillResultsByResultId(resultId);
   }
 
-  private mapExamToEntity(dbObj: Exam): ExamEntity {
-    return ExamEntity.create({
-      id: dbObj.id,
-      title: dbObj.title,
-      description: dbObj.description ?? undefined,
-      duration: dbObj.duration,
-      totalQuestions: dbObj.totalQuestions,
-      maxScore: dbObj.maxScore,
-      passScore: dbObj.passScore,
-      publishStatus: dbObj.publishStatus,
-      collectionId: dbObj.collectionId,
-      chapterId: dbObj.chapterId ?? undefined,
-      order: dbObj.order,
-      examType: dbObj.examType ?? 'FULL_MOCK',
-      certificationType: dbObj.certificationType ?? null,
-      level: dbObj.level ?? null,
-      initializationStatus: (dbObj as Record<string, unknown>).initializationStatus as string ?? 'none',
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      deletedAt: dbObj.deletedAt ?? undefined,
-      version: dbObj.version,
-    });
+  saveSkillResult(skillResult: SkillResultEntity): Promise<SkillResultEntity> {
+    return this.resultRepo.saveSkillResult(skillResult);
   }
 
-  private mapChapterToEntity(dbObj: Chapter): ChapterEntity {
-    return ChapterEntity.create({
-      id: dbObj.id,
-      collectionId: dbObj.collectionId,
-      title: dbObj.title,
-      description: dbObj.description ?? undefined,
-      order: dbObj.order,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      deletedAt: dbObj.deletedAt ?? undefined,
-      version: BigInt(1),
-    });
+  // ============================================
+  // QUESTION RESULT OPERATIONS
+  // ============================================
+
+  findQuestionResultsByResultId(resultId: string): Promise<QuestionResultEntity[]> {
+    return this.resultRepo.findQuestionResultsByResultId(resultId);
   }
 
-  private mapSectionToEntity(dbObj: ExamSection): ExamSectionEntity {
-    return ExamSectionEntity.create({
-      id: dbObj.id,
-      examId: dbObj.examId,
-      title: dbObj.title,
-      subtitle: dbObj.subtitle ?? undefined,
-      sectionType: dbObj.sectionType ?? 'general',
-      instruction: dbObj.instruction ?? undefined,
-      order: dbObj.order,
-      durationMinutes: dbObj.durationMinutes ?? 0,
-      questionCount: dbObj.questionCount ?? 0,
-      isBreak: dbObj.isBreak ?? false,
-      audioMediaId: dbObj.audioMediaId ?? undefined,
-      scriptText: dbObj.scriptText ?? undefined,
-      passageText: dbObj.passageText ?? undefined,
-      passageTitle: dbObj.passageTitle ?? undefined,
-      passageType: dbObj.passageType ?? undefined,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  saveQuestionResult(questionResult: QuestionResultEntity): Promise<QuestionResultEntity> {
+    return this.resultRepo.saveQuestionResult(questionResult);
   }
 
-  private mapSessionToEntity(dbObj: ExamSession): ExamSessionEntity {
-    return ExamSessionEntity.create({
-      id: dbObj.id,
-      examId: dbObj.examId,
-      userId: dbObj.userId,
-      status: dbObj.status,
-      startedAt: dbObj.startedAt,
-      endedAt: dbObj.endedAt ?? undefined,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      version: dbObj.version,
-    });
+  // ============================================
+  // AI EVALUATION OPERATIONS
+  // ============================================
+
+  findAiEvaluationByResultId(resultId: string): Promise<AiEvaluationEntity | null> {
+    return this.resultRepo.findAiEvaluationByResultId(resultId);
   }
 
-  private mapResultToEntity(dbObj: ExamResult): ExamResultEntity {
-    return ExamResultEntity.create({
-      id: dbObj.id,
-      sessionId: dbObj.sessionId,
-      examId: dbObj.examId,
-      userId: dbObj.userId,
-      totalScore: dbObj.totalScore,
-      maxScore: dbObj.maxScore ?? 100.0,
-      accuracyRate: dbObj.accuracyRate ?? 0.0,
-      timeSpentMinutes: dbObj.timeSpentMinutes ?? 0,
-      passed: dbObj.passed,
-      completedAt: dbObj.completedAt ?? null,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  saveAiEvaluation(evaluation: AiEvaluationEntity): Promise<AiEvaluationEntity> {
+    return this.resultRepo.saveAiEvaluation(evaluation);
   }
 
-  private mapQuestionToEntity(dbObj: Question): QuestionEntity {
-    return QuestionEntity.create({
-      id: dbObj.id,
-      title: dbObj.title,
-      content: dbObj.content,
-      type: dbObj.type,
-      difficulty: dbObj.difficulty,
-      category: dbObj.category ?? null,
-      status: dbObj.status,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      deletedAt: dbObj.deletedAt ?? undefined,
-      version: dbObj.version,
-    });
+  // ============================================
+  // CREATOR PROFILE OPERATIONS
+  // ============================================
+
+  findCreatorProfileById(id: string): Promise<CreatorProfileEntity | null> {
+    return this.resultRepo.findCreatorProfileById(id);
   }
 
-  private mapAnswerToEntity(dbObj: SessionAnswer): SessionAnswerEntity {
-    return SessionAnswerEntity.create({
-      id: dbObj.id,
-      sessionId: dbObj.sessionId,
-      questionId: dbObj.questionId,
-      answerText: dbObj.answerText,
-      choiceIds: dbObj.choiceIds,
-      isCorrect: dbObj.isCorrect,
-      points: dbObj.points,
-      savedAt: dbObj.savedAt,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  findCreatorProfileByUserId(userId: string): Promise<CreatorProfileEntity | null> {
+    return this.resultRepo.findCreatorProfileByUserId(userId);
   }
 
-  private mapExamQuestionToEntity(dbObj: ExamQuestion): ExamQuestionEntity {
-    return ExamQuestionEntity.create({
-      id: dbObj.id,
-      examId: dbObj.examId,
-      questionId: dbObj.questionId,
-      sectionId: dbObj.sectionId,
-      order: dbObj.order,
-      points: dbObj.points,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-      audioMediaId: dbObj.audioMediaId,
-      imageMediaId: dbObj.imageMediaId,
-      partNumber: dbObj.partNumber,
-      gapNumber: dbObj.gapNumber,
-      writingTaskType: dbObj.writingTaskType,
-      speakingPrompt: dbObj.speakingPrompt,
-      isGridIn: dbObj.isGridIn,
-      formatMetadata: dbObj.formatMetadata,
-      passageGroupId: dbObj.passageGroupId,
-      blankNumber: dbObj.blankNumber,
-      subQuestionNumber: dbObj.subQuestionNumber,
-      passageTitle: dbObj.passageTitle,
-      passageType: dbObj.passageType,
-    });
+  findCreatorProfiles(limit?: number): Promise<CreatorProfileEntity[]> {
+    return this.resultRepo.findCreatorProfiles(limit);
   }
 
-  private mapChoiceToEntity(dbObj: QuestionChoice): QuestionChoiceEntity {
-    return QuestionChoiceEntity.create({
-      id: dbObj.id,
-      questionId: dbObj.questionId,
-      content: dbObj.content,
-      isCorrect: dbObj.isCorrect,
-      order: dbObj.order,
-      createdBy: dbObj.createdBy,
-      updatedBy: dbObj.updatedBy,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  saveCreatorProfile(profile: CreatorProfileEntity): Promise<CreatorProfileEntity> {
+    return this.resultRepo.saveCreatorProfile(profile);
   }
 
-  private mapMetadataToEntity(dbObj: {
-    id: string;
-    questionId: string;
-    explanation: string | null;
-    points: number;
-    estimatedTime: string | null;
-    shuffleOptions: boolean;
-    referenceType: string | null;
-    passageSource: string | null;
-    highlight: string | null;
-    cognitiveLevel: string | null;
-    tags: string[];
-    skills: string[];
-    qualityScore: number | null;
-    qualityRating: string | null;
-    passageId: string | null;
-    passageText: string | null;
-    modelAnswer: string | null;
-    rubric: unknown;
-    matchingPairs: unknown;
-    wordRoot: string | null;
-    keyWord: string | null;
-    media: unknown;
-    hints: unknown;
-    createdAt: Date;
-    updatedAt: Date;
-  }): QuestionMetadataEntity {
-    return QuestionMetadataEntity.fromPersistence({
-      id: dbObj.id,
-      questionId: dbObj.questionId,
-      explanation: dbObj.explanation,
-      points: dbObj.points,
-      estimatedTime: dbObj.estimatedTime,
-      shuffleOptions: dbObj.shuffleOptions,
-      referenceType: dbObj.referenceType,
-      passageSource: dbObj.passageSource,
-      highlight: dbObj.highlight,
-      cognitiveLevel: dbObj.cognitiveLevel,
-      tags: dbObj.tags,
-      skills: dbObj.skills,
-      qualityScore: dbObj.qualityScore,
-      qualityRating: dbObj.qualityRating,
-      passageId: dbObj.passageId,
-      passageText: dbObj.passageText,
-      modelAnswer: dbObj.modelAnswer,
-      rubric: dbObj.rubric,
-      matchingPairs: dbObj.matchingPairs,
-      wordRoot: dbObj.wordRoot,
-      keyWord: dbObj.keyWord,
-      media: dbObj.media,
-      hints: dbObj.hints,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  // ============================================
+  // COLLECTION FAVORITE OPERATIONS
+  // ============================================
+
+  findFavoritesByUserId(userId: string) {
+    return this.socialRepo.findFavoritesByUserId(userId);
   }
 
-  private mapQuestionType(type?: string): string {
-    switch (type) {
-      case 'multiple_choice': return 'Multiple Choice';
-      case 'fill_in_blank': return 'Fill in Blank';
-      case 'essay': return 'Essay';
-      case 'single_choice':
-      default: return 'Single Choice';
-    }
+  findFavoritesWithCollectionsByUserId(userId: string) {
+    return this.socialRepo.findFavoritesWithCollectionsByUserId(userId);
   }
 
-  private mapDifficulty(diff?: string): string {
-    switch (diff) {
-      case 'easy': return 'Easy';
-      case 'hard': return 'Hard';
-      case 'medium':
-      default: return 'Medium';
-    }
+  findFavoriteById(id: string) {
+    return this.socialRepo.findFavoriteById(id);
   }
 
-  private mapViolationToEntity(dbObj: SessionViolation): SessionViolationEntity {
-    return SessionViolationEntity.create({
-      id: dbObj.id,
-      sessionId: dbObj.sessionId,
-      violationType: dbObj.violationType,
-      description: dbObj.description,
-      occurredAt: dbObj.occurredAt,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.createdAt,
-    });
+  findFavoriteByUserAndCollection(userId: string, collectionId: string) {
+    return this.socialRepo.findFavoriteByUserAndCollection(userId, collectionId);
   }
 
-  private mapSkillResultToEntity(dbObj: SkillResult): SkillResultEntity {
-    return SkillResultEntity.create({
-      id: dbObj.id,
-      resultId: dbObj.resultId,
-      skillName: dbObj.skillName,
-      score: dbObj.score,
-      maxScore: dbObj.maxScore,
-      accuracyRate: dbObj.accuracyRate,
-      feedback: dbObj.feedback ?? null,
-      createdAt: dbObj.createdAt,
-    });
+  saveFavorite(favorite: { userId: string; collectionId: string }) {
+    return this.socialRepo.saveFavorite(favorite);
   }
 
-  private mapQuestionResultToEntity(dbObj: QuestionResult): QuestionResultEntity {
-    return QuestionResultEntity.create({
-      id: dbObj.id,
-      resultId: dbObj.resultId,
-      questionId: dbObj.questionId,
-      questionText: dbObj.questionText ?? null,
-      isCorrect: dbObj.isCorrect,
-      scoreAwarded: dbObj.scoreAwarded,
-      userAnswer: dbObj.userAnswer ?? null,
-      correctAnswer: dbObj.correctAnswer ?? null,
-      explanation: dbObj.explanation ?? null,
-      timeSpent: dbObj.timeSpent,
-      createdAt: dbObj.createdAt,
-    });
+  deleteFavorite(userId: string, collectionId: string): Promise<void> {
+    return this.socialRepo.deleteFavorite(userId, collectionId);
   }
 
-  private mapAiEvaluationToEntity(dbObj: AiEvaluation): AiEvaluationEntity {
-    return AiEvaluationEntity.create({
-      id: dbObj.id,
-      resultId: dbObj.resultId,
-      evaluationText: dbObj.evaluationText,
-      feedbackJson: dbObj.feedbackJson as Prisma.JsonValue,
-      createdAt: dbObj.createdAt,
-    });
+  // ============================================
+  // COLLECTION BOOKMARK OPERATIONS
+  // ============================================
+
+  findBookmarksByUserId(userId: string) {
+    return this.socialRepo.findBookmarksByUserId(userId);
   }
 
-  // ===================== CollectionReview =====================
-
-  async findReviewsByCollectionId(collectionId: string) {
-    return this.prisma.collectionReview.findMany({
-      where: { collectionId },
-      orderBy: { createdAt: 'desc' },
-    });
+  findBookmarksWithDetailsByUserId(userId: string) {
+    return this.socialRepo.findBookmarksWithDetailsByUserId(userId);
   }
 
-  async findReviewsByCollectionIdWithUser(collectionId: string) {
-    return this.prisma.collectionReview.findMany({
-      where: { collectionId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: { name: true, email: true, picture: true },
-        },
-      },
-    });
+  findBookmarkById(id: string) {
+    return this.socialRepo.findBookmarkById(id);
   }
 
-  async findReviewById(id: string) {
-    return this.prisma.collectionReview.findUnique({ where: { id } });
+  findBookmarksWithCollectionsByUserId(userId: string) {
+    return this.socialRepo.findBookmarksWithCollectionsByUserId(userId);
   }
 
-  async findReviewByUserAndCollection(userId: string, collectionId: string) {
-    return this.prisma.collectionReview.findFirst({
-      where: { userId, collectionId },
-    });
+  findBookmarkByUserAndCollection(userId: string, collectionId: string) {
+    return this.socialRepo.findBookmarkByUserAndCollection(userId, collectionId);
   }
 
-  async saveReview(data: { collectionId: string; userId: string; rating: number; text: string }) {
-    const existing = await this.findReviewByUserAndCollection(data.userId, data.collectionId);
-    if (existing) {
-      return this.prisma.collectionReview.update({
-        where: { id: existing.id },
-        data: { rating: data.rating, text: data.text },
-      });
-    }
-    return this.prisma.collectionReview.create({ data });
+  saveBookmark(bookmark: { userId: string; collectionId: string }) {
+    return this.socialRepo.saveBookmark(bookmark);
   }
 
-  async saveReviewWithUser(data: { collectionId: string; userId: string; rating: number; text: string }) {
-    const existing = await this.findReviewByUserAndCollection(data.userId, data.collectionId);
-    if (existing) {
-      return this.prisma.collectionReview.update({
-        where: { id: existing.id },
-        data: { rating: data.rating, text: data.text },
-        include: { user: { select: { name: true, email: true, picture: true } } },
-      });
-    }
-    return this.prisma.collectionReview.create({
-      data,
-      include: { user: { select: { name: true, email: true, picture: true } } },
-    });
+  deleteBookmark(userId: string, collectionId: string): Promise<void> {
+    return this.socialRepo.deleteBookmark(userId, collectionId);
   }
 
-  async deleteReview(id: string) {
-    await this.prisma.collectionReview.delete({ where: { id } });
+  // ============================================
+  // USER DOWNLOAD OPERATIONS
+  // ============================================
+
+  findDownloadsByUserId(userId: string): Promise<UserDownload[]> {
+    return this.socialRepo.findDownloadsByUserId(userId);
   }
 
-  // ===================== CollectionDiscussion =====================
-
-  async findDiscussionsByCollectionId(collectionId: string) {
-    return this.prisma.collectionDiscussion.findMany({
-      where: { collectionId },
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { replies: true } } },
-    });
+  saveDownload(download: {
+    userId: string;
+    itemType: string;
+    itemId: string;
+    fileName: string;
+    fileSize: number;
+    downloadUrl?: string;
+  }): Promise<UserDownload> {
+    return this.socialRepo.saveDownload(download);
   }
 
-  async findDiscussionById(id: string) {
-    return this.prisma.collectionDiscussion.findUnique({
-      where: { id },
-      include: { replies: { orderBy: { createdAt: 'asc' } } },
-    });
+  deleteDownload(id: string): Promise<void> {
+    return this.socialRepo.deleteDownload(id);
   }
 
-  async saveDiscussion(data: { collectionId: string; userId: string; title: string; content: string }) {
-    return this.prisma.collectionDiscussion.create({ data });
+  deleteAllDownloads(userId: string): Promise<void> {
+    return this.socialRepo.deleteAllDownloads(userId);
   }
 
-  async deleteDiscussion(id: string) {
-    await this.prisma.collectionDiscussion.delete({ where: { id } });
+  // ============================================
+  // COLLECTION PURCHASE OPERATIONS
+  // ============================================
+
+  findPurchasesByUserId(userId: string): Promise<CollectionPurchase[]> {
+    return this.socialRepo.findPurchasesByUserId(userId);
   }
 
-  // ===================== DiscussionReply =====================
-
-  async findRepliesByDiscussionId(discussionId: string) {
-    return this.prisma.discussionReply.findMany({
-      where: { discussionId },
-      orderBy: { createdAt: 'asc' },
-    });
+  findPurchaseByUserAndCollection(userId: string, collectionId: string): Promise<CollectionPurchase | null> {
+    return this.socialRepo.findPurchaseByUserAndCollection(userId, collectionId);
   }
 
-  async saveReply(data: { discussionId: string; userId: string; content: string }) {
-    return this.prisma.discussionReply.create({ data });
+  savePurchase(purchase: {
+    userId: string;
+    collectionId: string;
+    amount?: number;
+    currency?: string;
+  }): Promise<CollectionPurchase> {
+    return this.socialRepo.savePurchase(purchase);
   }
 
-  async deleteReply(id: string) {
-    await this.prisma.discussionReply.delete({ where: { id } });
+  // ============================================
+  // COLLECTION REPORT OPERATIONS
+  // ============================================
+
+  saveReport(report: {
+    collectionId: string;
+    userId: string;
+    reason?: string;
+  }): Promise<CollectionReport> {
+    return this.socialRepo.saveReport(report);
   }
 
-  private mapCreatorProfileToEntity(dbObj: CreatorProfile): CreatorProfileEntity {
-    return CreatorProfileEntity.create({
-      id: dbObj.id,
-      userId: dbObj.userId,
-      displayName: dbObj.displayName,
-      bio: dbObj.bio,
-      status: dbObj.status,
-      createdAt: dbObj.createdAt,
-      updatedAt: dbObj.updatedAt,
-    });
+  // ============================================
+  // COLLECTION REVIEW OPERATIONS
+  // ============================================
+
+  findReviewsByCollectionId(collectionId: string): Promise<CollectionReview[]> {
+    return this.socialRepo.findReviewsByCollectionId(collectionId);
+  }
+
+  findReviewsByCollectionIdWithUser(collectionId: string) {
+    return this.socialRepo.findReviewsByCollectionIdWithUser(collectionId);
+  }
+
+  findReviewById(id: string) {
+    return this.socialRepo.findReviewById(id);
+  }
+
+  findReviewByUserAndCollection(userId: string, collectionId: string) {
+    return this.socialRepo.findReviewByUserAndCollection(userId, collectionId);
+  }
+
+  saveReview(review: { collectionId: string; userId: string; rating: number; text: string }): Promise<CollectionReview> {
+    return this.socialRepo.saveReview(review);
+  }
+
+  saveReviewWithUser(review: { collectionId: string; userId: string; rating: number; text: string }) {
+    return this.socialRepo.saveReviewWithUser(review);
+  }
+
+  deleteReview(id: string): Promise<void> {
+    return this.socialRepo.deleteReview(id);
+  }
+
+  // ============================================
+  // COLLECTION DISCUSSION OPERATIONS
+  // ============================================
+
+  findDiscussionsByCollectionId(collectionId: string): Promise<CollectionDiscussion[]> {
+    return this.socialRepo.findDiscussionsByCollectionId(collectionId);
+  }
+
+  findDiscussionById(id: string) {
+    return this.socialRepo.findDiscussionById(id);
+  }
+
+  saveDiscussion(discussion: { collectionId: string; userId: string; title: string; content: string }): Promise<CollectionDiscussion> {
+    return this.socialRepo.saveDiscussion(discussion);
+  }
+
+  deleteDiscussion(id: string): Promise<void> {
+    return this.socialRepo.deleteDiscussion(id);
+  }
+
+  // ============================================
+  // DISCUSSION REPLY OPERATIONS
+  // ============================================
+
+  findRepliesByDiscussionId(discussionId: string): Promise<DiscussionReply[]> {
+    return this.socialRepo.findRepliesByDiscussionId(discussionId);
+  }
+
+  saveReply(reply: { discussionId: string; userId: string; content: string }): Promise<DiscussionReply> {
+    return this.socialRepo.saveReply(reply);
+  }
+
+  deleteReply(id: string): Promise<void> {
+    return this.socialRepo.deleteReply(id);
   }
 }

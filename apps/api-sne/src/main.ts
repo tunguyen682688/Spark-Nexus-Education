@@ -8,8 +8,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BigIntSerializerInterceptor } from './big-int-serializer.interceptor';
+import { GlobalExceptionFilter } from '@spark-nest-ed/infrastructure-exception-global';
 import * as express from 'express';
 import * as path from 'path';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -31,6 +33,24 @@ async function bootstrap() {
   // Increase body parser limit for large exam content payloads
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+
+  // Security headers via Helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", process.env.AUTH0_DOMAIN || ''],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  }));
 
   // Serve uploaded files (local storage dev mode)
   const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
@@ -59,22 +79,34 @@ async function bootstrap() {
   });
 
   // CORS Configuration
+  let corsOrigins: string | string[];
+  if (isDevelopment) {
+    corsOrigins = [
+      'http://localhost:3000',
+      'http://localhost:4200',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3001',
+      'http://127.0.0.1:4200',
+      'http://127.0.0.1:5173',
+    ];
+  } else {
+    const raw = process.env.CORS_ORIGIN;
+    if (!raw) {
+      logger.warn('⚠️  CORS_ORIGIN not set in production — all cross-origin requests will be blocked');
+      corsOrigins = [];
+    } else {
+      corsOrigins = raw.split(',').map((o: string) => o.trim()).filter(Boolean);
+      if (corsOrigins.length === 0) {
+        logger.warn('⚠️  CORS_ORIGIN is empty in production — all cross-origin requests will be blocked');
+      }
+    }
+  }
+
   app.enableCors({
-    origin: isDevelopment
-      ? [
-          'http://localhost:3000',
-          'http://localhost:4200',
-          'http://localhost:5173',
-          'http://localhost:5174',
-          'http://localhost:3001',
-          'http://127.0.0.1:4200',
-          'http://127.0.0.1:5173',
-        ]
-      : process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN.split(',').map((o: string) => o.trim())
-        : [],
+    origin: corsOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   });
 
@@ -89,6 +121,9 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Global exception filter (hides stack traces in production, consistent JSON:API errors)
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Global BigInt serializer interceptor
   app.useGlobalInterceptors(new BigIntSerializerInterceptor());

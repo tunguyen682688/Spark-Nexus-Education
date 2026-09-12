@@ -17,13 +17,20 @@ export class R2ObjectStorage implements IObjectStorage {
     this.bucketPrimary = this.config.get<string>('R2_BUCKET_PRIMARY', 'spark-nexus-media');
     this.publicUrl = this.config.get<string>('R2_PUBLIC_URL', '');
 
+    const accessKeyId = this.config.get<string>('R2_ACCESS_KEY_ID', '');
+    const secretAccessKey = this.config.get<string>('R2_SECRET_ACCESS_KEY', '');
+
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error(
+        'R2ObjectStorage: R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY must be set. ' +
+        'Configure Cloudflare R2 credentials or switch STORAGE_DRIVER to "local".'
+      );
+    }
+
     this.client = new S3Client({
       region: 'auto',
       endpoint: this.endpoint,
-      credentials: {
-        accessKeyId: this.config.get<string>('R2_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.config.get<string>('R2_SECRET_ACCESS_KEY', ''),
-      },
+      credentials: { accessKeyId, secretAccessKey },
     });
 
     this.logger.log(`R2 initialized: endpoint=${this.endpoint}, bucket=${this.bucketPrimary}`);

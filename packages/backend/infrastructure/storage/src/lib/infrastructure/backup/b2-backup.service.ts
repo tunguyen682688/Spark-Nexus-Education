@@ -17,27 +17,44 @@ interface BackupJobData {
 
 export class B2BackupService implements OnModuleInit {
   private readonly logger = new Logger(B2BackupService.name);
-  private readonly b2Client: S3Client;
+  private readonly b2Client: S3Client | null = null;
+  private readonly enabled: boolean;
 
   constructor(
     @Inject(MEDIA_FILE_REPOSITORY) private readonly repo: IMediaFileRepository,
     private readonly bullMQ: BullMQService,
   ) {
-    this.b2Client = new S3Client({
-      region: 'us-east-005',
-      endpoint: 'https://us-east-005.backblazeb2.com',
-      credentials: {
-        accessKeyId: process.env.B2_KEY_ID || '',
-        secretAccessKey: process.env.B2_APP_KEY || '',
-      },
-    });
+    const keyId = process.env.B2_KEY_ID;
+    const appKey = process.env.B2_APP_KEY;
+
+    if (!keyId || !appKey) {
+      this.enabled = false;
+      this.logger.warn(
+        'B2BackupService disabled: B2_KEY_ID and B2_APP_KEY not set. ' +
+        'Media backup to B2 will not run.'
+      );
+    } else {
+      this.enabled = true;
+      this.b2Client = new S3Client({
+        region: 'us-east-005',
+        endpoint: 'https://us-east-005.backblazeb2.com',
+        credentials: {
+          accessKeyId: keyId,
+          secretAccessKey: appKey,
+        },
+      });
+    }
   }
 
   onModuleInit() {
-    this.bullMQ.registerWorker('media-backup', (job) => this.process(job as Job<BackupJobData>));
+    if (this.enabled) {
+      this.bullMQ.registerWorker('media-backup', (job) => this.process(job as Job<BackupJobData>));
+    }
   }
 
   private async process(job: Job<BackupJobData>): Promise<void> {
+    if (!this.b2Client) return;
+
     const { storageKey, bucketSource, bucketBackup } = job.data;
 
     this.logger.log(`Starting B2 backup: key=${storageKey}`);
@@ -65,6 +82,8 @@ export class B2BackupService implements OnModuleInit {
   }
 
   private async existsInB2(bucket: string, key: string): Promise<boolean> {
+    if (!this.b2Client) return false;
+
     try {
       await this.b2Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
       return true;

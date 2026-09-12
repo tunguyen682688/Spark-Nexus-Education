@@ -1,9 +1,9 @@
 {
   "name": "@spark-nest-ed/infrastructure-exception-global",
   "version": "0.0.1",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
