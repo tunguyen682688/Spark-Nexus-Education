@@ -2,7 +2,7 @@
 
 Tài liệu này là nguồn tham chiếu thực thi cho cấu trúc repository, luồng chạy
 ứng dụng và thiết lập môi trường local của Spark Nexus Ed. Nội dung được đối
-chiếu với mã nguồn và cấu hình workspace tại ngày 07/06/2026.
+chiếu với mã nguồn và cấu hình workspace tại ngày 12/09/2026.
 
 ## 1. Tổng quan hệ thống
 
@@ -20,22 +20,35 @@ React + Vite (frontend-sne, :4200)
   | REST JSON + Bearer token
   v
 NestJS API (api-sne, :3000/api/v1)
-  |             |
-  | Prisma      | BullMQ / cache
-  v             v
-PostgreSQL    Redis (:6379)
+  |             |          |
+  | Prisma      | Cache    | Storage (R2/Local/B2)
+  v             v          v
+PostgreSQL    Redis       Cloudflare R2 (prod) / Local (dev) + B2 backup
 ```
 
 Các domain đang được nối vào backend:
 
 - `module-vocabulary`: từ vựng, bộ từ, quiz, tiến độ và import nền.
 - `module-grammar`: bài học, luyện tập, kỳ thi, SRS và cộng đồng ngữ pháp.
+- `module-certification`: đề thi TOEIC/IELTS/VSTEP/Cambridge, câu hỏi, phiên
+  thi, kết quả, media upload, favorites, bookmarks, reviews.
+- `module-listening`: materials, subtitles, progress tracking, media assets.
 - `module-user`: hồ sơ người dùng đồng bộ từ Auth0.
-- `module-reading`: mới được scaffold, chưa có đầy đủ các lớp nghiệp vụ.
+- `module-reading`: article, progress, translation. Đang ở mức cơ bản.
 
-Frontend có các feature library tương ứng cho Vocabulary, Grammar và Reading.
-Nhiều route ngoài các feature này hiện vẫn là placeholder, không nên xem là
-chức năng đã hoàn thành.
+Frontend có các feature library tương ứng cho Vocabulary, Grammar, Reading,
+Listening và Certification. Nhiều route ngoài các feature này hiện vẫn là
+placeholder, không nên xem là chức năng đã hoàn thành.
+
+Các thành phần cross-cutting đã triển khai:
+
+- **Bảo mật**: Helmet HTTP headers, GlobalExceptionFilter (JSON:API), rate
+  limiting (100 req/min), DOMPurify sanitize, upload auth guard.
+- **Performance**: Cache singleflight (10 endpoint), negative caching (30s),
+  zlib compression (>1KB), pipeline batch delete, Prisma batch upsert.
+- **Storage**: R2 primary (prod), local (dev), B2 backup, media cleanup processor.
+- **Redis**: Single shared connection, polling-based job processing (no BRPOP),
+  configurable via `REDIS_ENABLED` env var.
 
 ## 2. Cấu trúc repository
 
@@ -49,10 +62,10 @@ chức năng đã hoàn thành.
 |-- packages/
 |   |-- backend/
 |   |   |-- domains/             # Bounded-context libraries
-|   |   `-- infrastructure/      # Auth, DB, cache, logging...
+|   |   `-- infrastructure/      # Auth, DB, cache, storage, logging...
 |   |-- frontend/
 |   |   |-- core/                # API, auth, constants, store
-|   |   |-- features/            # Grammar, Reading, Vocabulary
+|   |   |-- features/            # Grammar, Reading, Vocabulary, Listening, Certification
 |   |   `-- shared/              # UI, pages, hooks, assets, utils
 |   `-- shared/libs/             # Primitive dùng chung, domain bases, query
 |-- docs/                         # Governance và tài liệu kỹ thuật
@@ -68,9 +81,9 @@ Các domain trưởng thành dùng bốn lớp:
 
 ```text
 presentation -> application -> domain
-                      |
-                      v
-               infrastructure
+                       |
+                       v
+                infrastructure
 ```
 
 - `presentation`: controller, guard và chuyển đổi giao thức HTTP.
@@ -85,8 +98,26 @@ Quy tắc phụ thuộc:
 3. Infrastructure hiện thực contract do domain/application sở hữu.
 4. App chỉ làm composition root, không chứa business logic.
 
-`module-reading` hiện chưa tuân theo đầy đủ cấu trúc này vì mới chỉ có module
-NestJS cơ bản.
+### 2.2. Infrastructure modules
+
+Các infrastructure library hiện có:
+
+- `infrastructure-auth`: JWT strategy, Auth0 JWKS, role/permission guards.
+- `infrastructure-database`: Prisma service, schema, migrations.
+- `infrastructure-cache`: SharedCacheService (Redis), singleflight, negative caching.
+- `infrastructure-storage`: R2ObjectStorage (prod), LocalObjectStorage (dev),
+  B2BackupService, MediaCleanupProcessor, StorageHealthIndicator.
+- `infrastructure-messaging`: RabbitMQ adapter (tương lai), hiện standalone.
+- `infrastructure-logging`: Structured JSON logging.
+- `infrastructure-monitoring`: Prometheus metrics, health indicators.
+- `infrastructure-exception-global`: GlobalExceptionFilter (JSON:API error format).
+
+Redis architecture:
+
+- **1 connection per instance**: `BullMQService` là sole connection owner.
+- **Polling-based job processing**: LPOP non-blocking, không dùng BRPOP Workers.
+- **`REDIS_ENABLED=false`**: No Redis, no BullMQ, cache methods là no-op, app vẫn chạy.
+- **BullMQ removed**: `@nestjs/bullmq` đã gỡ bỏ hoàn toàn, dùng raw `bullmq` + `ioredis`.
 
 ### 2.2. Frontend layering
 
@@ -128,25 +159,38 @@ thành `http://localhost:3000/api/v1`; fallback trong mã nguồn hiện trỏ t
 
 - Global prefix `api`.
 - URI versioning, mặc định `v1`.
-- CORS theo môi trường.
+- CORS theo môi trường với startup validation.
 - Global `ValidationPipe` với whitelist và transform.
+- `helmet()` middleware: Content-Security-Policy, HSTS, X-Content-Type-Options.
+- Body parser: `express.json({ limit: '5mb' })`.
 - Swagger ở `/api/docs` khi không chạy production.
 - Host mặc định `localhost`, port mặc định `3000`.
 
-`AppModule` lắp Vocabulary, User, Grammar, Reading, Auth, Database và BullMQ.
-JWT được xác minh bằng Auth0 JWKS; hồ sơ người dùng được upsert vào PostgreSQL
-và trạng thái đồng bộ được cache trong Redis.
+Security middleware (tự chế, không dùng `@nestjs/throttler` guard):
+
+- **Rate limiting**: 100 requests per minute per IP, sliding window.
+- **Request size**: 5MB max, body lớn hơn bị reject.
+- **Input sanitization**: XSS prevention cho query params.
+- **Upload guard**: `/api/v1/certification/admin/*` yêu cầu authenticated user.
+
+`AppModule` lắp Vocabulary, User, Grammar, Reading, Listening, Certification,
+Auth, Database, Cache, Storage, Logging, Monitoring và ExceptionGlobal.
+`ThrottlerGuard` đăng ký qua `APP_GUARD` provider (global).
+GlobalExceptionFilter xử lý lỗi JSON:API, ẩn stack trace production,
+mapping Prisma error codes (P2002, P2025, P2014) sang HTTP status.
 
 ## 4. Yêu cầu môi trường
 
-| Thành phần | Phiên bản/chính sách                            |
-| ---------- | ----------------------------------------------- |
-| Node.js    | 20 LTS, trùng với GitHub Actions                |
-| npm        | Dùng phiên bản đi kèm Node 20                   |
-| Nx         | 22.7.2, chạy qua `npx nx`                       |
-| PostgreSQL | Tương thích Prisma 6.19                         |
-| Redis      | Redis 7, `maxmemory-policy noeviction`          |
-| Docker     | Docker Compose v2 nếu chạy Redis bằng container |
+| Thành phần | Phiên bản/chính sách                                                         |
+| ---------- | ---------------------------------------------------------------------------- |
+| Node.js    | 20 LTS, trùng với GitHub Actions                                             |
+| npm        | Dùng phiên bản đi kèm Node 20                                                |
+| Nx         | 22.7.2, chạy qua `npx nx`                                                    |
+| PostgreSQL | Tương thích Prisma 6.19                                                      |
+| Redis      | Redis 7, `maxmemory-policy noeviction` (tùy chọn; `REDIS_ENABLED=false` bỏ qua) |
+| Docker     | Docker Compose v2 nếu chạy Redis bằng container                              |
+| Cloudflare R2 | Prod: `STORAGE_DRIVER=r2` với credentials                     |
+| Backblaze B2  | Optional: backup service khi `B2_*` env vars được cấu hình                 |
 
 Không cài Nx toàn cục. `npx nx` dùng đúng phiên bản workspace và tránh sai
 lệch giữa máy phát triển với CI.
@@ -182,7 +226,14 @@ Các biến bắt buộc để backend khởi động đầy đủ:
 
 - `DATABASE_URL`, `DIRECT_URL`.
 - `AUTH0_DOMAIN`, `AUTH0_AUDIENCE`.
-- `REDIS_HOST`, `REDIS_PORT`.
+
+Các biến tùy chọn nhưng khuyến nghị:
+
+- `REDIS_HOST`, `REDIS_PORT` (default: `localhost`, `6379`). Set `REDIS_ENABLED=false` nếu không dùng Redis.
+- `STORAGE_DRIVER` (default: `local`). Options: `local`, `r2`.
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` (prod).
+- `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME` (optional backup).
+- `MEDIA_EXPIRY_MINUTES` (default: `30`).
 
 Các biến bắt buộc cho frontend authentication và API:
 
@@ -370,13 +421,13 @@ Các điểm dưới đây cần được xử lý riêng, không nên che giấ
 2. `.env` hiện tại có thể thiếu `DIRECT_URL`, trong khi Prisma schema yêu cầu.
 3. Fallback API URL của frontend dùng cổng `4000`, backend dùng `3000`.
 4. Bootstrap log có health URL nhưng chưa có health endpoint.
-5. `module-reading` và `feature-reading` đang ở mức scaffold.
+5. `module-reading` và `feature-reading` đang ở mức cơ bản.
 6. Nhiều infrastructure library mới chỉ chứa module khung.
 7. Nx boundary tags chưa có dependency constraints thực.
 8. Tên thương hiệu còn lẫn `SparkNestEd`, `Spark Nexus Ed` và
    `EnglishReelNet` trong log/Swagger.
-9. `npx nx sync:check` hiện báo `apps/api-sne/tsconfig.app.json` thiếu project
-   reference tới `packages/backend/domains/module-reading/tsconfig.lib.json`.
+9. `module-listening` đã triển khai đầy đủ nhưng frontend chưa có listening feature.
+10. `module-certification` controller (2564 lines) cần split thành focused controllers.
 
 Khi các điểm này được sửa trong code/config, tài liệu này phải được cập nhật
 trong cùng Pull Request.
@@ -406,7 +457,8 @@ docker compose exec redis redis-cli ping
 docker compose exec redis redis-cli CONFIG GET maxmemory-policy
 ```
 
-Policy phải là `noeviction`.
+Policy phải là `noeviction`. Nếu không dùng Redis, set `REDIS_ENABLED=false`
+trong `.env`. App vẫn hoạt động đầy đủ (cache methods là no-op, jobs không chạy).
 
 ### Nx graph hoặc cache có biểu hiện bất thường
 

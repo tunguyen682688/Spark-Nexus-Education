@@ -53,17 +53,21 @@ không phải một hệ thống microservices độc lập.
 
 ## 3. Bản đồ trạng thái nghiệp vụ
 
-| Phân vùng            | Trạng thái        | Phạm vi hiện tại                                                      |
-| -------------------- | ----------------- | --------------------------------------------------------------------- |
-| User                 | `Đang dùng`       | Danh tính Auth0, hồ sơ local, role và permission                      |
-| Vocabulary           | `Đang dùng`       | Bộ từ, mục từ, import, favorite, quiz và tiến độ                      |
-| Dictionary           | `Đang dùng`       | Entry, sense, example, expression và dữ liệu liên quan                |
-| Grammar              | `Đang dùng`       | Bài học, tiến độ, luyện tập, kỳ thi và community                      |
-| Reading              | `Đang phát triển` | Article và ReadingProgress có trong schema; module còn ở mức scaffold |
-| Writing              | `Định hướng`      | Route placeholder, chưa có domain backend hoàn chỉnh                  |
-| Study Plan           | `Định hướng`      | Route placeholder                                                     |
-| Assessment tổng quát | `Định hướng`      | Route placeholder; Grammar có assessment riêng                        |
-| Games/Leaderboard    | `Định hướng`      | Route placeholder hoặc mô hình dữ liệu chưa đủ luồng                  |
+| Phân vùng            | Trạng thái        | Phạm vi hiện tại                                                                 |
+| -------------------- | ----------------- | -------------------------------------------------------------------------------- |
+| User                 | `Đang dùng`       | Danh tính Auth0, hồ sơ local, role và permission                                 |
+| Vocabulary           | `Đang dùng`       | Bộ từ, mục từ, import, favorite, quiz và tiến độ                                 |
+| Dictionary           | `Đang dùng`       | Entry, sense, example, expression và dữ liệu liên quan                           |
+| Grammar              | `Đang dùng`       | Bài học, tiến độ, luyện tập, kỳ thi và community                                 |
+| Certification        | `Đang dùng`       | 65 endpoints: đề thi TOEIC/IELTS/VSTEP/Cambridge, câu hỏi, phiên thi, kết quả, media, reviews, favorites, bookmarks |
+| Listening            | `Đang dùng`       | Materials, subtitles, progress tracking, media assets, s3 bucket selector        |
+| Reading              | `Đang phát triển` | Article và ReadingProgress có trong schema; module cơ bản                        |
+| Writing              | `Định hướng`      | Route placeholder, chưa có domain backend hoàn chỉnh                             |
+| Study Plan           | `Định hướng`      | Route placeholder                                                                |
+| Assessment tổng quát | `Định hướng`      | Route placeholder; Grammar có assessment riêng                                   |
+| Games/Leaderboard    | `Định hướng`      | Route placeholder hoặc mô hình dữ liệu chưa đủ luồng                            |
+
+Chi tiết từng feature: đọc [12-feature-documentation/](12-feature-documentation/)
 
 BA phải ghi rõ bounded context chịu trách nhiệm cho yêu cầu. Không tạo một
 khái niệm nghiệp vụ chung chung nếu nó đã thuộc một context cụ thể.
@@ -93,8 +97,14 @@ nội bộ của package khác.
 | Swagger         | `Đang dùng` | API docs development                | Cập nhật decorator khi contract API đổi                         |
 | Prisma 6        | `Đang dùng` | PostgreSQL ORM                      | Chỉ infrastructure truy cập Prisma trực tiếp                    |
 | PostgreSQL      | `Đang dùng` | Dữ liệu bền vững                    | Migration phải đi cùng thay đổi schema                          |
-| BullMQ          | `Đang dùng` | Background job                      | Job phải có retry strategy và tránh xử lý trùng                 |
-| Redis 7         | `Đang dùng` | Queue và cache                      | BullMQ yêu cầu policy `noeviction`                              |
+| BullMQ (raw)    | `Đang dùng` | Background job                      | Polling-based (LPOP), 1 Redis connection per instance           |
+| Redis 7         | `Đang dùng` | Cache + queue                       | Tùy chọn: `REDIS_ENABLED=false` bỏ qua Redis, app vẫn chạy    |
+| Helmet          | `Đang dùng` | HTTP security headers               | CSP, HSTS, X-Content-Type-Options                                |
+| Cloudflare R2   | `Đang dùng` | Object storage (prod)               | `STORAGE_DRIVER=r2`, media upload, presigned URLs                |
+| Local Storage   | `Đang dùng` | Object storage (dev)                | `STORAGE_DRIVER=local`, uploads vào `uploads/` directory         |
+| Backblaze B2    | `Đang dùng` | Backup storage                      | Optional: B2BackupService graceful degradation khi thiếu creds  |
+| DOMPurify       | `Đang dùng` | XSS prevention                      | sanitizeHtml cho user-generated HTML content                    |
+| zlib            | `Đang dùng` | Compression                         | Auto-compress >1KB, gzip level 6                                |
 
 ### 4.3. Frontend
 
@@ -141,7 +151,7 @@ Các công nghệ hoặc mô hình dưới đây xuất hiện trong tài liệu
 | Microservices độc lập              | `Định hướng`; hiện là modular monolith                       |
 | gRPC nội bộ                        | `Định hướng`                                                 |
 | RabbitMQ/Kafka                     | `Định hướng`; job hiện dùng BullMQ/Redis                     |
-| Prometheus/Grafana                 | `Định hướng` hoặc chưa đủ bằng chứng runtime                 |
+| Prometheus/Grafana                 | `Đang dùng` (metrics collection); `Định hướng` (dashboard)  |
 | Jaeger distributed tracing         | `Định hướng` hoặc chưa đủ bằng chứng runtime                 |
 | Kubernetes/ArgoCD                  | `Định hướng`; không có manifest triển khai đầy đủ trong repo |
 | LaunchDarkly/GrowthBook            | `Định hướng`                                                 |
@@ -238,25 +248,33 @@ xác nhận, không tự thay đổi trong feature spec.
 
 ## 9. Ngôn ngữ nghiệp vụ cốt lõi
 
-| Thuật ngữ              | Ý nghĩa dùng trong dự án                                  |
-| ---------------------- | --------------------------------------------------------- |
-| User                   | Người dùng được Auth0 định danh và có hồ sơ local         |
-| VocabularySet          | Bộ từ vựng do người dùng hoặc hệ thống quản lý            |
-| VocabularySetItem      | Một mục được thêm vào VocabularySet                       |
-| Entry                  | Mục từ gốc trong từ điển                                  |
-| Sense                  | Một nghĩa cụ thể của Entry                                |
-| UserVocabularyProgress | Tiến độ ôn tập của user đối với một item                  |
-| Mastery                | Mức thành thạo; phải nêu rõ thang đo trong từng feature   |
-| QuizSession            | Một phiên làm bài có trạng thái và kết quả                |
-| GrammarLesson          | Bài học ngữ pháp theo level và nội dung                   |
-| UserGrammarProgress    | Tiến độ của user đối với GrammarLesson                    |
-| GrammarExamSet         | Bộ đề ngữ pháp hoặc chứng chỉ                             |
-| Article                | Nội dung đọc                                              |
-| ReadingProgress        | Tiến độ đọc Article của một user                          |
-| CEFR Level             | Trình độ A1, A2, B1, B2, C1 hoặc C2                       |
-| SRS                    | Cơ chế ôn tập lặp quãng                                   |
-| Published              | Nội dung có thể được đối tượng được phép truy cập sử dụng |
-| Draft                  | Nội dung chưa được phát hành                              |
+| Thuật ngữ                  | Ý nghĩa dùng trong dự án                                              |
+| -------------------------- | --------------------------------------------------------------------- |
+| User                       | Người dùng được Auth0 định danh và có hồ sơ local                     |
+| VocabularySet              | Bộ từ vựng do người dùng hoặc hệ thống quản lý                        |
+| VocabularySetItem          | Một mục được thêm vào VocabularySet                                   |
+| Entry                      | Mục từ gốc trong từ điển                                              |
+| Sense                      | Một nghĩa cụ thể của Entry                                            |
+| UserVocabularyProgress     | Tiến độ ôn tập của user đối với một item                              |
+| Mastery                    | Mức thành thạo; phải nêu rõ thang đo trong từng feature               |
+| QuizSession                | Một phiên làm bài có trạng thái và kết quả                            |
+| GrammarLesson              | Bài học ngữ pháp theo level và nội dung                               |
+| UserGrammarProgress        | Tiến độ của user đối với GrammarLesson                                |
+| GrammarExamSet             | Bộ đề ngữ pháp hoặc chứng chỉ                                         |
+| Article                    | Nội dung đọc                                                          |
+| ReadingProgress            | Tiến độ đọc Article của một user                                      |
+| CertificationExam          | Đề thi TOEIC/IELTS/VSTEP/Cambridge, gồm sections và questions        |
+| CertificationExamSection   | Phần thi (Listening/Reading) chứa câu hỏi                             |
+| CertificationQuestion      | Câu hỏi (MCQ, Listening, Comprehension) trong đề thi                  |
+| CertificationSession       | Phiên làm bài thi, ghi lại câu trả lời và kết quả                   |
+| CertificationResult        | Kết quả thi, điểm số, và analytics                                    |
+| MediaFile                  | File upload (audio/image) lưu trong R2/Local/B2, reference by ID     |
+| ListeningMaterial          | Tài liệu nghe với subtitle và media asset                             |
+| ListeningProgress          | Tiến độ nghe của user đối với ListeningMaterial                       |
+| CEFR Level                 | Trình độ A1, A2, B1, B2, C1 hoặc C2                                   |
+| SRS                        | Cơ chế ôn tập lặp quãng                                               |
+| Published                  | Nội dung có thể được đối tượng được phép truy cập sử dụng             |
+| Draft                      | Nội dung chưa được phát hành                                          |
 
 Nếu BA cần thuật ngữ mới:
 
@@ -371,17 +389,18 @@ Không dùng tiêu chí mơ hồ như “giao diện đẹp”, “API nhanh” 
 
 ## 11. Ánh xạ BA sang kỹ thuật
 
-| Nội dung BA         | Artifact kỹ thuật thường liên quan                |
-| ------------------- | ------------------------------------------------- |
-| Actor và quyền      | Auth guard, permission, ownership check           |
-| Business rule       | Domain entity/aggregate, application handler      |
-| Input/output        | DTO, API contract, frontend types                 |
-| State lifecycle     | Enum/constants, entity methods, persistence       |
-| Dữ liệu mới         | Prisma schema và migration                        |
-| Xử lý lâu           | BullMQ job và progress status                     |
-| Màn hình dữ liệu    | Query hook, container, loading/error/empty states |
-| Acceptance criteria | Unit, integration hoặc E2E tests                  |
-| Audit/trace         | Structured logging và event metadata              |
+| Nội dung BA         | Artifact kỹ thuật thường liên quan                            |
+| ------------------- | ------------------------------------------------------------- |
+| Actor và quyền      | Auth guard, permission, ownership check                       |
+| Business rule       | Domain entity/aggregate, application handler                  |
+| Input/output        | DTO, API contract, frontend types                             |
+| State lifecycle     | Enum/constants, entity methods, persistence                   |
+| Dữ liệu mới         | Prisma schema và migration                                    |
+| Xử lý lâu           | BullMQ job và progress status                                 |
+| Upload media        | Storage module (R2/Local/B2), MediaFile entity, presigned URL |
+| Màn hình dữ liệu    | Query hook, container, loading/error/empty states             |
+| Acceptance criteria | Unit, integration hoặc E2E tests                              |
+| Audit/trace         | Structured logging và event metadata                          |
 
 BA không cần chỉ định class hoặc thư mục, nhưng phải mô tả đủ để kỹ sư xác
 định artifact bị tác động.
@@ -510,6 +529,7 @@ business rules, acceptance criteria và các artifact kỹ thuật bị tác đ�
 
 ## 19. Tài liệu liên quan
 
+**Kiến trúc & Quy trình:**
 - [Kiến trúc hệ thống và setup](SYSTEM_ARCHITECTURE_AND_SETUP.md)
 - [Ubiquitous Language Glossary](04-domain-business-architecture/01-ubiquitous-language-glossary.md)
 - [Bounded Contexts Mapping](04-domain-business-architecture/02-bounded-contexts-mapping.md)
@@ -517,4 +537,13 @@ business rules, acceptance criteria và các artifact kỹ thuật bị tác đ�
 - [Backend Layered Architecture](05-backend-architecture-standards/01-layered-architecture-di.md)
 - [Frontend Application Shell](06-frontend-architecture-standards/01-application-shell-routing.md)
 - [Testing Strategy](09-testing-quality-gates/01-testing-pyramid-strategy.md)
+- [Engineering Handbook](ENGINEERING_HANDBOOK.md)
+- [Contributing Guide](CONTRIBUTING.md)
+
+**Feature Documentation:**
+- [Certification](12-feature-documentation/feature%20certification.md) — Đề thi & Chứng chỉ (TOEIC, IELTS, VSTEP, Cambridge)
+- [Grammar](12-feature-documentation/feature%20grammar.md) — Ngữ pháp (CEFR A1-C2, SRS, Trap Diary)
+- [Reading](12-feature-documentation/feature%20reading.md) — Đọc hiểu (Articles, Quiz, Translation, Studio)
+- [Listening](12-feature-documentation/feature%20listening.md) — Nghe (Materials, Subtitles, Progress Tracking)
+- [Vocabulary](12-feature-documentation/feature%20vocabulary.md) — Từ vựng (Flashcards, Quizzes, Spaced Repetition)
 - [Contribution Guide](CONTRIBUTING.md)
