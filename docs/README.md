@@ -79,11 +79,18 @@ docs/
 │   ├── 01-multi-environment-matrix.md         # Ma trận cấu hình Dev, Staging, UAT, Production
 │   └── 02-gitops-argocd-deployment.md         # Hạ tầng Kubernetes, GitOps qua ArgoCD
 │
-└── 📈 11-sre-observability-runbooks/           # Runbooks giám sát & Phản ứng sự cố SRE
-    ├── 01-logging-taxonomy-json.md            # Định dạng Structured JSON Log & Correlation ID
-    ├── 02-metrics-prometheus-grafana.md       # Thu thập 4 tín hiệu vàng (Latency, Traffic, Errors, Saturation)
-    ├── 03-distributed-tracing-jaeger.md       # Truy vết microservices phân tán bằng Jaeger Tracing
-    └── 04-incident-response-playbook.md       # Quy trình phản ứng 4 bước và báo cáo sự cố (Post-mortem)
+├── 📈 11-sre-observability-runbooks/           # Runbooks giám sát & Phản ứng sự cố SRE
+│   ├── 01-logging-taxonomy-json.md            # Định dạng Structured JSON Log & Correlation ID
+│   ├── 02-metrics-prometheus-grafana.md       # Thu thập 4 tín hiệu vàng (Latency, Traffic, Errors, Saturation)
+│   ├── 03-distributed-tracing-jaeger.md       # Truy vết microservices phân tán bằng Jaeger Tracing
+│   └── 04-incident-response-playbook.md       # Quy trình phản ứng 4 bước và báo cáo sự cố (Post-mortem)
+│
+└── 📋 12-feature-documentation/               # Tài liệu Chức năng theo Module
+    ├── feature certification.md               # Đề thi & Chứng chỉ (TOEIC, IELTS, VSTEP, Cambridge)
+    ├── feature grammar.md                     # Ngữ pháp (CEFR A1-C2, SRS, Trap Diary)
+    ├── feature reading.md                     # Đọc hiểu (Articles, Quiz, Translation, Studio)
+    ├── feature listening.md                   # Nghe (Materials, Subtitles, Progress Tracking)
+    └── feature vocabulary.md                  # Từ vựng (Flashcards, Quizzes, Spaced Repetition)
 ```
 
 ---
@@ -106,6 +113,13 @@ docs/
 ### 🔒 4. Kỹ sư Bảo mật & DevOps
 * Kiểm soát phân quyền: Đọc [Identity & Access Management (IAM)](08-security-compliance-matrix/01-identity-access-management.md) và [RBAC/ABAC Control](08-security-compliance-matrix/03-rbac-abac-authorization.md).
 * Triển khai hạ tầng: Đọc [GitOps & ArgoCD Deployment](10-devops-infrastructure-iac/02-gitops-argocd-deployment.md).
+
+### 📋 5. Tài liệu Chức năng (Feature Documentation)
+* Đề thi & Chứng chỉ: Đọc [Certification](12-feature-documentation/feature%20certification.md) — TOEIC, IELTS, VSTEP, Cambridge
+* Ngữ pháp: Đọc [Grammar](12-feature-documentation/feature%20grammar.md) — CEFR A1-C2, SRS, Trap Diary
+* Đọc hiểu: Đọc [Reading](12-feature-documentation/feature%20reading.md) — Articles, Quiz, Translation, Studio
+* Nghe: Đọc [Listening](12-feature-documentation/feature%20listening.md) — Materials, Subtitles, Progress Tracking
+* Từ vựng: Đọc [Vocabulary](12-feature-documentation/feature%20vocabulary.md) — Flashcards, Quizzes, Spaced Repetition
 
 ---
 
